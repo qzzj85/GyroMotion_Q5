@@ -12,7 +12,7 @@ u8 IS_Can_ReachPoint_X(s8 now_gridx,s8 tgt_gridx,s8 now_gridy);
 void Init_Shift_Point2(void);
 void Do_Shift_Point2(void);
 void Do_ShiftYBS(void);
-u8 Abort2Sweep(s8 tgt_gridx,s8 tgt_gridy);
+u8 Abort2Sweep(void);
 void Init_ShiftExit_RightYBS(u8 temp_data);
 void Init_ShiftExit_LeftYBS(u8 temp_data);
 

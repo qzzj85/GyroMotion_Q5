@@ -80,7 +80,7 @@ void Init_RunTest(void)
 				Set_LeftRight(0);
 		}
 #else
-	Assign_LeftRight(0);
+	Assign_LeftRight();
 #endif
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
@@ -253,7 +253,8 @@ void Do_RunTest(void)
 				if(giv_sys_time-mode.time<200)
 					return;
 				Speed=1000;
-				if(do_action_my(3,20*CM_PLUS,motion1.tgt_yaw))
+				//if(do_action_my(3,20*CM_PLUS,motion1.tgt_yaw))
+				if(do_action(2,360*Angle_1))
 					{
 						stop_rap();
 						mode.step++;

@@ -669,7 +669,10 @@ void Uart3_Communication(void)
 		if(temp_checksum==COMBUF3[USART3_RX_SIZE-1])
 			{
 				Gyro_Data.yaw=(COMBUF3[4]<<8)+COMBUF3[3];
+#ifdef GYRO_COMPENSATION
 				Gyro_Data.yaw=((int)(Gyro_Data.yaw))*(36000+289)/36000;
+#endif
+//				Gyro_Data.yaw=((int)(Gyro_Data.yaw))*(36000-385)/36000;
 				#if 0
 				Gyro_Data.pitch=(COMBUF3[6]<<8)+COMBUF3[5];
 				Gyro_Data.roll=(COMBUF3[8]<<8)+COMBUF3[7];

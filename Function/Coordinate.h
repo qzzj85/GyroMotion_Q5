@@ -22,6 +22,11 @@
 #define	CHECK_NEWAREA		3
 #define	CHECK_GOEXIT		4
 
+#define	DIR_YMAX			1
+#define	DIR_XMAX			2
+#define	DIR_YMIN			3
+#define	DIR_XMIN			4
+
 extern float X_pos,Y_pos;
 extern volatile u8 coordinate[COORDI_YLENGTH+1][COORDI_XLENGTH+1];
 extern int x_max[20],x_min[20];

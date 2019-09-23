@@ -3,6 +3,7 @@
 #define PI180				57.295791		//180/PI
 
 short F_Angle_Const,B_Angle_Const,L_Angle_Const,R_Angle_Const;//机器开始清扫时的前向角度和后向角度，固定不变
+short LF_Angle_Const,RF_Angle_Const,LB_Angle_Const,RB_Angle_Const;
 
 //取当前角度的对角
 short Get_Reverse_Angle(short forward_angle)
@@ -57,12 +58,23 @@ void Get_Const_Angle(void)
 	B_Angle_Const=Get_Reverse_Angle(F_Angle_Const);
 	
 	L_Angle_Const=F_Angle_Const-90*100;
-	if(L_Angle_Const<(-180100))
+	if(L_Angle_Const<(-18000))
 		L_Angle_Const+=360*100;
 	
 	R_Angle_Const=F_Angle_Const+90*100;
 	if(R_Angle_Const>18000)
 		R_Angle_Const=R_Angle_Const-360*100;
+
+	LF_Angle_Const=F_Angle_Const-45*100;
+	if(LF_Angle_Const<(-18000))
+		LF_Angle_Const+=36000;
+
+	RF_Angle_Const=F_Angle_Const+45000;
+	if(RF_Angle_Const>18000)
+		RF_Angle_Const-=36000;
+
+	RB_Angle_Const=Get_Reverse_Angle(LF_Angle_Const);
+	LB_Angle_Const=Get_Reverse_Angle(RF_Angle_Const);
 }
 
 void Save_Abort_Data(void)
@@ -130,27 +142,11 @@ u8 Analysis_Back_Leak(void)
 							check_point.next_tgtyaw=F_Angle_Const;
 							Set_CheckPoint_NextAction(CHECK_BACK);
 							if(check_gridy1>check_gridy2)
-								check_point.ybs_dir=1;
+								check_point.ybs_dir=LEFT;
 							else
-								check_point.ybs_dir=2;
+								check_point.ybs_dir=RIGHT;
 							return 1;
 						}
-					#if 0
-					if((!Read_Coordinate_Clean(check_gridx,check_gridy1))&(Read_Coordinate_CleanNoWall(check_gridx,check_gridy2)))
-						{
-							check_point.new_x1=check_gridx;
-							check_point.new_y1=check_gridy2;
-							check_point.new_x2=check_gridx;
-							check_point.new_y2=check_gridy1;
-							check_point.next_tgtyaw=F_Angle_Const;
-							
-							if(check_gridy1>check_gridy2)
-								check_point.ydir=0;
-							else
-								check_point.ydir=1;
-							return 1;
-						}
-					#endif
 				}
 			for(check_gridx=now_gridx;check_gridx>xmin_check1;check_gridx--)
 				{
@@ -164,30 +160,14 @@ u8 Analysis_Back_Leak(void)
 							Set_CheckPoint_NextAction(CHECK_BACK);
 							if(check_gridy1>check_gridy2)
 								{
-									 check_point.ybs_dir=2;
+									 check_point.ybs_dir=RIGHT;
 								}
 							else
 								{
-									check_point.ybs_dir=1;
+									check_point.ybs_dir=LEFT;
 								}
 							return 1;
 						}
-		#if 0
-					if((!Read_Coordinate_Clean(check_gridx,check_gridy1))&(Read_Coordinate_CleanNoWall(check_gridx,check_gridy2)))
-						{
-							check_point.new_x1=check_gridx;
-							check_point.new_y1=check_gridy2;
-							check_point.new_x2=check_gridx;
-							check_point.new_y2=check_gridy1;
-							check_point.next_tgtyaw=F_Angle_Const;
-							
-							if(check_gridy1>check_gridy2)
-								check_point.ydir=0;
-							else
-								check_point.ydir=1;
-							return 1;
-						}
-		#endif
 				}
 			if(check_gridy1>grid.y_back_last)
 				check_gridy1--;
@@ -381,87 +361,8 @@ void Change_LeftRight(void)
 	motion1.leftright=!motion1.leftright;
 }
 
-void Assign_LeftRight(u8 reverse)
+void Assign_LeftRight(void)
 {
-#if 0
-	u8 y_acc;
-	y_acc=motion1.y_acc;
-	if(!reverse)						//正常清扫中
-		{
-			switch(y_acc)
-				{
-					case 0:								//沿Y轴负方向(L_Angle_Const)清扫
-						if(motion1.tgt_yaw==F_Angle_Const)
-							Set_LeftRight(1);			//设置方向右沿边
-						else
-							Set_LeftRight(0);			//设置方向左沿边
-						Set_Motion_YDir(-1);
-						break;
-					case 1:								//沿Y轴正方向(R_Angle_Const)清扫
-						if(motion1.tgt_yaw==F_Angle_Const)
-							Set_LeftRight(0);			//设置方向左沿边
-						else
-							Set_LeftRight(1);			//设置方向右沿边
-						Set_Motion_YDir(1);
-						break;
-					case 2:								//沿Y轴双方向清扫
-						if(grid.y<grid.y_sweep_start)	//如果此时Y坐标小于清扫起始坐标
-							{
-								if(motion1.tgt_yaw==F_Angle_Const)
-									Set_LeftRight(1);	
-								else
-									Set_LeftRight(0);
-								Set_Motion_YDir(-1);
-							}
-						else							//如果此时Y坐标大于等于清扫起始坐标
-							{
-								if(motion1.tgt_yaw==F_Angle_Const)
-									Set_LeftRight(0);
-								else
-									Set_LeftRight(1);
-								if(grid.y>grid.y_sweep_start)
-									Set_Motion_YDir(1);
-								else
-									Set_Motion_YDir(0);
-							}
-						break;
-				}
-		}
-	else												//回扫中
-		{
-			switch(y_acc)
-				{
-					case 0: 							//沿Y轴负方向(L_Angle_Const)清扫
-						if(motion1.tgt_yaw==F_Angle_Const)
-							Set_LeftRight(0);			//设置方向右沿边
-						else
-							Set_LeftRight(1);			//设置方向左沿边
-						break;
-					case 1: 							//沿Y轴正方向(R_Angle_Const)清扫
-						if(motion1.tgt_yaw==F_Angle_Const)
-							Set_LeftRight(1);			//设置方向左沿边
-						else
-							Set_LeftRight(0);			//设置方向右沿边
-						break;
-					case 2: 							//沿Y轴双方向清扫
-						if(grid.y<grid.y_sweep_start)	//如果此时Y坐标小于清扫起始坐标
-							{
-								if(motion1.tgt_yaw==F_Angle_Const)
-									Set_LeftRight(0);	
-								else
-									Set_LeftRight(1);
-							}
-						else							//如果此时Y坐标大于等于清扫起始坐标
-							{
-								if(motion1.tgt_yaw==F_Angle_Const)
-									Set_LeftRight(1);
-								else
-									Set_LeftRight(0);
-							}
-						break;
-				}
-		}
-#endif
 	s8 ydir=Read_Motion_YDir();
 	switch(ydir)
 		{

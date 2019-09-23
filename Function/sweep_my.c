@@ -543,6 +543,10 @@ void Init_First_Sweep(void)
 	TRACE("B_Angle_Const=%d\r\n",B_Angle_Const);
 	TRACE("L_Angle_Const=%d\r\n",L_Angle_Const);
 	TRACE("R_Angle_Const=%d\r\n",R_Angle_Const);
+	TRACE("LF_Angle_Const=%d\r\n",LF_Angle_Const);
+	TRACE("LB_Angle_Const=%d\r\n",LB_Angle_Const);
+	TRACE("RF_Angle_Const=%d\r\n",RF_Angle_Const);
+	TRACE("RB_Angle_Const=%d\r\n",RB_Angle_Const);
 	TRACE("Range max=%d\r\n",motion1.xpos_start+RANGE_MAX);
 	TRACE("Range min=%d\r\n",motion1.xpos_start-RANGE_MIN);
 	TRACE("GRID_MAX=%d\r\n",GRID_MAX);
@@ -562,6 +566,7 @@ void Init_First_Sweep(void)
 //	Del_All_Sweep_Bump_Node();
 	Send_Voice(VOICE_SWEEP_START);
 	Open_Led(1,0,1);
+	//Sweep_Level_Set(sweep_suction);
 }
 
 //输入参数
@@ -617,7 +622,7 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 		motion1.repeat_sweep=true;		//第一次清扫，如果是X轴是双方向清扫，则设置重复扫一次，单方向的，则没有必要
 }
 
-void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
+void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 {
 	u8 m=0;
 	static u8 turn_dir=0,turn_angle=0;
@@ -634,7 +639,7 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 	if(ydir<0)
 		{
 			last_gridy=bump_gridy+1;
-			next_gridy=bump_gridy+1;
+			next_gridy=bump_gridy-1;
 		}
 	
 	m=Read_Sweep_Bump(ir_enable,out_enable);
@@ -954,21 +959,6 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 									stop_rap();
 									mode.step_bp++;
 								}
-#if 0
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-								{
-									stop_rap();
-									mode.bump=0;
-									mode.step_bp=0;
-									mode.bump_flag=false;
-									mode.step=0;
-									grid.y_straight_start=grid.y;
-									grid.x_straight_start=grid.x;
-									mode.bump_time=giv_sys_time;
-									motion1.repeat_sweep=false;
-									TRACE("Angle repeat at stepbp 23\r\n");
-								}
-#endif
 							break;
 						case 22:
 							Speed=MID_MOVE_SPEED;
@@ -986,33 +976,7 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
-#if 0
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-								{
-									stop_rap();
-									mode.bump=0;
-									mode.step_bp=0;
-									mode.bump_flag=false;
-									mode.step=0;
-									grid.y_straight_start=grid.y;
-									grid.x_straight_start=grid.x;
-									mode.bump_time=giv_sys_time;
-									motion1.repeat_sweep=false;
-									TRACE("Angle repeat at stepbp 23\r\n");
-								}
-#endif
 							
-#if 0
-							if((now_gridy==last_gridy)&(Judge_GridYPOS_Nearby_Reach(bump_gridy)))
-								{
-									stop_rap();
-									TRACE("last_gridy=%d now_gridy=%d at stepbp 22\r\n",last_gridy,now_gridy);
-									//Init_Sweep_LeftYBS(1);
-									motion1.tgt_yaw=motion1.anti_tgt_yaw;
-									motion1.repeat_sweep=false;
-									Init_Pass2Sweep();
-								}
-#else
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
 									if(now_gridy==last_gridy)
@@ -1025,18 +989,15 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 										}
 									stop_rap();
 									TRACE("last_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy,__func__);
-									//Init_Sweep_RightYBS(1);
 									motion1.tgt_yaw=motion1.anti_tgt_yaw;
 									motion1.repeat_sweep=false;
 									Init_Pass2Sweep();
 									return;
 								}
-#endif
 							break;
 						case 23:
 							Set_Coordinate_WallClean(now_gridx,now_gridy);
 							enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
-
 							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
 								{	
 									stop_rap();
@@ -1064,27 +1025,13 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 											Init_Pass2Sweep();
 											return;
 										}
-#if 0
-									if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-										{	
-											stop_rap();
-											mode.bump=0;
-											mode.step_bp=0;
-											mode.bump_flag=false;
-											mode.step=0;
-											grid.y_straight_start=grid.y;
-											grid.x_straight_start=grid.x;
-											mode.bump_time=giv_sys_time;
-											TRACE("Angle repeat at stepbp 23\r\n");
-										}
-#endif
 								}
 							if(now_gridy==next_gridy)
 								{
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
-											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy);
+											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",next_gridy,now_gridy);
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=true;
@@ -1237,21 +1184,6 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 									stop_rap();
 									mode.step_bp++;
 								}
-#if 0
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-								{
-									stop_rap();
-									mode.bump=0;
-									mode.step_bp=0;
-									mode.bump_flag=false;
-									mode.step=0;
-									grid.y_straight_start=grid.y;
-									grid.x_straight_start=grid.x;
-									mode.bump_time=giv_sys_time;
-									motion1.repeat_sweep=false;
-									TRACE("Angle repeat at stepbp 23\r\n");
-								}
-#endif
 							break;
 						case 22:
 							Speed=MID_MOVE_SPEED;
@@ -1269,17 +1201,6 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
-#if 0
-							if((now_gridy==last_gridy)&(Judge_GridYPOS_Nearby_Reach(bump_gridy)))
-								{
-									stop_rap();
-									TRACE("last_gridy=%d now_gridy=%d at stepbp 22\r\n",last_gridy,now_gridy);
-									//Init_Sweep_RightYBS(1);
-									motion1.tgt_yaw=motion1.anti_tgt_yaw;
-									motion1.repeat_sweep=false;
-									Init_Pass2Sweep();
-								}
-#else
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
 									if(now_gridy==last_gridy)
@@ -1298,7 +1219,6 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 									Init_Pass2Sweep();
 									return;
 								}
-#endif
 							break;
 						case 23:
 							Set_Coordinate_WallClean(now_gridx,now_gridy);
@@ -1330,27 +1250,13 @@ void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable)
 											Init_Pass2Sweep();
 											return;
 										}
-#if 0
-									if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-										{	
-											stop_rap();
-											TRACE("Angle repeat at stepbp 23\r\n");
-											mode.bump=0;
-											mode.step_bp=0;
-											mode.bump_flag=false;
-											mode.step=0;
-											grid.y_straight_start=grid.y;
-											grid.x_straight_start=grid.x;
-											mode.bump_time=giv_sys_time;
-										}
-#endif
 								}
 							if(now_gridy==next_gridy)
 								{
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
-											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy);
+											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",next_gridy,now_gridy);
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=true;
@@ -1674,24 +1580,9 @@ void Init_NormalSweep(short tgt_yaw)
 #endif
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
-#if 0
-	if(motion1.tgt_yaw==F_Angle_Const)
-		{
-			if(Read_Motion_YAcc())	//目标角度为x轴正向，且清扫间隔方向为Y轴正向
-				Set_LeftRight(0);			//设置方向为左转及左沿边
-			else							//目标角度为x轴正向，且清扫间隔方向为Y轴负向
-				Set_LeftRight(1);			//设置方向为右转及右沿边
-		}
-	else
-		{
-			if(Read_Motion_YAcc())	//目标角度为x轴负向，且清扫间隔方向为Y轴正向
-				Set_LeftRight(1);
-			else							//目标角度为x轴负向，且清扫间隔方向为Y轴负向
-				Set_LeftRight(0);
-		}
-#else
-	Assign_LeftRight(0);
-#endif
+	
+	Assign_LeftRight();
+	
 	motion1.leakon=false;
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
@@ -1726,7 +1617,7 @@ void Do_NormalSweep(void)
 
 			return;
 		}
-	Sweep_Bump_Action_II(1,1);
+	Sweep_Bump_Action(1,1);
 	
 	if(mode.bump)
 		return;
@@ -1833,24 +1724,9 @@ void Init_Back_Sweep(short tgt_yaw)
 #endif
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
-#if 0
-	if(motion1.tgt_yaw==F_Angle_Const)
-		{
-			if(Read_Motion_YAcc())	//目标角度为x轴正向，且清扫间隔方向为Y轴正向
-				Set_LeftRight(1);
-			else							//目标角度为x轴正向，且清扫间隔方向为Y轴负向
-				Set_LeftRight(0);
-		}
-	else
-		{
-			if(Read_Motion_YAcc())	//目标角度为x轴负向，且清扫间隔方向为Y轴正向
-				Set_LeftRight(0);
-			else							//目标角度为x轴负向，且清扫间隔方向为Y轴负向
-				Set_LeftRight(1);
-		}
-#else
-	Assign_LeftRight(1);
-#endif
+	
+	Assign_LeftRight();
+	
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
 	grid.y_back_last=grid.y;
@@ -1859,12 +1735,6 @@ void Init_Back_Sweep(short tgt_yaw)
 	data1=Analysis_StopBack(motion1.tgt_yaw);
 	if(data1==1)
 		{
-#if 0
-			if(Analysis_Back_Leak())
-				Init_Shift_Point1(0);
-			else
-			//退出回扫
-#endif
 				{
 			TRACE("Analysis Stop back sweep!\r\n");
 			TRACE("Quit Back Sweep in %s\r\n",__func__);
@@ -1902,7 +1772,7 @@ void Do_BackSweep(void)
 
 			return;
 		}
-	Sweep_Bump_Action_II(0,1);
+	Sweep_Bump_Action(0,1);
 	if(mode.bump)
 		return;
 	if((mode.sub_mode!=BACK_SWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
@@ -2109,7 +1979,8 @@ void Init_Pass2Sweep(void)
 
 void Do_Pass2Sweep(void)
 {
-	short turn_angle=0;
+	u8 turn_dir=0;
+	short tgt_angle=0;
 //	YBS_Comm_Rap_My();
 	ACC_DEC_Curve();
 
@@ -2138,70 +2009,47 @@ void Do_Pass2Sweep(void)
 				stop_rap();
 				if(giv_sys_time-mode.time>5000)
 					{
-						{
-							if(!Read_LeftRight())		//需要准备左沿边
-								{
-									mode.step=10;
-									return;
-								}
-							else						//当前右沿边，左转。tgt_yaw为B_Anlge,需要转向到F_Angle;
-								{
-									mode.step=20;
-									return;
-								}
-						}
+						mode.step++;
 					}
 				break;
-			case 10:
+			case 1:
 				Speed=TURN_SPEED;
-				if(do_action(2,720*Angle_1));
 				if(motion1.tgt_yaw==F_Angle_Const)
-					turn_angle=B_Angle_Const;
+					tgt_angle=B_Angle_Const;
 				else
-					turn_angle=F_Angle_Const;
-				if(Judge_Yaw_Reach(turn_angle,TURN_ANGLE_BIOS))
+					tgt_angle=F_Angle_Const;
+				turn_dir=Get_TurnDir(tgt_angle);
+				if(do_action(turn_dir,360*Angle_1));
+				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
-						TRACE("Gyro_Data.yaw=%d turn_angle=%d\r\n",Gyro_Data.yaw,turn_angle);
+						TRACE("Gyro_Data.yaw=%d turn_angle=%d\r\n",Gyro_Data.yaw,tgt_angle);
 						TRACE("yaw Reach!\r\n");
-						mode.step=0xF0;
-					}
-				break;
-			case 20:
-				Speed=TURN_SPEED;
-				if(do_action(1,720*Angle_1));
-				if(motion1.tgt_yaw==F_Angle_Const)
-					turn_angle=B_Angle_Const;
-				else
-					turn_angle=F_Angle_Const;
-				if(Judge_Yaw_Reach(turn_angle,TURN_ANGLE_BIOS))
-					{
-						stop_rap();
 						mode.step=0xF0;
 					}
 				break;
 			case 0xF0:
 				if(motion1.tgt_yaw==F_Angle_Const)
 					{
-						turn_angle=B_Angle_Const;
+						tgt_angle=B_Angle_Const;
 					}
 				else
 					{	
-						turn_angle=F_Angle_Const;
+						tgt_angle=F_Angle_Const;
 					}
 				if(!Read_Motion_BackSweep())
 					{
 						if(!motion1.leakon)
-							Init_NormalSweep(turn_angle);
+							Init_NormalSweep(tgt_angle);
 						else
-							Init_LeakSweep(turn_angle);
+							Init_LeakSweep(tgt_angle);
 					}
 				else
 					{
 						if(!motion1.leakon)
-							Init_Back_Sweep(turn_angle);
+							Init_Back_Sweep(tgt_angle);
 						else
-							Init_Leak_BackSweep(turn_angle);
+							Init_Leak_BackSweep(tgt_angle);
 					}
 				break;
 		}
@@ -2516,6 +2364,7 @@ void Do_Stop_BackSweep(void)
 						mode.step=4;
 						return;
 					}
+				TRACE("tgt_yaw=%d\r\n",tgt_yaw);
 				mode.step++;
 				break;
 			case 1:
@@ -2847,7 +2696,7 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	YBS_check_base=false;
 }
 
-u8 YBS_AbortFor_Sweep_II(void)
+u8 YBS_AbortFor_Sweep(void)
 {
 	s8 temp_data1,now_gridx,now_gridy;
 	short xpos,ypos;
@@ -2865,6 +2714,7 @@ u8 YBS_AbortFor_Sweep_II(void)
 							stop_rap();
 							TRACE("Quit Now backsweep in %s\r\n",__func__);
 							Init_Stop_BackSweep();
+							return 1;
 						}
 					else
 						{
@@ -2903,8 +2753,11 @@ u8 YBS_AbortFor_Sweep_II(void)
 					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 					if(((mode.step==0x11)|(mode.step==0x51)))
 						{
-							TRACE("Need Repeat!\r\n");
-							motion1.repeat_sweep=true;
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+								{
+									TRACE("Need Repeat!\r\n");
+									motion1.repeat_sweep=true;
+								}
 						}
 					else
 						{
@@ -2945,8 +2798,11 @@ u8 YBS_AbortFor_Sweep_II(void)
 					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 					if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
 						{
-							TRACE("Need Repeat!\r\n");
-							motion1.repeat_sweep=true;
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+								{
+									TRACE("Need Repeat!\r\n");
+									motion1.repeat_sweep=true;
+								}
 						}
 					else
 						{
@@ -2963,6 +2819,7 @@ u8 YBS_AbortFor_Sweep_II(void)
 							stop_rap();
 							TRACE("Quit Now backsweep in %s\r\n",__func__);
 							Init_Stop_BackSweep();
+							return 1;
 						}
 					else
 						{
@@ -2988,27 +2845,6 @@ u8 YBS_AbortFor_Sweep_II(void)
 				}
 		}
 
-#if 0
-	//判断X坐标是否超出400cmX400cm区域，是则准备新一轮直行清扫
- 	if(((xpos>motion1.xpos_max_area)|(xpos<motion1.xpos_min_area-10))&(mode.step<0xF0))
-		{
-			stop_rap();
-			TRACE("Out of Range!\r\n");
-			Init_Pass2Sweep();
-			return 1;
-		}
-#endif
-
-#if 0
-	if(AngleRepeat_InYBS())
-		{
-			stop_rap();
-			mode.step=0xF0;
-			TRACE("Angle Repeat!\r\n");
-			Init_Pass2Sweep();
-			return;
-		}
-#endif
 	if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
 		{			
 			stop_rap();
@@ -3049,7 +2885,7 @@ u8 YBS_AbortFor_Sweep_II(void)
 		}
 
 #if 1
-	if((giv_sys_time-mode.time>150000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
+	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
 		{
 			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
 				{
@@ -3141,7 +2977,7 @@ void Sweep_YBS(void)
 			return;
 		}
 
-	if(YBS_AbortFor_Sweep_II())
+	if(YBS_AbortFor_Sweep())
 		return;
 	
 	
@@ -3153,6 +2989,8 @@ void Sweep_YBS(void)
 		{
 			YBS_Left_Bump(1);
 		}
+	else
+		return;
 			
 	if(mode.bump != 0)		//	有碰撞需要处理，返回d
 		{
@@ -3293,7 +3131,8 @@ void Sweep_YBS(void)
 			
 			case 1:
 				YBS_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 				//if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
 					{
@@ -3321,7 +3160,8 @@ void Sweep_YBS(void)
 							
 			case 2:
 				YBS_Check_corner(); 					
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 80)  			//	彻底丢失墙壁    有可能出现拐角//80  //140
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
@@ -3462,7 +3302,8 @@ void Sweep_YBS(void)
 				break;
 			case 0x41:  
 				YBS_Left_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 					{
 						mode.step = 0x42;
@@ -3488,7 +3329,8 @@ void Sweep_YBS(void)
 				break;
 			case 0x42:
 				YBS_Left_Check_corner(); 					
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;

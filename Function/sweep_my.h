@@ -14,7 +14,7 @@ void Continue_Sweep(void);
 void Do_Back2YbsStart(void);
 void Do_Pass2Sweep(void);
 void Init_Back2YbsStart(void);
-void Sweep_Bump_Action_II(u8 ir_enable,u8 out_enable);
+void Sweep_Bump_Action(u8 ir_enable,u8 out_enable);
 void Do_BackSweep(void);
 u8 Analysis_NeedBack(s8 ygrid_abort);
 u8 Analysis_StopBack(short tgt_yaw);
@@ -34,7 +34,7 @@ void Init_Sweep_LeftYBS(u8 avoid_staright);
 void Sweep_YBS(void);
 void Init_Back_Sweep(short tgt_yaw);
 void StopBack_Bump_Action(void);
-u8 YBS_AbortFor_Sweep_II(void);
+u8 YBS_AbortFor_Sweep(void);
 
 #endif
 

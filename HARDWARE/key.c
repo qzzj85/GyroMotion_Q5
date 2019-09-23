@@ -188,7 +188,8 @@ void AutoReadKey(void)
 												stream_start(00);// ¿ªÊ¼´«Êä
 #endif	
 												Init_First_Sweep();
-												
+												//Init_Right_YBS(1);	
+												//Init_Left_YBS(1);
 												//Init_RunTest();
 											}
 										else if(mode.sub_mode==ERR)

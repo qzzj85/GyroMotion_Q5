@@ -627,6 +627,7 @@ void EXTI0_IRQHandler(void)
 											{
 												l_ring.length++; 
 												l_ring.speed_length++;		//qz add 20180203
+												l_ring.dq_time = giv_sys_time;
 												if(l_rap.ori == FRONT)
 													{
 														l_ring.all_length++;
@@ -637,7 +638,6 @@ void EXTI0_IRQHandler(void)
 														l_ring.all_length--;
 													}
 											}
-										l_ring.dq_time = giv_sys_time;
 									}
 									l_step = 1; 
 							}

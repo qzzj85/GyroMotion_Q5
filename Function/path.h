@@ -1,6 +1,20 @@
 #ifndef PATH_H
 #define PATH_H
 
+#define	AREA_UPLEFT				1
+#define	AREA_UPRIGHT			2
+#define	AREA_DOWNLEFT			3
+#define	AREA_DOWNRIGHT			4
+
+#define	BOUNDARY_RIGHTDOWN		1
+#define	BOUNDARY_RIGHTUP		2
+#define	BOUNDARY_UPRIGHT		3
+#define	BOUNDARY_UPLEFT			4
+#define	BOUNDARY_LEFTUP			5
+#define	BOUNDARY_LEFTDOWN		6
+#define	BOUNDARY_DOWNLEFT		7
+#define	BOUNDARY_DOWNRIGHT		8
+
 extern POINT_GRID turn_grid;
 extern u32 path_length;
 

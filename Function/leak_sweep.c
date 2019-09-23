@@ -641,30 +641,13 @@ void Init_LeakSweep(short tgt_yaw)
 #endif
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
-#if 0
-	if(check_point.ydir)				//Y轴正方向
-		{
-			if(motion1.tgt_yaw==F_Angle_Const)
-				Set_LeftRight(0);			//设置方向左沿边
-			else
-				Set_LeftRight(1);			//设置方向右沿边
-			Set_Motion_YDir(1);
-		}
-	else									//Y轴负方向
-		{
-			if(motion1.tgt_yaw==F_Angle_Const)
-				Set_LeftRight(1);			//设置方向右沿边
-			else							
-				Set_LeftRight(0);			//设置方向左沿边
-			Set_Motion_YDir(-1);
-		}
-#else
+	
 	if(check_point.ydir)
 		Set_Motion_YDir(1);
 	else
 		Set_Motion_YDir(-1);
-	Assign_LeftRight(check_point.yacc_anti);
-#endif
+	Assign_LeftRight();
+	
 	motion1.leakon=true;
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
@@ -688,7 +671,7 @@ void Do_LeakSweep(void)
 	ACC_DEC_Curve();
 
 	//LeakSweep_Bump_Action();
-	Sweep_Bump_Action_II(1,1);
+	Sweep_Bump_Action(1,1);
 	
 	if(mode.bump)
 		return;
@@ -854,7 +837,7 @@ void Do_Leak_BackSweep(void)
 
 			return;
 		}
-	Sweep_Bump_Action_II(0,1);
+	Sweep_Bump_Action(0,1);
 	if(mode.bump)
 		return;
 	if((mode.sub_mode!=LEAK_BACKSWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP

@@ -275,17 +275,32 @@ void Shift_BumpAction(void)
 															return;
 														}
 												}
+
+											if(mode.sub_mode==SHIFTPOINT1)
+												{
+													temp_data=Judge_YBS_Dir();
+													if(temp_data==1)
+														{
+															Init_Shift_LeftYBS(1);
+															return;
+														}
+													else if(temp_data==2)
+														{
+															Init_Shift_RightYBS(1);
+															return;
+														}
+												}
 											
 											if(mode.sub_mode==SHIFTPOINT2)
 												{
 													if(nextaction<=CHECK_LEAKSWEEP)
 														{
-															if(check_point.ybs_dir==1)
+															if(check_point.ybs_dir==LEFT)
 																{
 																	Init_Shift_LeftYBS(1);
 																	return;
 																}
-															else if(check_point.ybs_dir==2)
+															else if(check_point.ybs_dir==RIGHT)
 																{
 																	Init_Shift_RightYBS(1);
 																	return;
@@ -1511,6 +1526,18 @@ void Do_Shift_Point1(void)
 				TRACE("Enter mode step can't reach point1");
 				TRACE("Need YBS!!\r\n");
 
+				temp_result=Judge_YBS_Dir();
+				if(temp_result==1)
+					{
+						Init_Shift_LeftYBS(1);
+						return;
+					}
+				else if(temp_result==2)
+					{
+						Init_Shift_RightYBS(1);
+						return;
+					}
+
 				if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
 					{
 						if(mode.last_sub_mode==YBS_SUB_LEFT)
@@ -2302,6 +2329,8 @@ void Do_ShiftYBS(void)
 	if(Abort_ShiftYBS())
 		return;
 	
+	if(Abort2Sweep())
+		return;
 	
 	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
 		{
@@ -2311,6 +2340,8 @@ void Do_ShiftYBS(void)
 		{
 			YBS_Left_Bump(1);
 		}
+	else
+		return;
 			
 	if(mode.bump != 0)		//	有碰撞需要处理，返回d
 			{
@@ -2449,7 +2480,8 @@ void Do_ShiftYBS(void)
 			
 			case 1:
 				YBS_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 				//if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
 					{
@@ -2477,7 +2509,8 @@ void Do_ShiftYBS(void)
 							
 			case 2:
 				YBS_Check_corner(); 					
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 80)				//	彻底丢失墙壁	  有可能出现拐角//80  //140
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
@@ -2618,7 +2651,8 @@ void Do_ShiftYBS(void)
 				break;
 			case 0x41:	
 				YBS_Left_Check_corner();	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 					{
 						mode.step = 0x42;
@@ -2644,7 +2678,8 @@ void Do_ShiftYBS(void)
 				break;
 			case 0x42:
 				YBS_Left_Check_corner();					
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
@@ -2910,12 +2945,14 @@ void Do_ExitAtion(void)
 		}
 }
 
-u8 Abort2Sweep(s8 tgt_gridx,s8 tgt_gridy)
+u8 Abort2Sweep(void)
 {
-	s8 now_gridy,now_gridx;
-	u8 data1,data2,data3,data4;
+	s8 now_gridy,now_gridx,tgt_gridx1,tgt_gridx2,tgt_gridy1,tgt_gridy2;
+	u8 nextaction=0;
 	now_gridx=grid.x;now_gridy=grid.y;
-	
+	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
+	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
+	nextaction=Read_CheckPoint_NextAction();
 
 #if 0
 	if((check_point.next_action==CHECK_LEAKSWEEP)&(now_gridy==tgt_gridy))
@@ -2953,6 +2990,9 @@ u8 Abort2Sweep(s8 tgt_gridx,s8 tgt_gridy)
 				}
 		}	
 #endif
+
+#if 0
+		u8 data1,data2,data3,data4;
 		if((now_gridx+2<grid.x_area_max)&(now_gridx-2>grid.x_area_min))
 			{
 				if((now_gridy+1<grid.y_area_max)&(now_gridy-1>grid.y_area_min))
@@ -3002,6 +3042,117 @@ u8 Abort2Sweep(s8 tgt_gridx,s8 tgt_gridy)
 					}
 			}
 		return 0;
+#endif
+
+	s8 temp_gridx1,temp_gridy1,temp_gridx2,temp_gridy2;	
+	short now_angle=Gyro_Data.yaw;
+	switch(nextaction)
+		{
+
+			case CHECK_NORMALSWEEP:
+			case CHECK_BACK:
+			case CHECK_LEAKSWEEP:
+				if(now_gridy!=tgt_gridy2)
+					return 0;
+
+				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
+					{
+						if(check_point.ydir>0)
+							{
+								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+									{
+										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
+									}
+								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+									{
+										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy+1;
+									}
+								else
+									{
+										return 0;
+									}
+							}
+						else
+							{
+								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+									{
+										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
+									}
+								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+									{
+										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy-1;
+									}
+								else
+									{
+										return 0;
+									}
+							}
+					}		
+				else																				//右沿边
+					{
+						if(check_point.ydir>0)
+							{
+								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+									{
+										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
+									}
+								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+									{
+										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy+1;
+									}
+								else
+									{
+										return 0;
+									}
+							}
+						else
+							{
+								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+									{
+										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
+									}
+								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+									{
+										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy-1;
+									}
+								else
+									{
+										return 0;
+									}
+							}
+					}
+
+				if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
+					{
+						if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
+							{
+								stop_rap();
+								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
+								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx2,temp_gridy2);
+								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
+								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
+								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
+								//Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+								if(temp_gridx1>now_gridx)
+									check_point.next_tgtyaw=F_Angle_Const;
+								else
+									check_point.next_tgtyaw=B_Angle_Const;
+								check_point.ydir=check_point.ydir;
+								Init_Shift_Point1(0);
+								return 1;
+							}
+					}
+				break;
+		}
+	return 0;	
 }
 
 void Init_ShiftExit_RightYBS(u8 temp_data)
@@ -3135,18 +3286,66 @@ void Init_ShiftExit_LeftYBS(u8 temp_data)
 
 u8 Abort_ShiftExit_YBS(void)
 {
-	s8 now_gridx,now_gridy;
-	u8 temp_areano;
+	s8 now_gridx,now_gridy,temp_gridx1,temp_gridy1;
+	u8 temp_areano=0;
 	now_gridx=grid.x;now_gridy=grid.y;
-	
+
 	temp_areano=Read_Coordinate_AreaNo(now_gridx,now_gridy);
-	if((temp_areano!=0)&(temp_areano==motion1.exit_area_num))
+	if(temp_areano==motion1.exit_area_num)
 		{
 			TRACE("now grid is in the exit area num!!!\r\n");
 			TRACE("now grid is in the exit area num!!!\r\n");
 			TRACE("Abort and recheck!!!\r\n");
 			stop_rap();
 			Do_ExitAtion();
+		}
+
+	if(mode.bump>BUMP_OUTRANGE)
+		{
+			switch(mode.bump)
+				{
+					case BUMP_XMAX_OUT:
+						temp_gridx1=now_gridx+1;
+						temp_gridy1=now_gridy;
+						temp_areano=Read_Coordinate_AreaNo(temp_gridx1,temp_gridy1);
+						break;
+					case BUMP_XMIN_OUT:
+						temp_gridx1=now_gridx-1;
+						temp_gridy1=now_gridy;
+						temp_areano=Read_Coordinate_AreaNo(temp_gridx1,temp_gridy1);
+						break;
+					case BUMP_YMAX_OUT:
+						temp_gridx1=now_gridx;
+						temp_gridy1=now_gridy+1;
+						temp_areano=Read_Coordinate_AreaNo(temp_gridx1,temp_gridy1);
+						break;
+					case BUMP_YMIN_OUT:
+						temp_gridx1=now_gridx;
+						temp_gridy1=now_gridy-1;
+						temp_areano=Read_Coordinate_AreaNo(temp_gridx1,temp_gridy1);
+						break;
+					default:
+						temp_areano=0;
+						break;
+				}
+		}
+	
+	if((temp_areano!=0)&(temp_areano==motion1.exit_area_num))
+		{
+			stop_rap();
+			TRACE("Abort and recheck!!!\r\n");
+			TRACE("change check point exit!!!\r\n");
+			check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
+			check_point.new_x2=temp_gridx1;check_point.new_y2=temp_gridy1;
+			Init_Shift_Point1(0);
+			return 1;
+		}
+
+	if((now_gridx==check_point.new_x1)&(now_gridy==check_point.new_y1))
+		{
+			TRACE("now grid is match checkpoint new1!!\r\n");
+			stop_rap();
+			Init_Shift_Point1(0);
 			return 1;
 		}
 	return 0;
@@ -3240,6 +3439,8 @@ void Do_ShiftExit_YBS(void)
 		{
 			YBS_Left_Bump(1);
 		}
+	else
+		return;
 			
 	if(mode.bump != 0)		//	有碰撞需要处理，返回d
 			{
@@ -3378,7 +3579,8 @@ void Do_ShiftExit_YBS(void)
 			
 			case 1:
 				YBS_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 				//if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
 					{
@@ -3406,7 +3608,8 @@ void Do_ShiftExit_YBS(void)
 							
 			case 2:
 				YBS_Check_corner(); 					
-				YBS_Distance_Check(0);
+				//YBS_Distance_Check(0);
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 80)				//	彻底丢失墙壁	  有可能出现拐角//80  //140
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
@@ -3547,7 +3750,8 @@ void Do_ShiftExit_YBS(void)
 				break;
 			case 0x41:	
 				YBS_Left_Check_corner();	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
 					{
 						mode.step = 0x42;
@@ -3573,7 +3777,8 @@ void Do_ShiftExit_YBS(void)
 				break;
 			case 0x42:
 				YBS_Left_Check_corner();					
-				YBS_Left_Distance_Check();
+				//YBS_Left_Distance_Check();
+				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;

@@ -552,6 +552,7 @@ void Disable_earth(void)
   e_l.sign=NEAR;
   e_r.sign=NEAR;
   e_m.sign=NEAR;
+  Reset_Earth_Send();
 }
 /****************************************************
 ¹¦ÄÜ£º½ûÖ¹²âÁ¿Ç½¼ì
@@ -578,6 +579,7 @@ action_wall = false;
 w_mm.sign=FARN;
 w_mm.high_sign=FARN;
 #endif
+	Reset_Wall_Send();
 
 }
 

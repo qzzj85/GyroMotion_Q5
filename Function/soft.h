@@ -93,11 +93,12 @@
 //#define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
 #define		RING_PWM_CTL			1
-//#define		GRYO_CAL				1
+//#define		GYRO_CAL				1					//惯导校准代码
+#define		GYRO_COMPENSATION		1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			0
+#define		CORRECT_VERSION			1
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -254,8 +255,8 @@
 #define     FARN            0                              //远
 
 
-#define    LEFT             0            	//方向是向左
-#define    RIGHT            1            	//方向是向右
+#define    LEFT             1            	//方向是向左
+#define    RIGHT            2            	//方向是向右
 #define 	 STOP 			0X03
 
 #define     FRONT           0X01    			// 向前
@@ -1101,8 +1102,9 @@ typedef struct					//补扫检查信息结构体
 	s8 new_x2;					//补扫点X坐标
 	s8 new_y2;					//补扫点Y坐标
 
-	u8 ybs_dir;
-	s8 backup_gridx;				
+	u8 ybs_dir;					//可以预先判定的沿边方向，0:没有预先判定方向，1:左沿边，2:右沿边
+	s8 backup_gridx;			//可以进入的备份点
+	u8 new_area_dir;			//下一区域next_area的方向，使用ymax/ymin/xmax/xmin来表示新区域相对于当前区域的方向	
 } CHECK_POINT;
 
 typedef struct 					//包含点坐标的结构体
@@ -1110,6 +1112,7 @@ typedef struct 					//包含点坐标的结构体
 	s8 gridx;					//当前点X坐标
 	s8 gridy;					//当前点Y坐标
 	u8 data;					//数据
+	u8 area_dir;				//所在区域的方位（比如左上，右下等）
 }POINT_GRID;
 
 typedef struct					//包含路径分析起点和终点坐标的结构体

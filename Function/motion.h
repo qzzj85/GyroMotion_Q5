@@ -2,6 +2,8 @@
 #define MOTION_H
 
 extern short F_Angle_Const,B_Angle_Const,L_Angle_Const,R_Angle_Const;//机器开始清扫时的前向角度和后向角度，固定不变
+extern short LF_Angle_Const,RF_Angle_Const,LB_Angle_Const,RB_Angle_Const;
+
 
 short get_gyro_angle(void);
 short Get_Back_Angle(void);
@@ -11,7 +13,7 @@ void Set_Motion_BackSweep(u8 back_sweep);
 u8 Read_Motion_BackSweep(void);
 void Set_Motion_Acc(u8 x_acc,u8 y_acc);
 u8 Read_Motion_YAcc(void);
-void Assign_LeftRight(u8 reverse);
+void Assign_LeftRight(void);
 s8 Read_Motion_YDir(void);
 void Set_LeftRight(u8 leftright);
 void Set_Motion_YDir(s8 ydir);

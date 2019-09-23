@@ -177,7 +177,6 @@ void Init_Cease(void)
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed();					//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
 	Sweep_Level_Set(STOP_ALL);
-
 		
 	/****设置机器的工作模式******/   
 	mode.mode = CEASE; 

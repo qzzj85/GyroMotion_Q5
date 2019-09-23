@@ -949,11 +949,12 @@ void stop_rap(void)
 	mode.action = 0; 
 	Gyro_Data.straight=false;
 
-#ifdef GRYO_CAL
+#ifdef GYRO_CAL
 	if(mode.status)
 		{
 			if(gyro_cal_flag)
 				{
+					delay_ms(1000);
 					GYRO_CAL_PIN_0;
 					TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
 					delay_ms(1000);

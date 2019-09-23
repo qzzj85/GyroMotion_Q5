@@ -1022,12 +1022,14 @@ BEGIN_Y_YBS:
 
 u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 {
+	static POINT_GRID last_turn_grid;
 	s8 temp_gridx,temp_gridy;
 	u8 result=0;
 	POINT_GRID now_grid,tgt_grid;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 	temp_gridx=grid.x;temp_gridy=grid.y;
-	
+
+#if 0
 	now_grid.gridx=temp_gridx;now_grid.gridy=temp_gridy;
 	result=Analysis_Directly_YBS(&now_grid,&tgt_grid);
 	if(result)
@@ -1067,7 +1069,70 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 			turn_grid=now_grid;
 			return 1;
 		}
-
+#else
+	short now_angle=Gyro_Data.yaw;
+	if(mode.sub_mode==YBS_SUB_LEFT)
+		{
+			if(abs((abs(now_angle))-(abs(F_Angle_Const)))<4500)					//机器角度朝向上半球
+				{
+					now_grid.gridx=temp_gridx;now_grid.gridy=temp_gridy+1;
+				}
+			else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<4500)			//机器角度朝向右半球
+				{
+					now_grid.gridx=temp_gridx-1;now_grid.gridy=temp_gridy;
+				}
+			else if(abs((abs(now_angle))-(abs(B_Angle_Const)))<4500)			//机器角度朝向下半球
+				{
+					now_grid.gridx=temp_gridx;now_grid.gridy=temp_gridy-1;
+				}
+			else if(abs((abs(now_angle))-(abs(L_Angle_Const)))<4500)			//机器角度朝向左半球
+				{
+					now_grid.gridx=temp_gridx+1;now_grid.gridy=temp_gridy;
+				}
+			else
+				{
+					TRACE("motion not match special angle in %s!!!\r\n",__func__);
+					return 0;
+				}
+		}
+	else if(mode.sub_mode==YBS_SUB_RIGHT)
+		{
+			if(abs((abs(now_angle))-(abs(F_Angle_Const)))<4500) 				//机器角度朝向上半球
+				{
+					now_grid.gridx=temp_gridx;now_grid.gridy=temp_gridy-1;
+				}
+			else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<4500)			//机器角度朝向右半球
+				{
+					now_grid.gridx=temp_gridx+1;now_grid.gridy=temp_gridy;
+				}
+			else if(abs((abs(now_angle))-(abs(B_Angle_Const)))<4500)			//机器角度朝向下半球
+				{
+					now_grid.gridx=temp_gridx;now_grid.gridy=temp_gridy+1;
+				}
+			else if(abs((abs(now_angle))-(abs(L_Angle_Const)))<4500)			//机器角度朝向左半球
+				{
+					now_grid.gridx=temp_gridx-1;now_grid.gridy=temp_gridy;
+				}
+			else
+				{
+					TRACE("motion not match special angle in %s!!!\r\n",__func__);
+					return 0;
+				}
+		}
+	
+	if((last_turn_grid.gridx==now_grid.gridx)&(last_turn_grid.gridy==now_grid.gridy))
+		{
+			TRACE("last turn grid is match now grid!!\r\n");
+			return 0;
+		}
+	result=Analysis_Directly_YBS(&now_grid,&tgt_grid);
+	if(result)
+		{
+			turn_grid=now_grid;
+			last_turn_grid=now_grid;
+			return 1;
+		}
+#endif
 	return 0;
 }
 
@@ -1122,4 +1187,386 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 	return 0;
 }
 
+#if 1
+u8 Locate_AreaDir(s8 gridx,s8 gridy)
+{
+	s8 xmax_clean,xmin_clean,ymax_clean,ymin_clean;
+	s8 x_median,y_median;
+	u8 x_dif,y_dif;
 
+	if(gridy<grid.y_area_min)
+		gridy=grid.y_area_min;
+	if(gridy>grid.y_area_max)
+		gridy=grid.y_area_max;
+
+	if(gridx<grid.x_area_min)
+		gridx=grid.x_area_min;
+	if(gridx>grid.x_area_max)
+		gridx=grid.x_area_max;
+	
+	xmax_clean=Return_MaxClean_GridX(gridy,0);
+	xmin_clean=Return_MinClean_GridX(gridy,0);
+	ymax_clean=Return_MaxClean_GridY(gridx,0);
+	ymin_clean=Return_MinClean_GridY(gridx,0);
+
+	TRACE("xmax_clean=%d in %s\r\n",xmax_clean,__func__);
+	TRACE("xmin_clean=%d\r\n",xmin_clean);
+	TRACE("ymax_clean=%d\r\n",ymax_clean);
+	TRACE("ymin_clean=%d in %s\r\n",ymin_clean,__func__);
+
+	x_median=(xmax_clean+xmin_clean)/2;	
+	y_median=(ymax_clean+ymin_clean)/2;
+
+	if(gridy>y_median)
+		{
+			if(gridx>x_median)
+				{
+					return AREA_UPRIGHT;
+				}
+			else
+				{
+					return AREA_DOWNRIGHT;
+				}
+		}
+	else
+		{
+			if(gridx>x_median)
+				{	
+					return AREA_UPLEFT;
+				}
+			else
+				{
+					return AREA_DOWNLEFT;
+				}
+		}
+}
+
+u8 Locate_BoundaryDir(s8 gridx,s8 gridy)
+{
+	s8 xmax_clean,xmin_clean,ymax_clean,ymin_clean;
+	s8 x_median,y_median;
+	u8 x_dif,y_dif;
+	xmax_clean=Return_MaxClean_GridX(gridy,0);
+	xmin_clean=Return_MinClean_GridX(gridy,0);
+	ymax_clean=Return_MaxClean_GridY(gridx,0);
+	ymin_clean=Return_MinClean_GridY(gridx,0);
+	
+	TRACE("xmax_clean=%d in %s\r\n",xmax_clean,__func__);
+	TRACE("xmin_clean=%d\r\n",xmin_clean);
+	TRACE("ymax_clean=%d\r\n",ymax_clean);
+	TRACE("ymin_clean=%d in %s\r\n",ymin_clean,__func__);
+
+	x_median=(xmax_clean+xmin_clean)/2;	
+	y_median=(ymax_clean+ymin_clean)/2;
+
+	if(gridx==xmax_clean)
+		{
+			if(gridy>y_median)
+				return BOUNDARY_UPRIGHT;
+			else
+				return BOUNDARY_UPLEFT;
+		}
+	else if(gridx==xmin_clean)
+		{
+			if(gridy>y_median)
+				return BOUNDARY_DOWNRIGHT;
+			else
+				return BOUNDARY_DOWNLEFT;
+		}
+	else if(gridy==ymax_clean)
+		{
+			if(gridx>x_median)
+				{
+					return BOUNDARY_RIGHTUP;
+				}
+			else
+				{
+					return BOUNDARY_RIGHTDOWN;
+				}
+		}
+	else if(gridy==ymin_clean)
+		{
+			if(gridx>x_median)
+				{
+					return BOUNDARY_LEFTUP;
+				}
+			else
+				{	
+					return BOUNDARY_LEFTDOWN;
+				}
+		}
+	else
+		return 0;
+}
+
+u8 Judge_YBSDir_Area(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
+
+{
+	u8 now_area_dir,tgt_area_dir;
+	s8 now_gridx,now_gridy,tgt_gridx,tgt_gridy;
+	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;now_area_dir=now_grid->area_dir;
+	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;tgt_area_dir=tgt_grid->area_dir;
+
+	switch(tgt_area_dir)
+		{
+			case BOUNDARY_DOWNLEFT:						//XMIN靠左边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:		
+							if(now_gridy<tgt_gridy)
+								{
+									return 2;
+								}
+							else
+								{
+									return 1;
+								}
+						case AREA_DOWNRIGHT:
+							return 1;
+						case AREA_UPLEFT:
+							return 2;
+						case AREA_UPRIGHT:
+							return 0;
+					}
+				break;
+			case BOUNDARY_DOWNRIGHT:					//XMIN靠右边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 1;
+						case AREA_DOWNRIGHT:
+							if(now_gridy<tgt_gridy)
+								{
+									return 2;
+								}
+							else
+								{
+									return 1;
+								}
+						case AREA_UPLEFT:
+							return 0;
+						case AREA_UPRIGHT:
+							return 2;
+					}
+				break;
+			case BOUNDARY_UPLEFT:							//XMAX靠左边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 1;
+						case AREA_DOWNRIGHT:
+							return 0;
+						case AREA_UPLEFT:
+							if(now_gridy<tgt_gridy)
+								{
+									return 1;
+								}
+							else
+								{
+									return 2;
+								}
+						case AREA_UPRIGHT:
+							return 2;
+					}
+				break;
+			case BOUNDARY_UPRIGHT:						//XMAX靠右边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 0;
+						case AREA_DOWNRIGHT:
+							return 2;
+						case AREA_UPLEFT:
+							return 1;
+						case AREA_UPRIGHT:
+							if(now_gridy<tgt_gridy)
+								{
+									return 1;
+								}
+							else
+								{
+									return 2;
+								}
+					}
+				break;
+			case BOUNDARY_LEFTUP:						//YMIN靠上边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 1;
+						case AREA_DOWNRIGHT:
+							return 0;
+						case AREA_UPLEFT:
+							if(now_gridx<tgt_gridx)
+								{
+									return 1;
+								}
+							else
+								{
+									return 2;
+								}
+						case AREA_UPRIGHT:
+							return 2;
+					}
+				break;
+			case BOUNDARY_LEFTDOWN:						//YMIN靠下边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							if(now_gridx<tgt_gridx)
+								{
+									return 1;
+								}
+							else
+								{
+									return 2;
+								}
+						case AREA_DOWNRIGHT:
+							return 1;
+						case AREA_UPLEFT:
+							return 2;
+						case AREA_UPRIGHT:
+							return 0;
+					}
+				break;
+			case BOUNDARY_RIGHTUP: 					//YMAX靠上边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 0;
+						case AREA_DOWNRIGHT:
+							return 2;
+						case AREA_UPLEFT:
+							return 1;
+						case AREA_UPRIGHT:
+							if(now_gridx<tgt_gridx)
+								{
+									return 2;
+								}
+							else
+								{
+									return 1;
+								}
+					}
+				break;
+			case BOUNDARY_RIGHTDOWN:					//YMAX靠下边界
+				switch(now_area_dir)
+					{
+						case AREA_DOWNLEFT:
+							return 2;
+						case AREA_DOWNRIGHT:
+							if(now_gridx<tgt_gridx)
+								{
+									return 2;
+								}
+							else
+								{
+									return 1;
+								}
+						case AREA_UPLEFT:
+							return 0;
+						case AREA_UPRIGHT:
+							return 1;
+							break;
+					}
+				break;
+		}
+}
+
+u8 Judge_YBS_Dir(void)
+{
+	s8 now_gridx,now_gridy,tgt_gridx1,tgt_gridy1;
+	u8 now_area_dir,tgt_area_dir,ybs_dir=0;
+	POINT_GRID now_grid,tgt_grid;
+	now_gridx=grid.x;now_gridy=grid.y;
+	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
+
+	TRACE("Enter in %s...\r\n",__func__);
+	
+	if((abs(now_gridx-tgt_gridx1)<=3)&(abs(now_gridy-tgt_gridy1)<=3))
+		{
+			TRACE("now grid is in 60cm to new1!!!\r\n");
+			TRACE("return 0!!!\r\n");
+			return 0;
+		}
+
+	switch(check_point.next_action)
+		{
+			case CHECK_NEWAREA:
+#if 0
+				switch(check_point.new_area_dir)
+					{
+						case DIR_XMAX:					//目标点位于上边界
+							if(now_gridy>check_point.new_y1)
+								{
+									TRACE("Judge Right YBS!!!\r\n");
+									return 2;			//右沿边
+								}
+							else
+								{
+									TRACE("Judge Left YBS!!!\r\n");
+									return 1;			//左沿边
+								}
+							break;
+						case DIR_XMIN:					//目标点位于下边界
+							if(now_gridy>check_point.new_y1)
+								{
+									TRACE("Judge Left YBS!!!\r\n");
+									return 1;			//左沿边
+								}
+							else
+								{
+									TRACE("Judge Right YBS!!!\r\n");
+									return 2;			//右沿边
+								}
+							break;
+						case DIR_YMAX:					//目标点位于右边界
+							if(now_gridx>check_point.new_x1)
+								{
+									TRACE("Judge Left YBS!!!\r\n");
+									return 1;			//左沿边
+								}
+							else
+								{
+									TRACE("Judge Right YBS!!!\r\n");
+									return 2;			//右沿边
+								}
+							break;
+						case DIR_YMIN:					//目标点位于左边界
+							if(now_gridx>check_point.new_x1)
+								{
+									TRACE("Judge Left YBS!!!\r\n");
+									return 1;			//左沿边
+								}
+							else
+								{
+									TRACE("Judge Right YBS!!!\r\n");
+									return 2;			//右沿边
+								}
+							break;
+					}
+				break;
+#endif
+			case CHECK_NORMALSWEEP:
+			case CHECK_LEAKSWEEP:
+				now_area_dir=Locate_AreaDir(now_gridx,now_gridy);
+				tgt_area_dir=Locate_BoundaryDir(tgt_gridx1, tgt_gridy1);
+				now_grid.gridx=now_gridx;now_grid.gridy=now_gridy;now_grid.area_dir=now_area_dir;
+				tgt_grid.gridx=tgt_gridx1;tgt_grid.gridy=tgt_gridy1;tgt_grid.area_dir=tgt_area_dir;
+				TRACE("now gridx=%d now_gridy=%d\r\n",now_gridx,now_gridy);
+				TRACE("tgt_gridx=%d tgt_gridy=%d\r\n",tgt_gridx1,tgt_gridy1);
+				TRACE("now_area_dir=%d\r\n",now_area_dir);
+				TRACE("tgt_boundary_dir=%d\r\n",tgt_area_dir);
+				if(tgt_area_dir==0)
+					{
+						TRACE("tgt is not boundary!!! return 0!!!\r\n");
+						return 0;
+					}
+				ybs_dir=Judge_YBSDir_Area(&now_grid,&tgt_grid);
+				break;
+			default:
+				break;
+		}
+	TRACE("ybs_dir=%d in %s\r\n",ybs_dir,__func__);
+}
+#endif

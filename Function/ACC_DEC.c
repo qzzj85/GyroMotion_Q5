@@ -9,6 +9,11 @@
 #define	G_KI 10/100
 #define G_KD 10/100
 #define SPEED_MAX	50//100//800
+
+#define	W_KP	50/100
+#define	W_KI	10/100
+#define	W_KD 	10/100
+#define WALL_SPEED_MAX 200 	
 //////////////////////////全局变量//////////////////////////////////
 /////////////////////////全局函数////////////////////////////////////
 /////////////////////////私有函数////////////////////////////////////
@@ -20,7 +25,7 @@ void  ACC_DEC_Curve(void);
 
 void ACC_DEC_Comm_rap_My(void);
 void Gyro_Comm_rap(void);
-
+void Wall_Comm_Rap(void);
 //=================================================================================
 //=================================================================================
 //////功能  ：    每10ms 执行一次，自动根据车轮信息控制车轮
@@ -93,10 +98,8 @@ void ACC_DEC_Comm_rap_My (void)
 	r_rap.rap_run=r_rap.rap;
 #endif
 
-#if 1
 	if(Gyro_Data.straight)
 		Gyro_Comm_rap();
-#endif
 /////////////////////////////////右轮/////////////////////////// 
 	if(r_rap.sign)
 		{
@@ -249,6 +252,64 @@ void Gyro_Comm_rap(void)
 		l_rap.rap_run=l_rap.rap+SPEED_MAX;
 	if(l_rap.rap_run<l_rap.rap-SPEED_MAX)
 		l_rap.rap_run=l_rap.rap-SPEED_MAX;
+}
+
+void Wall_Comm_Rap(void)
+{
+	static int wall_ek[3];
+	int data1=0;
+	
+	if(mode.sub_mode==YBS_SUB_LEFT)
+		{
+			wall_ek[2]=wall_ek[1];
+			wall_ek[1]=wall_ek[0];
+			wall_ek[0]=w_l.dis-YBS_DISTANCE;
+
+			data1=(wall_ek[0]-wall_ek[1])*G_KP+wall_ek[0]*G_KI+(wall_ek[0]+wall_ek[2]-2*wall_ek[1])*G_KD;
+#if 1
+				if(data1>50)
+					data1=50;
+				if(data1<-50)
+					data1=-50;
+#endif
+			
+				r_rap.rap_run+=data1;
+				if(r_rap.rap_run>r_rap.rap+WALL_SPEED_MAX)
+					r_rap.rap_run=r_rap.rap+WALL_SPEED_MAX;
+				if(r_rap.rap_run<r_rap.rap-WALL_SPEED_MAX)
+					r_rap.rap_run=r_rap.rap-WALL_SPEED_MAX;
+				
+				l_rap.rap_run-=data1;
+				if(l_rap.rap_run>l_rap.rap+WALL_SPEED_MAX)
+					l_rap.rap_run=l_rap.rap+WALL_SPEED_MAX;
+				if(l_rap.rap_run<l_rap.rap-WALL_SPEED_MAX)
+					l_rap.rap_run=l_rap.rap-WALL_SPEED_MAX;
+		}
+	else if(mode.sub_mode==YBS_SUB_RIGHT)
+		{
+			wall_ek[2]=wall_ek[1];
+			wall_ek[1]=wall_ek[0];
+			wall_ek[0]=w_r.dis-YBS_DISTANCE;
+
+			data1=(wall_ek[0]-wall_ek[1])*W_KP+wall_ek[0]*W_KI+(wall_ek[0]+wall_ek[2]-2*wall_ek[1])*W_KD;
+#if 1
+				if(data1>50)
+					data1=50;
+				if(data1<-50)
+					data1=-50;
+#endif
+			l_rap.rap_run+=data1;
+			if(l_rap.rap_run>l_rap.rap+WALL_SPEED_MAX)
+				l_rap.rap_run=l_rap.rap+WALL_SPEED_MAX;
+			if(l_rap.rap_run<l_rap.rap-WALL_SPEED_MAX)
+				l_rap.rap_run=l_rap.rap-WALL_SPEED_MAX;
+			
+			r_rap.rap_run-=data1;
+			if(r_rap.rap_run>r_rap.rap+WALL_SPEED_MAX)
+				r_rap.rap_run=r_rap.rap+WALL_SPEED_MAX;
+			if(r_rap.rap_run<r_rap.rap-WALL_SPEED_MAX)
+				r_rap.rap_run=r_rap.rap-WALL_SPEED_MAX;
+		}
 }
 //==================================================================================================================================================================
 //==================================================================================================================================================================

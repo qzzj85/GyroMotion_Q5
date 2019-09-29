@@ -28,7 +28,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 			switch (mode.step_bp)
 				{
 					case 0:
-						Speed=3000;
+						Speed=HIGH_MOVE_SPEED;
 						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//后退
 							{
 								stop_rap();
@@ -47,7 +47,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 2:
-						Speed=3000;								
+						Speed=HIGH_MOVE_SPEED;								
 						if(do_action(7,180*Angle_1))			//右轮不动向左转
 							{
 								stop_rap();
@@ -60,7 +60,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 3:
-						Speed=2000;									//左转10度
+						Speed=TURN_SPEED;									//左转10度
 						if(do_action(1,10*Angle_1))
 							{
 								stop_rap();
@@ -68,7 +68,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 4:
-						Speed=2000;									//前进1cm
+						Speed=MID_MOVE_SPEED;									//前进1cm
 						if(do_action(3,1*CM_PLUS))
 							{
 								stop_rap();
@@ -76,7 +76,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 5:
-						Speed=3000;									//后退10cm
+						Speed=HIGH_MOVE_SPEED;									//后退10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -95,7 +95,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 7:
-						Speed=2000; 								//右转10度
+						Speed=TURN_SPEED; 								//右转10度
 						if(do_action(2,10*Angle_1))
 							{
 								stop_rap();
@@ -103,7 +103,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 8:
-						Speed=2000; 								//前进1cm
+						Speed=MID_MOVE_SPEED; 								//前进1cm
 						if(do_action(3,1*CM_PLUS))
 							{
 								stop_rap();
@@ -111,7 +111,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 9:
-						Speed=3000; 								//后退10cm
+						Speed=HIGH_MOVE_SPEED; 								//后退10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -132,7 +132,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 0XF0:
-						Speed=2000;
+						Speed=TURN_SPEED;
 						if(do_action(1,120*Angle_1))
 							{
 								stop_rap();
@@ -159,7 +159,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 			switch (mode.step_bp)
 				{
 					case 0:
-						Speed=3000;
+						Speed=HIGH_MOVE_SPEED;
 						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//后退
 							{
 								stop_rap();
@@ -180,7 +180,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						mode.step_bp++;
 						break;
 					case 3:
-						Speed=2000; 								//左转10度
+						Speed=TURN_SPEED; 								//左转10度
 						if(do_action(1,10*Angle_1))
 							{
 								stop_rap();
@@ -188,7 +188,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 4:
-						Speed=2000; 								//前进1cm
+						Speed=MID_MOVE_SPEED; 								//前进1cm
 						if(do_action(3,1*CM_PLUS))
 							{
 								stop_rap();
@@ -196,7 +196,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 5:
-						Speed=3000; 								//后退10cm
+						Speed=HIGH_MOVE_SPEED; 								//后退10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -215,7 +215,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 7:
-						Speed=2000; 								//右转10度
+						Speed=TURN_SPEED; 								//右转10度
 						if(do_action(2,10*Angle_1))
 							{
 								stop_rap();
@@ -231,7 +231,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 9:
-						Speed=3000; 								//后退10cm
+						Speed=HIGH_MOVE_SPEED; 								//后退10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -252,7 +252,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 0XF0:
-						Speed=2000;
+						Speed=TURN_SPEED;
 						if(do_action(1,100*Angle_1))
 							{
 								stop_rap();
@@ -278,7 +278,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 			switch (mode.step_bp)
 				{
 				case 0:
-					Speed=3000;
+					Speed=HIGH_MOVE_SPEED;
 					if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS)) 		//后退
 						{
 							stop_rap();
@@ -296,7 +296,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 2:
-					Speed=3000; 							
+					Speed=HIGH_MOVE_SPEED; 							
 					if(do_action(8,180*Angle_1))			//左轮不动向右转
 						{
 							stop_rap();
@@ -308,7 +308,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 3:
-					Speed=2000; 								//左转10度
+					Speed=TURN_SPEED; 								//左转10度
 					if(do_action(1,10*Angle_1))
 						{
 							stop_rap();
@@ -316,7 +316,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 4:
-					Speed=2000; 								//前进1cm
+					Speed=MID_MOVE_SPEED; 								//前进1cm
 					if(do_action(3,1*CM_PLUS))
 						{
 							stop_rap();
@@ -324,7 +324,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 5:
-					Speed=3000; 								//后退10cm
+					Speed=HIGH_MOVE_SPEED; 								//后退10cm
 					if(do_action(4,10*CM_PLUS))
 						{
 							stop_rap();
@@ -343,7 +343,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 7:
-					Speed=2000; 								//右转10度
+					Speed=TURN_SPEED; 								//右转10度
 					if(do_action(2,10*Angle_1))
 						{
 							stop_rap();
@@ -351,7 +351,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 8:
-					Speed=2000; 								//前进1cm
+					Speed=MID_MOVE_SPEED; 								//前进1cm
 					if(do_action(3,1*CM_PLUS))
 						{
 							stop_rap();
@@ -359,7 +359,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 9:
-					Speed=3000; 								//后退10cm
+					Speed=HIGH_MOVE_SPEED; 								//后退10cm
 					if(do_action(4,10*CM_PLUS))
 						{
 							stop_rap();
@@ -380,7 +380,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 0XF0:
-					Speed=2000;
+					Speed=TURN_SPEED;
 					if(do_action(1,60*Angle_1))
 						{
 							stop_rap();
@@ -394,7 +394,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 0xF1:
-					Speed=1000;
+					Speed=HIGH_MOVE_SPEED;
 					if(do_action(3,10*CM_PLUS))
 						{
 							stop_rap();
@@ -476,7 +476,7 @@ static void Left_Bump_Action(u8 m)
 					}
 			break;
 			case 4:			
-				Speed=1000;
+				Speed=TURN_SPEED;
 				if(do_action(2,12*Angle_1))		//右转12度
 					{
 						stop_rap();
@@ -490,7 +490,7 @@ static void Left_Bump_Action(u8 m)
 				mode.step_bp++;
 				break;
 			case 6:
-				Speed=1000;
+				Speed=MID_MOVE_SPEED;
 				if(do_action(3,10*CM_PLUS))		//直行10公分
 					{
 						stop_rap();
@@ -625,7 +625,7 @@ static void Right_Bump_Action(u8 m)
 					mode.step_bp=0x40;
 					break;
 				case 0x40:
-					Speed=1000;
+					Speed=TURN_SPEED;
 					if(do_action(1,10*Angle_1))			//左转10度
 						{
 							stop_rap();
@@ -633,7 +633,7 @@ static void Right_Bump_Action(u8 m)
 						}
 					break;
 				case 0x41:
-					Speed=1000;
+					Speed=MID_MOVE_SPEED;
 					if(do_action(3,10*CM_PLUS))			//前进10公分
 						{
 							stop_rap();
@@ -1124,7 +1124,7 @@ void YBS_Right_Bump(u8 out_enable)
 			{
 			#if 1
 				case 0:
-					Speed=4000;
+					Speed=TOP_MOVE_SPEED;
 					if(do_action(4,10*CM_PLUS))
 						{
 							stop_rap();
@@ -1147,7 +1147,7 @@ void YBS_Right_Bump(u8 out_enable)
 						}
 					break;
 				case 2:
-					Speed=4000;
+					Speed=TOP_MOVE_SPEED;
 					if(do_action(3,25*CM_PLUS))
 						{
 							stop_rap();
@@ -1332,7 +1332,7 @@ void YBS_Right_Bump(u8 out_enable)
 						}
 					break;
 				case 3:
-					Speed=SPEED150;
+					Speed=HIGH_MOVE_SPEED;
 					//if(do_action(3,FARAWAY*CM_PLUS))
 					if(do_action_my(3,FARAWAY*CM_PLUS,tgt_angle))
 						{
@@ -1361,6 +1361,7 @@ void YBS_Right_Bump(u8 out_enable)
 					Set_Coordinate_Wall(grid.x,grid.y);
 					switch(m)
 						{
+#if 0
 							case BUMP_ONLY_LEFT:
 								turn_angle=150;
 								break;
@@ -1373,13 +1374,17 @@ void YBS_Right_Bump(u8 out_enable)
 								break;
 							case BUMP_ONLY_RIGHTMID:
 							case BUMP_RIGHT_MID:
+#else
+							case BUMP_ONLY_LEFT:
+							case BUMP_MID:
+#endif
 								turn_angle=60;
 								break;
 							case BUMP_ONLY_RIGHT:
 								turn_angle=30;
 								break;
 							default:
-								turn_angle=60;
+								turn_angle=30;
 								break;
 						}
 					mode.step_bp++;
@@ -1426,7 +1431,7 @@ void YBS_Right_Bump(u8 out_enable)
 						}
 					break;
 				case 8:
-					enable_rap_no_length(FRONT,1200,FRONT,200);
+					enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
 					if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 						{
 							stop_rap();
@@ -1504,6 +1509,7 @@ void YBS_Right_Bump(u8 out_enable)
 				case 14:
 					switch(m)
 						{
+#if 0
 							case BUMP_ONLY_LEFT:
 								turn_angle=150;
 								break;
@@ -1516,13 +1522,17 @@ void YBS_Right_Bump(u8 out_enable)
 								break;
 							case BUMP_ONLY_RIGHTMID:
 							case BUMP_RIGHT_MID:
+#else
+							case BUMP_ONLY_LEFT:
+							case BUMP_MID:
+#endif
 								turn_angle=60;
 								break;
 							case BUMP_ONLY_RIGHT:
 								turn_angle=30;
 								break;
 							default:
-								turn_angle=60;
+								turn_angle=30;
 								break;
 						}
 					Set_Coordinate_Wall(grid.x,grid.y);
@@ -1562,7 +1572,7 @@ void YBS_Right_Bump(u8 out_enable)
 						}
 					break;
 				case 18:
-					enable_rap_no_length(FRONT,1000,FRONT,300);
+					enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
 					if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 						{
 							stop_rap();

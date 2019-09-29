@@ -49,6 +49,9 @@ UART UART2;
 UART UART3;
 MOTION motion1;
 
+short old_yaw=0;
+char cnt_180=0;
+
 void Init_SLAM_DATA(void)
 {
 	Slam_Data.tick_time			=	giv_sys_time;//SLAM心跳时间，若本体接收连续失败60回（1min），
@@ -670,7 +673,31 @@ void Uart3_Communication(void)
 			{
 				Gyro_Data.yaw=(COMBUF3[4]<<8)+COMBUF3[3];
 #ifdef GYRO_COMPENSATION
+				long	yaw_temp ;
+				yaw_temp = Gyro_Data.yaw -old_yaw;
+				old_yaw = Gyro_Data.yaw;
+			
+				if (yaw_temp < -30000)	  // 正方向 超过180度时候,	old_yaw 为正 ,新的yaw为负   , 那么需要把新的变成为正的值
+					cnt_180 -=1;
+				if (yaw_temp >	30000)	  //反方向转超过 180度 
+					cnt_180 +=1;
+				if(cnt_180 <0) 
+					{
+						if (Gyro_Data.yaw< -18000) 
+						Gyro_Data.yaw =	Gyro_Data.yaw + 36000;
+					}
+				if(cnt_180 >0) 
+					{
+						if (Gyro_Data.yaw>  18000)  
+						Gyro_Data.yaw =	Gyro_Data.yaw - 36000;
+					}	
 				Gyro_Data.yaw=((int)(Gyro_Data.yaw))*(36000+289)/36000;
+				//Gyro_Data.yaw=((int)(Gyro_Data.yaw))*1.007;
+				if (Gyro_Data.yaw> 18000) 
+				 Gyro_Data.yaw	=  Gyro_Data.yaw - 36000;
+				if (Gyro_Data.yaw< -18000) 
+				 Gyro_Data.yaw =  Gyro_Data.yaw + 36000;
+				
 #endif
 //				Gyro_Data.yaw=((int)(Gyro_Data.yaw))*(36000-385)/36000;
 				#if 0

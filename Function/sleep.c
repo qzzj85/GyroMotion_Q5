@@ -9,6 +9,7 @@
 	
 ////////////////////////全局变量//////////////////////////////////
 bool ExitInput;     //有按键、外部电源外部输入
+bool key_wakeup_flag=false;
 ///////////////////////私有变量////////////////////////////////////
 ///////////////////////全局函数////////////////////////////////////	  
 void Init_Sleep(void); 
@@ -59,6 +60,8 @@ void Init_Sleep(void)
 	Reset_UV();
 #endif
 //	Send_Voice(VOICE_SLEEP_START);
+	key_wakeup_flag=false;
+
 }
 /******************************************************************
 功能：执行充电
@@ -67,36 +70,144 @@ void Init_Sleep(void)
 //qz add
 void Do_Sleep_My(void)
 {
-#ifdef DC_NOBAT_RUN
-	  if(((power.charge_dc)|(power.charge_seat))&(!dc_nobat_run))
+	uint32 t;
+	uint8 s=0;
+
+	if(power.charge_dc|power.charge_seat)
+		{
+			if(power.charge_seat)
+				Init_Chargeing(SEAT_CHARGING);
+			if(power.charge_dc)
+				Init_Chargeing(DC_CHARGING);
+		}
+	
+			 //在调试时允许在停机状态下调试
+	//	#ifdef	DEBUG	
+	 *((uint32 *)0xe0042004) |= 2;
+	//	#endif	 
+	switch (mode.step)
+		{
+			case 0:
+				if(giv_sys_time-mode.time<10000)
+					return;
+				PWR5V_OFF;
+				PWR3V3_OFF;
+				Disable_earth();
+				Disable_wall();
+				Disable_Speed();
+				disable_hwincept();
+				BAT_CHECK_0;
+				LED_RED_OFF;
+				LED_GREEN_OFF;
+				ADC_Cmd(ADC1,DISABLE);
+				GPIOA->CRL=0x44444444;
+				GPIOA->CRH=0X44444444;
+				GPIOB->CRL=0x44444444;
+				GPIOB->CRH=0X44444444;
+				GPIOC->CRL=0x44444444;
+				GPIOC->CRH=0X44444444;
+				GPIOD->CRL=0x44444444;
+				GPIOD->CRH=0X44444444;
+				GPIOE->CRL=0x44444444;
+				GPIOE->CRH=0X44444444;
+				mode.step++;
+				break;
+			case 1:
+#ifdef STOP_WEEKUP										
+				Enable_ExternInt_Weekup(1); //可以使用KEY1,直充,座充唤醒				
 #else
-	  if(power.charge_dc|power.charge_seat)
+				Diable_AllExtInt_Weekup();	//屏蔽所有外部中断，无法唤醒
 #endif
-		  {
-			   //Init_Chargeing(CHARGEING); 
+				IWDG_ReloadCounter();
+				IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+				IWDG_SetPrescaler(IWDG_Prescaler_256);//使用
+				IWDG_SetReload(1000);
+				IWDG_ReloadCounter();
+				while(1)
+					{
+						  ///////设置闹钟中断时间////////
+						 t = (RTC_GetCounter() + 2);
+						 PWR_BackupAccessCmd(ENABLE);
+						 RTC_WaitForLastTask();
+						 RTC_SetAlarm(t);
+						 RTC_WaitForLastTask();
+						 PWR_BackupAccessCmd(DISABLE);
+					  
+						 PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI); 
+				
+						 RCC_EXITSTOP();
+						 IWDG_ReloadCounter();
+						 //读取实时时钟值////////////
+						 Rtc_time = RTC_GetCounter();
+						 if(Rtc_time >= 604800)
+							  {
+									 Rtc_time = Rtc_time % 604800;
+									 PWR_BackupAccessCmd(ENABLE);
+									 RTC_WaitForLastTask();
+									 RTC_SetCounter(Rtc_time);
+									 RTC_WaitForLastTask();
+									 PWR_BackupAccessCmd(DISABLE);
+							  }
+						 t = giv_sys_time;
+						 s = 0;
+						 while((giv_sys_time - t) < 5000)
+						 {
+							 judge_charge();
+							 /////有充电的电源插入
+							 
+							 if((power.charge_dc == 1) || (power.charge_seat == 1))
+								 {
+									 s = 1;
+									 break;
+								 }
+							 if(!Read_Key2())
+								 {
+									 s = 2;
+									 break;
+								 }
+							 if(key_wakeup_flag)
+							 	{
+							 		s=2;
+									break;
+							 	}
+						 }
+						 if(s>0)
+						 {
+							 break;
+						 }
+						 //AccountCapabilityReal(); //计算耗电量
+					  
+				  }
+#if 0					
+				RCC_Configuration();		///////////初始化系统的晶振，如有移植需要修改
+				Battery_Data_Init();
+				Init_PWM(); 			//qz add 20180703,不然风扇会转
+				init_time_2();			////////	//	Timer2	   10K 中断	  计数器
+				Init_Hardware();
+//				init_hwincept();				///////////初始化红外接收程序
+				Init_Bump_Interrupt();
+				Init_Time_1();
+				//Init_Lcd();
+				init_ad();					//重新初始化AD
+				Del_AllNode();		//删除之前的所有语音
+				Init_Chargeing(CHARGEING);
 
-			   //qz add 20180901
-			   if(power.charge_seat)
-				  Init_Chargeing(SEAT_CHARGING);
-			   if(power.charge_dc)
-				  Init_Chargeing(DC_CHARGING);
-			   //qz add end
-			   return;
-		  }
-
-	if((!key1.key)|(!key2.key)|(!key3.key))
-		{
-			Init_Cease();
-		}
-
-#ifdef SHUTDOWN_MODE	//qz add 20180901
-	if((giv_sys_time-mode.time>4200000))
-		{
-//			Slam_Data.dipan_req=DIPAN_REQ_TURNOFFSLAM;
-			Init_ShutDown();
-		}
+				//qz add 20180901
+				if(power.charge_seat)
+				   Init_Chargeing(SEAT_CHARGING);
+				if(power.charge_dc)
+				   Init_Chargeing(DC_CHARGING);
+				//qz add end
 #endif
+				key_wakeup_flag=false;
+				PWR5V_ON;
+				PWR3V3_ON;
+				Init_System();
+			}
+	
 }
+
+
 void Do_Sleep(void)
 {
 u32 t;

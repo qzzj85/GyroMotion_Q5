@@ -26,7 +26,8 @@
 #define 	STOP_ALL	  			0
 #define		DOCK_SWEEP_LEVEL		4
 
-
+#define		MB_STD_PWM				200
+#define		FAN_STD_PWM				1000
 
 void  Init_PWM(void);
 void  enable_pwm(u16 channel,u16  pwm);

@@ -1,8 +1,8 @@
 #include  "ad.h"
 
 //qz add
-#define W_L_ADPIN		GPIO_Pin_4//GPIO_Pin_7	//PA7		ADC1_CHN_7		//×óÇ½¼ì¼ì²â
-#define W_LM_ADPIN		GPIO_Pin_7//GPIO_Pin_4	//PC4		ADC1_CHN_14		//×óÖÐÇ½¼ì¼ì²â
+#define W_LM_ADPIN		GPIO_Pin_4	//PC4		ADC1_CHN_14		//×óÇ½¼ì¼ì²â
+#define W_L_ADPIN		GPIO_Pin_7	//PA7		ADC1_CHN_7		//×óÖÐÇ½¼ì¼ì²â
 #define W_M_ADPIN		GPIO_Pin_5	//PC5		ADC1_CHN_15		//ÖÐÇ½¼ì¼ì²â
 #define W_RM_ADPIN		GPIO_Pin_0	//PB0		ADC1_CHN_8		//ÓÒÖÐÇ½¼ì¼ì²â
 #define W_R_ADPIN		GPIO_Pin_1	//PB1		ADC1_CHN_9		//ÓÒÇ½¼ì¼ì²â

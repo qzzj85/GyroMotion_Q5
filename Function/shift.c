@@ -392,7 +392,7 @@ void Shift_BumpAction(void)
 								}
 							break;
 						case 4:
-							Speed=LOW_MOVE_SPEED;
+							Speed=MID_MOVE_SPEED;
 							if(do_action(3,4*CM_PLUS))
 								{
 									stop_rap();
@@ -469,7 +469,7 @@ void Shift_BumpAction(void)
 								}
 							break;
 						case 10:
-							Speed=LOW_MOVE_SPEED;
+							Speed=MID_MOVE_SPEED;
 							if(do_action(4,2*CM_PLUS))
 								{
 									stop_rap();
@@ -2444,7 +2444,7 @@ void Do_ShiftYBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
-				Speed=1500;//2000
+				Speed=FAST_MOVE_SPEED;//2000
 				if(do_action(3,100*CM_PLUS))		//直行5m
 					{
 						stop_rap();
@@ -2464,7 +2464,6 @@ void Do_ShiftYBS(void)
 					}
 				if(giv_sys_time-mode.bump_time<200)
 					return;
-//					Speed = 1200;
 				Speed=HIGH_MOVE_SPEED;		//800//2000
 				forward(0xFF812345);
 				mode.step = 1;
@@ -3543,7 +3542,7 @@ void Do_ShiftExit_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
-				Speed=1500;//2000
+				Speed=FAST_MOVE_SPEED;//2000
 				if(do_action(3,100*CM_PLUS))		//直行5m
 					{
 						stop_rap();
@@ -3563,7 +3562,6 @@ void Do_ShiftExit_YBS(void)
 					}
 				if(giv_sys_time-mode.bump_time<200)
 					return;
-//					Speed = 1200;
 				Speed=HIGH_MOVE_SPEED;		//800//2000
 				forward(0xFF812345);
 				mode.step = 1;

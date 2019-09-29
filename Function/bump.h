@@ -1,7 +1,7 @@
 #ifndef BUMP_H
 #define BUMP_H
 
-#define BUMP_BACK_SPEED 	SPEED100	//500//1000//1500			//qz modify 20180927 2500--->1500
+#define BUMP_BACK_SPEED 	MID_MOVE_SPEED	//500//1000//1500			//qz modify 20180927 2500--->1500
 #define BUMP_TIME_DELAY 		200//2000//1500	//500	//1000
 #define BUMP_BACK_LENGTH		3	
 

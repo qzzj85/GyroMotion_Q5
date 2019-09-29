@@ -414,6 +414,8 @@ void enable_rap_no_length(u32 ori_l,u32 speed_l,u32 ori_r,u32 speed_r)
 	l_rap.pulse=0;
 	//QZ ADD END	
 	Gyro_Data.straight=false;
+
+	spd_acc_flag=true;
 }
 
 //=======================================================================
@@ -513,8 +515,6 @@ void  enable_rap(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r)
 			r_rap.State=0x70;
 			l_rap.State=0x70;
 
-//			if((l_rap.ori==FRONT)&(r_rap.ori==FRONT))
-//				Gyro_Data.straight=1;
 			
 //			l_rap.master=0;
 //			r_rap.master=1;
@@ -554,7 +554,7 @@ void  enable_rap(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r)
 ////////////	{
 ////////////		w_rap.sign = 1;
 ////////////	}
-	
+	spd_acc_flag=true;
 }
 //==============================================================================================
 //==============================================================================================
@@ -690,7 +690,7 @@ void  enable_rap_yaw(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r,short tgt_ya
 ////////////	{
 ////////////		w_rap.sign = 1;
 ////////////	}
-	
+	spd_acc_flag=true;
 }
 
 
@@ -984,18 +984,51 @@ u32 subbtime(u32 little,u32 big)
 ***********************************************************/
 void stop(void)
 {
-	l_rap.sign=0;
-	r_rap.sign=0;
-	r_rap.pwm=0;
-	l_rap.pwm=0;
 	disable_pwm(L_FRONT);
 	disable_pwm(L_BACK);
 	disable_pwm(R_BACK);
 	disable_pwm(R_FRONT) ;
-////////////	GPIO_SetBits(GPIOE, L_BACKONOFF);
-////////////	GPIO_SetBits(GPIOE, R_BACKONOFF);
-////////////	GPIO_SetBits(GPIOE,L_FRONTONOFF );
-////////////	GPIO_SetBits(GPIOE,R_FRONTONOFF );	 
+
+#ifdef MILE_COMPENSATION
+	if((!bump_value)&((r_rap.sign)|(l_rap.sign)))
+		{
+#ifdef STOP_SPD_CNT
+			l_ring.stop_spd=0;r_ring.stop_spd=0;
+			for(int i=0;i<10;i++)
+				{
+					l_ring.stop_spd+=l_ring.stop_buf[i];
+					r_ring.stop_spd+=r_ring.stop_buf[i];
+					l_ring.stop_buf[i]=0;
+					r_ring.stop_buf[i]=0;
+				}
+
+			r_ring.stop_spd=r_ring.stop_spd*10;
+			l_ring.stop_spd=l_ring.stop_spd*10;
+#else
+			r_ring.stop_spd=r_rap.rap_run;
+			l_ring.stop_spd=l_rap.rap_run;
+			r_ring.stop_spd=r_rap.rap;
+			l_ring.stop_spd=l_rap.rap;
+#endif
+			r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
+			if(r_rap.ori==FRONT)
+				r_ring.all_length+=r_ring.cal_length;
+			else if(r_rap.ori==BACK)
+				r_ring.all_length-=r_ring.cal_length;
+
+			l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
+			if(l_rap.ori==FRONT)
+				l_ring.all_length+=l_ring.cal_length;
+			else if(l_rap.ori==BACK)
+				l_ring.all_length-=l_ring.cal_length;
+			TRACE("l_rap=%d spd=%d cal=%d\r\n",l_rap.rap,l_ring.stop_spd,l_ring.cal_length);
+			TRACE("r_rap=%d spd=%d cal=%d\r\n",r_rap.rap,r_ring.stop_spd,r_ring.cal_length);
+		}
+#endif
+	l_rap.sign=0;
+	r_rap.sign=0;
+	r_rap.pwm=0;
+	l_rap.pwm=0;	
 	//w_rap.sign = 0;//取消前轮计速
 	r_ring.real_speed=0;		//qz add
 	l_ring.real_speed=0;		//qz add

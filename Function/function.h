@@ -86,7 +86,6 @@ u8 read_sideearth(void);
 u8 		Check_Free_Sikd(void);	//qz add 20180123
 u8 SLAM_Tick_Check(void);
 void YBS_Comm_Rap_My(void);				//qz add 20180203
-void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r);
 
 void Enable_Free_Skid_Check(void);
 void Disable_Free_Skid_Check(void);

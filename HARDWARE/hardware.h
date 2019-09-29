@@ -86,7 +86,7 @@ PE7		左前碰撞（NC）
 PE8		右前碰撞（NC）
 PE9		右碰撞
 PE10	启动按键
-PE11	左回充红外
+PE11	风机电源控制
 PE12	DC充电检测
 PE13	墙检电源控制
 PE14	地检电源控制
@@ -114,8 +114,10 @@ PE15	船型开关检测
 /////////下面是电池充电输入脚定义////////////////////////////
 #define  	CHARGE_DC   	GPIO_Pin_12   	//DC输入     			PE
 #define		GPIO_DC			GPIOE
+#define		EXTI_Line_DC	EXTI_Line12	
 #define  	CHARGE_SEAT 	GPIO_Pin_8   	//回充座输入 			PA
 #define		GPIO_SEAT		GPIOA
+#define		EXTI_Line_SEAT	EXTI_Line8
 #define		PWR_SWITCH_PIN	GPIO_Pin_15		//船型开关检测			PE	
 ///////下面是红外接收的管脚定义/////////////////////////////// 
 #define  	HW_POWER        GPIO_Pin_9   	//红外电源输出控制    		PD //☆
@@ -165,6 +167,9 @@ PE15	船型开关检测
 ///////风机管脚定义///////////////////////////////////////////
 #define	 	FAN_PWM			GPIO_Pin_7	 	//风机PWM引脚			PC
 #define		FAN_SPEED_PIN	GPIO_Pin_4		//风机反馈引脚			PE
+#define		FAN_PWR_CTL		GPIO_Pin_11
+#define		FAN_PWR_CTL_1	{GPIO_FANSPEED->BSRR|=1<<11;}
+#define		FAN_PWR_CTL_0	{GPIO_FANSPEED->BRR|=1<<11;}
 #define		GPIO_FANSPEED	GPIOE
 ///////////尘盒管脚定义///////////////////////////////////////////
 #define  	DUST_BOX		GPIO_Pin_15   	//尘盒存在检测输入引脚       PA     NEW		

@@ -16,6 +16,7 @@
 //=====================Ë½ÓÐº¯Êý====================================
 void log_out(void)
 {
+#if 1
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
 	TRACE("===========\r\n");
@@ -39,7 +40,7 @@ void log_out(void)
 //	TRACE("w_ring.leth=%d\r\n",w_ring.length);
   	if(mode.mode==CEASE)
 		{
-			//TRACE("w_l.dis=%d w_lm.dis=%d  w_m.dis=%d  w_rm.dis=%d  w_r.dis=%d\r\n",w_l.dis,w_lm.dis,\
+			TRACE("w_l.dis=%d w_lm.dis=%d  w_m.dis=%d  w_rm.dis=%d  w_r.dis=%d\r\n",w_l.dis,w_lm.dis,\
 			w_m.dis,w_rm.dis,w_r.dis);
 			TRACE("e_l.dif=%d e_m.dif=%d e_r.dif=%d\r\n",e_l.difference,e_m.difference,e_r.difference);
 	//		TRACE("batcap=%d\r\n",Battery.BatteryCapability);
@@ -76,10 +77,9 @@ void log_out(void)
 		{	
 			TRACE("error_code=%d\r\n",error_code);
 		}
-#if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
-	TRACE("Gyro.x=%d\r\n",Gyro_Data.x_pos);
-	TRACE("Gyro.y=%d\r\n",Gyro_Data.y_pos);
+	TRACE("Gyro.x=%f\r\n",X_pos);
+	TRACE("Gyro.y=%f\r\n",Y_pos);
 	TRACE("grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 	TRACE("m.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("c_p.next_action=%d\r\n",check_point.next_action);
@@ -89,6 +89,10 @@ void log_out(void)
 	TRACE("m.ydir=%d\r\n",motion1.y_dir);
 	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
 	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
+#else
+	TRACE("l.rap_run=%d r.rap_run=%d\r\n",l_rap.rap_run,r_rap.rap_run);
+	TRACE("l_spd=%d r_spd=%d\r\n",l_ring.real_speed,r_ring.real_speed);
+	TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
 #endif
 }
 
@@ -134,7 +138,6 @@ int main(void)
 #ifdef DEBUG_Enter_Mode
 	TRACE("============welcome to sweeper!=============\r\n");
 #endif
-//	Speed=2000;	do_action(3,500*CM_PLUS);
 	while(1)
 	{	
 						Uart3_Communication();
@@ -188,13 +191,6 @@ int main(void)
 						LED_Handle();
 						WifiData_Handle();
 
-//						Speed=500;
-//						if(do_action(3,200*CM_PLUS));
-//						ACC_DEC_Curve();
-//						LED_Handle();
-//						Speed=1000;
-//						if(do_action(3,1000*CM_PLUS));
-//						ACC_DEC_Curve();
 	}	
 
 }

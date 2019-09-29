@@ -26,5 +26,5 @@ void Init_WatchDog(void)
       IWDG_SetPrescaler(IWDG_Prescaler_256);//สนำร
       IWDG_SetReload(1000);
       IWDG_ReloadCounter();
-//	  IWDG->KR=0XCCCC;
+	  //IWDG->KR=0XCCCC;
 }

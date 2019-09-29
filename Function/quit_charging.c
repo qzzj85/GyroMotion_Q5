@@ -69,7 +69,7 @@ void Do_Quit_Chargeing(void)
 		{
 
 			case 0x01:
-				Speed=1000;
+				Speed=HIGH_MOVE_SPEED;
 				if(do_action(4,50*CM_PLUS))
 					{
 						stop_rap();

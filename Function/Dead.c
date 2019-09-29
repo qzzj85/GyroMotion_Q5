@@ -85,30 +85,22 @@ void Init_ShutDown(void)
 #endif
 		//RST_S2D_1;			//qz add 20181110:禁止导航板复位底盘
 		Close_Led();
-	
+	key_wakeup_flag=false;
 }
 /******************************************************************
 功能：执行充电
 ******************************************************************/
 void Do_Dead(void)
 {
-#ifndef DS1307
-	   uint32 t;
-	   uint8 s;
-#endif
+	uint32 t;
+	uint8 s;
 
 	if(power.charge_dc|power.charge_seat)
 		{
-			//Init_Lcd();
-			Init_Chargeing(CHARGEING);
-				 
-			//qz add 20180901
 			if(power.charge_seat)
 				Init_Chargeing(SEAT_CHARGING);
 			if(power.charge_dc)
 				Init_Chargeing(DC_CHARGING);
-			//qz add end
-				 
 		}
 
 		 //在调试时允许在停机状态下调试
@@ -118,66 +110,43 @@ void Do_Dead(void)
 	   switch (mode.step)
 	   	{
 	   		case 0:
-				//qz add 20181110
-				if(Slam_Data.tick_flag)				//接收到SLAM心跳，标识SLAM已启动，可以发送关机命令
-					{
-						Slam_Data.dipan_req=DIPAN_REQ_TURNOFFSLAM;
-						mode.time=giv_sys_time;
-						mode.step++;
-						break;
-					}
-				if(giv_sys_time-mode.time>1800000)	//超过3min，直接去低功耗
-					{
-						mode.step=2;
-						mode.time=giv_sys_time;
-#ifdef DS1307
-						ENABLE_PWROFF;
-						Reset_GyroPwr();
-#endif
-					}
+				if(giv_sys_time-mode.time<10000)
+					return;
+				PWR5V_OFF;
+				PWR3V3_OFF;
+				Disable_earth();
+				Disable_wall();
+				Disable_Speed();
+				disable_hwincept();
+				BAT_CHECK_0;
+				LED_RED_OFF;
+				LED_GREEN_OFF;
+				ADC_Cmd(ADC1,DISABLE);
+				GPIOA->CRL=0x44444444;
+				GPIOA->CRH=0X44444444;
+				GPIOB->CRL=0x44444444;
+				GPIOB->CRH=0X44444444;
+				GPIOC->CRL=0x44444444;
+				GPIOC->CRH=0X44444444;
+				GPIOD->CRL=0x44444444;
+				GPIOD->CRH=0X44444444;
+				GPIOE->CRL=0x44444444;
+				GPIOE->CRH=0X44444444;
+				mode.step++;
 				break;
 			case 1:
-				if(giv_sys_time-mode.time>50000)	//qz add 20181110  wait 5s
-				//if(SLAM_Tick_Check())				//导航板停止发送心跳以后
-					{
-						//Slam_Data.no_msg=true;		//停止向导航板上传信息
-						mode.step++;
-						mode.time=giv_sys_time;
-						//Turnoff_AllUart();
-#ifdef DS1307
-						ENABLE_PWROFF;
-						Reset_GyroPwr();
-#endif
-						
-					}
-
-				break;
-			case 2:
-#ifdef DS1307
-				if(giv_sys_time-mode.time<5000)				//qz add 20181110
-					{
-						break;
-					}
 #ifdef STOP_WEEKUP										
-				Enable_ExternInt_Weekup();	//可以使用KEY1,直充,座充唤醒				
+				Enable_ExternInt_Weekup(0);	//可以使用KEY1,直充,座充唤醒				
 #else
 				Diable_AllExtInt_Weekup();	//屏蔽所有外部中断，无法唤醒
 #endif
-				ADC_Cmd(ADC1, DISABLE);
-				PWR_EnterSTOPMode(PWR_Regulator_LowPower,PWR_STOPEntry_WFI);
-//				RCC_EXITSTOP();
-
-				Disable_ExternInt_Weekup();
-				Init_System();
-			break;
-#else				   
 				IWDG_ReloadCounter();
 				IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 				IWDG_SetPrescaler(IWDG_Prescaler_256);//使用
 				IWDG_SetReload(1000);
 				IWDG_ReloadCounter();
 				while(1)
-				{
+					{
 						  ///////设置闹钟中断时间////////
 						 t = (RTC_GetCounter() + 2);
 						 PWR_BackupAccessCmd(ENABLE);
@@ -239,35 +208,18 @@ void Do_Dead(void)
 				if(power.charge_dc)
 				   Init_Chargeing(DC_CHARGING);
 				//qz add end
-#endif
 	   	}
 
 }
 
-void Enable_ExternInt_Weekup(void)
+void Enable_ExternInt_Weekup(u8 use_key)
 {
 	EXTI_InitTypeDef EXTI_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
-
-//	EXTI_DeInit();
 	
-#if 0
-	GPIOA->CRH&=0X0FFFFFFF;
-	GPIOA->CRH|=0X80000000;
-	AFIO->EXTICR[3]&=0XFFFF0000;
-	AFIO->EXTICR[3]&=0XFFFF1000;
-
 	EXTI->IMR&=0X00000000;
-	EXTI->IMR|=0X00008000;
-	EXTI->RTSR&=0X00000000;
-	EXTI->RTSR|=0X00008000;
-	EXTI->FTSR&=0X00000000;
-	EXTI->FTSR|=0X00008000;
-	EXTI->PR=0X00000000;
-#endif
-	EXTI->IMR&=0X00000000;
-	EXTI->IMR&=0X00009800;
+	EXTI->IMR|=0X00000400;
 	
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
@@ -275,42 +227,51 @@ void Enable_ExternInt_Weekup(void)
 	NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
 	NVIC_Init(&NVIC_InitStructure);
 
-	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IPD;
-	GPIO_InitStructure.GPIO_Pin=KEY_2;
-	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
-	GPIO_Init(GPIO_KEY2,&GPIO_InitStructure);
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource2);
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	NVIC_Init(&NVIC_InitStructure);
+
+	if(use_key)
+		{
+			GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IPD;
+			GPIO_InitStructure.GPIO_Pin=KEY_2;
+			GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+			GPIO_Init(GPIO_KEY2,&GPIO_InitStructure);
+			GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource10);
+		}
 
 	/*PP2暂时可能不会加入关机电路，所以进入DEAD低功耗以后，为了能够
 	直接充电，加入了DC检测和SEAT检测为外部中断，可以直接唤醒充电*/
 	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IPD;				
 	GPIO_InitStructure.GPIO_Pin=CHARGE_DC;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
-	GPIO_Init(GPIOE,&GPIO_InitStructure);
+	GPIO_Init(GPIO_DC,&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Pin=CHARGE_SEAT;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	GPIO_Init(GPIO_SEAT,&GPIO_InitStructure);
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE,GPIO_PinSource12);
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA,GPIO_PinSource8);
-	
-	EXTI_InitStructure.EXTI_Line = EXTI_Line2|EXTI_Line8|EXTI_Line12;
+
+	if(use_key)
+		EXTI_InitStructure.EXTI_Line = EXTI_Line10|EXTI_Line_DC|EXTI_Line_SEAT;
+	else
+		EXTI_InitStructure.EXTI_Line = EXTI_Line_DC|EXTI_Line_SEAT;
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;	   
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt; 		 
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
-	EXTI_ClearITPendingBit(EXTI_Line2);
+	
+	if(use_key)
+		EXTI_ClearITPendingBit(EXTI_Line10);
+	EXTI_ClearITPendingBit(EXTI_Line_DC);
+	EXTI_ClearITPendingBit(EXTI_Line_SEAT);
 }
 
 void Disable_ExternInt_Weekup(void)
 {
-	NVIC_InitTypeDef NVIC_InitStructure;
-	EXTI->IMR&=0XFFFF7FFF;
-
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-	NVIC_Init(&NVIC_InitStructure);
+	EXTI->IMR&=0;
 }
 
 void Diable_AllExtInt_Weekup(void)

@@ -26,6 +26,8 @@ void YBS_Left_Bump(u8 out_enable)
 	u32 m;
 	static u8 turn_dir=0,turn_angle=0;
 	static short tgt_angle=0;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
 	s8 ydir=Read_Motion_YDir();
 	m = YBS_read_bump1(out_enable);
 	switch(mode.bump)	   //处理   //bump碰撞的标志   
@@ -436,6 +438,26 @@ void YBS_Left_Bump(u8 out_enable)
 		case BUMP_LF_OUT:
 		case BUMP_RB_OUT:
 		case BUMP_LB_OUT:
+
+#if 0
+			if((mode.mode==SHIFT)|(mode.mode==EXIT))
+				{
+					if((mode.bump==BUMP_YMAX_OUT)|(mode.bump==BUMP_YMIN_OUT))
+						{
+							if(now_gridx!=mode.out_grid[mode.out_grid_cnt])
+								{
+									mode.out_grid[++mode.out_grid_cnt]=now_gridx;
+								}
+						}
+					else if((mode.bump==BUMP_XMAX_OUT)|(mode.bump==BUMP_XMIN_OUT))
+						{
+							if(now_gridy!=mode.out_grid[mode.out_grid_cnt])
+								{
+									mode.out_grid[++mode.out_grid_cnt]=now_gridy;
+								}
+						}
+				}
+#endif
 			switch(mode.step_bp)
 				{
 					case 0:
@@ -505,11 +527,12 @@ void YBS_Left_Bump(u8 out_enable)
 							}
 						break;
 					case 3:
-						Speed=MID_MOVE_SPEED;
+						Speed=HIGH_MOVE_SPEED;
 						//if(do_action(3,FARAWAY*CM_PLUS))
 						if(do_action_my(3,FARAWAY*CM_PLUS,tgt_angle))
 							{
 								stop_rap();
+								mode.last_outbump=mode.bump;
 								mode.bump=0;
 								mode.step_bp=0;
 								mode.step=0;
@@ -524,6 +547,7 @@ void YBS_Left_Bump(u8 out_enable)
 						if((m!=mode.bump)&(m>=BUMP_OUTRANGE))
 							{
 								stop_rap();
+								mode.last_outbump=mode.bump;
 								mode.bump=m;
 								mode.step_bp=0;
 							}
@@ -535,6 +559,7 @@ void YBS_Left_Bump(u8 out_enable)
 								case BUMP_ONLY_LEFT:
 									turn_angle=30;
 									break;
+#if 0
 								case BUMP_ONLY_LEFTMID:
 								case BUMP_LEFT_MID:
 									turn_angle=60;
@@ -549,8 +574,13 @@ void YBS_Left_Bump(u8 out_enable)
 								case BUMP_ONLY_RIGHT:
 									turn_angle=150;
 									break;
-								default:
+#else
+								case BUMP_MID:
+								case BUMP_ONLY_RIGHT:
 									turn_angle=60;
+#endif
+								default:
+									turn_angle=30;
 									break;
 							}
 						mode.step_bp++;
@@ -583,37 +613,26 @@ void YBS_Left_Bump(u8 out_enable)
 						if(do_action(3,8*CM_PLUS))
 							{
 								stop_rap();
-#if 0
-								mode.step=0x40;
-								mode.bump=0;
-								mode.step_bp=0;
-								mode.bump_flag=0;
-#endif
 								mode.step_bp++;
 							}
 						if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 							{
 								stop_rap();
-								//mode.bump=m;
-								//mode.step_bp=0;
-								//return;
 								mode.step_bp=4;
 							}
 						break;
 					case 8:
-						enable_rap_no_length(FRONT,200,FRONT,1200);
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 						if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 							{
 								stop_rap();
-								//mode.bump=m;
-								//mode.step_bp=0;
-								//return;
 								mode.step_bp=4;
 								return;
 							}
 						if((m!=mode.bump)&(m>=BUMP_OUTRANGE))
 							{
 								stop_rap();
+								mode.last_outbump=mode.bump;
 								mode.bump=m;
 								mode.step_bp=0;
 								return;
@@ -621,6 +640,7 @@ void YBS_Left_Bump(u8 out_enable)
 						if(m==0)
 							{
 								mode.step=0x40;
+								mode.last_outbump=mode.bump;
 								mode.bump=0;
 								mode.step_bp=0;
 								mode.bump_flag=0;
@@ -685,6 +705,7 @@ void YBS_Left_Bump(u8 out_enable)
 								case BUMP_ONLY_LEFT:
 									turn_angle=30;
 									break;
+#if 0
 								case BUMP_ONLY_LEFTMID:
 								case BUMP_LEFT_MID:
 									turn_angle=60;
@@ -699,9 +720,13 @@ void YBS_Left_Bump(u8 out_enable)
 								case BUMP_ONLY_RIGHT:
 									turn_angle=150;
 									break;
-								default:
+#else
+								case BUMP_MID:
+								case BUMP_ONLY_RIGHT:
 									turn_angle=60;
-									break;
+#endif
+								default:
+									turn_angle=30;
 							}
 						mode.step_bp++;
 						mode.bump_time=giv_sys_time;
@@ -742,7 +767,7 @@ void YBS_Left_Bump(u8 out_enable)
 							}
 						break;
 					case 18:
-						enable_rap_no_length(FRONT,300,FRONT,1000);
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 						if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 							{
 								stop_rap();

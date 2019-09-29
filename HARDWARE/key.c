@@ -191,6 +191,7 @@ void AutoReadKey(void)
 												//Init_Right_YBS(1);	
 												//Init_Left_YBS(1);
 												//Init_RunTest();
+												//Init_SweepTest();
 											}
 										else if(mode.sub_mode==ERR)
 											{
@@ -210,6 +211,13 @@ void AutoReadKey(void)
 									case DOCKING:
 										Send_Voice(VOICE_DOCK_STOP);
 										Init_Cease();
+										break;
+									case TEST:
+										if((mode.sub_mode==RUN_TEST))
+											{
+												mode.step=0;
+												mode.test_step++;
+											}
 										break;
 										
 								}

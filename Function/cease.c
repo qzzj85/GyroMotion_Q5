@@ -84,32 +84,16 @@ void Do_Cease(void)
 				Init_Err();
 				return ;
 			}
+#if 0
     /**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
-	#ifdef SLEEP_SUBMODE
-	if(((giv_sys_time-mode.time)>1800000)&(!mode.factory))			//qz mask 20181110
+	if(((giv_sys_time-mode.time)>10000*30)&(!mode.factory))			//qz mask 20181110
 	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
 		{
 			Init_Sleep();
+			//Init_ShutDown();
 			return;
 		}
-	#if 0
-	if(((giv_sys_time - mode.time) > 1800000)&&(!Slam_Data.sleep_flag))
-	{
-	   Slam_Data.sleep_flag=true;			//qz add 通知SLAM,准备休眠
-	   //Slam_Data.dipan_req=DIPAN_REQ_TURNOFFSLAM;
-	}
-
-	// qz add
-	if((if(SLAM_Tick_Check))&&(Slam_Data.sleep_flag))		//通知SLAM休眠后，30秒内没有收到心跳，判断SLAM已经进入休眠
-		{
-			mode.last_mode=mode.mode;
-			Init_Sleep();
-			Slam_Data.sleep_flag=0x00;	//qz add:SLAM进入休眠后，清SLEEP_FLAG标志
-//			Slam_Data.tick_flag=0;			//qz add，SLAM进入休眠后，无需再上传数据，上传数据会将其唤醒
-		}
-	#endif
-	//qz add end
-	#endif
+#endif
 	clr_all_hw_struct();				//qz mask 20181215
 //	find_home=ReadHwSign_My();			//qz mask 20181215
 #ifdef REPEAT_DOCK	//qz add 20180901

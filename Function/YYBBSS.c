@@ -230,7 +230,7 @@ void YBS_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
-				Speed=1500;//2000
+				Speed=HIGH_MOVE_SPEED;//2000
 				if(do_action(3,100*CM_PLUS))		//Ö±ÐÐ5m
 					{
 						stop_rap();
@@ -842,7 +842,21 @@ u32 Check_OutofRange_YBS(u8 out_enable)
 
 	if(!out_enable)
 		return 0;
-	
+#if 1
+	if(((mode.mode==SHIFT)|(mode.mode==EXIT))&(mode.bump==0))
+		{
+			if((mode.step==0x10)|(mode.step==0x11)|(mode.step==0x50)|(mode.step==0x51))
+				{
+					//TRACE("outgrid!!\r\n");
+					return 0;
+				}
+			if((mode.step==0x4)|(mode.step==0x44))
+				{
+					//TRACE("outgrid!!\r\n");
+					return 0;
+				}
+		}
+#endif	
 	xmax_out=Check_Xmax_OutYBS();
 	xmin_out=Check_Xmin_OutYBS();
 	ymax_out=Check_Ymax_OutYBS();

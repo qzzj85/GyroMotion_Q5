@@ -4,28 +4,6 @@
 //=====================私有定义====================================
 
 
-//////////////////////////私有定义//////////////////////////////////
-#define G_KP 80/100
-#define	G_KI 10/100
-#define G_KD 10/100
-#define SPEED_MAX	50//100//800
-
-#define	W_KP	50/100
-#define	W_KI	10/100
-#define	W_KD 	10/100
-#define WALL_SPEED_MAX 200 	
-//////////////////////////全局变量//////////////////////////////////
-/////////////////////////全局函数////////////////////////////////////
-/////////////////////////私有函数////////////////////////////////////
-
-void  ACC_DEC_comm_rap(void);
-void  ACC_DEC_Curve(void);
-//=======================================================================
-///////////////////////函数实体////////////////////////////////////
-
-void ACC_DEC_Comm_rap_My(void);
-void Gyro_Comm_rap(void);
-void Wall_Comm_Rap(void);
 //=================================================================================
 //=================================================================================
 //////功能  ：    每10ms 执行一次，自动根据车轮信息控制车轮
@@ -34,10 +12,116 @@ void Wall_Comm_Rap(void);
 //=================================================================================
 //=================================================================================
 
+bool gyro_comm_flag=true;
+bool spd_acc_flag=true;
 
 uint32_t Acc_Dec_length;
 //==================================================================================================================================================================
 //==================================================================================================================================================================
+
+void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r)
+{
+	static u32 speed_check_time=0;
+	u32 t=0;int l_length_temp=0,r_length_temp=0;
+	t=giv_sys_time-speed_check_time;
+#ifdef DEBUG_SPEED
+	TRACE("t=%d\r\n",t);
+#endif
+	speed_check_time=giv_sys_time;
+
+#ifdef DEBUG_SPEED
+	TRACE("l.leng=%d l.last_length=%d\r\n",l_ring.speed_length,l_ring.last_speed_length);
+	TRACE("r.leng=%d r.last_length=%d\r\n",r_ring.speed_length,r_ring.last_speed_length);
+#endif
+	l_length_temp=l_ring.speed_length-l_ring.last_speed_length;
+	l_ring.last_speed_length=l_ring.speed_length;
+	r_length_temp=r_ring.speed_length-r_ring.last_speed_length;
+	r_ring.last_speed_length=r_ring.speed_length;
+
+#ifdef STOP_SPD_CNT
+	if(l_length_temp)
+		{
+			l_ring.stop_buf[0]=l_ring.stop_buf[1];
+			l_ring.stop_buf[1]=l_ring.stop_buf[2];
+			l_ring.stop_buf[2]=l_ring.stop_buf[3];
+			l_ring.stop_buf[3]=l_ring.stop_buf[4];
+			l_ring.stop_buf[4]=l_ring.stop_buf[5];
+			l_ring.stop_buf[5]=l_ring.stop_buf[6];
+			l_ring.stop_buf[6]=l_ring.stop_buf[7];
+			l_ring.stop_buf[7]=l_ring.stop_buf[8];
+			l_ring.stop_buf[8]=l_ring.stop_buf[9];
+			l_ring.stop_buf[9]=l_length_temp;
+		}
+
+	if(r_length_temp)
+		{
+			r_ring.stop_buf[0]=r_ring.stop_buf[1];
+			r_ring.stop_buf[1]=r_ring.stop_buf[2];
+			r_ring.stop_buf[2]=r_ring.stop_buf[3];
+			r_ring.stop_buf[3]=r_ring.stop_buf[4];
+			r_ring.stop_buf[4]=r_ring.stop_buf[5];
+			r_ring.stop_buf[5]=r_ring.stop_buf[6];
+			r_ring.stop_buf[6]=r_ring.stop_buf[7];
+			r_ring.stop_buf[7]=r_ring.stop_buf[8];
+			r_ring.stop_buf[8]=r_ring.stop_buf[9];
+			r_ring.stop_buf[9]=l_length_temp;
+		}
+#endif
+		
+//qz add 20180703
+	if((l_rap.sign)&(l_length_temp==0))
+		l_ring.odds++;
+	else
+		l_ring.odds=0;
+
+	if((r_rap.sign)&(r_length_temp==0))
+		r_ring.odds++;
+	else
+		r_ring.odds=0;
+//qz add end
+
+	*speed_l=l_length_temp*10000/t;
+	*speed_r=r_length_temp*10000/t;
+
+
+	if(r_rap.sign==0)
+		*speed_r=0;
+	if(l_rap.sign==0)
+		*speed_l=0;
+
+	//qz add 20180417
+	#if 0
+	if((r_rap.sign)&(*speed_r<=0))
+		r_ring.odds++;
+	else if(((r_rap.sign)&(*speed_r>0))||(!r_rap.sign))		//qz modify 20180515:增加!r_rap.sign条件
+		r_ring.odds=0;
+	
+	if((l_rap.sign)&(*speed_l<=0))
+		l_ring.odds++;
+	else if(((l_rap.sign)&(*speed_l>0))||(!l_rap.sign))		//qz modify 20180515:增加!l_rap.sign条件
+		l_ring.odds=0;
+	#endif
+
+	if(r_ring.odds>2000)		//约3s qz modify 20180515
+		{
+#if 1
+			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
+			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
+#endif
+			r_ring.state=BAD;
+		}
+	if(l_ring.odds>2000)
+		{
+			l_ring.state=BAD;
+#if 1
+			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
+			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
+#endif
+		}
+	//qz add end
+
+}
+
 void  ACC_DEC_Curve(void)
 {
 //u32 	t,l;
@@ -52,43 +136,38 @@ void  ACC_DEC_Curve(void)
 }
 //==================================================================================================================================================================
 //==================================================================================================================================================================
-
 void ACC_DEC_Comm_rap_My (void)
 {
-//	int ec;
 	float f_ec;
-//		if(rap_time==false)
-//			return;
-//		rap_time=false;
 
 	Check_Speed_My(&(l_ring.real_speed), &(r_ring.real_speed));
 
 #if 1
-	if(Deci_Sec)
+	if(spd_acc_flag)
 		{
-			Deci_Sec=false;
+			spd_acc_flag=false;
 			if(l_rap.rap_run<l_rap.rap)
 			{
-				l_rap.rap_run+=300;
+				l_rap.rap_run+=200;
 				if(l_rap.rap_run>=l_rap.rap)
 					l_rap.rap_run=l_rap.rap;
 			}
 			else if(l_rap.rap_run>l_rap.rap)
 			{
-				l_rap.rap_run-=300;
+				l_rap.rap_run-=200;
 				if(l_rap.rap_run<l_rap.rap)
 					l_rap.rap_run=l_rap.rap;
 			}	
 			
 			if(r_rap.rap_run<r_rap.rap)
 			{
-				r_rap.rap_run+=300;
+				r_rap.rap_run+=200;
 				if(r_rap.rap_run>=r_rap.rap)
 				r_rap.rap_run=r_rap.rap;
 			}
 			else if(r_rap.rap_run>r_rap.rap)
 			{
-				r_rap.rap_run-=300;
+				r_rap.rap_run-=200;
 				if(r_rap.rap_run<r_rap.rap)
 					r_rap.rap_run=r_rap.rap;
 			}	
@@ -137,21 +216,68 @@ void ACC_DEC_Comm_rap_My (void)
 				{enable_pwm(R_FRONT,r_rap.pwm);}
 			else
 				{enable_pwm(R_BACK,r_rap.pwm);}
-
-			if(r_rap.length<r_ring.length+10*CM_PLUS)
+#if 0
+			if((r_rap.length<r_ring.length+10*CM_PLUS)&(r_rap.rap>500))
 				{
 					r_rap.rap=500;
 				}
-			
+#endif
 			if(r_rap.length  <=  (r_ring.length+10) )
 				{
+					disable_pwm(R_BACK);
+					disable_pwm(R_FRONT); 
+					if((l_rap.sign)&(l_rap.length==r_rap.length))
+						{
+#ifdef MILE_COMPENSATION
+#ifdef STOP_SPD_CNT
+							l_ring.stop_spd=0;
+							for(int i=0;i<10;i++)
+								{
+									l_ring.stop_spd+=l_ring.stop_buf[i];
+									l_ring.stop_buf[i]=0;
+								}					
+							l_ring.stop_spd=l_ring.stop_spd*10;
+#else
+							//l_ring.stop_spd=l_rap.rap_run;
+							l_ring.stop_spd=l_rap.rap;
+#endif
+							l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
+							TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
+							if(l_rap.ori==FRONT)
+								l_ring.all_length+=l_ring.cal_length;
+							else if(l_rap.ori==BACK)
+								l_ring.all_length-=l_ring.cal_length;
+#endif					
+							l_rap.sign		= 0;
+							l_rap.pwm			= 0;
+							l_rap.rap		= 0;
+							l_rap.rap_run=0;
+						}
+#ifdef MILE_COMPENSATION
+#ifdef STOP_SPD_CNT
+					r_ring.stop_spd=0;
+					for(int i=0;i<10;i++)
+						{
+							r_ring.stop_spd+=r_ring.stop_buf[i];
+							r_ring.stop_buf[i]=0;
+						}
+					r_ring.stop_spd=r_ring.stop_spd*10;
+#else
+					//r_ring.stop_spd=r_rap.rap_run;
+					r_ring.stop_spd=r_rap.rap;
+#endif
+					r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
+					TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
+					if(r_rap.ori==FRONT)
+						r_ring.all_length+=r_ring.cal_length;
+					else if(r_rap.ori==BACK)
+						r_ring.all_length-=r_ring.cal_length;
+#endif					
 					r_rap.sign		= 0;
 					r_rap.pwm			= 0;
 					r_rap.rap		= 0;
-					disable_pwm(R_BACK);
-					disable_pwm(R_FRONT); 
 					r_rap.rap_run=0;
-				}				
+				}	
 		}
 
 	if(l_rap.sign)
@@ -160,19 +286,68 @@ void ACC_DEC_Comm_rap_My (void)
 				{enable_pwm(L_FRONT,l_rap.pwm);}
 			else
 				{enable_pwm(L_BACK,l_rap.pwm);}
-
-			if(l_rap.length<l_ring.length+10*CM_PLUS)
+#if 0
+			if((l_rap.length<l_ring.length+10*CM_PLUS)&(l_rap.rap>500))
 				{
 					l_rap.rap=500;
 				}
-			
+#endif
 			if(l_rap.length  <=  (l_ring.length+10) )
 				{
+					disable_pwm(L_FRONT);
+					disable_pwm(L_BACK);
+					if((r_rap.sign)&(r_rap.length==l_rap.length))
+						{
+							disable_pwm(R_FRONT);
+							disable_pwm(R_BACK);
+#ifdef MILE_COMPENSATION
+#ifdef STOP_SPD_CNT
+							r_ring.stop_spd=0;
+							for(int i=0;i<10;i++)
+								{
+									r_ring.stop_spd+=r_ring.stop_buf[i];
+									r_ring.stop_buf[i]=0;
+								}
+							r_ring.stop_spd=r_ring.stop_spd*10;
+#else
+							//r_ring.stop_spd=r_rap.rap_run;
+							r_ring.stop_spd=r_rap.rap;
+#endif
+							r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
+							TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
+							if(r_rap.ori==FRONT)
+								r_ring.all_length+=r_ring.cal_length;
+							else if(r_rap.ori==BACK)
+								r_ring.all_length-=r_ring.cal_length;
+#endif					
+							r_rap.sign		= 0;
+							r_rap.pwm			= 0;
+							r_rap.rap		= 0;
+							r_rap.rap_run=0;
+						}
+#ifdef MILE_COMPENSATION
+#ifdef STOP_SPD_CNT
+					l_ring.stop_spd=0;
+					for(int i=0;i<10;i++)
+						{
+							l_ring.stop_spd+=l_ring.stop_buf[i];
+							l_ring.stop_buf[i]=0;
+						}					
+					l_ring.stop_spd=l_ring.stop_spd*10;
+#else
+					//l_ring.stop_spd=l_rap.rap_run;
+					l_ring.stop_spd=l_rap.rap;
+#endif
+					l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
+					TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
+					if(l_rap.ori==FRONT)
+						l_ring.all_length+=l_ring.cal_length;
+					else if(l_rap.ori==BACK)
+						l_ring.all_length-=l_ring.cal_length;
+#endif					
 					l_rap.sign		= 0;
 					l_rap.pwm			= 0;
 					l_rap.rap		= 0;
-					disable_pwm(L_FRONT);
-					disable_pwm(L_BACK);
 					l_rap.rap_run=0;
 				}
 		}
@@ -227,6 +402,10 @@ int Cal_Gyro_Angle(void)
 void Gyro_Comm_rap(void)
 {
 	int data1=0;
+
+//	if(!gyro_comm_flag)
+//		return;
+	gyro_comm_flag=false;
 	Gyro_Data.g_ek[2]=Gyro_Data.g_ek[1];
 	Gyro_Data.g_ek[1]=Gyro_Data.g_ek[0];
 	Gyro_Data.g_ek[0]=Cal_Gyro_Angle();
@@ -244,14 +423,18 @@ void Gyro_Comm_rap(void)
 	r_rap.rap_run+=data1;
 	if(r_rap.rap_run>r_rap.rap+SPEED_MAX)
 		r_rap.rap_run=r_rap.rap+SPEED_MAX;
-	if(r_rap.rap_run<r_rap.rap-SPEED_MAX)
-		r_rap.rap_run=r_rap.rap-SPEED_MAX;
+	if(r_rap.rap_run<100)
+		r_rap.rap_run=100;
+	//if(r_rap.rap_run<r_rap.rap-SPEED_MAX)
+		//r_rap.rap_run=r_rap.rap-SPEED_MAX;
 	
 	l_rap.rap_run-=data1;
 	if(l_rap.rap_run>l_rap.rap+SPEED_MAX)
 		l_rap.rap_run=l_rap.rap+SPEED_MAX;
-	if(l_rap.rap_run<l_rap.rap-SPEED_MAX)
-		l_rap.rap_run=l_rap.rap-SPEED_MAX;
+	if(l_rap.rap_run<100)
+		l_rap.rap_run=100;
+	//if(l_rap.rap_run<l_rap.rap-SPEED_MAX)
+		//l_rap.rap_run=l_rap.rap-SPEED_MAX;
 }
 
 void Wall_Comm_Rap(void)

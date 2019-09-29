@@ -833,7 +833,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)		//qz add 20181011
 								return 0;
-							Speed=1100;							//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约135mm/s
 							if(do_action(1,70*Angle_1)) 		//左转,行走完成时间大约900ms
 								{
 									stop_rap();
@@ -850,7 +850,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 2:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1000;							//速度约270mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约270mm/s
 							if(do_action(4,10*CM_PLUS))			//行走完成100mm,大约耗时370ms
 								{
 									stop_rap();					
@@ -867,7 +867,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 3:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;							//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约135mm/s
 							if(do_action(2,60*Angle_1))			//右转，
 								{
 									stop_rap();
@@ -926,7 +926,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:											//缠绕的同时发生碰撞,先处理完碰撞
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							Set_BS_Level(0);							//关边刷
 							if(do_action(4,4*CM_PLUS))					//后退			
 								{
@@ -945,7 +945,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 8:											//后退后还是有碰撞(因为此时被缠绕,后退不一定成功)
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;									//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;									//速度约135mm/s
 							if(do_action(1,360*Angle_1))				//旋转一周,全程需要5.4s	
 								{
 									stop_rap();
@@ -986,7 +986,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;							//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约135mm/s
 							if(do_action(2,70*Angle_1)) 		//行走完成时间大约900ms
 								{
 									stop_rap();
@@ -1004,7 +1004,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
 							Set_SideBrush_Pwm(0);				//先关掉边扫
-							Speed=1000;							//速度约270mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约270mm/s
 							if(do_action(4,10*CM_PLUS))			//行走完成100mm,大约耗时370ms
 								{
 									stop_rap();
@@ -1021,7 +1021,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 3:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;							//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约135mm/s
 							if(do_action(1,60*Angle_1))			
 								{
 									stop_rap();
@@ -1080,7 +1080,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 //							Set_BS_Level(0);
 							if(do_action(4,4*CM_PLUS))
 								{
@@ -1099,7 +1099,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 8:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;						//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;						//速度约135mm/s
 							if(do_action(1,360*Angle_1))	//全程需要5.4s	
 								{
 									stop_rap();
@@ -1269,7 +1269,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=2200;								//速度约135mm/s
+							Speed=FAST_MOVE_SPEED;								//速度约135mm/s
 							if(do_action(1,360*Angle_1))			//左轮不动向左转
 								{
 									stop_rap();
@@ -1294,7 +1294,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 2:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=2200;								//速度约135mm/s
+							Speed=FAST_MOVE_SPEED;								//速度约135mm/s
 							if(do_action(2,360*Angle_1))			//左轮不动向右转
 								{
 									stop_rap();
@@ -1311,7 +1311,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 3:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=2200;								//速度约203mm/s
+							Speed=FAST_MOVE_SPEED;								//速度约203mm/s
 							if(do_action(4,10*CM_PLUS))				//10cm耗时约500ms
 								{
 									stop_rap();
@@ -1367,7 +1367,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 6:			//已经在step_abn为4的时候延时，此刻无需延时
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(1,60*Angle_1))
 								{
 									stop_rap();
@@ -1383,7 +1383,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,4*CM_PLUS))
 								{
 									stop_rap();
@@ -1412,7 +1412,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(2,360*Angle_1))			//旋转
 								{
 									stop_rap();
@@ -1438,7 +1438,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 3:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100; 							//前进
+							Speed=HIGH_MOVE_SPEED; 							//前进
 							if(do_action(3,10*CM_PLUS))
 								{
 									stop_rap();
@@ -1461,7 +1461,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 4:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,4*CM_PLUS))			//碰撞后退
 								{
 									stop_rap();
@@ -1506,7 +1506,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=1100;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,4*CM_PLUS))			//碰撞后退
 								{
 									stop_rap();
@@ -1569,12 +1569,12 @@ u8 Action_Protect_My(u8 abnoraml)
 									if((l_ori<=FRONT))				//取反方向开始运转
 										{
 											l_rap.ori=BACK;
-											enable_pwm(L_BACK,800);
+											enable_pwm(L_BACK,PWM_RING_MAX*4/5);
 										}
 									else
 										{
 											l_rap.ori=FRONT;
-											enable_pwm(L_FRONT,800);
+											enable_pwm(L_FRONT,PWM_RING_MAX*4/5);
 										}
 								}
 							if(r_state)
@@ -1582,12 +1582,12 @@ u8 Action_Protect_My(u8 abnoraml)
 									if((r_ori<=FRONT))				//取反方向开始运转
 									{
 										r_rap.ori=BACK;
-										enable_pwm(R_BACK,800);
+										enable_pwm(R_BACK,PWM_RING_MAX*4/5);
 									}
 									else
 									{
 										r_rap.ori=FRONT;
-										enable_pwm(R_FRONT,800);
+										enable_pwm(R_FRONT,PWM_RING_MAX*4/5);
 									}
 								}
 							mode.abn_time=giv_sys_time; //qz add 20181011
@@ -1644,12 +1644,12 @@ u8 Action_Protect_My(u8 abnoraml)
 									if((l_ori<=FRONT))				//取正方向开始运转
 										{
 											l_rap.ori=FRONT;
-											enable_pwm(L_FRONT,500);
+											enable_pwm(L_FRONT,PWM_RING_MAX*4/5);
 										}
 									else
 										{
 											l_rap.ori=BACK;
-											enable_pwm(L_BACK,500);
+											enable_pwm(L_BACK,PWM_RING_MAX*4/5);
 										}
 								}
 							if(r_state)
@@ -1657,12 +1657,12 @@ u8 Action_Protect_My(u8 abnoraml)
 									if((r_ori<=FRONT))				//取正方向开始运转
 									{
 										r_rap.ori=FRONT;
-										enable_pwm(R_FRONT,500);
+										enable_pwm(R_FRONT,PWM_RING_MAX*4/5);
 									}
 									else
 									{
 										r_rap.ori=BACK;
-										enable_pwm(R_BACK,500);
+										enable_pwm(R_BACK,PWM_RING_MAX*4/5);
 									}
 								}
 							mode.step_abn++;
@@ -1737,7 +1737,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
 								return 0;
-							Speed=1000;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
@@ -1762,7 +1762,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 3:
-							Speed=TURN_SPEED;
+							Speed=MID_MOVE_SPEED;
 							if(do_action(1,80*Angle_1))
 								{
 									stop_rap();
@@ -1770,7 +1770,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 4:
-							Speed=1000;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(3,15*CM_PLUS))
 								{
 									stop_rap();
@@ -1783,7 +1783,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 10:
-							Speed=1000;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,3*CM_PLUS))
 								{
 									stop_rap();
@@ -1818,7 +1818,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
 								return 0;
-							Speed=1000;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(3,10*CM_PLUS))
 								{
 									stop_rap();
@@ -1843,7 +1843,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 3:
-							Speed=1000;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(3,15*CM_PLUS))
 								{
 									stop_rap();
@@ -1856,7 +1856,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 10:
-							Speed=1000;
+							Speed=MID_MOVE_SPEED;
 							if(do_action(4,3*CM_PLUS))
 								{
 									stop_rap();
@@ -1957,7 +1957,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:
 							if(giv_sys_time-mode.abn_time<1000)
 								return 0;
-							Speed=LOW_MOVE_SPEED;
+							Speed=MID_MOVE_SPEED;
 							if(do_action(2,2*CM_PLUS))
 								{
 									stop_rap();
@@ -3971,86 +3971,6 @@ u8 Return_LM_Dis(u16 data)
 		return Distance;
 }
 
-
-void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r)
-{
-//	if(!time_speed)
-//		return;
-//	time_speed=false;
-
-	static u32 speed_check_time=0;
-	u32 t=0;int l_length_temp=0,r_length_temp=0;
-	t=giv_sys_time-speed_check_time;
-#ifdef DEBUG_SPEED
-	TRACE("t=%d\r\n",t);
-#endif
-	speed_check_time=giv_sys_time;
-
-#ifdef DEBUG_SPEED
-	TRACE("l.leng=%d l.last_length=%d\r\n",l_ring.speed_length,l_ring.last_speed_length);
-	TRACE("r.leng=%d r.last_length=%d\r\n",r_ring.speed_length,r_ring.last_speed_length);
-#endif
-	l_length_temp=l_ring.speed_length-l_ring.last_speed_length;
-	l_ring.last_speed_length=l_ring.speed_length;
-	r_length_temp=r_ring.speed_length-r_ring.last_speed_length;
-	r_ring.last_speed_length=r_ring.speed_length;
-
-//qz add 20180703
-	if((l_rap.sign)&(l_length_temp==0))
-		l_ring.odds++;
-	else
-		l_ring.odds=0;
-
-	if((r_rap.sign)&(r_length_temp==0))
-		r_ring.odds++;
-	else
-		r_ring.odds=0;
-//qz add end
-
-	*speed_l=l_length_temp*10000/t;
-	*speed_r=r_length_temp*10000/t;
-
-
-	if(r_rap.sign==0)
-		*speed_r=0;
-	if(l_rap.sign==0)
-		*speed_l=0;
-
-	//qz add 20180417
-	#if 0
-	if((r_rap.sign)&(*speed_r<=0))
-		r_ring.odds++;
-	else if(((r_rap.sign)&(*speed_r>0))||(!r_rap.sign))		//qz modify 20180515:增加!r_rap.sign条件
-		r_ring.odds=0;
-	
-	if((l_rap.sign)&(*speed_l<=0))
-		l_ring.odds++;
-	else if(((l_rap.sign)&(*speed_l>0))||(!l_rap.sign))		//qz modify 20180515:增加!l_rap.sign条件
-		l_ring.odds=0;
-	#endif
-
-	if(r_ring.odds>2000)		//约3s qz modify 20180515
-		{
-#if 1
-			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
-			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
-#endif
-			r_ring.state=BAD;
-		}
-	if(l_ring.odds>2000)
-		{
-			l_ring.state=BAD;
-#if 1
-			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
-			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
-#endif
-		}
-	//qz add end
-
-//	if((r_rap.ori==FRONT)&(l_rap.ori==FRONT)&(*speed_l!=0)
-}
-
-
 void Write_Mode_Backup(void)
 {
 
@@ -4113,11 +4033,17 @@ u8 FAN_Skid_Check(void)
 void Set_FJ_Level(u16 level)
 {
   if(level==0)
-  	Fan.flag=false;
+  	{
+  		FAN_PWR_CTL_0;
+  		Fan.flag=false;
+  	}
   else
-  	Fan.flag=true;
+  	{
+  		FAN_PWR_CTL_1;
+  		Fan.flag=true;
 //  TIM_SetCompare4(TIM3,level);//标准  
-	Set_Fan_Pwm(level);
+		Set_Fan_Pwm(level);
+  	}
 }
 
 void Set_BS_Level(u16 level)
@@ -4152,8 +4078,8 @@ void Sweep_Level_Set(u16 sweep_suction)
 			break;
 			case STANDARD:
 				Set_BS_Level(STANDARD_PWM);
-				Set_ZS_Level(STANDARD_PWM);
-				Set_FJ_Level(STANDARD_PWM);
+				Set_ZS_Level(MB_STD_PWM);
+				Set_FJ_Level(FAN_STD_PWM);
 			break;
 			case SILENCE:
 				Set_BS_Level(SILENCE_PWM);

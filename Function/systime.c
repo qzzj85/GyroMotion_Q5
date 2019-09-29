@@ -23,7 +23,6 @@ bool gbv_minute;   												//分钟标志，用于定时采样电池的电压。
 bool Five_Sec;
 bool Ten_Sec;
 bool Half_Sec;
-bool Deci_Sec;		//100ms
 bool MiliSec_50;	//50ms
 vu16 CCR1_Val = 1200;//定时器的计数脉冲。
 bool time_speed=false;

@@ -21,7 +21,6 @@ extern bool Five_Sec;
 extern bool Ten_Sec;
 extern bool Half_Sec;
 extern bool Half_Min;
-extern bool Deci_Sec;
 extern bool MiliSec_50;	//50ms
 extern bool time_speed;
 extern bool gyro_check_time;

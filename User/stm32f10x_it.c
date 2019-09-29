@@ -329,7 +329,6 @@ void TIM1_CC_IRQHandler(void)
 
 void TIM2_IRQHandler(void)	//	10K 中断
 { 
-	
 //	if((mode.mode==DOCKING)||(BS_NO_TIME_FLAG))			//如果在小回充模式，降低边扫频率
 //		GPIOA->ODR^=GPIO_Pin_2;
 
@@ -390,10 +389,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //	if((giv_sys_time % 100) == 0)
 	if((giv_sys_time % 100) == 0)		//	10mS
 		{
-			rap_time=true;
 			YBS_Check_Flag=true;
 			key_time = true;          //按键时间	  
-//			rap_time = true;          //左右轮速度调节时间
+			rap_time = true;          //左右轮速度调节时间
 //			gbv_yaokong_time = true;	
 			
 //			YBS_Conor_Check_Flag  = true;
@@ -414,6 +412,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			
 	if((giv_sys_time % 200) == 0)				//20mS
 		{
+//			rap_time=true;
 			sensor_report_time = true;			//里程计 数据上报时间
 			Mileage_report_time=true;
 //			YBS_Check_Flag  		= true;			
@@ -435,9 +434,8 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		
 	if((giv_sys_time % 500) == 0)				//50 mS
 		{
-				MiliSec_50=true;
-				led.led_time=true;
-			
+			led.led_time=true;
+			gyro_comm_flag=true;
 		}
 		
 	if((giv_sys_time % 1000) == 0)				//100ms			
@@ -445,13 +443,12 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //			log_show = true;				//显示更新时间		
 			CHECK_STATUS_TIME=true; 		//qz add 20180417
 			action_wall_time=true;
-			Deci_Sec=true;
+			spd_acc_flag=true;
 		}
 	
 	if((giv_sys_time%3000)==0)
 		{
-//			log_show = true;				//显示更新时间		
-			GET_DISPLAY_TIME=true;
+//			spd_acc_flag=true;
 			led.quic_flag=true;
 #ifdef TUYA_WIFI
 			wifi_update_time=true;
@@ -790,6 +787,7 @@ void EXTI4_IRQHandler(void)
 *******************************************************************************/
 void EXTI15_10_IRQHandler(void)
 {
+#if 0
 	static u32 rm_hw_time=0,l_hw_time=0;
 	u32 sample_time;
 	static u32 r_hw_time,b_hw_time,mm_hw_time;
@@ -1294,6 +1292,13 @@ void EXTI15_10_IRQHandler(void)
 		EXTI_ClearITPendingBit(EXTI_Line_RMHW);
  	}
 #endif
+#endif
+
+	if(EXTI_GetFlagStatus(EXTI_Line10)!=RESET)			//左碰撞
+		{
+			EXTI_ClearITPendingBit(EXTI_Line10);
+			key_wakeup_flag=true;
+		}
 }
 //======================================================================================
 //======================================================================================
@@ -1433,120 +1438,6 @@ void EXTI9_5_IRQHandler(void)
 #endif
 				}
 		}
-#if 0
-	//////////////左中碰撞中断/////////////////
-	if(EXTI_GetITStatus(EXTI_Line_LMBUMP) != RESET)			 //左中碰撞
-	{
-		 EXTI_ClearITPendingBit(EXTI_Line_LMBUMP);
-			 {
-#ifdef RING_PWM_CTL
-				 i=0;
-				 while(i<10)
-					 {
-						 i++;
-					 }
-				 if(!Read_L_Bump())
-					 {
-						 bump_value|=L_BUMP_BIT;
-						 l_bump.key=0;
-					 }
-				 if(!Read_R_Bump())
-					 {
-						 bump_value|=R_BUMP_BIT;
-						 r_bump.key=0;
-					 }
-				 if(!Read_RM_Bump())
-					 {
-						 bump_value|=RM_BUMP_BIT;
-						 rm_bump.key=0;
-					 }
-				 if(!Read_LM_Bump())
-					 {
-
-						 bump_value|=LM_BUMP_BIT;
-						 lm_bump.key=0;
-					 }
-				 if(bump_value)
-					 {
-						 Close_Bump_Exit();
-					 }
-#else
-				 for(i=0;i<3;i++)
-					 {
-						 if(!Read_LM_Bump())
-						 {
-							 if(i==2)
-							 {
-								 bump_value|=LM_BUMP_BIT;
-								 lm_bump.key=0;
-							 }
-						 }
-						 else
-						 {
-							 break;
-						 }
-					 }
-#endif
-			 }
-	}
-
-
-	////////////右碰撞中断///////////////////
-	if(EXTI_GetFlagStatus(EXTI_Line_RMBUMP)!=RESET)		  //右中碰撞
-	{
-	  EXTI_ClearITPendingBit(EXTI_Line_RMBUMP);
-		  {
-#ifdef RING_PWM_CTL		 				 
-			  i=0;
-			  while(i<10)
-				  {
-					  i++;
-				  }
-			  if(!Read_L_Bump())
-				  {
-					  bump_value|=L_BUMP_BIT;
-					  l_bump.key=0;
-				  }
-			  if(!Read_R_Bump())
-				  {
-					  bump_value|=R_BUMP_BIT;
-					  r_bump.key=0;
-				  }
-			  if(!Read_RM_Bump())
-				  {
-					  bump_value|=RM_BUMP_BIT;
-					  rm_bump.key=0;
-				  }
-			  if(!Read_LM_Bump())
-				  {
-
-					  bump_value|=LM_BUMP_BIT;
-					  lm_bump.key=0;
-				  }
-			  if(bump_value)
-				  {
-					  Close_Bump_Exit();
-				  }
-#else
-			 for(i=0;i<3;i++)
-				 {
-					 if(!Read_RM_Bump())
-					 {
-						 if(i==2)
-						 {
-							 bump_value|=RM_BUMP_BIT;
-							 rm_bump.key=0;
-						 }
-					 }
-					 else
-					 {
-						 break;
-					 }
-				 }
-#endif
-		  }
-	}
-#endif
 }
 //======================================================================================
 //======================================================================================

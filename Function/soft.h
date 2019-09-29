@@ -35,11 +35,11 @@
 #endif
 
 #if 0
-//#define		FREE_SKID_CHECK			1					//万向轮径向打滑检测，用于上报导航板
-//#define		FREE_SKID_INDEP_CHECK	1					//独立万向轮检测，用于卡住
+//#define	FREE_SKID_CHECK			1					//万向轮径向打滑检测，用于上报导航板
+//#define	FREE_SKID_INDEP_CHECK	1					//独立万向轮检测，用于卡住
 //#define 	ROTATE_SKID_CHECK		1					//旋转打滑检测
 #define		FAN_CHECK				1					//风机检查
-//#define		LIFT_CHECK				1					//离地检查
+//#define	LIFT_CHECK				1					//离地检查
 //#define 	SLAM_CHECK				1					//SLAMTICK检查
 #define		BUMP_FIX_CHECK			1					//碰撞锁定检测
 #define		RING_FIX_CHECK			1					//驱动轮锁定检查
@@ -47,9 +47,9 @@
 #define		MB_OC_CHECK				1					//中扫过电流检查
 #define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
 #define		SB_FIX_CHECK			1					//边扫缠绕检查
-//#define		CLIFF_ENABLE			1					//地检悬崖检查
+//#define	CLIFF_ENABLE			1					//地检悬崖检查
 #define		GYRO_TICK_CHECK			1					//惯导数据检查,5s内未接到收据,判定错误
-//#define		WALL_EARTH_ERROR_CHECK	1				//墙地检异常检测(比如没插)
+//#define	WALL_EARTH_ERROR_CHECK	1					//墙地检异常检测(比如没插)
 #endif
 #define		GYRO_BIOS_CHECK			1
 
@@ -62,7 +62,7 @@
 #define		YBS_DIS_RESTORE			1					//沿边固定距离增大以后自动回复
 //define	COMMANDER_SEAT_REPORT	1					//命令模式下发现充电座上报标志
 #define		SWITCHOFF_SUBMODE		1					//船型开关未打开模式
-//#define		SLEEP_SUBMODE			1					//底盘休眠模式
+//#define		SLEEP_SUBMODE			1				//底盘休眠模式
 //#define		DOCK_NEAR				1				//充电座近信号
 //#define		WALL_DARK_FIX			1				//墙检暗数据固定
 #define		WALL_DARK_CAL			1					//墙检暗数据校正,500ms打开一次
@@ -73,14 +73,14 @@
 #define		NEW_PWR_CAL				1					//使用2600MAH初始化电池及电量计算方法
 #define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
 #define		COMMAND_CLIFF_ACTION	1					//新悬崖规避动作
-//#define		REMOTE					1					//使用遥控器功能
+//#define		REMOTE					1				//使用遥控器功能
 #define		REPEAT_DOCK				1					//再接续回充功能
 #define		SHUTDOWN_MODE			1					//关机功能
 #define		INTERFERENCE_ACTION		1					//红外信号抗干扰
-//#define		UV						1					//UV灯功能
+//#define		UV						1				//UV灯功能
 #define 	REYBS2DOCK				1					//小回充信号丢失再次请求沿边
 #define		DUMMY_WALL				1					//虚拟墙，沿边模式下能够接受非00速度指令，进入速度模式
-//#define		NARROW_PASS				1					//沿边窄通道处理,主要是与左碰撞相关。
+//#define		NARROW_PASS				1				//沿边窄通道处理,主要是与左碰撞相关。
 #define		GYRO_ROLL_CHECK			1					//惯导俯仰角检测（阈值5度）
 #define		FREE_FIRST_BAD_CHECK	1					//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
 //#define 	DS1307					1					//使用DS1307 RTC及后备寄存器
@@ -89,16 +89,19 @@
 #define		STOP_WEEKUP				1					//可以从STOP模式中唤醒
 #define		SPEED_EXTI				1					//速度使用外部中断来计数
 //#define		MHW_CAPTURE				1
-//#define		GYRO_PITCH_CHECK		1					//惯导俯仰角检测
+//#define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
 //#define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
-#define		RING_PWM_CTL			1
-//#define		GYRO_CAL				1					//惯导校准代码
-#define		GYRO_COMPENSATION		1
+#define		RING_PWM_CTL			1					//轮子PWM切断控制
+//#define		GYRO_CAL				1				//惯导校准代码
+//#define		GYRO_COMPENSATION		1					//惯导角度补偿
+#define		MILE_COMPENSATION		1					//里程计补偿
+//#define		STOP_SPD_CNT			1
+
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			1
+#define		CORRECT_VERSION			2
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -559,6 +562,9 @@ Q5样机
 行走1M：4101.083506
 两轮间距：216mm
 旋转1度脉冲：216*3.141592/360/0.243838=7.730359
+摩擦系数：5.9461	根据k=(speed^2)/(2gl),g为质量，l为刹车长度，speed为速度
+机器质量：2300g
+根据速度计算摩擦距离：l=speed^2/6.11413/2/2365，所以速度
 ***************************************************************/
 
 #define   DIS_XiShu 	1.0255
@@ -572,9 +578,9 @@ Q5样机
 #define MM_PLUS 		4.1010835//8.202180		//QZ ADD
 #define CM_PLUS 		41.010835//82.021805		//QZ ADD
 #define METER_PLUS 		4101.083506//8202.180468	//QZ ADD
-#define MAX_SPEED 		4500 			//qz 定义最大速度,约305mm/s
+#define MAX_SPEED 		1600 			//qz 定义最大速度,约305mm/s
 #define	RING_RANGE		216				//两轮间距235mm
-
+#define	LENGTH_CAL		6858		//速度的平方直接除以LENGTH_CAL，为矫正长度。LENGTH_CAL=5.9461*2*2365*PULSE_LENGTH
 
 #define 	Angle_1 		7.730359//15.460746
 #define   	angle60  		Angle_1*60
@@ -597,8 +603,8 @@ Q5样机
 #define		MID_MOVE_SPEED		SPEED100
 #define		LOW_MOVE_SPEED		SPEED50
 
-#define	REVOLUTION_SPEED_HIGH	800
-#define	REVOLUTION_SPEED_LOW	200
+#define		REVOLUTION_SPEED_HIGH	1000
+#define		REVOLUTION_SPEED_LOW	400
 
 
 typedef struct
@@ -773,6 +779,9 @@ typedef struct             //车轮速度的数据结构
   unsigned int  odds;        //车轮停下转动的时间次数
 
   u8 check_step;
+  int stop_buf[10];
+  int stop_spd;
+  int cal_length;
 }RING;
 
 typedef struct	  //车轮的速度信息
@@ -984,6 +993,9 @@ unsigned char  fangxiang;  // 0 左转； 1右转
  u8 sub_tst_item;
  u8 test_step;
  u32 test_dis_data;
+ u8 last_outbump;
+ s8 out_grid[30];
+ u8 out_grid_cnt;
 }MODE;
 
 typedef struct

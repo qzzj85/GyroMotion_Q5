@@ -168,7 +168,7 @@ void Init_Hardware (void)
 	/////////////////////////PC¿ÚÍÆÍìÊä³ö///////////////////
 	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN;
     GPIO_Init(GPIOD,&GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin=WALL_SEND|EARTH_SEND;
+	GPIO_InitStructure.GPIO_Pin=WALL_SEND|EARTH_SEND|FAN_PWR_CTL;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
 	PWR3V3_ON
 	PWR5V_ON

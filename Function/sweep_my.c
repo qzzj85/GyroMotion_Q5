@@ -566,7 +566,15 @@ void Init_First_Sweep(void)
 //	Del_All_Sweep_Bump_Node();
 	Send_Voice(VOICE_SWEEP_START);
 	Open_Led(1,0,1);
-	//Sweep_Level_Set(sweep_suction);
+//	Sweep_Level_Set(sweep_suction);
+#if 0
+	check_point.new_x1=20;
+	check_point.new_y1=20;
+	check_point.new_x2=20;
+	check_point.new_y2=21;
+	check_point.next_action=CHECK_NEWAREA;
+	Init_Shift_Point1(0);
+#endif
 }
 
 //输入参数
@@ -789,9 +797,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 23:
 							Set_Coordinate_WallClean(now_gridx,now_gridy);
 							if(turn_dir==2)
-								enable_rap_no_length(FRONT,300,FRONT,1200);
+								enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 							else
-								enable_rap_no_length(FRONT,1200,FRONT,300);
+								enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
 							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
 								{
 									stop_rap();
@@ -1395,6 +1403,19 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										tgt_angle=R_Angle_Const;
 								}
 #endif
+							if(((now_gridy==grid.y_area_max)&(ydir>0))|((now_gridy==grid.y_area_min)&(ydir<0)))
+								{
+									//check_point.new_x1=0;
+									//check_point.new_y1=0;
+									//check_point.new_x2=0;
+									//check_point.new_y2=0;
+									///check_point.next_action=CHECK_GOEXIT;
+									//Init_Shift_Point1(0);
+									//return;
+									Area_Check(0);
+									return;
+								}
+							
 							if(!Read_LeftRight())		//需要准备左沿边
 								{
 									if(motion1.tgt_yaw==F_Angle_Const)
@@ -1784,7 +1805,7 @@ void Do_BackSweep(void)
 				mode.step++;
 			break;
 			case 1:
-				Speed=1000;
+				Speed=HIGH_MOVE_SPEED;
 				//do_action(3,FARAWAY);
 				if(do_action_my(3,FARAWAY,motion1.tgt_yaw));
 				if((w_m.high_sign==NEAR)|(w_r.high_sign==NEAR)|(w_l.high_sign==NEAR)|(w_lm.high_sign==NEAR)|(w_rm.high_sign==NEAR))
@@ -2009,22 +2030,45 @@ void Do_Pass2Sweep(void)
 				stop_rap();
 				if(giv_sys_time-mode.time>5000)
 					{
-						mode.step++;
+						{
+							if(!Read_LeftRight())		//需要准备左沿边
+								{
+									mode.step=10;
+									return;
+								}
+							else						//当前右沿边，左转。tgt_yaw为B_Anlge,需要转向到F_Angle;
+								{
+									mode.step=20;
+									return;
+								}
+						}
 					}
 				break;
-			case 1:
+			case 10:
 				Speed=TURN_SPEED;
+				if(do_action(2,720*Angle_1));
 				if(motion1.tgt_yaw==F_Angle_Const)
 					tgt_angle=B_Angle_Const;
 				else
 					tgt_angle=F_Angle_Const;
-				turn_dir=Get_TurnDir(tgt_angle);
-				if(do_action(turn_dir,360*Angle_1));
 				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
 						TRACE("Gyro_Data.yaw=%d turn_angle=%d\r\n",Gyro_Data.yaw,tgt_angle);
 						TRACE("yaw Reach!\r\n");
+						mode.step=0xF0;
+					}
+				break;
+			case 20:
+				Speed=TURN_SPEED;
+				if(do_action(1,720*Angle_1));
+				if(motion1.tgt_yaw==F_Angle_Const)
+					tgt_angle=B_Angle_Const;
+				else
+					tgt_angle=F_Angle_Const;
+				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
 						mode.step=0xF0;
 					}
 				break;
@@ -2160,7 +2204,7 @@ void StopBack_Bump_Action(void)
 			case 1:
 				if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
 					return;
-				Speed=1000;
+				Speed=BUMP_BACK_SPEED;
 				if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
 					{
 						stop_rap();
@@ -2248,11 +2292,11 @@ void StopBack_Bump_Action(void)
 			case 6:
 				if(turn_dir==1)
 					{
-						enable_rap_no_length(FRONT,1000,FRONT,300);
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
 					}
 				else
 					{
-						enable_rap_no_length(FRONT,300,FRONT,1000);
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 					}
 				#if 0
 				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
@@ -2274,7 +2318,7 @@ void StopBack_Bump_Action(void)
 			case 8:
 				if(giv_sys_time-mode.bump_time<1000)
 					return;
-				Speed=LOW_MOVE_SPEED;
+				Speed=MID_MOVE_SPEED;
 				if(do_action(4,2*CM_PLUS))
 					{
 						stop_rap();
@@ -2444,15 +2488,6 @@ void Do_Stop_BackSweep(void)
 						else
 							Init_LeakSweep(motion1.tgt_yaw);
 					}
-				#if 0
-				Speed=2000;
-				if(do_action(3,FARAWAY));
-				if(Judge_Xpos_Reach(motion1.xpos_abort,5))
-					{
-						stop_rap();
-						Init_NormalSweep(motion1.tgt_yaw);		//先进入正常直行清扫模式
-					}
-				#endif
 				break;
 		}
 }
@@ -2753,7 +2788,8 @@ u8 YBS_AbortFor_Sweep(void)
 					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 					if(((mode.step==0x11)|(mode.step==0x51)))
 						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+
 								{
 									TRACE("Need Repeat!\r\n");
 									motion1.repeat_sweep=true;
@@ -2798,7 +2834,8 @@ u8 YBS_AbortFor_Sweep(void)
 					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 					if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
 						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+
 								{
 									TRACE("Need Repeat!\r\n");
 									motion1.repeat_sweep=true;
@@ -3095,7 +3132,7 @@ void Sweep_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
-				Speed=1500;//2000
+				Speed=FAST_MOVE_SPEED;//2000
 				if(do_action(3,100*CM_PLUS))		//直行5m
 					{
 						stop_rap();
@@ -3115,7 +3152,6 @@ void Sweep_YBS(void)
 					}
 				if(giv_sys_time-mode.bump_time<200)
 					return;
-//					Speed = 1200;
 				Speed=HIGH_MOVE_SPEED;		//800//2000
 				forward(0xFF812345);
 				mode.step = 1;
@@ -3130,7 +3166,7 @@ void Sweep_YBS(void)
 				break;
 			
 			case 1:
-				YBS_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
+				//YBS_Check_corner(); 	//QZ:利用w_r的difference，计算distance，每次得到一个新的YBS_Wall_Distance
 				//YBS_Distance_Check(0);
 				Wall_Comm_Rap();
 				if(YBS_Wall_Distance < 80)		//80	//	第一次找到墙
@@ -3159,7 +3195,7 @@ void Sweep_YBS(void)
 				break;
 							
 			case 2:
-				YBS_Check_corner(); 					
+				//YBS_Check_corner(); 					
 				//YBS_Distance_Check(0);
 				Wall_Comm_Rap();
 				if(YBS_Wall_Distance > 80)  			//	彻底丢失墙壁    有可能出现拐角//80  //140
@@ -3391,6 +3427,600 @@ void Sweep_YBS(void)
 					}
 				//qz add end
 #endif
+				break;
+			case 0x50:
+				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 
+				r_rap.rap 	=YBS_LOST_CORNER_TURN_SPD;	//QZ:原来为300,350		
+				l_rap.rap 	=YBS_LOST_CORNER_TURN_SPD_R ;
+				l_rap.sign	=1;
+				r_rap.sign	=1;
+				l_rap.ori	=FRONT;
+				r_rap.ori	=FRONT;
+				mode.step 	= 0x51;
+				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
+
+				//qz add 20180316
+#ifdef ROTATE_SKID_CHECK
+				Enable_Rotate_Skid_Check(1);
+#endif
+
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=false;
+#endif
+				break;
+			case 0x51:
+				YBS_Left_Check_corner();
+
+				//QZ ADD
+				r_rap.rap =YBS_LOST_CORNER_TURN_SPD;	//QZ:原来为300,350		
+				l_rap.rap = YBS_LOST_CORNER_TURN_SPD_R ;
+				
+				l_rap.ori=FRONT;
+				l_rap.sign=1;
+				r_rap.ori=FRONT;
+				r_rap.sign=1;
+
+#if 0			//取消底盘孤岛判断
+				if(l_ring.all_length-Wall_lost_Start_Pos>(angle720+angle360))
+					{
+						stop_rap();
+						mode.step=0x88;//0x12
+#ifdef FREE_SKID_CHECK
+						Enable_Free_Skid_Check();
+#endif
+#ifdef YBS_BLACK
+						YBS_DISTANCE=30;
+#endif
+						return;
+					}
+									//QZ ADD END
+#endif 
+				if((YBS_Wall_Distance < (YBS_DISTANCE + 20))||(w_rm.sign==NEAR)||(w_m.high_sign==NEAR)|(w_lm.high_sign==NEAR))//||(M_WALL_DIS<100)||(RM_WALL_DIS<100))				//	第二次找到墙
+						{
+							//QZ:ADD
+							stop_rap();
+					//		mode.step = 0x12;
+							//qz add
+							r_rap.rap=HIGH_MOVE_SPEED;
+							l_rap.rap=HIGH_MOVE_SPEED;
+							l_rap.ori=FRONT;
+							l_rap.sign=1;
+							r_rap.ori=FRONT;
+							r_rap.sign=1;
+							mode.step =0x41;
+						}
+				break;
+								
+			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
+			case 0xA0:   	
+				if((l_rap.sign == 0)&&(r_rap.sign == 0))
+					{
+						Speed = 1200;
+						enable_rap(FRONT,(uint32_t)(1.5 * METER_PLUS) ,	FRONT,(uint32_t)(1 * METER_PLUS));
+						
+						mode.step = 0xA1;
+					}
+				break;					
+			case  0xA1:
+				if((l_rap.sign == 0)&&(r_rap.sign == 0))
+					{
+							mode.step = 0xA5;		//	可能受困
+					}
+				break;							
+			case  0xA5://	可能受困
+				Speed = 2600;
+				if(do_action(3,	(uint32_t)(0.5 * METER_PLUS)) == 1)		
+					{mode.step = 0xA6;}	
+				break;
+			case  0xA6://	可能受困
+				Speed = 2600;
+				if(do_action(4,	(uint32_t)(0.5 * METER_PLUS)) == 1)		
+					{mode.step = 0xA7;}	
+				break;
+			case  0xA7://	可能受困
+				Speed = 2200;
+				if(do_action(2,	(uint32_t)(180 * Angle_1)))		
+					{mode.step = 0x88;}	
+				break;
+			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
+			//qz add
+			case 0xB0:
+				Speed=2400;
+				if(do_action(4,(u32)(10*CM_PLUS)))
+					{
+						stop_rap();
+						mode.step=0xB1;
+					}
+				break;
+			case 0xB1:
+				Speed=1600;
+				if(do_action(1,angle90))
+					{
+						stop_rap();
+						mode.step=0xB2;
+					}
+				break;
+			case 0xB2:
+				if(do_action(3,(u32)(15*CM_PLUS)))
+					{
+						stop_rap();
+						mode.step=0XB3;
+					}
+				break;
+			case 0xB3:
+				if(do_action(6,angle90_D))
+					{
+						stop_rap();
+						mode.step=0x00;
+					}
+				break;
+
+			//绕过障碍后的处理过程
+  			case 0xD0:
+				if(giv_sys_time-mode.time<5000)
+					return;
+				mode.step++;
+//				turn_dir=Get_TurnDir(motion1.tgt_yaw);
+				TRACE("now_angle=%d turn_dir=%d\r\n",Gyro_Data.yaw,turn_dir);
+				break;
+			case 0xD1:
+				Speed=TURN_SPEED;
+				turn_dir=Get_TurnDir(motion1.tgt_yaw);
+				if(do_action(turn_dir,720*Angle_1))
+					{	
+						stop_rap();
+					}
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{	
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 0xD2:
+				Continue_Sweep();
+				break;
+				//	不停继续转圈
+
+
+			case 0xE0:
+				Speed=1000;
+				if(mode.sub_mode==YBS_SUB_LEFT)
+					temp_data1=1;
+				else
+					temp_data1=2;
+				if(do_action(temp_data1,180*Angle_1))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 0xE1:
+				if(mode.sub_mode==YBS_SUB_LEFT)
+					{
+						Init_Right_YBS(1);
+					}
+				else
+					{
+						Init_Left_YBS(1);
+					}
+				break;
+
+			//y坐标回溯超过20cm时，开启左沿边
+			case 0x90:
+				stop_rap();
+				Init_YBS_Exchange(YBS_SUB_RIGHT);
+				break;
+		}	//	end of      switch (mode.step)	//step路径执行的步骤
+}
+
+
+void Sweep_YBS_II(void)
+{
+//  static u8 piv_out;  //机器是否向外展开，1为向外展开，0为向里缩小
+//  static u8 piv_left; //机器是否向左转，1为向左转，0为向右转
+	u8 temp_data1=0;
+	u8 abnormal;
+	u32 uin32;
+	static u8 turn_dir=0;
+
+#if 1		
+#ifdef DC_NOBAT_RUN
+	if((power.charge_dc)&(!dc_nobat_run))
+#else
+	if(power.charge_dc)
+#endif
+		{
+			stop_rap();
+			uin32 = giv_sys_time;
+			while(giv_sys_time - uin32 < 20000)
+				{
+					AutoReadKey();
+					judge_charge();
+				}
+				 
+#ifdef DC_NOBAT_RUN
+			if((power.charge_dc)&(!dc_nobat_run))
+#else
+			if(power.charge_dc)
+#endif
+				{
+					 Init_Chargeing(DC_CHARGING);
+					 return;
+				}					
+		}
+#endif
+
+#ifdef PITCH_SPEEDUP
+  	if(Gyro_Pitch_Speedup())
+  		{
+			mode.speed_up=true;
+  		}
+	else
+		mode.speed_up=false;
+#endif
+
+	ACC_DEC_Curve();
+
+	clr_all_hw_effect();			//qz add 20181210
+
+	abnormal=Read_Protect();
+	if(mode.abnormity)
+		{
+			Action_Protect_My(abnormal);
+#ifdef FREE_SKID_INDEP_CHECK
+			Free_Skid_Indep.check_flag=false;
+#endif
+
+#ifdef YBS_DIS_RESTORE
+			Disable_Rotate_Angle();
+#endif
+			mode.speed_up=false;		//qz add 20181225
+			return;
+		}
+
+	if(YBS_AbortFor_Sweep())
+		return;
+		
+	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+		{
+			YBS_Check_corner();
+			YBS_Right_Bump(1);
+		}		
+	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+		{
+			YBS_Left_Bump(1);
+			YBS_Left_Check_corner();
+		}
+	else
+		return;
+			
+	if(mode.bump != 0)		//	有碰撞需要处理，返回d
+		{
+#ifdef ROTATE_SKID_CHECK
+			Disable_Rotate_Skid_Check();
+#endif
+
+#ifdef YBS_DIS_RESTORE
+			Disable_Rotate_Angle();
+#endif
+
+#ifdef FREE_SKID_INDEP_CHECK
+			Free_Skid_Indep.check_flag=false;
+#endif
+			return;
+		}
+	
+	//qz add 20180228
+#ifdef	FREE_SKID_CHECK
+	if(Check_Free_Sikd())
+		{
+			Slam_Data.skid_flag=1;
+#ifdef SKID_REPORT_TIME
+			Slam_Data.skid_report_time=giv_sys_time;
+#endif
+#ifdef FREE_SKID_ACTION
+			stop_rap();
+			mode.step=0xB0;
+#endif
+		}
+#endif
+
+#if 0
+	#ifdef ROTATE_SKID_CHECK
+	if(Check_Rotate_Skid())
+		{
+			Slam_Data.skid_flag=1;
+#ifdef ROTATE_SKID_ACTION
+			stop_rap();
+			Disable_Rotate_Skid_Check();
+			
+			mode.step=0xC0;
+#endif
+			
+		}
+	#endif
+#endif
+	//qz add end
+	
+	//----------------------------------------------------------------------------------
+	//----------------------------------------------------------------------------------
+	
+	switch (mode.step)	//step路径执行的步骤
+		{
+			case 0x88:
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+#ifndef YBS_START_RIGHT_ANGLE
+				enable_rap_no_length(FRONT, 3500, FRONT, 3000);	//qz modify 20180703:走斜线
+#else
+				Speed=FAST_MOVE_SPEED;//2000							
+				if(do_action(3,100*CM_PLUS))		//直行1m
+					{
+						stop_rap();
+						mode.step++;
+					}
+#ifdef	ROTATE_SKID_CHECK
+				Disable_Rotate_Skid_Check();
+#endif
+				break;
+			//qz add 20180801
+			case 0x89:
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=false;
+#endif
+				Speed=FAST_MOVE_SPEED;
+				if(mode.sub_mode==YBS_SUB_RIGHT)
+					temp_data1=2;
+				else
+					temp_data1=1;
+				if(do_action(temp_data1,90*Angle_1))			//右转90度
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 0x8A:
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+				Speed=FAST_MOVE_SPEED;//2000
+				if(do_action(3,100*CM_PLUS))		//直行5m
+					{
+						stop_rap();
+						mode.step=0x88;
+					}
+#endif					
+#ifdef	ROTATE_SKID_CHECK
+				Disable_Rotate_Skid_Check();
+#endif
+				break;
+					
+			case 0:
+				if(mode.sub_mode==YBS_SUB_LEFT)
+					{
+						mode.step=0x40;
+						return;
+					}
+				if(giv_sys_time-mode.bump_time<200)
+					return;
+				if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
+					{
+						mode.step=1;
+						
+					}
+				else
+					{
+						mode.step=3;
+					}
+				//qz add 20180316
+#ifdef ROTATE_SKID_CHECK
+				Disable_Rotate_Skid_Check();
+#endif
+
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif				
+				break;
+			
+			case 1:
+				Speed=HIGH_MOVE_SPEED;
+				do_action(3,FARAWAY*CM_PLUS);
+				//Wall_Comm_Rap();
+#ifdef	YBS_Straight_FAST
+				YBS_Straight_Time=giv_sys_time;
+#endif
+
+#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
+				Enable_Rotate_Angle();
+#endif
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+				mode.step++;
+				break;
+							
+			case 2:
+				Wall_Comm_Rap();
+				//if(YBS_Wall_Distance > 80)  			//	彻底丢失墙壁    有可能出现拐角//80  //140
+				if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
+					{
+						stop_rap();
+						mode.step = 3;
+
+#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
+						Disable_Rotate_Angle();
+#endif
+						return;
+					}
+
+#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
+				Check_Rotate_Angle();
+				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
+					{
+						YBS_DISTANCE=YBS_DISTANCE_CONST;
+					}
+#endif
+
+
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+				break;
+			
+			case 3:
+				mode.step = 4;	 
+				break;
+			case 4: 
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,3*CM_PLUS))
+				//if((l_ring.all_length-Wall_lost_Start_Pos)>=3*CM_PLUS)
+					{
+						stop_rap();
+						if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
+							{
+								mode.step=0x00;
+								return;
+							}
+						mode.step = 0x10;
+					}
+				break;
+			case 0x10: 	  	
+				Wall_lost_Start_Pos = l_ring.all_length;							//	旋转 
+				r_rap.rap =YBS_LOST_CORNER_TURN_SPD_R;	//QZ:原来为300,350		
+				l_rap.rap = YBS_LOST_CORNER_TURN_SPD ;
+				l_rap.sign=1;
+				r_rap.sign=1;
+				l_rap.ori=FRONT;
+				r_rap.ori=FRONT;
+				mode.step = 0x11;
+				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
+				lost_turn_time=giv_sys_time;
+				//qz add 20180316
+#ifdef ROTATE_SKID_CHECK
+				Enable_Rotate_Skid_Check(1);
+#endif
+
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=false;
+#endif
+				break;
+			case 0x11:
+				YBS_Check_corner();
+
+				//QZ ADD
+				r_rap.rap =YBS_LOST_CORNER_TURN_SPD_R;	//QZ:原来为300,350		
+				l_rap.rap = YBS_LOST_CORNER_TURN_SPD ;
+					
+				l_rap.ori=FRONT;
+				l_rap.sign=1;
+				r_rap.ori=FRONT;
+				r_rap.sign=1;
+
+				if(giv_sys_time-lost_turn_time>10000)			//qz add 20180902 1.5s qz modify 20181201 1.5s--->1.0s
+					{
+						YBS_DISTANCE=YBS_DISTANCE_CONST;
+					}
+				if((YBS_Wall_Distance <= (YBS_DISTANCE + 20))|(w_m.high_sign==NEAR)|(w_rm.high_sign==NEAR))//||(M_WALL_DIS<100)||(RM_WALL_DIS<100))				//	第二次找到墙	//qz modify 20181225
+					{
+						//QZ:ADD
+						stop_rap();
+					//	mode.step = 0x12;
+						//qz add
+						r_rap.rap=HIGH_MOVE_SPEED;
+						l_rap.rap=HIGH_MOVE_SPEED;
+						l_rap.ori=FRONT;
+						l_rap.sign=1;
+						r_rap.ori=FRONT;
+						r_rap.sign=1;
+						mode.step =0x01;
+					}
+				break;
+			case 0x12:   							//	停止旋转
+				mode.step = 0x00;
+				break;
+			//--------------------------------------------------------
+							
+
+			
+			//--------------------------------------------------------
+			//--------------------------------------------------------
+			case 0x40:  
+				if(giv_sys_time-mode.bump_time<200)
+					return;
+				if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
+					{
+						mode.step=0x41;
+					}
+				else
+					{
+						mode.step=0x43;
+					}
+#ifdef ROTATE_SKID_CHECK
+				Disable_Rotate_Skid_Check();
+#endif
+			
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+								
+				break;
+			case 0x41:
+				Speed=HIGH_MOVE_SPEED;
+				do_action(3,FARAWAY*CM_PLUS);
+				//Wall_Comm_Rap();
+#ifdef	YBS_Straight_FAST
+				YBS_Straight_Time=giv_sys_time;
+#endif
+			
+#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
+				Enable_Rotate_Angle();
+#endif
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+				mode.step++;												
+				break;
+			case 0x42:
+				Wall_Comm_Rap();
+				if(YBS_Wall_Distance > CONST_DIS+YBS_DISTANCE) 			//	彻底丢失墙壁	  有可能出现拐角//80
+						{
+							stop_rap();
+							mode.step = 0x43;
+#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
+							Disable_Rotate_Angle();
+#endif
+							return;
+						}
+
+#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
+				Check_Rotate_Angle();
+				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
+					{
+						YBS_DISTANCE=YBS_DISTANCE_CONST;
+					}
+#endif
+#ifdef FREE_SKID_INDEP_CHECK
+				Free_Skid_Indep.check_flag=true;
+#endif
+				break;
+			//--------------------------------------------------------
+			//--------------------------------------------------------
+			case 0x43:
+				mode.step = 0x44;	 
+				break;
+			case 0x44:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,3*CM_PLUS))
+					{
+						stop_rap();
+						if(YBS_Wall_Distance<CONST_DIS+YBS_DISTANCE)
+							{
+								mode.step=0x40;
+								return;
+							}
+						mode.step = 0x50;
+					}
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 

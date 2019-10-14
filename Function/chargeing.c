@@ -170,12 +170,14 @@ void Do_Chargeing(void)
 					Init_Chargeing(DC_CHARGING);
 				break;
 			case 2:
+#if 0
 				if((!l_lidi.key)|(!r_lidi.key))
 					{
 						Init_Cease();
 						Init_Cease();
 						return;
 					}
+#endif
 				if(dis_err_code)
 					{
 						Init_Err();

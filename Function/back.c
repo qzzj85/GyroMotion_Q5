@@ -7,8 +7,18 @@ u8 Init_BackHead(void)
 {
 	if(back_head!=NULL)
 		{
-			TRACE("BackHead malloc fail!!!\r\n");
-			return 1;
+			TRACE("back head is exist!!\r\n");
+			if(back_head->last_info!=NULL);
+				back_head->last_info=NULL;
+			if(back_head->next_info!=NULL)
+				{
+					if(Del_All_BackInfo())
+						{
+							TRACE("Del all back info fail !!!\r\n");
+							return 1;
+						}
+				}
+			return 0;
 		}
 	
 	back_head=(struct BACK_INFO*)malloc(BACK_INFO_LEN);
@@ -16,6 +26,7 @@ u8 Init_BackHead(void)
 	back_head->last_info=NULL;
 	back_head->next_info=NULL;
 	curr_back=back_head;
+	TRACE("back head malloc success!!\r\n");
 	return 0;
 }
 
@@ -86,4 +97,29 @@ void Get_Curr_BackInfo(void)
 	Delete_CurrBackInfo();
 }
 
+u8 Del_All_BackInfo(void)
+{
+	struct BACK_INFO *p,*q;
+	p=back_head;
+//	TRACE("Enter in Delete All PathPoint!!\r\n");
+	while(p->next_info!=NULL)			//先去到最后一个节点
+		{
+			p=p->next_info;
+		}
+	while(p->last_info!=NULL)			//再判断最后一个节点是否path_head
+		{
+			q=p->last_info; 			//找到上一个节点
+			free(p);					//释放最后一个节点
+			p=q;						//前往上一个节点，之前的上一个节点已经是最后一个节点，准备再次释放
+			p->next_info=NULL;			//			
+		}
+	if(p!=back_head)
+		{
+			TRACE("Delete All BackInfo fail!\r\n");
+			return 1;
+		}
+	back_head->next_info=NULL;				//现在p是head_point，将其next设置为空
+	TRACE("Delete All BackInfo success!\r\n");
+	return 0;
+}
 

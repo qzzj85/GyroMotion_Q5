@@ -96,7 +96,6 @@ void Enable_Rotate_Skid_Check(u8 dir);
 void Disable_Rotate_Skid_Check(void);
 int Check_Gyro_angle(u8 dir);
 u8 Check_Rotate_Skid(void);
-void Init_Mode_My(void);
 
 //qz add 20180319
 void Sweep_Level_Set(u16 sweep_suction);

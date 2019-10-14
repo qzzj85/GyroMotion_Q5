@@ -59,14 +59,11 @@ void  Init_System(void)
 	USART3_DMA_RX_Init(USART3_RX_SIZE);
 	
 	Init_Voice();						//初始化语音芯片，包括音量设置
-#ifdef MHW_CAPTURE
-	Init_Time_1();						//初始化TIM1，TIM1用于中红外捕获
-#endif	  
 	Init_WatchDog();					//初始化看门狗
 	init_rtc();							//初始化RTC,BKP数据读取,建立闹钟中断
 	Battery_Data_Init();
 	Init_PWM();							//初始化PWM，PWM用于电机驱动、风扇驱动、充电驱动
-//		init_hwincept();					//初始化红外接收程序
+	init_hwincept();					//初始化红外接收程序
 //	Init_Remote_Info();					//qz add 20189817初始化遥控信息
 	init_power();
 	time = giv_sys_time;
@@ -126,9 +123,9 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Pin=KEY_3;
   	GPIO_Init(GPIOC, &GPIO_InitStructure);  
   	///////////////////////PD浮空输入
-//  	GPIO_Init(GPIOD, &GPIO_InitStructure);  
+  	GPIO_InitStructure.GPIO_Pin =L_HW|R_HW|LM_HW|LB_HW|RM_HW|RB_HW;
+  	GPIO_Init(GPIOD, &GPIO_InitStructure);  
   ///////////////////////PE浮空输入 
-	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
   	GPIO_InitStructure.GPIO_Pin =CHARGE_DC|R_SPEED|L_SPEED|PWR_SWITCH_PIN|KEY_2|FAN_SPEED_PIN|MB_SPEED_PIN;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
 /**************************/
@@ -166,7 +163,9 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Pin = VOICE_CLK|VOICE_DATA|RING_PWM_CTL_PIN|LSB_PWR_PIN; 
     GPIO_Init(GPIOB,&GPIO_InitStructure);
 	/////////////////////////PC口推挽输出///////////////////
-	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN;
+	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN;
+    GPIO_Init(GPIOC,&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN|HW_POWER;
     GPIO_Init(GPIOD,&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Pin=WALL_SEND|EARTH_SEND|FAN_PWR_CTL;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
@@ -634,7 +633,12 @@ return 1;	//QZ:原来为0
 **********************************************************/
 u8 Read_L_HW(void)
 {
-	return GPIO_ReadInputDataBit(GPIOE, L_HW)  ;
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, L_HW)  ;
+}
+
+u8 Read_LB_HW(void)
+{
+	return GPIO_ReadInputDataBit(GPIO_HWPWR,LB_HW);
 }
 
 /**********************************************************
@@ -642,27 +646,31 @@ u8 Read_L_HW(void)
 **********************************************************/
 u8 Read_RM_HW(void)
 {
-	return GPIO_ReadInputDataBit(GPIOE, RM_HW)  ;
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, RM_HW)  ;
 }
 
+u8 Read_RB_HW(void)
+{
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, RB_HW)  ;
+}
 /**********************************************************
 读取IO状态
 **********************************************************/
 u8 Read_R_HW(void)
 {
-	return GPIO_ReadInputDataBit(GPIOE, R_HW)  ;
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, R_HW)  ;
 }
    
 u8 Read_LM_HW(void)
 {
-	return GPIO_ReadInputDataBit(GPIOE, LM_HW)  ;
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, LM_HW)  ;
 }
 /**********************************************************
 读取IO状态
 **********************************************************/
 u8 Read_B_HW(void)//hzh
 {
-	return GPIO_ReadInputDataBit(GPIOE, B_HW)  ;
+	return GPIO_ReadInputDataBit(GPIO_HWPWR, B_HW)  ;
 }
 /**********************************************************
 读取IO状态

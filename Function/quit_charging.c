@@ -6,12 +6,15 @@ void Init_Quit_Charging(void)
 	mode.last_sub_mode=mode.sub_mode;
 	mode.mode=CEASE;
 	mode.sub_mode=QUIT_CHARGING;
-	
-	disable_hwincept();
+
+	Enable_wall();
+	Enable_earth();
+	enable_hwincept();
 	Init_Action();
 	Enable_Speed();
 //	mode.step=0x01;
 	mode.step=0x00;				//初始化mode.step
+	mode.time=giv_sys_time;
 	WriteWorkState();
 
 	Sweep_Level_Set(STOP_ALL);
@@ -31,27 +34,8 @@ void Init_Quit_Charging(void)
 
 void Do_Quit_Chargeing(void)
 {
-#if 0
-	if((power.charge_dc==1))
-		{	//qz add 20180522
-			if(giv_sys_time-mode.time>600000)			//一分钟后没有拔掉直充，重新进入充电模式
-				{
-					stop_rap();
-					Init_Chargeing();
-				}
-			return;
-		}
-
-	//qz add 20180522
-	if((!power.charge_dc)&(!power.charge_seat)&(mode.step==0x00))		//一分钟之内拔掉直充，且无充电座，进入待机
-		{
-			stop_rap();
-			Init_Cease();
-			return;
-		}
-#endif
-
-	#if 1
+	static short tgt_angle=0,anti_tgt_angle;
+	#if 0
 	//if((power.charge_seat==1)&&(mode.step==0x00))
 	if(mode.step==0)
 		{
@@ -67,22 +51,46 @@ void Do_Quit_Chargeing(void)
 
 	switch(mode.step)
 		{
-
+			case 0:
+				if(giv_sys_time-mode.time<2000)
+					return;
+				tgt_angle=Gyro_Data.yaw;
+				anti_tgt_angle=Get_Reverse_Angle(tgt_angle);
+				mode.step++;
 			case 0x01:
 				Speed=HIGH_MOVE_SPEED;
-				if(do_action(4,50*CM_PLUS))
+				if(do_action(4,40*CM_PLUS))
 					{
 						stop_rap();
 						mode.step++;
 					}
 				break;
 			case 0x02:
-				//Init_Cease();
-				//mode.status=1;		//qz add 20180827
-				//Init_Commander();
-				//Init_Cease();
-				Init_First_Sweep();
-				mode.Info_Abort=0;	//qz add 20180316 starting recevie com from NAVI
+#if 0
+				Speed=TURN_SPEED;
+				if(do_action(1,90*Angle_1))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 3:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,50*CM_PLUS))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 4:
+#endif
+				Speed=TURN_SPEED;
+				do_action(2,360*Angle_1);
+				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						Init_First_Sweep(1);
+					}
 				break;
 				
 		}

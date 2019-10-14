@@ -10,8 +10,8 @@ u8 Analysis_StopLeak(short tgt_yaw)
 	if(tgt_yaw==F_Angle_Const)
 		{
 			temp_x=now_gridx;
-			if(temp_x+1>GRID_MAX)
-				temp_x=GRID_MAX;
+			if(temp_x+1>grid.x_area_max)
+				temp_x=grid.x_area_max;
 			else
 				temp_x+=1;
 			
@@ -41,8 +41,8 @@ u8 Analysis_StopLeak(short tgt_yaw)
 	else
 		{
 			temp_x=now_gridx;
-			if(temp_x-1<GRID_MIN)
-				temp_x=GRID_MIN;
+			if(temp_x-1<grid.x_area_min)
+				temp_x=grid.x_area_min;
 			else
 				temp_x-=1;
 
@@ -147,12 +147,6 @@ void Init_LeakSweep(short tgt_yaw)
 			error_code=0;
 		}
 
-#ifdef UV
-	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-		Set_UV();
-	else
-		Reset_UV();
-#endif
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
 	
@@ -183,7 +177,7 @@ void Init_LeakSweep(short tgt_yaw)
 void Do_LeakSweep(void)
 {
 	ACC_DEC_Curve();
-
+	clr_all_hw_effect();
 	//LeakSweep_Bump_Action();
 	Sweep_Bump_Action(1,1);
 	
@@ -229,6 +223,7 @@ void Do_LeakSweep(void)
 
 void Init_Leak_BackSweep(short tgt_yaw)
 {
+	u8 data1;
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化显示***********/
@@ -282,13 +277,6 @@ void Init_Leak_BackSweep(short tgt_yaw)
 			dis_err_code=0;
 			error_code=0;
 		}
-
-#ifdef UV
-	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-		Set_UV();
-	else
-		Reset_UV();
-#endif
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
 #if 1
@@ -316,26 +304,32 @@ void Init_Leak_BackSweep(short tgt_yaw)
 	grid.y_back_last=grid.y;
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
-	if(Analysis_StopBack(motion1.tgt_yaw))
+	data1=Analysis_StopBack(motion1.tgt_yaw);
+	if(data1==1)
 		{
-			//退出回扫
-			TRACE("Analysis Stop back sweep!\r\n");
-			TRACE("Quit Back Sweep in %s\r\n",__func__);
-			//Init_Stop_LeakBack();
-			Init_Stop_BackSweep();
+			{
+				TRACE("Analysis Stop back sweep!\r\n");
+				TRACE("Quit Back Sweep in %s\r\n",__func__);
+				Init_Stop_BackSweep();
+			}
 		}
-
+	else if(data1==2)
+		{
+			mode.step=2;
+		}
 	delay_ms(500);
 }
 
 void Do_Leak_BackSweep(void)
 {
-	s8 now_gridx,now_gridy;
-	u8 turn_dir;
+	s8 now_gridx,now_gridy,ydir;
+	static u8 turn_dir;
 
 	now_gridx=grid.x;now_gridy=grid.y;
+	ydir=Read_Motion_YDir();
 	
 	ACC_DEC_Curve();
+	clr_all_hw_effect();
 	u8 abnormal=Read_Protect();
 	if(mode.abnormity)
 		{
@@ -387,7 +381,7 @@ void Do_Leak_BackSweep(void)
 
 				if((motion1.tgt_yaw==F_Angle_Const))
 					{
-						if((Read_Coordinate_Clean(now_gridx+1,now_gridy))&(now_gridx+1<=GRID_MAX))
+						if((Read_Coordinate_Clean(now_gridx+1,now_gridy))&(now_gridx+1<=grid.x_area_max))
 							{
 								stop_rap();
 								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
@@ -398,25 +392,34 @@ void Do_Leak_BackSweep(void)
 
 				if(motion1.tgt_yaw==B_Angle_Const)
 					{
-						if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=GRID_MIN))
+						if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=grid.x_area_min))
 							{
 								stop_rap();
 								mode.step++;
 							}
 					}
 
-				#if 0
-				//if((coordinate[grid.y][grid.x].clean))
-				if(Read_Coordinate_Clean(grid.x,grid.y))
-					{
-						TRACE("BACK OFF!!!\\r\n::");
-						while(1);
-					}
-				#endif
-				//qz add end
 				break;
-			//qz add 20190307 X坐标超出4M范围的措施
 			case 2:
+				if(ydir>0)
+					{
+						if(now_gridy+1>grid.y_area_max)
+							{
+								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+								Init_Stop_BackSweep();
+								return;
+							}
+					}
+				else if(ydir<0)
+					{
+						if(now_gridy-1<grid.y_area_min)
+							{
+								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+								Init_Stop_BackSweep();
+								return;
+							}
+					}
+				
 				if(!Read_LeftRight())		//需要准备左沿边
 					{
 						turn_dir=2; //左沿边，碰撞向右转
@@ -425,6 +428,9 @@ void Do_Leak_BackSweep(void)
 					{
 						turn_dir=1; //右沿边，碰撞向左转
 					}
+				mode.step++;
+				break;
+			case 3:
 				Speed=TURN_SPEED;
 				if(do_action(turn_dir,100*Angle_1))
 					{
@@ -432,7 +438,7 @@ void Do_Leak_BackSweep(void)
 						mode.step++;
 					}
 				break;
-			case 3:
+			case 4:
 				Speed=TURN_SPEED;
 				if(do_action(3,HORIZON_LENGTH*CM_PLUS))
 					{
@@ -440,7 +446,7 @@ void Do_Leak_BackSweep(void)
 						mode.step++;
 					}
 				break;
-			case 4:
+			case 5:
 				//Init_Pass2LeakSweep();
 				Init_Pass2Sweep();
 				break;

@@ -96,15 +96,34 @@ void Load_LastPoinGrid(POINT_GRID *lastgrid,POINT_GRID *nowgrid)
 
 u8 Init_PathPoint(void)
 {
+	if(path_head!=NULL)
+		{
+			TRACE("path head is exist!!!\r\n");
+			if(path_head->last_point!=NULL)
+				path_head->last_point=NULL;
+			if(path_head->next_point!=NULL)
+				{
+					if(Delete_All_PathPoint())
+						{
+							TRACE("fail in %s!!,Do not use pathpoint!!!\r\n",__func__);
+							motion1.pathpoint_ok=false;
+							return 1;
+						}
+				}
+			return 0;
+		}
+	
 	path_head=(struct PATH_POINT*)malloc(LEN_PATHPOINT);
 	if(path_head==NULL)
 		{
 			TRACE("path head malloc fail!!\r\n");
+			motion1.pathpoint_ok=false;
 			return 1;
 		}
 	path_head->last_point=NULL;
 	path_head->next_point=NULL;
 	path_head->path_grid.data=0;
+	TRACE("path head malloc success!!\r\n");
 //	Init_LastPointGrid();
 	return 0;
 }
@@ -123,13 +142,14 @@ u8 Delete_All_PathPoint(void)
 			q=p->last_point;			//找到上一个节点
 			free(p);					//释放最后一个节点
 			p=q;						//前往上一个节点，准备再次释放
+			p->next_point=NULL;			//			
 		}
 	if(p!=path_head)
 		{
 			TRACE("Delete All PathPoint fail!\r\n");
 			return 1;
 		}
-	p->next_point=NULL;					//现在p是head_point，将其next设置为空
+	path_head->next_point=NULL;					//现在p是head_point，将其next设置为空
 	TRACE("Delete All PathPoint success!\r\n");
 	return 0;
 }
@@ -755,7 +775,11 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("now_gridx=%d gridy=%d\r\n",now_gridx,now_gridy);
 	TRACE("tgt_gridx=%d gridy=%d\r\n",tgt_gridx,tgt_gridy);
-	Delete_All_PathPoint();
+	if(Delete_All_PathPoint())
+		{
+			motion1.pathpoint_ok=false;
+			return 0;
+		}
 //	pointgrid=(POINT_GRID*)malloc(POINTGRID_LEN*100);
 	if(now_gridy<tgt_gridy)
 		{
@@ -816,6 +840,7 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 								{
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
+											motion1.pathpoint_ok=false;
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
 											Delete_All_PathPoint();
 											return 0;
@@ -890,8 +915,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 								{
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
-
+											motion1.pathpoint_ok=false;
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
 											return 0;
 										}
 								}
@@ -922,6 +948,11 @@ u8 Find_PathPoint_Way(s8 tgt_gridx,s8 tgt_gridy)
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 
 	TRACE("Enter in %s...\r\n",__func__);
+	if(!motion1.pathpoint_ok)
+		{
+			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+			return 0;
+		}
 	result=Analysis_PathPoint_NoWall(&now_grid,&tgt_grid);
 	TRACE("result=%d\r\n",result);
 	TRACE("Out %s!\r\n",__func__);
@@ -1143,6 +1174,13 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 	u8 result=0;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
+
+	TRACE("Enter %s..\r\n",__func__);
+	if(!motion1.pathpoint_ok)
+		{
+			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+			return 0;
+		}
 
 	temp_grid.gridx=now_gridx;temp_grid.gridy=now_gridy;
 	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);

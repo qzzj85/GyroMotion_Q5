@@ -24,10 +24,15 @@
 ///////////////qz//////////////////
 #define CLEAN_BIT 		0x01
 #define CLEAN_BIT_MASK	0XFE
+
 #define WALL_BIT		0X02
 #define WALL_BIT_MASK	0XFD
-#define AREA_NO_MASK    0XFC
 #define WALL_CLEAN_BIT	0X03
+
+#define AREA_NO_MASK    0XF8
+
+#define	SEAT_BIT		0x04
+#define	SEAT_BIT_MASK	0xFB
 
 volatile uint32_t last_r, now_r; // 采样周期计数 单位 us
 float hal_r;
@@ -50,19 +55,19 @@ GYRO_BIOS gyro_bios;
 
 void Cal_Grid_Pos(void)
 {
-	int temp_ypos=0-RANGE_MAX;
-	int temp_xpos=0-RANGE_MAX;
-	TRACE("gridy_pos_cnt=%d\r\n",GRIDY_POS_CNT);
-	TRACE("temp_ypos=%d\r\n",temp_ypos);
-	TRACE("temp_xpos=%d\r\n",temp_xpos);
+	int temp_ypos=(short)(motion1.ypos_start)-RANGE_MAX;
+	int temp_xpos=(short)(motion1.xpos_start)-RANGE_MAX;
+//	TRACE("gridy_pos_cnt=%d\r\n",GRIDY_POS_CNT);
+//	TRACE("temp_ypos=%d\r\n",temp_ypos);
+//	TRACE("temp_xpos=%d\r\n",temp_xpos);
 	for(int i=0;i<GRIDY_POS_CNT;i++)
 		{
 			gridy_pos[i]=temp_ypos;
 			gridx_pos[i]=temp_xpos;
 			temp_ypos+=20;
 			temp_xpos+=20;
-			TRACE("gridy_pos[%d]=%d\r\n",i,gridy_pos[i]);
-			TRACE("gridx_pos[%d]=%d\r\n",i,gridx_pos[i]);
+//			TRACE("gridy_pos[%d]=%d\r\n",i,gridy_pos[i]);
+//			TRACE("gridx_pos[%d]=%d\r\n",i,gridx_pos[i]);
 		}
 }
 
@@ -110,6 +115,23 @@ void Cal_xy(void)
 	Gyro_Data.y_pos=Y_pos;
 }
 
+void Reset_XY(void)
+{
+	TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
+	GYRO_RST_0;
+	X_pos=0;Y_pos=0;
+	last_l_all_length=0;last_r_all_length=0;r_length=0;l_length=0;r1=0;
+	old_angle=0;
+	
+	Gyro_Data.x_pos=0;Gyro_Data.y_pos=0;
+	grid.x=0;grid.y=0;
+	l_ring.all_length=0;
+	r_ring.all_length=0;
+	delay_ms(300);
+	GYRO_RST_1;
+	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
+}
+
 void Init_Real_X(void)
 {
 	for(int i=0;i<20;i++)
@@ -140,7 +162,7 @@ void Set_Coordinate_Clean(s8 gridx,s8 gridy)
 		return;
 	if((gridy>grid.y_area_max)|(gridy<grid.y_area_min))
 		return;
-	coordinate[gridy_real][gridx_real]|=motion1.area_num<<2;
+	coordinate[gridy_real][gridx_real]|=motion1.area_num<<3;
 }
 
 void Reset_Coordinate_Clean(s8 xgrid,s8 ygrid)
@@ -199,6 +221,25 @@ u8 Read_Coordinate_Wall(s8 xgrid,s8 ygrid)
 		return 0;
 }
 
+void Set_Coordinate_Seat(s8 xgrid,s8 ygrid)
+{
+	s8 xgrid_real,ygrid_real;
+	xgrid_real=Cal_Real_Grid(xgrid);
+	ygrid_real=Cal_Real_Grid(ygrid);
+	coordinate[ygrid_real][xgrid_real]|=SEAT_BIT;
+}
+
+u8 Read_Coordinate_Seat(s8 xgrid,s8 ygrid)
+{
+	s8 xgrid_real,ygrid_real;
+	xgrid_real=Cal_Real_Grid(xgrid);
+	ygrid_real=Cal_Real_Grid(ygrid);
+	if(coordinate[ygrid_real][xgrid_real]&SEAT_BIT)
+		return 1;
+	else
+		return 0;
+}
+
 u8 Read_Coordinate_Data(s8 xgrid,s8 ygrid)
 {
 	s8 xgrid_real,ygrid_real;
@@ -233,7 +274,7 @@ u8 Read_Coordinate_AreaNo(s8 xgrid,s8 ygrid)
 	xgrid_real=Cal_Real_Grid(xgrid);
 	ygrid_real=Cal_Real_Grid(ygrid);
 	temp_data=coordinate[ygrid_real][xgrid_real]&AREA_NO_MASK;
-	temp_data=temp_data>>2;
+	temp_data=temp_data>>3;
 	return temp_data;
 }
 
@@ -1336,6 +1377,10 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 
 	///////////先进行max min检查///////////////////
 	///////////先进行max min检查///////////////////
+	if((Read_Coordinate_Seat(max_cleanx1,check_gridy1))|(Read_Coordinate_Seat(max_cleanx2,check_gridy2)))
+		{
+			goto LEAK_POINT_MIN_CHECK;
+		}
 	data1=abs(max_cleanx1-max_cleanx2);				//两个相邻Y坐标的X轴方向最大清扫坐标比较
 	if(data1>2)										//如果两个相邻Y坐标的X轴方向最大清扫坐标差距大于2个坐标格（40cm）
 		{
@@ -1426,7 +1471,11 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 						}
 				}
 		}
-
+LEAK_POINT_MIN_CHECK:
+	if((Read_Coordinate_Seat(min_cleanx1,check_gridy1))|(Read_Coordinate_Seat(min_cleanx2,check_gridy2)))
+		{
+			return 0;
+		}
 	data1=abs(min_cleanx1-min_cleanx2);				//两个相邻Y坐标的X轴方向最小清扫坐标比较
 	if(data1>2)										//如果两个相邻Y坐标的X轴方向最小清扫坐标差距大于2个坐标格（40cm）
 		{
@@ -1605,6 +1654,7 @@ u8 Find_Leak_Area(void)
 
 	if(motion1.area_ok)
 		return 0;
+	
 	start_gridy=grid.y;
 	if(start_gridy>grid.y_area_max)
 		start_gridy=grid.y_area_max;
@@ -1736,10 +1786,12 @@ u8 Find_Leak_Area(void)
 													check_point.new_y1=check_gridy;
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy-1;
-													check_point.ydir=1;
+													//check_point.ydir=1;
+													check_point.ydir=0;
 													check_point.ybs_dir=LEFT;
 													check_point.next_tgtyaw=F_Angle_Const;
-													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 													TRACE("point1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;
@@ -1877,10 +1929,12 @@ u8 Find_Leak_Area(void)
 													check_point.new_y1=check_gridy;
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy+1;
-													check_point.ydir=0;
+													//check_point.ydir=0;
+													check_point.ydir=1;
 													check_point.ybs_dir=RIGHT;
 													check_point.next_tgtyaw=F_Angle_Const;
-													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 													TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;																	//发现可进入点								
@@ -2024,6 +2078,12 @@ u8 Get_TurnDir(short tgt_angle)
 void Area_Check(u8 avoid_ybs)
 {
 	TRACE("Enter in %s...\r\n",__func__);
+	if(mode.mode!=SHIFT)
+		{
+			TRACE("mode.mode!=SHIFT!!\r\n");
+			TRACE("set worktime 10!!\r\n");
+			Set_AreaWorkTime(10);
+		}
 	if(Find_Leak_Area())
 		{
 			stop_rap();

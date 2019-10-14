@@ -5,7 +5,7 @@
 ////////////////////////////////////头文件///////////////////
 #include "soft.h"
 
-#define	    E_LOWDOOR				0x100		//普通地面砖大约6~7cm,灰色木地板大约4~5公分,纯黑色大约3公分
+#define	    E_LOWDOOR				100		//普通地面砖大约6~7cm,灰色木地板大约4~5公分,纯黑色大约3公分
 
 //qz add 20180319
 #define 	W_L_LOWDOOR				0x100
@@ -18,10 +18,6 @@
 #define		W_M_HIGHDOOR			0X100
 #define		W_RM_HIGHDOOR			0X50
 #define		W_R_HIGHDOOR			0X50
-
-#define		BUMP_L_CLIFF			1
-#define		BUMP_M_CLIFF			2
-#define		BUMP_R_CLIFF			4
 
 ///////////////////////////////////变量定义//////////////////
 extern WALL_DATA  e_l,e_r,e_m,w_l,w_lm,w_r,w_rm,w_m;  //地检和墙检的数据结构e_lm,e_rm

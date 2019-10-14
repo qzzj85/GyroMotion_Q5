@@ -91,14 +91,6 @@ void Init_Mode(void)
 	mode.abn_time=giv_sys_time;
 	mode.action=0;
 	mode.All_Info_Abort=0;
-	mode.Command_Spd_L=0;
-	mode.Command_Spd_R=0;
-	mode.Command_Last_Spd_L=0;
-	mode.Command_Last_Spd_R=0;
-	mode.Command_Desired_Degree=0;
-	mode.Command_Desired_Positon=0;
-	mode.Command_Desired_radius=0;
-	mode.Command_Desired_Speed=0;
 	mode.Info_Abort=0;
 	mode.time=giv_sys_time;
 	mode.step_mk=0;
@@ -202,30 +194,39 @@ void Action_Mode(void)
 		{    
 /*********************开机待机状态*******************/
 			case CEASE: 
-			switch(mode.sub_mode)
-				{
-					case CEASE:
-						Do_Cease();
-						break;
-					case QUIT_CHARGING:
-						Do_Quit_Chargeing();
-						break;
-					case ERR:
-						Do_Err();
-						break;
-					case SHUTDOWN:		//qz add 20180901
-					case DEAD:
-						Do_Dead();
-						break;
-					case SLEEP:
-						Do_Sleep_My();
-						break;
-				}
+				switch(mode.sub_mode)
+					{
+						case CEASE:
+							Do_Cease();
+							break;
+						case QUIT_CHARGING:
+							Do_Quit_Chargeing();
+							break;
+						case ERR:
+							Do_Err();
+							break;
+						case SHUTDOWN:		//qz add 20180901
+						case DEAD:
+							Do_Dead();
+							break;
+						case SLEEP:
+							Do_Sleep_My();
+							break;
+					}
 			break;
 	  
 	  /*********************找回充座状态*******************/
 			case DOCKING:
-				Do_Docking_My();
+				switch(mode.sub_mode)
+					{
+						case DOCKING:
+							Do_Docking_My();
+							break;
+						case YBS_SUB_RIGHT:
+						case YBS_SUB_LEFT:
+							Do_Docking_YBS();
+							break;
+					}
 			break;
 	  /*********************充电状态*******************/
 			case CHARGEING:
@@ -243,6 +244,9 @@ void Action_Mode(void)
 			case SWEEP:
 				switch (mode.sub_mode)
 					{
+						case SWEEP_FIRST_INIT:
+							Do_FirstInit_Sweep();
+							break;
 						case NORMAL_SWEEP:					//正常直行清扫
 							Do_NormalSweep();
 							break;
@@ -441,21 +445,6 @@ u32  read_bump(void)
 				return 90;//R_BUMP;
 
 	 }	
-     if((up_hw.effect)||(dummy_wall.effect))
-	 {
-			 if(//((up_hw.data & 0x8f) == 0)|| 
-				 (up_hw.data==0xec) || (up_hw.data==0xCC) || 
-			 (up_hw.data==0xdc) || (dummy_wall.effect))
-		 {
-					 if((mode.bump == 0))
-				 {
-						 mode.bump=10;//INFRARED;
-						 mode.step_bp=0;
-						 stop_rap();
-				 }
-				 return 10;//INFRARED;
-		 }
-	 }     
 		 
 #if 1		 
     if((w_l.sign==NEAR)&&(w_l.on==1))
@@ -776,6 +765,8 @@ u8 Read_Protect(void)
 #endif
 
 #ifdef GYRO_BIOS_CHECK
+	if((mode.mode==DOCKING)&((mode.sub_mode!=YBS_SUB_LEFT)&(mode.sub_mode!=YBS_SUB_RIGHT)))
+		return return_data;
 	data1=Gyro_Bios_Check();
 	if(data1)
 		{
@@ -1419,7 +1410,7 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn++;				
 									mode.abn_time=giv_sys_time; //qz add 20181011
 								}
-							if(l_bump.key&lm_bump.key&r_bump.key&rm_bump.key)	//没有碰撞信号后
+							if(l_bump.key&r_bump.key)	//没有碰撞信号后
 								{
 									stop_rap();
 									mode.step_abn=3;
@@ -2484,14 +2475,7 @@ void clr_ram(void)
  mode.step_bp=0;
  mode.abnormity=0;
  mode.step_abn=0;
- mode.times_bp=0;
- mode.angle_wall=0;
- mode.long_wall=0;
-// mode.start_wall=0;
-// mode.muck=0;
  mode.step_mk=0;
-// mode.times_mk=0;
- mode.ybs_sign =0;
 
  mode.time = giv_sys_time;
  mode.bump_flag=false;
@@ -3986,21 +3970,6 @@ void Write_Mode_Backup(void)
 	  #endif
 }
 
-void Init_Mode_My(void)
-{
-	u32 addr=MODE_BACKUP_ADDR;
-	u8 temp_mode;
-	temp_mode=*(vu16*)addr;
-//	if(temp_mode==COMMANDER_x10)
-//		Init_Commander();
-	if(temp_mode==YBS)
-		Init_Right_YBS(0);
-	if(temp_mode==CEASE)
-		Init_Cease();
-	if(temp_mode==DOCKING)
-		Init_Docking();
-}
-
 u8 FAN_Skid_Check(void)
 {
 	if(Fan.flag)
@@ -4171,13 +4140,9 @@ u8 Bump_Fix_Check(void)
 
 	return 0;
 #endif
-	if(Key_Status_Check_Low(&lm_bump))
-		return 1;
 	if(Key_Status_Check_Low(&l_bump))
 		return 1;
 	if(Key_Status_Check_Low(&r_bump))
-		return 1;
-	if(Key_Status_Check_Low(&rm_bump))
 		return 1;
 	else
 		return 0;		//qz add 20180515
@@ -4661,6 +4626,7 @@ void Init_Check_Status(void)
 #ifdef GYRO_PITCH_CHECK
 	Gyro_Data.pitch_check_step=0;
 #endif
+	Init_Gyro_Bios();
 
 	error_code=0;	//qz add 20180522
 	dis_err_code=0;

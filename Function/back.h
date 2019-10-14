@@ -25,5 +25,6 @@ struct BACK_INFO
 void Get_Curr_BackInfo(void);
 u8 Add_BackInfo(void);
 u8 Init_BackHead(void);
+u8 Del_All_BackInfo(void);
 
 #endif

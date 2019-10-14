@@ -18,6 +18,12 @@
 #define RM_BUMP_MASK		0XD
 #define R_BUMP_MASK			0XE
 
+#define	BUMP_LEFT_CLIFF		1
+#define	BUMP_MID_CLIFF		2
+#define	BUMP_RIGHT_CLIFF	3
+#define	BUMP_LM_CLIFF		4
+#define	BUMP_RM_CLIFF		5
+#define	BUMP_ALL_CLIFF		6
 #define BUMP_ONLY_LEFT      50
 #define BUMP_ONLY_LEFTMID   51
 #define BUMP_LEFT_MID       52
@@ -25,6 +31,8 @@
 #define BUMP_ONLY_RIGHTMID  61
 #define BUMP_RIGHT_MID      62
 #define BUMP_MID            70
+
+#define	BUMP_SEAT			99
 
 #define	BUMP_OUTRANGE		100
 #define BUMP_XOUTRANGE		101

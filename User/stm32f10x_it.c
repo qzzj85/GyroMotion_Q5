@@ -50,7 +50,7 @@ RTC闹钟中断(PP2取消):							抢占优先级12,子优先级0
 #ifdef	HW_INT_REC
 #define BIT0_MIN_SAMPLE	14//14//12		//ms
 #define BIT0_MAX_SAMPLE 16//16//17		//ms
-#define BIT1_MIN_SAMPLE 7//6//5		//ms
+#define BIT1_MIN_SAMPLE 6//6//5		//ms
 #define BIT1_MAX_SAMPLE 9//8//9		//ms
 #define START_FRAME_MIN	28
 #define START_FRAME_MAX 32
@@ -210,125 +210,10 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 
 static u8 w_step = 0;
 //======================================================================================
-
-void TIM1_UP_IRQHandler(void)
-{
-	if(TIM_GetITStatus(TIM1,TIM_IT_Update)!=RESET)
-		{
-		}
-	TIM_ClearITPendingBit(TIM1,TIM_IT_Update);
-}
-
-u32 data_temp;
-
-#ifdef MHW_CAPTURE
-void TIM1_CC_IRQHandler(void)
-{
-	if(TIM_GetITStatus(TIM1,TIM_IT_CC2)!=RESET)
-		{
-			if(!GPIO_ReadInputDataBit(GPIOE,RM_HW))		//捕获到下降沿
-				{
-					TIM_OC2PolarityConfig(TIM1, TIM_ICPolarity_Rising);	//设置为上升沿捕获
-					TIM_SetCounter(TIM1, 0);
-				}
-			else										//捕获到上升沿
-				{
-					data_temp=TIM_GetCapture2(TIM1);	//获取低电平时间
-					TIM_OC2PolarityConfig(TIM1, TIM_ICPolarity_Falling); //设置为下降沿捕获
-					if(rm_hw.start)
-						{
-							if((data_temp>=(BIT0_MIN_SAMPLE*100))&&(data_temp<=(BIT0_MAX_SAMPLE*100)))		//'0'
-								{
-									rm_hw.tempdata<<=1;
-									rm_hw.tempdata|=0;
-									rm_hw.bitnumber++;
-								}
-							else if((data_temp>=(BIT1_MIN_SAMPLE*100))&&(data_temp<=BIT1_MAX_SAMPLE*100))		//'1'
-								{
-									rm_hw.tempdata<<=1;
-									rm_hw.tempdata|=1;
-									rm_hw.bitnumber++;
-								}
-
-							//qz add 20180823，抗干扰
-#ifdef INTERFERENCE_ACTION
-							else
-								{
-									rm_hw.tempdata=0;
-									rm_hw.start=0;
-									rm_hw.bitnumber=0;
-								}
-#endif
-							//qz add end
-							if(rm_hw.bitnumber==8)
-							{
-								rm_hw.data=rm_hw.tempdata;
-								rm_hw.tempdata=0;
-								rm_hw.start=0;
-								switch (rm_hw.data)
-									{
-									case RIGHT_SIGN:
-									 rm_hw.effectRight=1;
-									 rm_hw.effect_timeRight=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									case LEFT_SIGN:
-									 rm_hw.effectLeft=1;
-									 rm_hw.effect_timeLeft=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									case LEFT_MID_SIGN:
-									 rm_hw.effectMidLeft=1;
-									 rm_hw.effect_timeMidLeft=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									break;
-									case RIGHT_MID_SIGN:
-									 rm_hw.effectMidRight=1;
-									 rm_hw.effect_timeMidRight=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									case NEAR_SIGN:
-									 rm_hw.effectNear=1;
-									 rm_hw.effect_timeNear=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-#ifdef DOCK_NEAR						
-										case 0x55:
-											rm_hw.effectNear=1;
-											rm_hw.effect_timeNear=giv_sys_time;
-											rm_hw.effect=1;
-											rm_hw.effect_time=giv_sys_time;
-										break;
-#endif
-#ifdef REMOTE		
-										default:
-											Parse_Remote_Signa(&rm_hw);
-										break;
-#endif
-									}
-							}
-
-						}
-					else if((data_temp>=(START_FRAME_MIN*100))&&(data_temp<=(START_FRAME_MAX*100)))
-						{
-									rm_hw.start=1;
-									rm_hw.bitnumber=0;
-						}
-							
-				}
-					
-		}
-	TIM_ClearITPendingBit(TIM1,TIM_IT_CC2);
-}
-#endif
-
 void TIM2_IRQHandler(void)	//	10K 中断
 { 
+	static u8 earth_step=0;
+	u8 temp_data1=0;
 //	if((mode.mode==DOCKING)||(BS_NO_TIME_FLAG))			//如果在小回充模式，降低边扫频率
 //		GPIOA->ODR^=GPIO_Pin_2;
 
@@ -401,9 +286,12 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //			time_speed=true;
 			gyro_check_time=true;
 			coordinate_show=true;
-			Cal_xy();
-			Cal_CoordinateXY();
-			Record_Coordinate_Intime();
+			//if((mode.mode==SWEEP)|(mode.mode==DOCKING)|(mode.mode==SHIFT)|(mode.mode==YBS))
+				{
+					Cal_xy();
+					Cal_CoordinateXY();
+					Record_Coordinate_Intime();
+				}
 			//Cal_Xmaxmin();
 		}			
 		
@@ -445,7 +333,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			action_wall_time=true;
 			spd_acc_flag=true;
 		}
-	
+
 	if((giv_sys_time%3000)==0)
 		{
 //			spd_acc_flag=true;
@@ -466,6 +354,8 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		{
 			Sec=true;
 			led.slow_flag=true;
+			top_time_sec=top_time;
+			top_time=0;
 		}
 	
 	if((giv_sys_time%20000)==0)			//2s
@@ -505,6 +395,60 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			else
 				gyro_cal_flag=false;
 		}
+
+	if((giv_sys_time%1200000)==0)
+		{
+		}
+
+#ifdef EARTH_IN_TIM2	
+	Read_Earth_My();							//	读取地检
+#if 0
+	switch(earth_step)
+		{
+			case 0:
+				if(!mode.status)
+					return;
+				temp_data1=Read_Cliff();
+				if(temp_data1)
+					{
+						mode.bump=temp_data1;
+						mode.step_bp=0;
+						disable_pwm(L_FRONT);
+						disable_pwm(R_FRONT);
+						enable_pwm(L_BACK,1200);
+						enable_pwm(R_BACK,1200);
+						l_rap.ori=BACK;
+						r_rap.ori=BACK;
+						earth_step++;
+					}
+				break;
+			case 1:
+				if(!Read_Cliff())
+					{
+						disable_pwm(L_FRONT);
+						disable_pwm(R_FRONT);
+						disable_pwm(L_BACK);
+						disable_pwm(R_BACK);
+						earth_step=0;
+					}
+				mode.step_bp=0;
+				break;
+		}
+#else
+	if(mode.status)
+		{
+			if(((e_l.sign==FARN)|(e_m.sign==FARN)|(e_r.sign==FARN))&(mode.mode!=DOCKING))
+				{
+					//disable_pwm(L_FRONT);
+					//disable_pwm(R_FRONT);
+					//enable_pwm(L_BACK,1300);
+					//enable_pwm(R_BACK,1300);
+					//l_rap.ori=BACK;
+					//r_rap.ori=BACK;
+				}
+		}
+#endif
+#endif
 }
 //======================================================================================
 //======================================================================================
@@ -787,234 +731,493 @@ void EXTI4_IRQHandler(void)
 *******************************************************************************/
 void EXTI15_10_IRQHandler(void)
 {
-#if 0
-	static u32 rm_hw_time=0,l_hw_time=0;
+	static u32 l_hw_time=0,lm_hw_time=0,lb_hw_time=0,r_hw_time=0,rm_hw_time=0,rb_hw_time=0;
 	u32 sample_time;
-	static u32 r_hw_time,b_hw_time,mm_hw_time;
 	 /////////////右红外中断///////////////
-	 if(EXTI_GetITStatus(EXTI_Line_RHW)!=RESET) 		 
-	 {
-		 if(Read_R_HW())	 //上升沿
-			 {
-				 if(r_hw.start)
-					 {
-						 sample_time=giv_sys_time-r_hw_time;
-						 if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE)) 		 //bit '0'
-							 {
-								 r_hw.tempdata<<=1;
-								 r_hw.tempdata|=0;
-								 r_hw.bitnumber++;
-							 }
-						 else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))	 //bit '1'
-							 {
-								 r_hw.tempdata<<=1;
-								 r_hw.tempdata|=1;
-								 r_hw.bitnumber++;
-							 }
- 
+	if(EXTI_GetITStatus(EXTI_Line_RHW)!=RESET) 	 
+		{
+			if(Read_R_HW())		 //上升沿
+				{
+					if(r_hw.start)
+						{
+							sample_time=giv_sys_time-r_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		 //bit '0'
+								{
+									r_hw.tempdata<<=1;
+									r_hw.tempdata|=0;
+									r_hw.bitnumber++;
+								}
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))  //bit '1'
+								{
+									r_hw.tempdata<<=1;
+									r_hw.tempdata|=1;
+									r_hw.bitnumber++;
+								}
+
 #ifdef INTERFERENCE_ACTION
-						 //qz add 20180823，抗干扰
-						 else
-							 {
-								 r_hw.tempdata=0;
-								 r_hw.start=0;
-								 r_hw.bitnumber=0;
-							 }
+							//qz add 20180823，抗干扰
+							else
+								{
+									r_hw.tempdata=0;
+									r_hw.start=0;
+									r_hw.bitnumber=0;
+								}
 #endif
-						 if(r_hw.bitnumber==8)
-							 {
-								 r_hw.data=r_hw.tempdata;
-								 r_hw.tempdata=0;
-								 r_hw.start=0;
-								 switch (r_hw.data)
-									 {
-									 case RIGHT_SIGN:
-									  r_hw.effectRight=1;
-									  r_hw.effect_timeRight=giv_sys_time;
-									  r_hw.effect=1;
-									  r_hw.effect_time=giv_sys_time;
-									  break;
-									 case LEFT_SIGN:
-									  r_hw.effectLeft=1;
-									  r_hw.effect_timeLeft=giv_sys_time;
-									  r_hw.effect=1;
-									  r_hw.effect_time=giv_sys_time;
-									  break;
-									 case LEFT_MID_SIGN:
-									  r_hw.effectMidLeft=1;
-									  r_hw.effect_timeMidLeft=giv_sys_time;
-									  r_hw.effect=1;
-									  r_hw.effect_time=giv_sys_time;
-									 break;
-									 case RIGHT_MID_SIGN:
-									  r_hw.effectMidRight=1;
-									  r_hw.effect_timeMidRight=giv_sys_time;
-									  r_hw.effect=1;
-									  r_hw.effect_time=giv_sys_time;
-									  break;
-									  case NEAR_SIGN:
-									   r_hw.effectNear=1;
-									   r_hw.effect_timeNear=giv_sys_time;
-									   r_hw.effect=1;
-									   r_hw.effect_time=giv_sys_time;
-									   break;
+							if(r_hw.bitnumber==8)
+								{
+									r_hw.data=r_hw.tempdata;
+									r_hw.tempdata=0;
+									r_hw.start=0;
+									switch (r_hw.data)
+										{
+											case RIGHT_SIGN:
+												r_hw.effectRight=1;
+												r_hw.effect_timeRight=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_SIGN:
+												r_hw.effectLeft=1;
+												r_hw.effect_timeLeft=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_MID_SIGN:
+												r_hw.effectMidLeft=1;
+												r_hw.effect_timeMidLeft=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
+											case RIGHT_MID_SIGN:
+												r_hw.effectMidRight=1;
+												r_hw.effect_timeMidRight=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
+											case NEAR_SIGN:
+												r_hw.effectNear=1;
+												r_hw.effect_timeNear=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												r_hw.effectTop=1;
+												r_hw.effect_timeTop=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+												top_time++;
+											break;
+											case MID_SIGN:
+												r_hw.effectMid=1;
+												r_hw.effect_timeMid=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
 #ifdef DOCK_NEAR						
-									 case 0x55:
-										 r_hw.effectNear=1;
-										 r_hw.effect_timeNear=giv_sys_time;
-										 r_hw.effect=1;
-										 r_hw.effect_time=giv_sys_time;
-										 break;
+											case 0x55:
+												r_hw.effectNear=1;
+												r_hw.effect_timeNear=giv_sys_time;
+												r_hw.effect=1;
+												r_hw.effect_time=giv_sys_time;
+											break;
 #endif
 #ifdef REMOTE		
-									 default:
-										 Parse_Remote_Signa(&r_hw);
-										 break;
+											default:
+												Parse_Remote_Signa(&r_hw);
+											break;
 #endif
- 
-									 }
-							 }
-					 }
-				 else								 //检测引导码
-					 {
-						 sample_time=giv_sys_time-r_hw_time;
-						 if((sample_time>START_FRAME_MIN)&&(sample_time<START_FRAME_MAX))
-							 {
-								 r_hw.start=1;
-								 r_hw.bitnumber=0;
-								 r_hw.tempdata=0;
-							 }
-					 }
-			 }
-		 else										 //下降沿
-			 {
-				 r_hw_time=giv_sys_time;
-			 }
-		 EXTI_ClearITPendingBit(EXTI_Line_RHW);
-	 }
-	 
-	 ///////////////后红外中断//////////////////
-	 if(EXTI_GetITStatus(EXTI_Line_BHW)!=RESET) 		 
-		 {
-		 if(Read_B_HW())	 //上升沿
-			 {
-				   sample_time=giv_sys_time-b_hw_time;
-				   if(b_hw.start)
-					 {
-						 if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE)) 	 //bit '0'
-							 {
-								 b_hw.tempdata<<=1;
-								 b_hw.tempdata|=0;
-								 b_hw.bitnumber++;
-							 }
-						 else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))	 //bit '1'
-							 {
-								 b_hw.tempdata<<=1;
-								 b_hw.tempdata|=1;
-								 b_hw.bitnumber++;
-							 }
-#ifdef INTERFERENCE_ACTION
-						 //qz add 20180823，抗干扰
-						 else
-							 {
-								 b_hw.tempdata=0;
-								 b_hw.start=0;
-								 b_hw.bitnumber=0;
-							 }
-#endif
-						 if(b_hw.bitnumber==8)
-							 {
-								 b_hw.data=b_hw.tempdata;
-								 b_hw.tempdata=0;
-								 b_hw.start=0;
-								 switch (b_hw.data)
-									 {
-										 case RIGHT_SIGN:
-											 b_hw.effectRight=1;
-											 b_hw.effect_timeRight=giv_sys_time;
-											 b_hw.effect=1;
-											 b_hw.effect_time=giv_sys_time;
-											 break;
-										 case LEFT_SIGN:
-											 b_hw.effectLeft=1;
-											 b_hw.effect_timeLeft=giv_sys_time;
-											 b_hw.effect=1;
-											 b_hw.effect_time=giv_sys_time;
-											 break;
-										 case LEFT_MID_SIGN:
-											 b_hw.effectMidLeft=1;
-											 b_hw.effect_timeMidLeft=giv_sys_time;
-											 b_hw.effect=1;
-											 b_hw.effect_time=giv_sys_time;
-										 break;
-										 case RIGHT_MID_SIGN:
-											 b_hw.effectMidRight=1;
-											 b_hw.effect_timeMidRight=giv_sys_time;
-											 b_hw.effect=1;
-											 b_hw.effect_time=giv_sys_time;
-											 break;
-										 case NEAR_SIGN:
-											  b_hw.effectNear=1;
-											  b_hw.effect_timeNear=giv_sys_time;
-											  b_hw.effect=1;
-											  b_hw.effect_time=giv_sys_time;
-											 break;
-#ifdef DOCK_NEAR						
-										 case 0x55:
-										  b_hw.effectNear=1;
-										  b_hw.effect_timeNear=giv_sys_time;
-										  b_hw.effect=1;
-										  b_hw.effect_time=giv_sys_time;
-										 break;
-										 
-#endif
- 
-#ifdef REMOTE
-										 default:
-											 Parse_Remote_Signa(&b_hw);
-											 break;
-#endif
-									 
- 
-									 }
-							 }
-					 }
-				 else								 //检测引导码
-					 {
-						 if((sample_time>START_FRAME_MIN)&&(sample_time<START_FRAME_MAX))
-							 {
-								 b_hw.start=1;
-								 b_hw.bitnumber=0;
-								 b_hw.tempdata=0;
-							 }
-					 }
-			 }
-		 else										 //下降沿
-			 {
-				 b_hw_time=giv_sys_time;
-			 }
-		 EXTI_ClearITPendingBit(EXTI_Line_BHW);
-		 }
- 
-	 if(EXTI_GetITStatus(EXTI_Line_LMHW)!=RESET)		
+
+										}
+								}
+						}
+					else								 //检测引导码
+						{
+							sample_time=giv_sys_time-r_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
+								{
+									r_hw.start=1;
+									r_hw.bitnumber=0;
+									r_hw.tempdata=0;
+								}
+						}
+				}
+			else										 //下降沿
+				{
+					r_hw_time=giv_sys_time;
+				}
+			EXTI_ClearITPendingBit(EXTI_Line_RHW);
+		}
+
+	if(EXTI_GetITStatus(EXTI_Line_RMHW)!=RESET)		 
 		{
-			if(Read_LM_HW())	//上升沿
+			if(Read_RM_HW())		 //上升沿
+				{
+					if(rm_hw.start)
+						{
+							sample_time=giv_sys_time-rm_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE)) 		 //bit '0'
+								{
+									rm_hw.tempdata<<=1;
+									rm_hw.tempdata|=0;
+									rm_hw.bitnumber++;
+								}
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))	 //bit '1'
+								{
+									rm_hw.tempdata<<=1;
+									rm_hw.tempdata|=1;
+									rm_hw.bitnumber++;
+								}
+
+#ifdef INTERFERENCE_ACTION
+							//qz add 20180823，抗干扰
+							else
+								{
+									rm_hw.tempdata=0;
+									rm_hw.start=0;
+									rm_hw.bitnumber=0;
+								}
+#endif
+							if(rm_hw.bitnumber==8)
+								{
+									rm_hw.data=rm_hw.tempdata;
+									rm_hw.tempdata=0;
+									rm_hw.start=0;
+									switch (rm_hw.data)
+										{
+											case RIGHT_SIGN:
+												rm_hw.effectRight=1;
+												rm_hw.effect_timeRight=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_SIGN:
+												rm_hw.effectLeft=1;
+												rm_hw.effect_timeLeft=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_MID_SIGN:
+												rm_hw.effectMidLeft=1;
+												rm_hw.effect_timeMidLeft=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+											case RIGHT_MID_SIGN:
+												rm_hw.effectMidRight=1;
+												rm_hw.effect_timeMidRight=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+											case NEAR_SIGN:
+												rm_hw.effectNear=1;
+												rm_hw.effect_timeNear=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												rm_hw.effectTop=1;
+												rm_hw.effect_timeTop=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+												top_time++;
+											break;
+											case MID_SIGN:
+												rm_hw.effectMid=1;
+												rm_hw.effect_timeMid=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+#ifdef DOCK_NEAR						
+											case 0x55:
+												rm_hw.effectNear=1;
+												rm_hw.effect_timeNear=giv_sys_time;
+												rm_hw.effect=1;
+												rm_hw.effect_time=giv_sys_time;
+											break;
+#endif
+#ifdef REMOTE		
+											default:
+												Parse_Remote_Signa(&rm_hw);
+											break;
+#endif
+
+										}
+								}
+						}
+					else								 //检测引导码
+						{
+							sample_time=giv_sys_time-rm_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
+								{
+									rm_hw.start=1;
+									rm_hw.bitnumber=0;
+									rm_hw.tempdata=0;
+								}
+						}
+				}
+			else										 //下降沿
+				{
+					rm_hw_time=giv_sys_time;
+				}
+			EXTI_ClearITPendingBit(EXTI_Line_RMHW);
+		}
+
+	if(EXTI_GetITStatus(EXTI_Line_RBHW)!=RESET) 	 
+		{
+			if(Read_RB_HW())		 //上升沿
+				{
+					if(rb_hw.start)
+						{
+							sample_time=giv_sys_time-rb_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		 //bit '0'
+								{
+									rb_hw.tempdata<<=1;
+									rb_hw.tempdata|=0;
+									rb_hw.bitnumber++;
+								}
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))  //bit '1'
+								{
+									rb_hw.tempdata<<=1;
+									rb_hw.tempdata|=1;
+									rb_hw.bitnumber++;
+								}
+
+#ifdef INTERFERENCE_ACTION
+							//qz add 20180823，抗干扰
+							else
+								{
+									rb_hw.tempdata=0;
+									rb_hw.start=0;
+									rb_hw.bitnumber=0;
+								}
+#endif
+							if(rb_hw.bitnumber==8)
+								{
+									rb_hw.data=rb_hw.tempdata;
+									rb_hw.tempdata=0;
+									rb_hw.start=0;
+									switch (rb_hw.data)
+										{
+											case RIGHT_SIGN:
+												rb_hw.effectRight=1;
+												rb_hw.effect_timeRight=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_SIGN:
+												rb_hw.effectLeft=1;
+												rb_hw.effect_timeLeft=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_MID_SIGN:
+												rb_hw.effectMidLeft=1;
+												rb_hw.effect_timeMidLeft=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case RIGHT_MID_SIGN:
+												rb_hw.effectMidRight=1;
+												rb_hw.effect_timeMidRight=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case NEAR_SIGN:
+												rb_hw.effectNear=1;
+												rb_hw.effect_timeNear=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												rb_hw.effectTop=1;
+												rb_hw.effect_timeTop=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+											case MID_SIGN:
+												rb_hw.effectMid=1;
+												rb_hw.effect_timeMid=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+#ifdef DOCK_NEAR						
+											case 0x55:
+												rb_hw.effectNear=1;
+												rb_hw.effect_timeNear=giv_sys_time;
+												rb_hw.effect=1;
+												rb_hw.effect_time=giv_sys_time;
+											break;
+#endif
+#ifdef REMOTE		
+											default:
+												Parse_Remote_Signa(&rb_hw);
+											break;
+#endif
+
+										}
+								}
+						}
+					else								 //检测引导码
+						{
+							sample_time=giv_sys_time-rb_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
+								{
+									rb_hw.start=1;
+									rb_hw.bitnumber=0;
+									rb_hw.tempdata=0;
+								}
+						}
+				}
+			else										 //下降沿
+				{
+					rb_hw_time=giv_sys_time;
+				}
+			EXTI_ClearITPendingBit(EXTI_Line_RBHW);
+		}
+	 
+	if(EXTI_GetITStatus(EXTI_Line_LHW)!=RESET)	 
+		{
+			if(Read_L_HW()) 	 //上升沿
+				{
+					if(l_hw.start)
+						{
+							sample_time=giv_sys_time-l_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		 //bit '0'
+								{
+									l_hw.tempdata<<=1;
+									l_hw.tempdata|=0;
+									l_hw.bitnumber++;
+								}
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))  //bit '1'
+								{
+									l_hw.tempdata<<=1;
+									l_hw.tempdata|=1;
+									l_hw.bitnumber++;
+								}
+
+#ifdef INTERFERENCE_ACTION
+							//qz add 20180823，抗干扰
+							else
+								{
+									l_hw.tempdata=0;
+									l_hw.start=0;
+									l_hw.bitnumber=0;
+								}
+#endif
+							if(l_hw.bitnumber==8)
+								{
+									l_hw.data=l_hw.tempdata;
+									l_hw.tempdata=0;
+									l_hw.start=0;
+									switch (l_hw.data)
+										{
+											case RIGHT_SIGN:
+												l_hw.effectRight=1;
+												l_hw.effect_timeRight=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_SIGN:
+												l_hw.effectLeft=1;
+												l_hw.effect_timeLeft=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+											case LEFT_MID_SIGN:
+												l_hw.effectMidLeft=1;
+												l_hw.effect_timeMidLeft=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+											case RIGHT_MID_SIGN:
+												l_hw.effectMidRight=1;
+												l_hw.effect_timeMidRight=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+											case NEAR_SIGN:
+												l_hw.effectNear=1;
+												l_hw.effect_timeNear=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												l_hw.effectTop=1;
+												l_hw.effect_timeTop=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+												top_time++;
+											break;
+											case MID_SIGN:
+												l_hw.effectMid=1;
+												l_hw.effect_timeMid=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+#ifdef DOCK_NEAR						
+											case 0x55:
+												l_hw.effectNear=1;
+												l_hw.effect_timeNear=giv_sys_time;
+												l_hw.effect=1;
+												l_hw.effect_time=giv_sys_time;
+											break;
+#endif
+#ifdef REMOTE		
+											default:
+												Parse_Remote_Signa(&l_hw);
+											break;
+#endif
+
+										}
+								}
+						}
+					else								 //检测引导码
+						{
+							sample_time=giv_sys_time-l_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
+								{
+									l_hw.start=1;
+									l_hw.bitnumber=0;
+									l_hw.tempdata=0;
+								}
+						}
+				}
+			else										 //下降沿
+				{
+					l_hw_time=giv_sys_time;
+				}
+			EXTI_ClearITPendingBit(EXTI_Line_LHW);
+		}
+
+	if(EXTI_GetITStatus(EXTI_Line_LMHW)!=RESET) 	 
+		{
+			if(Read_LM_HW())		 //上升沿
 				{
 					if(lm_hw.start)
 						{
-							sample_time=giv_sys_time-mm_hw_time;
-							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))			//bit '0'
+							sample_time=giv_sys_time-lm_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		 //bit '0'
 								{
 									lm_hw.tempdata<<=1;
 									lm_hw.tempdata|=0;
 									lm_hw.bitnumber++;
 								}
-							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE)) 	//bit '1'
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))  //bit '1'
 								{
 									lm_hw.tempdata<<=1;
 									lm_hw.tempdata|=1;
 									lm_hw.bitnumber++;
 								}
+
+#ifdef INTERFERENCE_ACTION
+							//qz add 20180823，抗干扰
+							else
+								{
+									lm_hw.tempdata=0;
+									lm_hw.start=0;
+									lm_hw.bitnumber=0;
+								}
+#endif
 							if(lm_hw.bitnumber==8)
 								{
 									lm_hw.data=lm_hw.tempdata;
@@ -1027,54 +1230,65 @@ void EXTI15_10_IRQHandler(void)
 												lm_hw.effect_timeRight=giv_sys_time;
 												lm_hw.effect=1;
 												lm_hw.effect_time=giv_sys_time;
-												//if(!rm_hw.effectRight)
-												 {
-													 //rm_hw.effectRight=1;
-													 //lm_hw.effect=1;
-												 }
-												break;
+											break;
 											case LEFT_SIGN:
 												lm_hw.effectLeft=1;
 												lm_hw.effect_timeLeft=giv_sys_time;
 												lm_hw.effect=1;
 												lm_hw.effect_time=giv_sys_time;
-												//if(!rm_hw.effectLeft)
-												 {
-													 //rm_hw.effectLeft=1;
-													 //lm_hw.effect=1;
-												 }
-												break;
-												
+											break;
 											case LEFT_MID_SIGN:
 												lm_hw.effectMidLeft=1;
 												lm_hw.effect_timeMidLeft=giv_sys_time;
 												lm_hw.effect=1;
 												lm_hw.effect_time=giv_sys_time;
-												 //if(!rm_hw.effectLeft)
-												 {
-													 //rm_hw.effectLeft=1;
-													 //lm_hw.effect=1;
-												 }
+											break;
 											case RIGHT_MID_SIGN:
 												lm_hw.effectMidRight=1;
 												lm_hw.effect_timeMidRight=giv_sys_time;
 												lm_hw.effect=1;
 												lm_hw.effect_time=giv_sys_time;
 											break;
- 
 											case NEAR_SIGN:
-												 lm_hw.effectNear=1;
-												 lm_hw.effect_timeNear=giv_sys_time;
-												 lm_hw.effect=1;
-												 lm_hw.effect_time=giv_sys_time;
-												break;
+												lm_hw.effectNear=1;
+												lm_hw.effect_timeNear=giv_sys_time;
+												lm_hw.effect=1;
+												lm_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												lm_hw.effectTop=1;
+												lm_hw.effect_timeTop=giv_sys_time;
+												lm_hw.effect=1;
+												lm_hw.effect_time=giv_sys_time;
+												top_time++;
+											break;
+											case MID_SIGN:
+												lm_hw.effectMid=1;
+												lm_hw.effect_timeMid=giv_sys_time;
+												lm_hw.effect=1;
+												lm_hw.effect_time=giv_sys_time;
+											break;
+#ifdef DOCK_NEAR						
+											case 0x55:
+												lm_hw.effectNear=1;
+												lm_hw.effect_timeNear=giv_sys_time;
+												lm_hw.effect=1;
+												lm_hw.effect_time=giv_sys_time;
+											break;
+#endif
+#ifdef REMOTE		
+											default:
+												Parse_Remote_Signa(&lm_hw);
+											break;
+#endif
+
 										}
 								}
 						}
-					else								//检测引导码
+					else								 //检测引导码
 						{
-							sample_time=giv_sys_time-mm_hw_time;
-							if((sample_time>START_FRAME_MIN)&&(sample_time<START_FRAME_MAX))
+							sample_time=giv_sys_time-lm_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
 								{
 									lm_hw.start=1;
 									lm_hw.bitnumber=0;
@@ -1082,222 +1296,124 @@ void EXTI15_10_IRQHandler(void)
 								}
 						}
 				}
-			else										//下降沿
+			else										 //下降沿
 				{
-					mm_hw_time=giv_sys_time;
+					lm_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_LMHW);
 		}
 
-	///////////左红外中断////////////////
-	if(EXTI_GetITStatus(EXTI_Line_LHW)!=RESET)				
-	   {
-		   if(Read_L_HW())	   //上升沿
-			   {
-					 sample_time=giv_sys_time-l_hw_time;
-					 if(l_hw.start)
-					   {
-						   if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		   //bit '0'
-							   {
-								   l_hw.tempdata<<=1;
-								   l_hw.tempdata|=0;
-								   l_hw.bitnumber++;
-							   }
-						   else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))	   //bit '1'
-							   {
-								   l_hw.tempdata<<=1;
-								   l_hw.tempdata|=1;
-								   l_hw.bitnumber++;
-							   }
+	if(EXTI_GetITStatus(EXTI_Line_LBHW)!=RESET) 	 
+		{
+			if(Read_LB_HW())		 //上升沿
+				{
+					if(lb_hw.start)
+						{
+							sample_time=giv_sys_time-lb_hw_time;
+							if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))		 //bit '0'
+								{
+									lb_hw.tempdata<<=1;
+									lb_hw.tempdata|=0;
+									lb_hw.bitnumber++;
+								}
+							else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))  //bit '1'
+								{
+									lb_hw.tempdata<<=1;
+									lb_hw.tempdata|=1;
+									lb_hw.bitnumber++;
+								}
+
 #ifdef INTERFERENCE_ACTION
-						   //qz add 20180823，抗干扰
-						   else
-							   {
-								   l_hw.tempdata=0;
-								   l_hw.start=0;
-								   l_hw.bitnumber=0;
-							   }
+							//qz add 20180823，抗干扰
+							else
+								{
+									lb_hw.tempdata=0;
+									lb_hw.start=0;
+									lb_hw.bitnumber=0;
+								}
 #endif
-						   if(l_hw.bitnumber==8)
-							   {
-								   l_hw.data=l_hw.tempdata;
-								   l_hw.tempdata=0;
-								   l_hw.start=0;
-								   switch (l_hw.data)
-									   {
-										   case RIGHT_SIGN:
-											l_hw.effectRight=1;
-											l_hw.effect_timeRight=giv_sys_time;
-										   	l_hw.effect=1;
-										   	l_hw.effect_time=giv_sys_time;
+							if(lb_hw.bitnumber==8)
+								{
+									lb_hw.data=lb_hw.tempdata;
+									lb_hw.tempdata=0;
+									lb_hw.start=0;
+									switch (lb_hw.data)
+										{
+											case RIGHT_SIGN:
+												lb_hw.effectRight=1;
+												lb_hw.effect_timeRight=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
 											break;
-										   case LEFT_SIGN:
-											l_hw.effectLeft=1;
-											l_hw.effect_timeLeft=giv_sys_time;
-										   	l_hw.effect=1;
-										   	l_hw.effect_time=giv_sys_time;
+											case LEFT_SIGN:
+												lb_hw.effectLeft=1;
+												lb_hw.effect_timeLeft=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
 											break;
-										   case LEFT_MID_SIGN:
-											l_hw.effectMidLeft=1;
-											l_hw.effect_timeMidLeft=giv_sys_time;
-										   	l_hw.effect=1;
-										   	l_hw.effect_time=giv_sys_time;
-										   break;
-										   case RIGHT_MID_SIGN:
-										   	l_hw.effectMidRight=1;
-											l_hw.effect_timeMidRight=giv_sys_time;
-										    l_hw.effect=1;
-											l_hw.effect_time=giv_sys_time;
+											case LEFT_MID_SIGN:
+												lb_hw.effectMidLeft=1;
+												lb_hw.effect_timeMidLeft=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
+											break;
+											case RIGHT_MID_SIGN:
+												lb_hw.effectMidRight=1;
+												lb_hw.effect_timeMidRight=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
 											break;
 											case NEAR_SIGN:
-											 l_hw.effectNear=1;
-											 l_hw.effect_timeNear=giv_sys_time;
-											 l_hw.effect=1;
-											 l_hw.effect_time=giv_sys_time;
-											 break;
+												lb_hw.effectNear=1;
+												lb_hw.effect_timeNear=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
+											break;
+											case TOP_SIGN:
+												lb_hw.effectTop=1;
+												lb_hw.effect_timeTop=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
+											break;
+											case MID_SIGN:
+												lb_hw.effectMid=1;
+												lb_hw.effect_timeMid=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
+											break;
 #ifdef DOCK_NEAR						
-										 case 0x55:
-											 l_hw.effectNear=1;
-											 l_hw.effect_timeNear=giv_sys_time;
-											 l_hw.effect=1;
-											 l_hw.effect_time=giv_sys_time;
-										 break;
+											case 0x55:
+												lb_hw.effectNear=1;
+												lb_hw.effect_timeNear=giv_sys_time;
+												lb_hw.effect=1;
+												lb_hw.effect_time=giv_sys_time;
+											break;
 #endif
 #ifdef REMOTE		
-										default:
-											Parse_Remote_Signa(&l_hw);
-										break;
+											default:
+												Parse_Remote_Signa(&lb_hw);
+											break;
 #endif
 
-									   }
-							   }
-					   }
-				   else 							   //检测引导码
-					   {
-						   if((sample_time>START_FRAME_MIN)&&(sample_time<START_FRAME_MAX))
-							   {
-								   l_hw.start=1;
-								   l_hw.bitnumber=0;
-								   l_hw.tempdata=0;
-							   }
-					   }
-			   }
-		   else 									   //下降沿
-			   {
-				   l_hw_time=giv_sys_time;
-			   }
-		   EXTI_ClearITPendingBit(EXTI_Line_LHW);
-	   }
-
-
-#ifndef MHW_CAPTURE
- if(EXTI_GetITStatus(EXTI_Line_RMHW)!=RESET)			
- 	{
- 		if(Read_RM_HW())		//上升沿
- 			{
- 				if(rm_hw.start)
- 					{
- 						sample_time=giv_sys_time-rm_hw_time;
-						if((sample_time>=BIT0_MIN_SAMPLE)&&(sample_time<=BIT0_MAX_SAMPLE))			//bit '0'
-							{
-								rm_hw.tempdata<<=1;
-								rm_hw.tempdata|=0;
-								rm_hw.bitnumber++;
-							}
-						else if((sample_time>=BIT1_MIN_SAMPLE)&&(sample_time<=BIT1_MAX_SAMPLE))		//bit '1'
-							{
-								rm_hw.tempdata<<=1;
-								rm_hw.tempdata|=1;
-								rm_hw.bitnumber++;
-							}
-
-#ifdef INTERFERENCE_ACTION
-						//qz add 20180823，抗干扰
-						else
-							{
-								rm_hw.tempdata=0;
-								rm_hw.start=0;
-								rm_hw.bitnumber=0;
-							}
-#endif
-						if(rm_hw.bitnumber==8)
-							{
-								rm_hw.data=rm_hw.tempdata;
-								rm_hw.tempdata=0;
-								rm_hw.start=0;
-								switch (rm_hw.data)
-									{
-									case RIGHT_SIGN:
-									 rm_hw.effectRight=1;
-									 rm_hw.effect_timeRight=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									case LEFT_SIGN:
-									 rm_hw.effectLeft=1;
-									 rm_hw.effect_timeLeft=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									case LEFT_MID_SIGN:
-									 rm_hw.effectMidLeft=1;
-									 rm_hw.effect_timeMidLeft=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									break;
-									case RIGHT_MID_SIGN:
-									 rm_hw.effectMidRight=1;
-									 rm_hw.effect_timeMidRight=giv_sys_time;
-									 rm_hw.effect=1;
-									 rm_hw.effect_time=giv_sys_time;
-									 break;
-									 case NEAR_SIGN:
-									  rm_hw.effectNear=1;
-									  rm_hw.effect_timeNear=giv_sys_time;
-									  rm_hw.effect=1;
-									  rm_hw.effect_time=giv_sys_time;
-									  break;
-#ifdef DOCK_NEAR						
-										case 0x55:
-											rm_hw.effectNear=1;
-											rm_hw.effect_timeNear=giv_sys_time;
-											rm_hw.effect=1;
-											rm_hw.effect_time=giv_sys_time;
-										break;
-#endif
-#ifdef REMOTE		
-										default:
-											Parse_Remote_Signa(&rm_hw);
-										break;
-#endif
-
-									}
-							}
- 					}
-				else								//检测引导码
-					{
-						sample_time=giv_sys_time-rm_hw_time;
-						if((sample_time>START_FRAME_MIN)&&(sample_time<START_FRAME_MAX))
-							{
-								rm_hw.start=1;
-								rm_hw.bitnumber=0;
-								rm_hw.tempdata=0;
-							}
-					}
- 			}
-		else										//下降沿
-			{
-				rm_hw_time=giv_sys_time;
-			}
-		EXTI_ClearITPendingBit(EXTI_Line_RMHW);
- 	}
-#endif
-#endif
-
-	if(EXTI_GetFlagStatus(EXTI_Line10)!=RESET)			//左碰撞
-		{
-			EXTI_ClearITPendingBit(EXTI_Line10);
-			key_wakeup_flag=true;
+										}
+								}
+						}
+					else								 //检测引导码
+						{
+							sample_time=giv_sys_time-lb_hw_time;
+							if((sample_time>=START_FRAME_MIN)&&(sample_time<=START_FRAME_MAX))
+								{
+									lb_hw.start=1;
+									lb_hw.bitnumber=0;
+									lb_hw.tempdata=0;
+								}
+						}
+				}
+			else										 //下降沿
+				{
+					lb_hw_time=giv_sys_time;
+				}
+			EXTI_ClearITPendingBit(EXTI_Line_LBHW);
 		}
 }
 //======================================================================================
@@ -1438,6 +1554,11 @@ void EXTI9_5_IRQHandler(void)
 #endif
 				}
 		}
+
+	 if(EXTI_GetFlagStatus(EXTI_Line8)!=RESET) 		
+		{
+			EXTI_ClearITPendingBit(EXTI_Line8);
+	 	}
 }
 //======================================================================================
 //======================================================================================

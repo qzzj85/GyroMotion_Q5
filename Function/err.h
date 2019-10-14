@@ -43,6 +43,7 @@
 #define	SEND_ERROR_DANGER		0X002A
 #define SEND_ERROR_NODEMALLOC	0X002B
 #define SEND_ERROR_PATHMALLOC	0X002C
+#define	SEND_ERROR_BACKMALLOC	0x002D
 
 ///////////////////////È«¾Öº¯Êý////////////////////////////////////		 
 void Init_Err(void); 

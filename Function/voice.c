@@ -4,6 +4,7 @@
 
 u32 voice_time=0;
 u8 voice_level;
+bool voice_ok=true;
 
 struct node
 {
@@ -14,10 +15,26 @@ struct node
 struct node *voice_head;
 
 
-void Init_Voice_Head(void)
-{
+u8 Init_Voice_Head(void)
+{	
+	if(voice_head!=NULL)
+		{
+			TRACE("voice head is exist!!\r\n");
+			if(voice_head->next!=NULL)
+				{
+					Del_All_VoiceNode();
+				}
+			return 0;
+		}
 	voice_head=(struct node*)malloc(LEN);
+	if(voice_head==NULL)
+		{
+			TRACE("voice head malloc fail!!\r\n");
+			return 1;
+		}
+	TRACE("voice head init ok!!\r\n");
 	voice_head->next=NULL;
+	return 0;
 }
 
 void Send_Voice(u8 data)
@@ -26,6 +43,9 @@ void Send_Voice(u8 data)
 	if((Dis_Hour>22)|(Dis_Hour<6))
 		return;
 #endif
+	if(!voice_ok)
+		return;
+
 	struct node *p,*q;
 	p=(struct node*)malloc(LEN);
 	q=voice_head;
@@ -46,19 +66,23 @@ void Del_Node(void)
 	free(p);
 }
 
-void Del_AllNode(void)
+void Del_All_VoiceNode(void)
 {
 	if(voice_head->next==NULL)
 		return;
-	struct node *p=voice_head;
+	struct node *p,*q;
 	while(voice_head->next!=NULL)
 		{
 			p=voice_head;
 			while(p->next!=NULL)
-				p=p->next;
+				{
+					q=p;
+					p=p->next;
+				}
 			free(p);
+			q->next==NULL;
 		}
-	
+	TRACE("Del all voicenode success!!!\r\n");	
 }
 
 #ifdef ONE_LINE_VOICE
@@ -369,7 +393,8 @@ void delay_100us(u32 delay_time)
 
 void Init_Voice(void)
 {
-	Init_Voice_Head();
+	if(Init_Voice_Head())
+		voice_ok=false;
 	voice_level=Read_Voice_Level();
 #ifdef DEBUG_INIT
 	TRACE("voice_level=0x%x\r\n",voice_level);

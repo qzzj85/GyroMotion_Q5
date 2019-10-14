@@ -36,6 +36,21 @@ output:
 ---------------------------------------------*/
 u8 Creat_AreaNodeList(void)
 {
+	if(head_node!=NULL)
+		{
+			TRACE("head_node is exist!!\r\n");
+			if(head_node->last_node!=NULL)
+				head_node->last_node==NULL;
+			if(head_node->next_node!=NULL)
+				{
+					if(Del_All_AreaNode())
+						{
+							TRACE("can't del all areanode!!\r\n");
+							return 1;
+						}
+				}
+			return 0;
+		}
 	head_node=(struct AREA_NODE*)malloc(NODE_LEN);
 //	curr_node=(struct AREA_NODE*)malloc(NODE_LEN);
 	if(head_node==NULL)
@@ -64,18 +79,21 @@ struct AREA_NODE* Return_CurrNode(void)
 
 u8 Add_AreaNode_End(void)
 {
-	struct AREA_NODE *p;
+	struct AREA_NODE *p,*q;
 	p=(struct AREA_NODE*)malloc(NODE_LEN);
 	if(p==NULL)
 		{
 			TRACE("Area Node Dynamic memory allocation failure!!!\r\n");
 			return 1;
 		}
+	
+	q=head_node;
+	while(q->next_node!=NULL)
+		q=q->next_node;
+		
 	p->area_num=motion1.area_num;
 	p->exit_area_num=motion1.exit_area_num;
 	p->clean=false;
-	p->last_node=curr_node;
-	p->next_node=NULL;
 	p->gridx_sweep_start=grid.x_sweep_start;
 	p->gridy_sweep_start=grid.y_sweep_start;
 	p->y_acc=motion1.y_acc;
@@ -85,6 +103,12 @@ u8 Add_AreaNode_End(void)
 	p->ymin_ok=motion1.ymin_ok;
 	p->xmax_ok=motion1.xmax_ok;
 	p->xmin_ok=motion1.xmin_ok;
+	
+	//p->last_node=curr_node;
+	q->next_node=p;
+	p->last_node=q;
+	p->next_node=NULL;
+	
 	curr_node=p;
 	TRACE("Add a AreaNode complete!!\r\n");
 	return 0;
@@ -103,6 +127,32 @@ u8 Del_AreaNode_End(void)
 	free(p);										//删除指针
 	curr_node->next_node=NULL;						//当前指针的下一指针指向空
 	TRACE("Del a AreaNode complete!!\r\n");
+	return 0;
+}
+
+u8 Del_All_AreaNode(void)
+{
+	struct AREA_NODE *p,*q;
+	p=head_node;
+//	TRACE("Enter in Delete All PathPoint!!\r\n");
+	while(p->next_node!=NULL)			//先去到最后一个节点
+		{
+			p=p->next_node;
+		}
+	while(p->last_node!=NULL)			//再判断最后一个节点是否path_head
+		{
+			q=p->last_node;				//找到上一个节点
+			free(p);					//释放最后一个节点
+			p=q;						//前往上一个节点，之前的上一个节点已经是最后一个节点，准备再次释放
+			p->next_node=NULL;			//			
+		}
+	if(p!=head_node)
+		{
+			TRACE("Delete All AreaNode fail!\r\n");
+			return 1;
+		}
+	head_node->next_node=NULL; 				//现在p是head_point，将其next设置为空
+	TRACE("Delete All AreaNode success!\r\n");
 	return 0;
 }
 
@@ -245,4 +295,16 @@ u8 Set_CurrNode_NewAreaInfo(bool area_ok,u8 num)
 				break;
 		}
 	return 0;
+}
+
+u8 Set_Curr_AllNewAreaOK(void)
+{
+	motion1.ymax_ok=true;
+	motion1.ymin_ok=true;
+	motion1.xmax_ok=true;
+	motion1.xmin_ok=true;
+	curr_node->ymax_ok=motion1.ymax_ok;
+	curr_node->ymin_ok=motion1.ymin_ok;
+	curr_node->xmax_ok=motion1.xmax_ok;
+	curr_node->xmin_ok=motion1.xmin_ok;
 }

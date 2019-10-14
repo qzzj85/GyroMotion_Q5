@@ -47,17 +47,17 @@
 #define		MB_OC_CHECK				1					//中扫过电流检查
 #define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
 #define		SB_FIX_CHECK			1					//边扫缠绕检查
-//#define	CLIFF_ENABLE			1					//地检悬崖检查
 #define		GYRO_TICK_CHECK			1					//惯导数据检查,5s内未接到收据,判定错误
 //#define	WALL_EARTH_ERROR_CHECK	1					//墙地检异常检测(比如没插)
 #endif
 #define		GYRO_BIOS_CHECK			1
+#define		CLIFF_ENABLE			1					//地检悬崖检查
 
 #define 	SLAM_CTL_FAN			1
 #define 	YBS_BLACK				1					//沿边时黑色墙体处理
 #define		PWRCAP_CAL				1					//电流计电量计算
 //#define 	OBSTACLE_CURRENT_CHECK	1					//过障时,电流会增加,过去不处理
-//#define	 	YBS_AVOID_SEAT			1				//沿边充电座避障
+#define	 	YBS_AVOID_SEAT			1				//沿边充电座避障
 #define		YBS_SEAT_REPROT			1					//延边时发现充电座上报标志
 #define		YBS_DIS_RESTORE			1					//沿边固定距离增大以后自动回复
 //define	COMMANDER_SEAT_REPORT	1					//命令模式下发现充电座上报标志
@@ -71,7 +71,7 @@
 #define		DC_NOBAT_RUN			1					//无电池,DC直插的直行
 #define		FREE_SKID_INDEP_ACC		1					//使用直行时间累加的方法判断独立万向轮打滑
 #define		NEW_PWR_CAL				1					//使用2600MAH初始化电池及电量计算方法
-#define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
+//#define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
 #define		COMMAND_CLIFF_ACTION	1					//新悬崖规避动作
 //#define		REMOTE					1				//使用遥控器功能
 #define		REPEAT_DOCK				1					//再接续回充功能
@@ -93,15 +93,16 @@
 //#define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
 #define		RING_PWM_CTL			1					//轮子PWM切断控制
-//#define		GYRO_CAL				1				//惯导校准代码
+#define		GYRO_CAL				1				//惯导校准代码
 //#define		GYRO_COMPENSATION		1					//惯导角度补偿
-#define		MILE_COMPENSATION		1					//里程计补偿
+//#define		MILE_COMPENSATION		1					//里程计补偿
 //#define		STOP_SPD_CNT			1
-
+#define		TEST_ONESTEP			1
+#define		EARTH_IN_TIM2			1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			2
+#define		CORRECT_VERSION			3
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -326,6 +327,7 @@
 #define	BACK_SWEEP		0XF0
 #define	STOP_BACKSWEEP 	0XEF
 #define PASS2INIT		0XEE
+#define	SWEEP_FIRST_INIT	0XED
 
 
 #define SHIFTPOINT1		0XD0
@@ -543,17 +545,7 @@ QZ
 Q5样机
 左右轮周长：194.68mm
 传动比:49.9
-码盘：16
 轮厚：14.8
-
-轮子转一圈的脉冲数：16*49.9*2=1596.8
-一个脉冲的长度：194.68/1596.8=0.1219188mm
-行走1mm脉冲：8.202180
-行走1cm脉冲：82.021805
-行走1M：8202.180468
-两轮间距：216mm
-旋转1度脉冲：216*3.141592/360/0.1219188=15.460746
-
 码盘：8
 轮子转一圈的脉冲数：8*49.9*2=798.4
 一个脉冲的长度：194.68/798.4=0.243838mm
@@ -579,7 +571,7 @@ Q5样机
 #define CM_PLUS 		41.010835//82.021805		//QZ ADD
 #define METER_PLUS 		4101.083506//8202.180468	//QZ ADD
 #define MAX_SPEED 		1600 			//qz 定义最大速度,约305mm/s
-#define	RING_RANGE		216				//两轮间距235mm
+#define	RING_RANGE		216				//两轮间距216mm
 #define	LENGTH_CAL		6858		//速度的平方直接除以LENGTH_CAL，为矫正长度。LENGTH_CAL=5.9461*2*2365*PULSE_LENGTH
 
 #define 	Angle_1 		7.730359//15.460746
@@ -702,55 +694,54 @@ typedef enum
 
 typedef struct             //墙检地检的数据结构	//红外数据结构?  QZ
 {
-  unsigned 		char  	(*read_io)();
-  unsigned 		char   	data;	   //红外接收的数据
-  unsigned 		int  		time;	   //接收开始的时间
-  unsigned 		char   	tempdata; //临时接收的数据
-  unsigned 		char   	tempbit ;	   //采样的当前位的值
-  unsigned 		char   	bitnumber;	   //红外接收位
-  unsigned 		char   	start;  //红外信号数据开始标志
+	unsigned 		char  	(*read_io)();
+	unsigned 		char   	data;	   //红外接收的数据
+	unsigned 		int  		time;	   //接收开始的时间
+	unsigned 		char   	tempdata; //临时接收的数据
+	unsigned 		char   	tempbit ;	   //采样的当前位的值
+	unsigned 		char   	bitnumber;	   //红外接收位
+	unsigned 		char   	start;  //红外信号数据开始标志
 	volatile    unsigned int   	sign;	   //红外接收到的标志
 	volatile    unsigned int  	effect_time;  //红外有效时间
 	volatile    unsigned int  	effect;       //红外有效
-	
+
 	//hzh
 	//其实sign并没有用到
-	  volatile	  unsigned int	  effectTop;
+	volatile	  unsigned int	  effectTop;
 	volatile	unsigned int	  signTop;
 	volatile	unsigned int	  effect_timeTop;
-	
+
 	volatile	unsigned int	effectSignal;//用于前接收头
 	volatile	unsigned int	  effect_timeSignal;
 	unsigned	char			Cnt_fallRise;
-	
-	  volatile	  unsigned int	  effectLeft;
-	  volatile	  unsigned int	  effect_timeLeft;
-	  
-	  
-	  volatile	  unsigned int	  effectRight;
-	  volatile	  unsigned int	  effect_timeRight;
-	  
-	  volatile	  unsigned int	  effectMid;
-	  volatile	  unsigned int	  effect_timeMid;
-	  
-	  volatile	  unsigned int	  effectTopReal;
-	  volatile	  unsigned int	  effect_timeTopReal;
 
-	  volatile	  unsigned int	  effectNear;
-	  volatile	  unsigned int	  effect_timeNear;
+	volatile	  unsigned int	  effectLeft;
+	volatile	  unsigned int	  effect_timeLeft;
 
-	  volatile	  unsigned int    effectMidLeft;
-	  volatile    unsigned int    effect_timeMidLeft;
 
-	  volatile    unsigned int    effectMidRight;
-	  volatile    unsigned int    effect_timeMidRight;
-	  
-	  u16 flag;
+	volatile	  unsigned int	  effectRight;
+	volatile	  unsigned int	  effect_timeRight;
 
-	  RECE_IR	rece_ir;		//qz add 20180817
+	volatile	  unsigned int	  effectMid;
+	volatile	  unsigned int	  effect_timeMid;
 
-	  u8 rece_cnt;
-	
+	volatile	  unsigned int	  effectTopReal;
+	volatile	  unsigned int	  effect_timeTopReal;
+
+	volatile	  unsigned int	  effectNear;
+	volatile	  unsigned int	  effect_timeNear;
+
+	volatile	  unsigned int    effectMidLeft;
+	volatile    unsigned int    effect_timeMidLeft;
+
+	volatile    unsigned int    effectMidRight;
+	volatile    unsigned int    effect_timeMidRight;
+
+	u16 flag;
+
+	RECE_IR	rece_ir;		//qz add 20180817
+
+	u8 rece_cnt;
 }INFR_DATA;
 typedef struct             //车轮速度的数据结构
 { 
@@ -912,71 +903,26 @@ unsigned int angle;		//机器的角度
 
 typedef struct		//机器系统的工作状态
 {
- bool speed_up;
- bool factory;				//厂测状态qz add 20181024
- bool factory_burnning;		//厂测跑机状态qz add 20181024
- u8 factory_tst_item;		//qz add 20181107
- unsigned char  mode ;	   //机器的运行模式  0：静止模式；1：扫地模式；2：自动回充模式；3；遥控模式	4:出错模式
- unsigned char  sub_mode;	//子模式，0x01:cease,0xfe:quit_charge,0xff：err
-// unsigned char  premode;   //hzh   记下【停止/启动按键】按下前的模式，进入cease模式后再按【启动】就进入之前的模式
- unsigned int action;		//动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线
-unsigned char  fangxiang;  // 0 左转； 1右转
-//////////// unsigned char  sign;       //动作标志 
-//////////// unsigned char  *road;		//路径指针
+	bool 		speed_up;
+	bool 		factory;				//厂测状态qz add 20181024
+	bool 		factory_burnning;		//厂测跑机状态qz add 20181024
+	bool 		bump_flag; 				   //qz add for bleamn
+
+	u8 			factory_tst_item;		//qz add 20181107
+	u8 		 	mode ;	   //机器的运行模式  0：静止模式；1：扫地模式；2：自动回充模式；3；遥控模式	4:出错模式
+	u8  		sub_mode;	//子模式，0x01:cease,0xfe:quit_charge,0xff：err
+	u8  		step;		//路径执行的步骤
+	u8 			step_abn;    //异常时的步骤
+	u8			step_bp;	//碰撞时的步骤标志
+	u8			step_mk;	//多垃圾清扫步骤
+	u8	 		last_bump;
+	u8 			Info_Abort;			//qz add中止接收指令，比如碰撞后退或退出充电座时,20180919修正为只速度屏蔽
+	u8 			All_Info_Abort;		//qz add 20180919，屏蔽所有指令
+	u8 			last_mode;			//qz add上一次的模式
+	u8 			last_sub_mode;
+	u8 			test_step;	
 	
- unsigned int time;       //动作的起始时间
- unsigned int sleep_time;
- unsigned int init_mode_time;	//qz add 20180814
-// unsigned int run_time;   //扫地时需要运行时间
- unsigned char  step;		//路径执行的步骤
- unsigned int  abnormity;  //异常号码  0表示没有异常 //QZ:16:中扫电流过大,19:左轮不动,20:右轮不动,22:左轮离地,23:右轮离地,31:右轮电流,32:左轮电流
- //unsigned char *road_abn;   //异常使用的路径
- unsigned char step_abn;    //异常时的步骤
- unsigned int bump ;      //碰撞的标志 //QZ:1:左地检,2:左中地检,3:右中地检,4:右地检,5:左碰撞,6:右碰撞,7:左墙检靠近墙,
- 									//8:左中墙检靠近墙,9:中墙检,10:顶红外或虚拟,14:右墙检,15:右中墙检,90:双碰撞,
- bool bump_flag;					//qz add for bleamn
- u8   last_bump;
- unsigned char  step_bp;    //碰撞时的步骤标志
- unsigned char  times_bp;   //碰撞的次数
- unsigned int angle_wall; //墙检的角度
- unsigned int long_wall;  //墙检的距离
- //unsigned char  start_wall; //墙检开始
-// unsigned char  muck;       //多垃圾清扫路径开始
- unsigned char  step_mk;    //多垃圾清扫步骤
-// unsigned char  times_mk;   //垃圾检测时连续左转次数
- unsigned char  ybs_sign;   //沿边扫标志
-// unsigned char  step_yaokong; // 在遥控时的步骤
- unsigned char sum_bump;    //在累计的碰撞次数。由ACTION_BUMP()函数和DO_SWEEP()函数修改和使用。
- 
- 
- 
- uint8_t 	Command_Running_Flag;
- uint8_t 	Command_Finish_Answer_Flag;
- int32_t 	Command_Desired_Positon;
- uint16_t Command_Desired_Speed;
- int16_t 	Command_Desired_Degree;
- int16_t 	Command_Desired_radius;
-// uint16_t Command_Motion_Type;	//QZ:0x01:原地旋转,0x02:圆周运动,0x05:直线行走,0xA0:SPEED RUN
- 
- 
- 
- int16_t Command_Spd_L;
- int16_t Command_Spd_R;
-
- 
- int16_t Command_Last_Spd_L;
- int16_t Command_Last_Spd_R;
-
-
- u32 bump_time;
- u32 abn_time;			//qz add 20181011
-// u8 wall_peng;
-
- u8 Info_Abort;			//qz add中止接收指令，比如碰撞后退或退出充电座时,20180919修正为只速度屏蔽
- u8 All_Info_Abort;		//qz add 20180919，屏蔽所有指令
- u8 last_mode;			//qz add上一次的模式
- u8 last_sub_mode;
- u8 status;		//qz add 20180422，扫地机状态，SLAM下发“开始清扫后置1,停止清扫后清0，进入异常状态后，也会清0”
+	u8 			status;		//qz add 20180422，扫地机状态，SLAM下发“开始清扫后置1,停止清扫后清0，进入异常状态后，也会清0”
                 //底盘会用这个status来判断预约时间到了以后，需不需要打开预约灯
                 /*status,0:停止中,机器处于非工作状态,
                          1:规划打扫
@@ -985,17 +931,18 @@ unsigned char  fangxiang;  // 0 左转； 1右转
                          4:重点打扫
 
                          5:预约打扫
-                         6:回充
-                */
-// u8 (*fun)();	//qz add 20180522附带函数，在这里主要是用于不同模式的碰撞读取函数
-// u8 slam_report;//qz add 20180601向SLAM上传数据标志，1，不上传，0，上传
- u8 test_item;
- u8 sub_tst_item;
- u8 test_step;
- u32 test_dis_data;
- u8 last_outbump;
- s8 out_grid[30];
- u8 out_grid_cnt;
+                         6:回充*/
+	u32 		action;		//动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线	
+	u32 		time;       //动作的起始时间
+	u32 		init_mode_time;	//qz add 20180814
+	u32  		abnormity;  //异常号码  0表示没有异常 //QZ:16:中扫电流过大,19:左轮不动,20:右轮不动,22:左轮离地,23:右轮离地,31:右轮电流,32:左轮电流
+	u32 		bump ;      //碰撞的标志 //QZ:1:左地检,2:左中地检,3:右中地检,4:右地检,5:左碰撞,6:右碰撞,7:左墙检靠近墙,
+ 									//8:左中墙检靠近墙,9:中墙检,10:顶红外或虚拟,14:右墙检,15:右中墙检,90:双碰撞,
+
+	u32 		last_outbump;
+	u32 		bump_time;
+	u32 		abn_time;			//qz add 20181011
+
 }MODE;
 
 typedef struct
@@ -1034,44 +981,47 @@ typedef struct					//坐标格信息结构体
 
 typedef struct 					//清扫结构体
 {
-	bool leakon;				//机器当前是NORAML清扫还是LEAK清扫，false:正常清扫，true:漏扫清扫
-	bool area_ok;				//当前区域清扫检查是否完成，如果清扫检查完毕，以后不再检查漏扫
-	bool ymax_ok;						//YMAX新区域检查完成标志
-	bool ymin_ok;						//YMIN新区域检查完成标志
-	bool xmax_ok;						//XMAX新区域检查完成标志
-	bool xmin_ok;						//XMIN新区域检查完成标志
-	bool repeat_sweep;			//重复扫标志，true:重复扫，false：无需要，沿边出现空旷区域时重复扫
-	bool repeat_sweep_abort;
-	bool leftright_abort;
-	u8 back_sweep;				//回扫标志，true:回扫,false:正常扫
-	u8 leftright;				//左右沿边标志，0：左沿边，1：右沿边
-	u8 y_acc;					//正常清扫时Y轴增长方向，0：负方向，1：正方向，2：双方向
-	u8 x_acc;					//正常清扫时X轴增长方向，0：负方向，1：正方向，2：双方向
-	s8 y_dir;					//Y轴清扫时的增长方向(0:负方向,1:正方向),因为y_acc有0,1,2三个值，2代表双方向清扫，无法再用y_acc表示目前正在清扫的方向
-	u8  continue_checkstep;		//沿边时检测是否绕过障碍的步骤
-	short xpos_ybs_start;		//弓形直线行走切换为沿边时起始点x坐标
-	short xpos_start;			//起始点x坐标
-	short ypos_ybs_start;		//弓形直线行走切换为沿边时起始点y坐标
-	short ypos_start;			//起始点y坐标
-	short tgt_yaw;				//直线清扫时目标角度
-	short anti_tgt_yaw;			//直线清扫时目标反角度
-	short xpos_abort;			//被打断(如回扫)时的x坐标
-	short ypos_abort;			//被打断(如回扫)时的y坐标
-	short tgtyaw_abort;
-	short anti_tgtyaw_abort;
-	short xpos_start_area;		//区域打扫（4X4）X起始坐标
-	short ypos_start_area;		//区域打扫（4X4）Y起始坐标
-	short xpos_max_area;		//区域打扫（4X4）能到达的最大X坐标
-	short xpos_min_area;		//区域打扫（4X4）能到达的最小X坐标
-	short ypos_max_area;		//区域打扫（4X4）能到达的最大Y坐标
-	short ypos_min_area;		//区域打扫（4X4）能到达的最小Y坐标
+	bool 	leakon;				//机器当前是NORAML清扫还是LEAK清扫，false:正常清扫，true:漏扫清扫
+	bool 	area_ok;				//当前区域清扫检查是否完成，如果清扫检查完毕，以后不再检查漏扫
+	bool 	ymax_ok;						//YMAX新区域检查完成标志
+	bool 	ymin_ok;						//YMIN新区域检查完成标志
+	bool 	xmax_ok;						//XMAX新区域检查完成标志
+	bool 	xmin_ok;						//XMIN新区域检查完成标志
+	bool 	repeat_sweep;			//重复扫标志，true:重复扫，false：无需要，沿边出现空旷区域时重复扫
+	bool 	repeat_sweep_abort;
+	bool 	leftright_abort;
+	bool 	pathpoint_ok;
+	bool	start_seat;
 	
-	u8 sweep_time;				//区域打扫次数，用于新开辟区域时的编号增加，从#1开始
-	u8 area_num;				//当前区域编号
-	u8 exit_area_num;			//退出区域编号
-	u32 sweeptime_abort;
-	u8 ybs_mode;				//机器开始沿边时，记录的沿边模式（左沿边，右沿边）
-	u8 ybs_nextation;			//机器开始沿边时，记录的当前动作。
+	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
+	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边
+	u8 		y_acc;					//正常清扫时Y轴增长方向，0：负方向，1：正方向，2：双方向
+	u8 		x_acc;					//正常清扫时X轴增长方向，0：负方向，1：正方向，2：双方向
+	s8 		y_dir;					//Y轴清扫时的增长方向(0:负方向,1:正方向),因为y_acc有0,1,2三个值，2代表双方向清扫，无法再用y_acc表示目前正在清扫的方向
+	u8  	continue_checkstep;		//沿边时检测是否绕过障碍的步骤
+	u8 		sweep_time;				//区域打扫次数，用于新开辟区域时的编号增加，从#1开始
+	u8 		area_num;				//当前区域编号
+	u8 		exit_area_num;			//退出区域编号
+
+	short 	xpos_ybs_start;		//弓形直线行走切换为沿边时起始点x坐标
+	short 	xpos_start;			//起始点x坐标
+	short 	ypos_ybs_start;		//弓形直线行走切换为沿边时起始点y坐标
+	short 	ypos_start;			//起始点y坐标
+	short 	tgt_yaw;				//直线清扫时目标角度
+	short 	anti_tgt_yaw;			//直线清扫时目标反角度
+	short 	xpos_abort;			//被打断(如回扫)时的x坐标
+	short 	ypos_abort;			//被打断(如回扫)时的y坐标
+	short 	tgtyaw_abort;
+	short 	anti_tgtyaw_abort;
+	short 	xpos_start_area;		//区域打扫（4X4）X起始坐标
+	short 	ypos_start_area;		//区域打扫（4X4）Y起始坐标
+	short 	xpos_max_area;		//区域打扫（4X4）能到达的最大X坐标
+	short 	xpos_min_area;		//区域打扫（4X4）能到达的最小X坐标
+	short 	ypos_max_area;		//区域打扫（4X4）能到达的最大Y坐标
+	short 	ypos_min_area;		//区域打扫（4X4）能到达的最小Y坐标
+	
+	u32 	worktime;			//区域内工作时间
+	u32 	worktime_max;		//区域允许最大工作时间	
 }MOTION;
 
 typedef struct					//坐标格坐标结构体

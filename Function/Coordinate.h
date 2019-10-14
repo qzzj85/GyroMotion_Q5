@@ -77,6 +77,7 @@ u8 Gyro_Bios_Check(void);
 u8 Judge_GridYPOS_Reach_Large(s8 gridy);
 s8 Cal_Real_Grid (s8 grid);
 u8 Can_Entry_Point(s8 gridx,s8 gridy,u8 check_ydir);
+void Reset_XY(void);
 
 #endif
 

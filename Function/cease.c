@@ -84,9 +84,9 @@ void Do_Cease(void)
 				Init_Err();
 				return ;
 			}
-#if 0
+#ifdef SLEEP_SUBMODE
     /**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
-	if(((giv_sys_time-mode.time)>10000*30)&(!mode.factory))			//qz mask 20181110
+	if(((giv_sys_time-mode.time)>10000*600)&(!mode.factory))			//qz mask 20181110
 	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
 		{
 			Init_Sleep();
@@ -94,7 +94,7 @@ void Do_Cease(void)
 			return;
 		}
 #endif
-	clr_all_hw_struct();				//qz mask 20181215
+	clr_all_hw_effect();				//qz mask 20181215
 //	find_home=ReadHwSign_My();			//qz mask 20181215
 #ifdef REPEAT_DOCK	//qz add 20180901
 	if((giv_sys_time-mode.time>40000)&(mode.last_mode==CHARGEING)&(mode.last_sub_mode==SEAT_CHARGING)&(!dc_nobat_run)&(mode.step==0))

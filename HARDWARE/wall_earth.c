@@ -97,9 +97,9 @@ void init_wallearth(void)
 	w_lm.check_time=15;
 	w_rm.check_time=15;
 
-	e_l.check_time=3;
-	e_m.check_time=3;
-	e_r.check_time=3;
+	e_l.check_time=2;
+	e_m.check_time=2;
+	e_r.check_time=2;
 	//qz add end
 
   WallSensitivity = false;	
@@ -353,7 +353,7 @@ u32	hehe;
 			
 			
 	//	in16 = earth->darkness - earth->brightness;
-#if 0			
+#if 1			
 		earth->dif[0] = earth->dif[1];
 		earth->dif[1] = earth->dif[2];
 		earth->dif[2] = earth->dif[3];
@@ -369,13 +369,11 @@ u32	hehe;
 #else
 		earth->dif[0]=earth->dif[1];
 		earth->dif[1]=earth->dif[2];
-		earth->dif[2]=earth->dif[3];
-		earth->dif[3]=earth->dif[4];
-		earth->dif[4]=in16;
-		hehe=earth->dif[0]+earth->dif[1]+earth->dif[2]+earth->dif[3]+earth->dif[4];
-		earth->difference=hehe/5;
+		earth->dif[2]=in16;
+		hehe=earth->dif[0]+earth->dif[1]+earth->dif[2];
+		earth->difference=hehe/3;
 #endif			
-			
+
 	if( earth->difference > earth->low_door) //测试时信号大于设定值
 			{
 					earth->near++;

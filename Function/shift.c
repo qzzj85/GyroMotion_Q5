@@ -14,40 +14,24 @@ u8 Read_Shift_Bump(void)
 	u32 data1=0;
 	
 #ifdef CLIFF_ENABLE			//ZDK屏蔽
-	if((e_l.sign == FARN))
-	{
-		if((mode.bump > 4) || (mode.bump == 0)) 	//左地检悬空
-		{ 
-			stop_rap();
-			mode.bump = 1;// E_L;
-			mode.step_bp=0;
-			mode.Info_Abort=1;
-		}
-		return 1;//E_L;
-	 }	 
-	if((e_m.sign==FARN))
-	{
-		if((mode.bump > 4) || (mode.bump == 0)) 	
-			 {
+	data1=Read_Cliff();
+	if(data1)
+		{
+			if((mode.bump>BUMP_ALL_CLIFF)|(mode.bump==0))
+				{
 					stop_rap();
-					mode.bump= 2;//E_LM;
+					mode.bump=data1;
 					mode.step_bp=0;
-					mode.Info_Abort=1;
-			 }
-		return 2;//E_LM;		
-	}
-
-	if((e_r.sign==FARN))
-	{
-		if((mode.bump > 4) || (mode.bump == 0))    
-			{	
-				stop_rap();
-				mode.bump=4;//E_R;
-				mode.step_bp=0;
-				mode.Info_Abort=1;
-			}
-		return 4;//E_R;
-	}	 
+#ifdef EARTH_IN_TIM2
+					enable_pwm(L_BACK,1200);
+					enable_pwm(R_BACK,1200);
+					l_rap.ori=BACK;
+					r_rap.ori=BACK;
+#endif
+					
+				}
+			return data1;
+		}
 #endif	 
 
 	data1=Parse_BumpValue();
@@ -135,7 +119,7 @@ u8 Read_Shift_Bump(void)
 #if 0
 	if((w_m.sign == NEAR)&(ir_enable))
 		{
-			if((mode.bump == 0)|(mode.bump==81))		//中墙检靠近墙
+			if((mode.bump == 0)|(mode.bump==BUMP_SEAT))		//中墙检靠近墙
 				{
 					stop_rap();
 					mode.bump=9;//W_M;
@@ -205,7 +189,7 @@ u8 Read_Shift_Bump(void)
 
 void Shift_BumpAction(void)
 {
-	u8 static turn_dir,turn_angle,bump_time=0;
+	u8 static turn_dir,turn_angle,bump_time=0,cliff_time=0;
 	u8 m,temp_data=0,nextaction=0;
 	s8 now_gridx,now_gridy,tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -216,6 +200,125 @@ void Shift_BumpAction(void)
 	
 	switch(mode.bump)
 		{
+			case BUMP_LEFT_CLIFF:
+			case BUMP_RIGHT_CLIFF:
+			case BUMP_MID_CLIFF:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.step_bp++;
+							cliff_time=0;
+							break;
+						case 1:
+							Speed=TOP_MOVE_SPEED;
+							if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))
+								{
+									if(!Read_Cliff())
+										{
+											mode.step_bp++;
+											return;
+										}
+									else
+										{
+											Set_Coordinate_Wall(now_gridx,now_gridy);
+											cliff_time++;
+										}
+									if(cliff_time>3)
+										{
+											error_code=ERROR_LIFT;
+											Send_Voice(VOICE_ERROR_DANGER);
+											Init_Err();
+										}
+								}
+							break;
+						case 2:
+							//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
+							nextaction=Read_CheckPoint_NextAction();
+							
+							if(nextaction==CHECK_GOEXIT)
+								{
+									if((mode.bump==BUMP_LEFT_CLIFF))
+										{
+											Init_ShiftExit_LeftYBS(1);
+											return;
+										}
+									else
+										{
+											Init_ShiftExit_RightYBS(1);
+											return;
+										}
+								}
+							
+							if(mode.sub_mode==SHIFTPOINT1)
+								{
+									temp_data=Judge_YBS_Dir();
+									if(temp_data==1)
+										{
+											Init_Shift_LeftYBS(1);
+											return;
+										}
+									else if(temp_data==2)
+										{
+											Init_Shift_RightYBS(1);
+											return;
+										}
+								}
+							
+							if(mode.sub_mode==SHIFTPOINT2)
+								{
+									if(nextaction<=CHECK_LEAKSWEEP)
+										{
+											if(check_point.ybs_dir==LEFT)
+												{
+													Init_Shift_LeftYBS(1);
+													return;
+												}
+											else if(check_point.ybs_dir==RIGHT)
+												{
+													Init_Shift_RightYBS(1);
+													return;
+												}
+											
+											if(check_point.new_y1<check_point.new_y2)
+												{
+													if(check_point.next_tgtyaw==F_Angle_Const)
+														{
+															Init_Shift_RightYBS(1);
+															return;
+														}
+													else
+														{
+															Init_Shift_LeftYBS(1);
+															return;
+														}
+												}
+											else
+												{
+													if(check_point.next_tgtyaw==F_Angle_Const)
+														{
+															Init_Shift_LeftYBS(1);
+															return;
+														}
+													else
+														{
+															Init_Shift_RightYBS(1);
+															return;
+														}
+												}
+										}
+								}
+							if((mode.bump==BUMP_LEFT_CLIFF))
+								{
+									Init_Shift_LeftYBS(1);
+								}
+							else
+								{
+									Init_Shift_RightYBS(1);
+								}
+							return;
+					}
+				break;
 			case BUMP_ONLY_LEFTMID:
 			case BUMP_ONLY_LEFT:
 			case BUMP_LEFT_MID:
@@ -561,13 +664,6 @@ void Init_Shift_Point1(u8 pre_action)
 			dis_err_code=0;
 			error_code=0;
 		}
-
-#ifdef UV
-	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-		Set_UV();
-	else
-		Reset_UV();
-#endif
 	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
@@ -1379,6 +1475,12 @@ void Do_Shift_Point1(void)
 					{
 						path_num=path_num+i-1;
 						temp_point=Get_PathPoint(path_num);
+						if(temp_point==NULL)
+							{
+								TRACE("temp_point is NULL in %s!!!\r\n",__func__);
+								mode.step=5;
+								return;
+							}
 						mode.step=175;
 					}
 				else
@@ -1506,7 +1608,8 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						TRACE("now grid is match new1,out path point way!!!\r\n");
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
-						Delete_All_PathPoint();
+						if(Delete_All_PathPoint())
+							motion1.pathpoint_ok=false;
 						return;
 					}
 				path_num++;
@@ -1514,7 +1617,8 @@ void Do_Shift_Point1(void)
 				if(path_num>path_length)
 					{
 						TRACE("path num has out of range!!!\r\n");
-						Delete_All_PathPoint();
+						if(Delete_All_PathPoint())
+							motion1.pathpoint_ok=false;
 						mode.step=5;
 					}
 				break;
@@ -1628,13 +1732,6 @@ void Init_Shift_Point2(void)
 			dis_err_code=0;
 			error_code=0;
 		}
-
-#ifdef UV
-	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-		Set_UV();
-	else
-		Reset_UV();
-#endif
 	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
@@ -1819,6 +1916,7 @@ void Do_Shift_Point2(void)
 								Init_Back_Sweep(motion1.tgt_yaw);
 							}
 						motion1.repeat_sweep=true;
+						Set_AreaWorkTime(20);
 					}
 				break;
 		}
@@ -2098,16 +2196,6 @@ u8 Abort_ShiftYBS(void)
 		{
 			abort_shiftybs_flag=false;
 			if(temp_nextaction<=CHECK_LEAKSWEEP)
-#if 0
-				{
-					if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
-						{
-							stop_rap();
-							Area_Check(1);
-							return 1;
-						}
-				}
-#else
 				{
 //					s8 tgt_gridx1,tgt_gridx2,tgt_gridy1,tgt_gridy2;
 //					tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
@@ -2173,11 +2261,12 @@ u8 Abort_ShiftYBS(void)
 							stop_rap();
 							Find_ExitArea_Entry();
 							TRACE("Go to Exit!!!\r\n");
+							TRACE("set worktime 10!!\r\n");
+							Set_AreaWorkTime(10);
 							Init_Shift_Point1(1);
 							return 1;
 						}
 				}
-#endif			
 			else
 				{
 					if(mode.last_sub_mode==SHIFTPOINT1)
@@ -2232,11 +2321,13 @@ u8 Abort_ShiftYBS(void)
 										TRACE("next action is NORMALSWEEP or LEAKSWEEP!!!\r\n");
 										TRACE("abort now action,prepare to next action!!!\r\n");
 										motion1.area_ok=true;
+										Set_CurrNode_LeakInfo(motion1.area_ok);
 										Area_Check(1);
 										return 1;
 									case CHECK_NEWAREA:
 										TRACE("next action is NEWAREA!!!\r\n");
 										TRACE("Area check again!!!\r\n");
+										Set_Curr_AllNewAreaOK();
 										Area_Check(1);
 										return 1;
 									case CHECK_GOEXIT:
@@ -2803,70 +2894,6 @@ void Do_ShiftYBS(void)
 						}
 				break;
 								
-			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
-			case 0xA0:		
-				if((l_rap.sign == 0)&&(r_rap.sign == 0))
-					{
-						Speed = 1200;
-						enable_rap(FRONT,(uint32_t)(1.5 * METER_PLUS) , FRONT,(uint32_t)(1 * METER_PLUS));
-						
-						mode.step = 0xA1;
-					}
-				break;					
-			case  0xA1:
-				if((l_rap.sign == 0)&&(r_rap.sign == 0))
-					{
-							mode.step = 0xA5;		//	可能受困
-					}
-				break;							
-			case  0xA5://	可能受困
-				Speed = 2600;
-				if(do_action(3, (uint32_t)(0.5 * METER_PLUS)) == 1) 	
-					{mode.step = 0xA6;} 
-				break;
-			case  0xA6://	可能受困
-				Speed = 2600;
-				if(do_action(4, (uint32_t)(0.5 * METER_PLUS)) == 1) 	
-					{mode.step = 0xA7;} 
-				break;
-			case  0xA7://	可能受困
-				Speed = 2200;
-				if(do_action(2, (uint32_t)(180 * Angle_1))) 	
-					{mode.step = 0x88;} 
-				break;
-			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
-			//qz add
-			case 0xB0:
-				Speed=2400;
-				if(do_action(4,(u32)(10*CM_PLUS)))
-					{
-						stop_rap();
-						mode.step=0xB1;
-					}
-				break;
-			case 0xB1:
-				Speed=1600;
-				if(do_action(1,angle90))
-					{
-						stop_rap();
-						mode.step=0xB2;
-					}
-				break;
-			case 0xB2:
-				if(do_action(3,(u32)(15*CM_PLUS)))
-					{
-						stop_rap();
-						mode.step=0XB3;
-					}
-				break;
-			case 0xB3:
-				if(do_action(6,angle90_D))
-					{
-						stop_rap();
-						mode.step=0x00;
-					}
-				break;
-
 			//绕过障碍后的处理过程
 			case 0xD0:
 				if(giv_sys_time-mode.time<5000)
@@ -2878,34 +2905,8 @@ void Do_ShiftYBS(void)
 				break;
 				//	不停继续转圈
 
-
-			case 0xE0:
-				Speed=1000;
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					temp_data1=1;
-				else
-					temp_data1=2;
-				if(do_action(temp_data1,180*Angle_1))
-					{
-						stop_rap();
-						mode.step++;
-					}
-				break;
-			case 0xE1:
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					{
-						Init_Right_YBS(1);
-					}
-				else
-					{
-						Init_Left_YBS(1);
-					}
-				break;
-
-			//y坐标回溯超过20cm时，开启左沿边
-			case 0x90:
-				stop_rap();
-				Init_YBS_Exchange(YBS_SUB_RIGHT);
+			default:
+				mode.step=0x88;
 				break;
 		}	//	end of		switch (mode.step)	//step路径执行的步骤
 }
@@ -2932,7 +2933,10 @@ void Do_ExitAtion(void)
 					TRACE("Prepare to YBS!!\r\n");
 					Send_Voice(VOICE_SWEEP_DONE);
 					//while(1);
-					Init_Docking();
+					if(motion1.start_seat)
+						Init_Docking();
+					else
+						Init_Cease();
 				}
 			else								//不是，则进入下一区域
 				{
@@ -2942,6 +2946,8 @@ void Do_ExitAtion(void)
 					Init_Shift_Point1(0);
 				}
 		}
+	TRACE("set worktime 10!!\r\n");
+	Set_AreaWorkTime(10);
 }
 
 u8 Abort2Sweep(void)
@@ -3900,110 +3906,8 @@ void Do_ShiftExit_YBS(void)
 							mode.step =0x41;
 						}
 				break;
-								
-			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
-			case 0xA0:		
-				if((l_rap.sign == 0)&&(r_rap.sign == 0))
-					{
-						Speed = 1200;
-						enable_rap(FRONT,(uint32_t)(1.5 * METER_PLUS) , FRONT,(uint32_t)(1 * METER_PLUS));
-						
-						mode.step = 0xA1;
-					}
-				break;					
-			case  0xA1:
-				if((l_rap.sign == 0)&&(r_rap.sign == 0))
-					{
-							mode.step = 0xA5;		//	可能受困
-					}
-				break;							
-			case  0xA5://	可能受困
-				Speed = 2600;
-				if(do_action(3, (uint32_t)(0.5 * METER_PLUS)) == 1) 	
-					{mode.step = 0xA6;} 
-				break;
-			case  0xA6://	可能受困
-				Speed = 2600;
-				if(do_action(4, (uint32_t)(0.5 * METER_PLUS)) == 1) 	
-					{mode.step = 0xA7;} 
-				break;
-			case  0xA7://	可能受困
-				Speed = 2200;
-				if(do_action(2, (uint32_t)(180 * Angle_1))) 	
-					{mode.step = 0x88;} 
-				break;
-			//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围//	扩大搜索范围
-			//qz add
-			case 0xB0:
-				Speed=2400;
-				if(do_action(4,(u32)(10*CM_PLUS)))
-					{
-						stop_rap();
-						mode.step=0xB1;
-					}
-				break;
-			case 0xB1:
-				Speed=1600;
-				if(do_action(1,angle90))
-					{
-						stop_rap();
-						mode.step=0xB2;
-					}
-				break;
-			case 0xB2:
-				if(do_action(3,(u32)(15*CM_PLUS)))
-					{
-						stop_rap();
-						mode.step=0XB3;
-					}
-				break;
-			case 0xB3:
-				if(do_action(6,angle90_D))
-					{
-						stop_rap();
-						mode.step=0x00;
-					}
-				break;
-
-			//绕过障碍后的处理过程
-			case 0xD0:
-				if(giv_sys_time-mode.time<5000)
-					return;
-				mode.step++;
-				break;
-			case 0xD1:
-				Area_Check(1);
-				break;
-				//	不停继续转圈
-
-
-			case 0xE0:
-				Speed=1000;
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					temp_data1=1;
-				else
-					temp_data1=2;
-				if(do_action(temp_data1,180*Angle_1))
-					{
-						stop_rap();
-						mode.step++;
-					}
-				break;
-			case 0xE1:
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					{
-						Init_Right_YBS(1);
-					}
-				else
-					{
-						Init_Left_YBS(1);
-					}
-				break;
-
-			//y坐标回溯超过20cm时，开启左沿边
-			case 0x90:
-				stop_rap();
-				Init_YBS_Exchange(YBS_SUB_RIGHT);
+			default:
+				mode.step=0x88;
 				break;
 		}	//	end of		switch (mode.step)	//step路径执行的步骤
 }

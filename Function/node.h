@@ -14,5 +14,7 @@ void Get_CurrNode_Info(void);
 u8 Out_CurrNode_Exit(void);
 u8 Set_CurrNode_LeakInfo(bool area_ok);
 u8 Set_CurrNode_NewAreaInfo(bool area_ok,u8 num);
+u8 Del_All_AreaNode(void);
+u8 Set_Curr_AllNewAreaOK(void);
 
 #endif

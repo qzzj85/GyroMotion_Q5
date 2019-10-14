@@ -919,71 +919,29 @@ u32 Check_OutofRange_YBS(u8 out_enable)
 u32  YBS_read_bump1(u8 out_enable)
 {
 	u32 data1=0;
+	static u32 find_seat_time=0;
+	static bool find_seat_first=false;
 //-------------------------------------------------------------	 
 //-------------------------------------------------------------	 
 #ifdef CLIFF_ENABLE
-
-	if((e_l.sign == FARN))
+	data1=Read_Cliff();
+	if(data1)
 		{
-			if((mode.bump > 4) || (mode.bump == 0))	    //左地检悬空	//QZ:若有其他的地检信号，则不进入，等待其他的地检动作先完成。
-				{ 
-					mode.bump = 1;// E_L;
-					mode.step_bp=0;
+			if((mode.bump>BUMP_ALL_CLIFF)|(mode.bump==0))
+				{
 					stop_rap();
-				
-					if(last_Bump_Num == 1)
-						{
-							Same_Bump_Counter ++;
-						}
-					else
-						{
-							Same_Bump_Counter = 0;
-						}
-					last_Bump_Num = 1;
-				}
-			return 1;//E_L;
-		} 
-//-------------------------------------------------------------	 						
-	if((e_r.sign==FARN))
-		{
-			if((mode.bump > 4) || (mode.bump == 0))	   
-				{	
-					mode.bump=4;//E_R;
+					mode.bump=data1;
 					mode.step_bp=0;
-					stop_rap();
-					if(last_Bump_Num == 4)
-						{
-							Same_Bump_Counter ++;
-						}
-					else
-						{
-							Same_Bump_Counter = 0;
-						}
-					last_Bump_Num = 4;
+					
+#ifdef EARTH_IN_TIM2
+					enable_pwm(L_BACK,1200);
+					enable_pwm(R_BACK,1200);
+					l_rap.ori=BACK;
+					r_rap.ori=BACK;
+#endif
 				}
-			return 4;//E_R;
+			return data1;
 		}
-//-------------------------------------------------------------	 
-	if((e_m.sign==FARN))
-		{
-			if((mode.bump > 4) || (mode.bump == 0))	    
-			{
-				mode.bump= 2;//E_LM;
-				mode.step_bp=0;
-				stop_rap();
-				if(last_Bump_Num == 2)
-					{
-						Same_Bump_Counter ++;
-					}
-				else
-					{
-						Same_Bump_Counter = 0;
-					}
-				last_Bump_Num = 2;
-			}
-	  return 2;//E_LM;
-		}
-//-------------------------------------------------------------	
 #endif
 
   
@@ -1094,7 +1052,7 @@ u32  YBS_read_bump1(u8 out_enable)
 
 	if((w_m.sign == NEAR)&(mode.step<0x90))
 		{
-			if((mode.bump == 0)|(mode.bump==81))	   //中墙检靠近墙
+			if((mode.bump == 0)|(mode.bump==BUMP_SEAT))	   //中墙检靠近墙
 				{
 					mode.bump=9;//W_M;
 					mode.step_bp=0;
@@ -1119,7 +1077,7 @@ u32  YBS_read_bump1(u8 out_enable)
 		{
 			if((mode.sub_mode==YBS_SUB_RIGHT))			//如果是右沿边,开启此检测
 				{
-					if((mode.bump == 0)|(mode.bump==81))		//右中墙检靠近墙
+					if((mode.bump == 0)|(mode.bump==BUMP_SEAT))		//右中墙检靠近墙
 						{
 							mode.bump=15;//W_RM;
 							mode.step_bp=0;
@@ -1159,7 +1117,8 @@ u32  YBS_read_bump1(u8 out_enable)
 		//if(r_hw.effectNear|r_hw.effectTopReal|rm_hw.effectTopReal)
 		//if(r_hw.effectNear|r_hw.effectTopReal)
 		//if((lm_hw.effectNear)|(rm_hw.effectNear)|r_hw.effectNear)
-	if((r_hw.effectRight)&((mode.step==1)|(mode.step==2))&(mode.bump==0))
+#if 0
+	if((r_hw.effectTop)&((mode.step==1)|(mode.step==2)|(mode.step==0x41)|(mode.step==0x42))&(mode.bump==0))
 		{
 #ifdef YBS_AVOID_SEAT
 			if(mode.bump==0)
@@ -1170,16 +1129,41 @@ u32  YBS_read_bump1(u8 out_enable)
 #ifdef YBS_DEBUG
 					TRACE("r_hw get NEAR in YBS mode!\r\n");
 #endif
-					mode.bump=81;
+					mode.bump=BUMP_SEAT;
 					mode.step_bp=0;
 				}
-			return 81;
+			return BUMP_SEAT;
 #endif
 #ifdef YBS_SEAT_REPROT
 			Slam_Data.ir_flag=true;
 #endif
 		}
-
+#endif
+	//if((r_hw.effectTop)&((mode.step==1)|(mode.step==2)|(mode.step==0x41)|(mode.step==0x42))&(mode.bump==0))
+	//if((rm_hw.effectTop|lm_hw.effectTop)&&(mode.bump==0))
+	if(top_time_sec>=11)
+		{
+			if(!find_seat_first)
+				{
+					find_seat_time=giv_sys_time;
+					find_seat_first=true;
+				}
+			//if((find_seat_first)&(giv_sys_time-find_seat_time>10000))
+				{
+					if((mode.bump==0)|(mode.bump>=BUMP_OUTRANGE))
+						{
+							stop_rap();
+							mode.bump=BUMP_SEAT;
+							mode.step_bp=0;
+							find_seat_first=false;
+						}
+				}
+			return BUMP_SEAT;
+		}
+	else
+		{
+			find_seat_first=false;
+		}
 
 	data1=Check_OutofRange_YBS(out_enable);
 	if((data1!=0)&(mode.bump<BUMP_OUTRANGE))
@@ -1908,72 +1892,6 @@ void Do_YBS_Exchange(void)
 
 u8 Parse_ContinueInYBS(void)
 {
-#if 0
-	short temp_s16=0;
-	if(mode.sub_mode==YBS_SUB_LEFT)
-		{
-			if(motion1.tgt_yaw>0)		//motion1.anti_tgt_yaw<0
-				{
-					if(((Gyro_Data.yaw>=0)&(Gyro_Data.yaw<motion1.tgt_yaw))|((Gyro_Data.yaw<0)&(Gyro_Data.yaw>motion1.anti_tgt_yaw)))		//在左半球
-						{
-							temp_s16=abs(Gyro_Data.yaw-motion1.tgt_yaw);
-							if(temp_s16>18000)
-								temp_s16=36000-temp_s16;
-							//if((temp_s16>7000)&(mode.step<0xD0))
-							if((temp_s16>70*100)&(temp_s16<=90*100)&(mode.step<0xD0))		//加小于90度的限制是为了防止从另外一个方向转到左半球区域
-							{
-								return 1;
-							}
-						}
-				}
-			else						//0<motion1.anti_tgt_yaw<=180
-				{
-					if(((Gyro_Data.yaw>=0)&(Gyro_Data.yaw>motion1.anti_tgt_yaw))|((Gyro_Data.yaw<0)&(Gyro_Data.yaw<motion1.tgt_yaw)))		//在左半球
-						{
-							temp_s16=abs(Gyro_Data.yaw-motion1.tgt_yaw);
-							if(temp_s16>18000)
-								temp_s16=36000-temp_s16;
-							//if((temp_s16>7000)&(mode.step<0xD0))
-							if((temp_s16>70*100)&(temp_s16<=90*100)&(mode.step<0xD0))
-							{
-								return 1;
-							}
-						}
-				}
-		}
-	else
-		{
-			if(motion1.tgt_yaw>0)		//motion1.anti_tgt_yaw<0
-				{
-					if(((Gyro_Data.yaw>=0)&(Gyro_Data.yaw>motion1.tgt_yaw))|((Gyro_Data.yaw<0)&(Gyro_Data.yaw<motion1.anti_tgt_yaw)))		//在右半球
-						{
-							temp_s16=abs(Gyro_Data.yaw-motion1.tgt_yaw);
-							if(temp_s16>18000)
-								temp_s16=36000-temp_s16;
-							//if((temp_s16>7000)&(mode.step<0xD0))
-							if((temp_s16>70*100)&(temp_s16<=90*100)&(mode.step<0xD0))
-								{
-									return 1;
-								}
-						}
-				}
-			else						//0<motion1.anti_tgt_yaw<=180
-				{
-					if(((Gyro_Data.yaw>=0)&(Gyro_Data.yaw<motion1.anti_tgt_yaw))|((Gyro_Data.yaw<0)&(Gyro_Data.yaw>motion1.tgt_yaw)))		//在右半球
-						{
-							temp_s16=abs(Gyro_Data.yaw-motion1.tgt_yaw);
-							if(temp_s16>18000)
-								temp_s16=36000-temp_s16;
-							//if((temp_s16>7000)&(mode.step<0xD0))
-							if((temp_s16>70*100)&(temp_s16<=90*100)&(mode.step<0xD0))
-								{
-									return 1;
-								}
-						}
-				}
-			}
-		return 0;
-#else
 	//static u8 check_step=0;
 	switch(motion1.continue_checkstep)
 		{
@@ -1993,7 +1911,6 @@ u8 Parse_ContinueInYBS(void)
 				break;
 		}
 	return 0;
-#endif
 }
 
 u8 Analysis_NeedBack_YBS(s8 ygrid_abort)

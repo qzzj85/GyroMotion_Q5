@@ -122,16 +122,19 @@ PE15	船型开关检测
 ///////下面是红外接收的管脚定义/////////////////////////////// 
 #define  	HW_POWER        GPIO_Pin_9   	//红外电源输出控制    		PD //☆
 #define		GPIO_HWPWR		GPIOD
-#define  	L_HW            GPIO_Pin_11   	//左红外输入          	PE
-#define	 	LM_HW			GPIO_Pin_9		//左前红外				PE
-#define  	RM_HW           GPIO_Pin_10   	//中红外输入     	    PE
-#define  	R_HW            GPIO_Pin_8  	//右红外输入     		PE	 
-#define  	B_HW            GPIO_Pin_5  	//后红外              	PB
+#define  	L_HW            GPIO_Pin_11   	//左红外输入          	PD
+#define	 	LM_HW			GPIO_Pin_12		//左前红外				PD
+#define  	RM_HW           GPIO_Pin_13   	//中红外输入     	    PD
+#define  	R_HW            GPIO_Pin_14  	//右红外输入     		PD	 
+#define  	B_HW            GPIO_Pin_5  	//后红外              	PD
+#define		LB_HW			GPIO_Pin_10
+#define		RB_HW			GPIO_Pin_15
+#define	 	EXTI_Line_LMHW	EXTI_Line12
+#define	 	EXTI_Line_LBHW	EXTI_Line10
 #define	 	EXTI_Line_LHW	EXTI_Line11
-#define	 	EXTI_Line_RMHW	EXTI_Line10
-#define	 	EXTI_Line_RHW	EXTI_Line8
-#define	 	EXTI_Line_BHW   EXTI_Line5
-#define	 	EXTI_Line_LMHW	EXTI_Line9
+#define	 	EXTI_Line_RHW   EXTI_Line14
+#define	 	EXTI_Line_RMHW	EXTI_Line13
+#define		EXTI_Line_RBHW	EXTI_Line15
 ////////下面是碰撞输入的管脚定义//////////////////////////////	
 #define  	L_BUMP_PIN      GPIO_Pin_6  	//左碰撞输入     	    PE
 #define  	LM_BUMP_PIN	 	GPIO_Pin_7  	//左中碰撞				PE
@@ -184,9 +187,9 @@ PE15	船型开关检测
 #define  	NAV_IRQ      	GPIO_Pin_15   //PE
 ///////////////////小鸟模块电源开关hzh//////////////////////////////////
 #define  	BIRD_POW     	GPIO_Pin_1	
-#define	 	GYRO_RST		GPIO_Pin_10
-#define	 	GYRO_RST_1		GPIO_SetBits(GPIOB,GYRO_RST)
-#define	 	GYRO_RST_0		GPIO_ResetBits(GPIOB,GYRO_RST)
+#define	 	GYRO_RST_PIN	GPIO_Pin_10
+#define	 	GYRO_RST_1		{GPIOC->BSRR|=1<<10;}
+#define	 	GYRO_RST_0		{GPIOC->BRR|=1<<10;}
 //////////////////LED灯控制引脚///////////////////////////	
 #define  	LED_GREEN		GPIO_Pin_7		//PD
 #define	 	LED_GREEN_ON	{GPIOD->BSRR|=1<<7;}

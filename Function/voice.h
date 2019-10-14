@@ -186,12 +186,14 @@ void Send_Voice(u8 addr);
 void delay_100us(u32 delay_time);
 void Voice_Handle(void);
 void voice_usart(u8 data);
-void Init_Voice_Head(void);
+u8 Init_Voice_Head(void);
 void Init_Voice(void);
 void Del_AllNode(void);
 void Set_Voice_Level(u8 data);
 void Write_Voice_Level(u8 data);
 u8 Read_Voice_Level(void);
+void Del_All_VoiceNode(void);
+
 #endif
 
 

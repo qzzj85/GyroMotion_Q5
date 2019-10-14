@@ -55,12 +55,6 @@ void Init_RunTest(void)
 			error_code=0;
 		}
 
-#ifdef UV
-	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-		Set_UV();
-	else
-		Reset_UV();
-#endif
 	motion1.tgt_yaw=Gyro_Data.yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(Gyro_Data.yaw);
 
@@ -263,7 +257,11 @@ void Do_RunTest(void)
 						//if(do_action(2,3600*Angle_1))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -275,7 +273,11 @@ void Do_RunTest(void)
 						if(Judge_Yaw_Reach(8700,TURN_ANGLE_BIOS))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -287,7 +289,11 @@ void Do_RunTest(void)
 						if(do_action_my(3,20*CM_PLUS,9000))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -299,7 +305,11 @@ void Do_RunTest(void)
 						if(Judge_Yaw_Reach(17700,TURN_ANGLE_BIOS))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -310,7 +320,11 @@ void Do_RunTest(void)
 						if(do_action_my(3,80*CM_PLUS,18000))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -322,7 +336,11 @@ void Do_RunTest(void)
 						if(Judge_Yaw_Reach(9300,TURN_ANGLE_BIOS))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -333,7 +351,11 @@ void Do_RunTest(void)
 						if(do_action_my(3,20*CM_PLUS,9000))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -345,7 +367,11 @@ void Do_RunTest(void)
 						if(Judge_Yaw_Reach(3,TURN_ANGLE_BIOS))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
 						break;
@@ -356,9 +382,15 @@ void Do_RunTest(void)
 						if(do_action_my(3,80*CM_PLUS,0))
 							{
 								stop_rap();
+#ifdef TEST_ONESTEP
 								mode.step=1;
+#else
+								mode.test_step++;
+#endif
 								mode.time=giv_sys_time;
 							}
+					case 9:
+						break;
 				}
 			break;
 			case 1:

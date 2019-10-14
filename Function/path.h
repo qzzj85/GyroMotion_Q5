@@ -31,4 +31,7 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy);
+
+u8 Add_PathPoint(s8 gridx,s8 gridy,u8 data);
+
 #endif

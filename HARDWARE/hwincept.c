@@ -7,8 +7,11 @@
 
 ////////////////////////私有定义//////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
-INFR_DATA l_hw,r_hw,rm_hw,b_hw,up_hw,dummy_wall,lm_hw;
+INFR_DATA l_hw,r_hw,rm_hw,lm_hw,lb_hw,rb_hw;
 bool Action_hwincept;
+
+u16 top_time,top_time_sec;
+
 ///////////////////////私有变量////////////////////////////////////
 ///////////////////////全局函数////////////////////////////////////
 void  init_hwincept(void);
@@ -34,7 +37,6 @@ void  init_hwincept(void)
 	l_hw.read_io 				= Read_L_HW;
 	r_hw.read_io 				= Read_R_HW;
 	rm_hw.read_io 				= Read_M_HW;
-	b_hw.read_io 				= Read_B_HW;
 
 
 #else
@@ -50,9 +52,9 @@ void  init_hwincept(void)
 	GPIO_Init(GPIOB,&GPIO_InitStruture);
 #endif
 	
-	NVIC_InitStructure.NVIC_IRQChannel=EXTI9_5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel=EXTI15_10_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=2;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0;
 	NVIC_Init(&NVIC_InitStructure);
 
@@ -60,19 +62,27 @@ void  init_hwincept(void)
 注意：右红外的中断源EXTI15_10_IRQn已经在碰撞红外中使能，
 故此处不需要在使能
 ----------------------------------------------*/
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource5);		//PB5,后红外
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource8);		//PE8,右红外
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource9);		//PE9,第二中红外
+#if 1
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource10);		//左后红外
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource11);		//左前红外
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource12);		//左红外
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource13);		//右红外
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource15);		//右后红外
+#endif
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource14);		//右前红外
 
-	EXTI_InitStructure.EXTI_Line=EXTI_Line8|EXTI_Line5|EXTI_Line9;		//后红外,左红外中断
+	EXTI_InitStructure.EXTI_Line=EXTI_Line_RMHW|EXTI_Line_LHW|EXTI_Line_LMHW|EXTI_Line_RHW|EXTI_Line_LBHW|EXTI_Line_RBHW;		//后红外,左红外中断
 	EXTI_InitStructure.EXTI_Trigger=EXTI_Trigger_Rising_Falling;
 	EXTI_InitStructure.EXTI_Mode=EXTI_Mode_Interrupt;
 	EXTI_InitStructure.EXTI_LineCmd=ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 
-	EXTI_ClearITPendingBit(EXTI_Line8);			//右红外
-	EXTI_ClearITPendingBit(EXTI_Line5);			//后红外
-	EXTI_ClearITPendingBit(EXTI_Line9);			//第二中红外
+	EXTI_ClearITPendingBit(EXTI_Line_RHW);			//右红外
+	EXTI_ClearITPendingBit(EXTI_Line_LHW);			//右红外
+	EXTI_ClearITPendingBit(EXTI_Line_RMHW);			//右红外
+	EXTI_ClearITPendingBit(EXTI_Line_RBHW);			//右红外
+	EXTI_ClearITPendingBit(EXTI_Line_LMHW);			//右红外
+	EXTI_ClearITPendingBit(EXTI_Line_LBHW);			//右红外
 #endif 
 
   
@@ -82,7 +92,6 @@ void  init_hwincept(void)
 	rm_hw.rece_ir=RECE_MID;
 	lm_hw.rece_ir=RECE_MID;
 	r_hw.rece_ir=RECE_RIGHT;
-	b_hw.rece_ir=RECE_BACK;
 	//qz add end
 
 	disable_hwincept();
@@ -741,8 +750,9 @@ void clr_all_hw_struct(void)
 	clr_hw_struct(&l_hw);
 	clr_hw_struct(&r_hw);
 	clr_hw_struct(&rm_hw);
-	clr_hw_struct(&b_hw);
 	clr_hw_struct(&lm_hw);
+	clr_hw_struct(&lb_hw);
+	clr_hw_struct(&rb_hw);
 }
 
 void clr_all_hw_effect(void)
@@ -750,8 +760,9 @@ void clr_all_hw_effect(void)
 	clr_hw_effect(&l_hw);
 	clr_hw_effect(&rm_hw);
 	clr_hw_effect(&r_hw); 
-	clr_hw_effect(&b_hw);
 	clr_hw_effect(&lm_hw);
+	clr_hw_effect(&rb_hw); 
+	clr_hw_effect(&lb_hw);
 }
 /***************************************************************************
 功能:清除红外的有效性

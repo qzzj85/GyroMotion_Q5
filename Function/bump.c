@@ -148,6 +148,7 @@ u8 Parse_BumpValue(void)
 			default:
 				return 0;			
 		}
+	return 0;
 }
 
 void Open_Ring_Cnt(void)

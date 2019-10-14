@@ -23,6 +23,9 @@ short Get_Reverse_Angle(short forward_angle);
 u8 Analysis_LastYClean(void);
 u8 Set_Motion_YDir_Reverse(void);
 u8 Analysis_Back_Leak(void);
+u8 Analysis_StopBack_InBump(s8 ydir,s8 now_gridx,s8 now_gridy);
+void Set_AreaWorkTime(u32 min_num);
+void Work_TimeOut_Handle(void);
 
 
 

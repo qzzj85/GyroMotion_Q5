@@ -1006,8 +1006,8 @@ void USART3_Init(void)
 	GPIO_PinRemapConfig(GPIO_PartialRemap_USART3,ENABLE);
 
 #if 0
-	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_10;
-	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
 #endif
 

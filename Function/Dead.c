@@ -136,7 +136,7 @@ void Do_Dead(void)
 				break;
 			case 1:
 #ifdef STOP_WEEKUP										
-				Enable_ExternInt_Weekup(0);	//可以使用KEY1,直充,座充唤醒				
+				Enable_ExternInt_Weekup(1); //可以使用KEY1,直充,座充唤醒				
 #else
 				Diable_AllExtInt_Weekup();	//屏蔽所有外部中断，无法唤醒
 #endif
@@ -176,22 +176,34 @@ void Do_Dead(void)
 						 {
 							 judge_charge();
 							 /////有充电的电源插入
+							 
 							 if((power.charge_dc == 1) || (power.charge_seat == 1))
-							 {
-								 s = 1;
-								 break;
-							 }
+								 {
+									 s = 1;
+									 break;
+								 }
+							 if(!Read_Key2())
+								 {
+									 s = 2;
+									 break;
+								 }
+							 if(key_wakeup_flag)
+								{
+									s=2;
+									break;
+								}
 						 }
-						 if(s == 1)
+						 if(s>0)
 						 {
 							 break;
 						 }
 						 //AccountCapabilityReal(); //计算耗电量
 					  
-				  }   
+				  }
+#if 0					
 				RCC_Configuration();		///////////初始化系统的晶振，如有移植需要修改
 				Battery_Data_Init();
-				Init_PWM();				//qz add 20180703,不然风扇会转
+				Init_PWM(); 			//qz add 20180703,不然风扇会转
 				init_time_2();			////////	//	Timer2	   10K 中断	  计数器
 				Init_Hardware();
 //				init_hwincept();				///////////初始化红外接收程序
@@ -208,7 +220,12 @@ void Do_Dead(void)
 				if(power.charge_dc)
 				   Init_Chargeing(DC_CHARGING);
 				//qz add end
-	   	}
+#endif
+				key_wakeup_flag=false;
+				PWR5V_ON;
+				PWR3V3_ON;
+				Init_System();
+			}
 
 }
 
@@ -219,7 +236,7 @@ void Enable_ExternInt_Weekup(u8 use_key)
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
 	EXTI->IMR&=0X00000000;
-	EXTI->IMR|=0X00000400;
+	EXTI->IMR|=0X00021500;
 	
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
@@ -244,7 +261,7 @@ void Enable_ExternInt_Weekup(u8 use_key)
 
 	/*PP2暂时可能不会加入关机电路，所以进入DEAD低功耗以后，为了能够
 	直接充电，加入了DC检测和SEAT检测为外部中断，可以直接唤醒充电*/
-	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IPD;				
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IN_FLOATING;				
 	GPIO_InitStructure.GPIO_Pin=CHARGE_DC;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
 	GPIO_Init(GPIO_DC,&GPIO_InitStructure);

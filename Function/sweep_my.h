@@ -25,7 +25,7 @@ void Do_Pass2Init(void);
 void Save_Abort_Data(void);
 u8 Check_OutofRange(void);
 void Load_Abort_Data(void);
-void Init_First_Sweep(void);
+void Init_First_Sweep(u8 start_seat);
 u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable);
 void Pass2Sweep_Bump_Action(void);
 void Do_Stop_BackSweep(void);
@@ -35,6 +35,8 @@ void Sweep_YBS(void);
 void Init_Back_Sweep(short tgt_yaw);
 void StopBack_Bump_Action(void);
 u8 YBS_AbortFor_Sweep(void);
+u8 Read_Cliff(void);
+void Do_FirstInit_Sweep(void);
 
 #endif
 

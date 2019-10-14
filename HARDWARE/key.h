@@ -22,6 +22,7 @@ extern bool boxfullone;
 extern bool wifi_time;
 extern bool wifi_update_time;
 void mcu_wifi_proc_key(void);
+void proc_wifi_dock(void);
 #endif
 
 #endif

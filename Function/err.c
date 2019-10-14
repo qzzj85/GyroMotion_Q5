@@ -98,7 +98,8 @@ void Do_Err(void)
   //if((error_code==SEND_ERROR_DIPANLIFT)|(error_code==SEND_ERROR_LEFTLIFT)|(error_code==SEND_ERROR_RIGHTLIFT))
   if((error_code==SEND_ERROR_DIPANLIFT))	//qz add 20180913
   	{
-  		if((l_lidi.key)&(r_lidi.key)&((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN)))
+  		//if((l_lidi.key)&(r_lidi.key)&((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN)))
+  		if((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN))
   			{
   				Init_Cease();				
   			}

@@ -16,7 +16,6 @@
 //=====================私有函数====================================
 void log_out(void)
 {
-#if 1
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
 	TRACE("===========\r\n");
@@ -57,8 +56,6 @@ void log_out(void)
 				TRACE("pow.dc=%d\r\n",power.charge_dc);
 			TRACE("m.bump=%d\r\n",mode.bump);
 			TRACE("m.step_bp=%d\r\n",mode.step_bp);
-			TRACE("l_rap.rap=%d\r\n",l_rap.rap);
-			TRACE("r_rap.rap=%d\r\n",r_rap.rap);
 		}
 	else if(mode.mode==CHARGEING)
 		{	
@@ -77,6 +74,7 @@ void log_out(void)
 		{	
 			TRACE("error_code=%d\r\n",error_code);
 		}
+#if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
 	TRACE("Gyro.x=%f\r\n",X_pos);
 	TRACE("Gyro.y=%f\r\n",Y_pos);
@@ -88,11 +86,19 @@ void log_out(void)
 	TRACE("m.area_num=%d\r\n",motion1.area_num);
 	TRACE("m.ydir=%d\r\n",motion1.y_dir);
 	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
-	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
+//	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
+//	TRACE("w_m.siag=%d\r\n",w_m.sign);
+	TRACE("top=%d\r\n",top_time_sec);
+	u32 min=(giv_sys_time-motion1.worktime)/10000/60;
+	u32 sec=(giv_sys_time-motion1.worktime)/10000-min*60;
+	TRACE("work time=%d min %d sec\r\n",min,sec);
 #else
-	TRACE("l.rap_run=%d r.rap_run=%d\r\n",l_rap.rap_run,r_rap.rap_run);
-	TRACE("l_spd=%d r_spd=%d\r\n",l_ring.real_speed,r_ring.real_speed);
-	TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
+//	TRACE("===========\r\n");
+	TRACE("lsp=%d rsp=%d\r\n",l_rap.rap,r_rap.rap);
+	TRACE("rm_hw.top=%d l=%d r=%d m=%d\r\n",rm_hw.effectTop,rm_hw.effectLeft,rm_hw.effectRight,rm_hw.effectMid);
+	TRACE("lm_hw.top=%d l=%d r=%d m=%d\r\n",lm_hw.effectTop,lm_hw.effectLeft,lm_hw.effectRight,lm_hw.effectMid);
+	TRACE("r_hw.top=%d l=%d r=%d m=%d\r\n",r_hw.effectTop,r_hw.effectLeft,r_hw.effectRight,r_hw.effectMid);
+	TRACE("l_hw.top=%d l=%d r=%d m=%d\r\n",l_hw.effectTop,l_hw.effectLeft,l_hw.effectRight,l_hw.effectMid);
 #endif
 }
 
@@ -160,7 +166,9 @@ int main(void)
 						sampling_temp_voltage();					//	AD采样数据处理  
 						//read_wallearth();		 					//	自动采样墙检和地检数据
 						//read_wallearth_my();						//	读取墙检地检
+#ifndef EARTH_IN_TIM2
 						Read_Earth_My();							//	读取地检
+#endif
 						Read_Wall_My();								//	读取墙检
 						APP_BAT_Handle();
 						Check_Status();
@@ -190,7 +198,7 @@ int main(void)
 
 						LED_Handle();
 						WifiData_Handle();
-
+						Work_TimeOut_Handle();
 	}	
 
 }

@@ -20,15 +20,15 @@ u32 rightbumptime;
 u8 rightbumpcnt=0;	
 //static u32 delay_time=0;
 
-void YBS_Cliff_Action(u8 bump_temp)
+void RYBS_Cliff_Action(u8 bump_temp)
 {
 	switch (mode.bump)
 	{
-		case BUMP_L_CLIFF:
+		case BUMP_LEFT_CLIFF:
 			switch (mode.step_bp)
 				{
 					case 0:
-						Speed=HIGH_MOVE_SPEED;
+						Speed=FAST_MOVE_SPEED;
 						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//ºóÍË
 							{
 								stop_rap();
@@ -76,7 +76,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 5:
-						Speed=HIGH_MOVE_SPEED;									//ºóÍË10cm
+						Speed=FAST_MOVE_SPEED;									//ºóÍË10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -111,7 +111,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 9:
-						Speed=HIGH_MOVE_SPEED; 								//ºóÍË10cm
+						Speed=FAST_MOVE_SPEED; 								//ºóÍË10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -128,7 +128,8 @@ void YBS_Cliff_Action(u8 bump_temp)
 							{
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
-								//Send_Voice(VOICE_ERROR_DANGER);
+								Send_Voice(VOICE_ERROR_DANGER);
+								Init_Err();
 							}
 						break;
 					case 0XF0:
@@ -155,11 +156,11 @@ void YBS_Cliff_Action(u8 bump_temp)
 				}
 			break;
 			
-		case BUMP_M_CLIFF:
+		case BUMP_MID_CLIFF:
 			switch (mode.step_bp)
 				{
 					case 0:
-						Speed=HIGH_MOVE_SPEED;
+						Speed=FAST_MOVE_SPEED;
 						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//ºóÍË
 							{
 								stop_rap();
@@ -196,7 +197,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 5:
-						Speed=HIGH_MOVE_SPEED; 								//ºóÍË10cm
+						Speed=FAST_MOVE_SPEED; 								//ºóÍË10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -231,7 +232,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 							}
 						break;
 					case 9:
-						Speed=HIGH_MOVE_SPEED; 								//ºóÍË10cm
+						Speed=FAST_MOVE_SPEED; 								//ºóÍË10cm
 						if(do_action(4,10*CM_PLUS))
 							{
 								stop_rap();
@@ -248,7 +249,8 @@ void YBS_Cliff_Action(u8 bump_temp)
 							{
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
-								//Send_Voice(VOICE_ERROR_DANGER);
+								Send_Voice(VOICE_ERROR_DANGER);
+								Init_Err();
 							}
 						break;
 					case 0XF0:
@@ -274,11 +276,11 @@ void YBS_Cliff_Action(u8 bump_temp)
 				}
 			break;
 
-		case BUMP_R_CLIFF:
+		case BUMP_RIGHT_CLIFF:
 			switch (mode.step_bp)
 				{
 				case 0:
-					Speed=HIGH_MOVE_SPEED;
+					Speed=FAST_MOVE_SPEED;
 					if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS)) 		//ºóÍË
 						{
 							stop_rap();
@@ -324,7 +326,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 5:
-					Speed=HIGH_MOVE_SPEED; 								//ºóÍË10cm
+					Speed=FAST_MOVE_SPEED; 								//ºóÍË10cm
 					if(do_action(4,10*CM_PLUS))
 						{
 							stop_rap();
@@ -359,7 +361,7 @@ void YBS_Cliff_Action(u8 bump_temp)
 						}
 					break;
 				case 9:
-					Speed=HIGH_MOVE_SPEED; 								//ºóÍË10cm
+					Speed=FAST_MOVE_SPEED; 								//ºóÍË10cm
 					if(do_action(4,10*CM_PLUS))
 						{
 							stop_rap();
@@ -376,7 +378,8 @@ void YBS_Cliff_Action(u8 bump_temp)
 						{
 							error_code=SEND_ERROR_DANGER;
 							dis_err_code=DIS_ERROR_DANGER;
-							//Send_Voice(VOICE_ERROR_DANGER);
+							Send_Voice(VOICE_ERROR_DANGER);
+							Init_Err();
 						}
 					break;
 				case 0XF0:
@@ -679,13 +682,17 @@ static void Right_Bump_Action(u8 m)
 }
 void YBS_Right_Bump(u8 out_enable)
 {
-//	u32 l_speed,r_speed,temp_data1;
-//	float radius;
-//	static u32 start_length,end_length;
-//	static bool no_enter=false;
+#ifdef YBS_AVOID_SEAT
+	u32 l_speed,r_speed,temp_data1;
+	float radius;
+	static u32 start_length,end_length;
+	static bool no_enter=false;
+#endif
 	static u8 turn_dir=0;
 	static short tgt_angle=0;
 	static u8 turn_angle=0;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
 	s8 ydir=Read_Motion_YDir();
 	u32 m;
   	m = YBS_read_bump1(out_enable);
@@ -696,10 +703,10 @@ void YBS_Right_Bump(u8 out_enable)
 		    mode.bump = 0;
 	    break;
 
-		case 1:
-		case 2:
-		case 4:
-			YBS_Cliff_Action(m);
+		case BUMP_MID_CLIFF:
+		case BUMP_LEFT_CLIFF:
+		case BUMP_RIGHT_CLIFF:
+			RYBS_Cliff_Action(m);
 		break;
 							
 		//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²//LR_BUMP;  Ë«Åö×²				
@@ -1211,19 +1218,21 @@ void YBS_Right_Bump(u8 out_enable)
 #endif
 
 #ifdef YBS_AVOID_SEAT
-	case 81:
+	case BUMP_SEAT:
+		Set_Coordinate_Seat(now_gridx,now_gridy);
 		switch(mode.step_bp)
 			{
 				case 0:
-					if(do_action(1,100*Angle_1))
+					Speed=TURN_SPEED;
+					if(do_action(1,80*Angle_1))
 						{
 							stop_rap();
 							mode.step_bp++;
 						}
 					break;
 				case 1:
-					l_speed=2000;
-					r_speed=800;
+					l_speed=800;
+					r_speed=550;
 					radius=(float)(RING_RANGE*r_speed)/(l_speed-r_speed);	//°ë¾¶Ô¼Îª20mm
 					end_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH/2);	//×¼±¸ÓÒÆ«×ª180¶È
 					start_length=l_ring.all_length;
@@ -1231,8 +1240,8 @@ void YBS_Right_Bump(u8 out_enable)
 					no_enter=false;
 					break;
 				case 2:
-					l_speed=2000;
-					r_speed=800;
+					l_speed=800;
+					r_speed=550;
 					enable_rap_no_length(FRONT,l_speed,FRONT,r_speed);
 					if(l_ring.all_length-start_length>end_length)
 						{
@@ -1241,16 +1250,26 @@ void YBS_Right_Bump(u8 out_enable)
 							mode.step_bp=0;
 							mode.step=0;
 						}
-					if((SLAM_DOCK)&(!no_enter))
+					if((m!=mode.bump)&(m>0))
+						{
+							stop_rap();
+							mode.bump=m;
+							mode.step_bp=0;
+							return;
+						}
+					if(mode.mode==DOCKING)
 						{
 							if(l_ring.all_length-start_length>(end_length/2))
 							{
+								stop_rap();
 								enable_hwincept();
 								no_enter=true;
+								Init_Docking();
 							}
 						}
 					break;
 			}
+		break;
 #endif	
 	case BUMP_XOUTRANGE:
 	case BUMP_YOUTRANGE:

@@ -350,6 +350,12 @@ static uint8_t	delay_counter;
 }
 //=======================================================================
 //=======================================================================
+void Change_Ring_Speed(int lspeed,int rspeed)
+{
+	l_rap.rap=lspeed;
+	r_rap.rap=rspeed;
+}
+
 void enable_rap_no_length(u32 ori_l,u32 speed_l,u32 ori_r,u32 speed_r)
 {
 	Enable_RingPWMCtrl();
@@ -948,20 +954,23 @@ void stop_rap(void)
 	action.sign		=	0;	
 	mode.action = 0; 
 	Gyro_Data.straight=false;
-
+//	delay_ms(500);
 #ifdef GYRO_CAL
 	if(mode.status)
 		{
-			if(gyro_cal_flag)
+			if((e_l.sign==FARN)|(e_m.sign==FARN)|(e_r.sign==FARN))
 				{
-					delay_ms(1000);
-					GYRO_CAL_PIN_0;
-					TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
-					delay_ms(1000);
-					delay_ms(1000);
-					TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
-					GYRO_CAL_PIN_1;
-					gyro_cal_flag=false;
+					if(gyro_cal_flag)
+						{
+							delay_ms(700);
+							GYRO_CAL_PIN_0;
+							TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
+							delay_ms(1000);
+							delay_ms(1000);
+							TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
+							GYRO_CAL_PIN_1;
+							gyro_cal_flag=false;
+						}
 				}
 		}
 #endif
@@ -1021,8 +1030,8 @@ void stop(void)
 				l_ring.all_length+=l_ring.cal_length;
 			else if(l_rap.ori==BACK)
 				l_ring.all_length-=l_ring.cal_length;
-			TRACE("l_rap=%d spd=%d cal=%d\r\n",l_rap.rap,l_ring.stop_spd,l_ring.cal_length);
-			TRACE("r_rap=%d spd=%d cal=%d\r\n",r_rap.rap,r_ring.stop_spd,r_ring.cal_length);
+			//TRACE("l_rap=%d spd=%d cal=%d\r\n",l_rap.rap,l_ring.stop_spd,l_ring.cal_length);
+			//TRACE("r_rap=%d spd=%d cal=%d\r\n",r_rap.rap,r_ring.stop_spd,r_ring.cal_length);
 		}
 #endif
 	l_rap.sign=0;

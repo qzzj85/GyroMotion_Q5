@@ -228,6 +228,8 @@ void ACC_DEC_Comm_rap_My (void)
 					disable_pwm(R_FRONT); 
 					if((l_rap.sign)&(l_rap.length==r_rap.length))
 						{
+							disable_pwm(L_BACK);
+							disable_pwm(L_FRONT);
 #ifdef MILE_COMPENSATION
 #ifdef STOP_SPD_CNT
 							l_ring.stop_spd=0;
@@ -242,7 +244,7 @@ void ACC_DEC_Comm_rap_My (void)
 							l_ring.stop_spd=l_rap.rap;
 #endif
 							l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
-							TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
+							//TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
 							if(l_rap.ori==FRONT)
 								l_ring.all_length+=l_ring.cal_length;
 							else if(l_rap.ori==BACK)
@@ -267,7 +269,7 @@ void ACC_DEC_Comm_rap_My (void)
 					r_ring.stop_spd=r_rap.rap;
 #endif
 					r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
-					TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
+					//TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
 					if(r_rap.ori==FRONT)
 						r_ring.all_length+=r_ring.cal_length;
 					else if(r_rap.ori==BACK)

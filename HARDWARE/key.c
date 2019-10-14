@@ -187,11 +187,12 @@ void AutoReadKey(void)
 												DelayMs(1);
 												stream_start(00);// 开始传输
 #endif	
-												Init_First_Sweep();
+												Init_First_Sweep(0);
 												//Init_Right_YBS(1);	
 												//Init_Left_YBS(1);
 												//Init_RunTest();
 												//Init_SweepTest();
+												//Init_Docking();
 											}
 										else if(mode.sub_mode==ERR)
 											{
@@ -313,9 +314,9 @@ void AutoReadKey(void)
 		 }
 #endif
 	//				read_key(&lidi);	//QZ:原来的
-	read_key(&l_lidi);	//QZ: ADD
-	read_key(&r_lidi);	//QZ: ADD 
-	read_key(&dust_box);
+//	read_key(&l_lidi);	//QZ: ADD
+//	read_key(&r_lidi);	//QZ: ADD 
+//	read_key(&dust_box);
 
 	Read_Key_High(&l_bump);			//因为碰撞按键由中断进行判断置低,所以在此处需要判断是否回弹为高
 	Read_Key_High(&r_bump);
@@ -647,32 +648,155 @@ void mcu_wifi_proc_key(void)
 		}
 }
 
+void proc_wifi_ybs(void)
+{
+	switch(mode.mode)
+		{
+			case CEASE:
+				switch(mode.sub_mode)
+					{
+						case CEASE:
+#ifdef TUYA_WIFI
+							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+							DelayMs(1);
+							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+							DelayMs(1);
+							stream_start(00);// 开始传输
+#endif
+							Init_First_Sweep(0);
+						break;
+						case ERR:
+						case SLEEP:
+							Init_Cease();
+						break;
+						default:
+							break;
+					}
+				break;
+			case CHARGEING:
+				switch(mode.sub_mode)
+					{
+						case SWITCHOFF:
+							break;
+						case DC_CHARGING:
+							Send_Voice(VOICE_ERROR_DC_EXIST);
+							break;
+						case SEAT_CHARGING:
+							Init_Quit_Charging();
+							break;
+						default:
+							break;
+					}
+				break;
+			default:
+				break;
+		}
+}
 
+void proc_wifi_dock(void)
+{
+	switch(mode.mode)
+		{
+			case CEASE:
+				switch(mode.sub_mode)
+					{
+						case CEASE:
+#ifdef TUYA_WIFI
+							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+							DelayMs(1);
+							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+							DelayMs(1);
+							stream_start(00);// 开始传输
+#endif
+							Init_Docking();
+						break;
+						case ERR:
+						case SLEEP:
+							Init_Docking();
+						break;
+						default:
+							break;
+					}
+				break;
+			case SWEEP:
+			case SHIFT:
+			case YBS:
+			case PASS2INIT:
+			case EXIT:
+				stop_rap();
+				Init_Docking();
+			default:
+				break;
+		}
+}
 
 void proc_wifi_play()
 {
-	if(mode.sub_mode==CEASE)
-		{					
-#ifdef TUYA_WIFI
-			mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-			wifi_uart_write_stream_init(0,0);// 初始化地图参数   地图  0  
-			DelayMs(1);
-			stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-			DelayMs(1);
-			stream_start(00);// 开始传输
-#endif
-			Init_First_Sweep();
-		}
-	else if(mode.sub_mode==ERR)
+	switch(mode.mode)
 		{
-			Init_Cease();
+			case CEASE:
+				switch(mode.sub_mode)
+					{
+						case CEASE:
+#ifdef TUYA_WIFI
+							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+							wifi_uart_write_stream_init(0,0);// 初始化地图参数   地图  0  
+							DelayMs(1);
+							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+							DelayMs(1);
+							stream_start(00);// 开始传输
+#endif
+							Init_First_Sweep(0);
+						break;
+						case ERR:
+						case SLEEP:
+							Init_Cease();
+						break;
+						default:
+							break;
+					}
+				break;
+			case CHARGEING:
+				switch(mode.sub_mode)
+					{
+						case SWITCHOFF:
+							break;
+						case DC_CHARGING:
+							Send_Voice(VOICE_ERROR_DC_EXIST);
+							break;
+						case SEAT_CHARGING:
+							Init_Quit_Charging();
+							break;
+						default:
+							break;
+					}
+				break;
+			default:
+				break;
 		}
 
 }
 void proc_wifi_stop()
 {
-        Init_Cease();
-       Send_Voice(VOICE_SWEEP_STOP);
+	switch(mode.mode)
+		{
+			case SWEEP:
+			case SHIFT:
+			case YBS:
+			case EXIT:
+			case PASS2INIT:
+				Send_Voice(VOICE_SWEEP_STOP);
+				Init_Cease();
+			break;
+			case DOCKING:
+				Send_Voice(VOICE_DOCK_STOP);
+				Init_Cease();
+			break;
+			default:
+				break;
+		}
 #ifdef TUYA_WIFI  
        stream_stop(0,256);// 停止地图    WIFI_STREAM_ENABLE
 #endif	

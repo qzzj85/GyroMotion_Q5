@@ -116,7 +116,7 @@ void Load_Abort_Data(void)
 u8 Analysis_Back_Leak(void)
 {
 	s8 check_gridy1,check_gridy2,check_gridx,now_gridx;
-	s8 xmax_check1,xmin_check1;
+	s8 xmax_check1,xmin_check1,xmax_check2,xmin_check2;
 	if(grid.y_abort==grid.y_back_last)
 		return 0;
 
@@ -131,8 +131,12 @@ u8 Analysis_Back_Leak(void)
 				check_gridy2=check_gridy1-1;
 			xmax_check1=Return_MaxClean_GridX(check_gridy1,0);
 			xmin_check1=Return_MinClean_GridX(check_gridy1,0);
+			xmax_check2=Return_MaxClean_GridX(check_gridy2,0);
+			xmin_check2=Return_MinClean_GridX(check_gridy2,0);
 			for(check_gridx=now_gridx;check_gridx<xmax_check1;check_gridx++)
 				{
+					if((Read_Coordinate_Seat(xmax_check2,check_gridy2))|(Read_Coordinate_Seat(xmax_check1,check_gridy1)))
+						break;
 					if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
 						{
 							check_point.new_x1=check_gridx;
@@ -150,6 +154,8 @@ u8 Analysis_Back_Leak(void)
 				}
 			for(check_gridx=now_gridx;check_gridx>xmin_check1;check_gridx--)
 				{
+					if((Read_Coordinate_Seat(xmin_check2,check_gridy2))|(Read_Coordinate_Seat(xmin_check1,check_gridy1)))
+						break;
 					if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
 						{
 							check_point.new_x1=check_gridx;
@@ -236,6 +242,10 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 		{
 			gridx_abort=Return_MaxClean_GridX(ygrid_abort,0);
 			gridx_analysis=Return_MaxClean_GridX(ygrid_analysis,0);
+			if(Read_Coordinate_Seat(gridx_analysis,ygrid_analysis))
+				{
+					return 0;
+				}
 			if(gridx_abort-gridx_analysis>2)
 				{
 					for(check_gridx=gridx_abort-1;check_gridx>gridx_analysis;check_gridx--)
@@ -253,6 +263,10 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 		{
 			gridx_abort=Return_MinClean_GridX(ygrid_abort,0);
 			gridx_analysis=Return_MinClean_GridX(ygrid_analysis,0);
+			if(Read_Coordinate_Seat(gridx_analysis,ygrid_analysis))
+				{
+					return 0;
+				}
 			if(gridx_analysis-gridx_abort>2)
 				{
 					for(check_gridx=gridx_abort+1;check_gridx<gridx_analysis;check_gridx++)
@@ -269,6 +283,30 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 	TRACE("No Need Back!\r\n");
 	return 0;
 #endif
+}
+
+//return:
+//0:需要继续回扫，1:停止回扫
+u8 Analysis_StopBack_InBump(s8 ydir,s8 now_gridx,s8 now_gridy)
+{
+	s8 next_gridy;
+	if(ydir>0)					//沿Y轴正方向清扫
+		{
+			next_gridy=now_gridy+1;
+			if(next_gridy>grid.y_area_max)							//当前Y坐标是区域最大Y坐标
+				return 1;											//返回1，退出回扫
+			else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最大Y坐标
+				return 1;											//且下一个Y坐标已经清扫，退出回扫
+		}
+	else if(ydir<0)
+		{
+			next_gridy=now_gridy-1;									
+			if(next_gridy<grid.y_area_min)							//当前Y坐标是区域最小Y坐标
+				return 1;											//返回1，退出回扫
+			else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最小Y坐标
+				return 1;											//且下一个Y坐标已经清扫，退出回扫
+		}
+	return 0;
 }
 
 /*------------------------------------------
@@ -290,14 +328,14 @@ u8 Analysis_StopBack(short tgt_yaw)
 	if(ydir>0)
 		{
 			next_gridy=grid.y+1;
-			if(next_gridy>GRID_MAX)
-				next_gridy=GRID_MAX;
+			if(next_gridy>grid.y_area_max)
+				next_gridy=grid.y;
 		}
 	else
 		{
 			next_gridy=grid.y-1;
-			if(next_gridy<GRID_MIN)
-				next_gridy=GRID_MIN;
+			if(next_gridy<grid.y_area_min)
+				next_gridy=grid.y;
 		}
 
 	
@@ -305,11 +343,14 @@ u8 Analysis_StopBack(short tgt_yaw)
 	if(tgt_yaw==F_Angle_Const)
 		{
 			temp_x=grid.x;
-			if(temp_x+1>GRID_MAX)
-				temp_x=GRID_MAX;
+#if 0
+			if(temp_x+1>grid.x_area_max)
+				temp_x=grid.x;
 			else
 				temp_x+=1;
-//			next_gridx=now_gridx-1;
+#endif			
+			if(temp_x+1<=grid.x_area_max)
+				temp_x+=1;
 			next_gridx=now_gridx;
 			if(Read_Coordinate_Clean(temp_x,grid.y))
 				{
@@ -322,11 +363,14 @@ u8 Analysis_StopBack(short tgt_yaw)
 	else
 		{
 			temp_x=grid.x;
-			if(temp_x-1<GRID_MIN)
+#if 0
+			if(temp_x-1<grid.x_area_min)
 				temp_x=GRID_MIN;
 			else
 				temp_x-=1;
-//			next_gridx=now_gridx-1;
+#endif
+			if(temp_x-1>=grid.x_area_min)
+				temp_x-=1;
 			next_gridx=now_gridx;
 			if(Read_Coordinate_Clean(temp_x,grid.y))
 				{
@@ -642,3 +686,72 @@ u8 Analysis_LastYClean(void)
 	return 0;
 }
 
+void Set_AreaWorkTime(u32 min_num)
+{
+	u32 sec_num=min_num*60*10000;
+	motion1.worktime=giv_sys_time;
+	motion1.worktime_max=sec_num;
+}
+
+void Work_TimeOut_Handle(void)
+{
+	u8 temp_nextaction=Read_CheckPoint_NextAction();
+	if((mode.mode==SWEEP)|(mode.mode==SHIFT))
+		{
+			if(giv_sys_time-motion1.worktime>motion1.worktime_max)
+				{
+					if(mode.mode==SWEEP)
+						{
+							stop_rap();
+							TRACE("working time out!!!\r\n");
+							TRACE("now is sweep,goto area_check!!!\r\n");
+							motion1.area_ok=true;
+							Set_CurrNode_LeakInfo(motion1.area_ok);
+							Area_Check(0);
+						}
+					else
+						{
+							switch(temp_nextaction)
+								{
+									case CHECK_NORMALSWEEP:
+									case CHECK_BACK:
+									case CHECK_LEAKSWEEP:
+										stop_rap();
+										TRACE("working time out!!!\r\n");
+										TRACE("now is shift,set leak_area ok,and goto new_area!!!\r\n");
+										motion1.area_ok=true;
+										Set_CurrNode_LeakInfo(motion1.area_ok);
+										Set_AreaWorkTime(5);
+										Area_Check(0);
+										break;
+									case CHECK_NEWAREA:
+										stop_rap();
+										TRACE("working time out!!!\r\n");
+										TRACE("now is shift,set new_area ok,and goto exit!!!\r\n");
+										Set_Curr_AllNewAreaOK();
+										Set_AreaWorkTime(5);
+										Area_Check(0);
+										break;
+									case CHECK_GOEXIT:
+										stop_rap();
+										TRACE("working time out!!!\r\n");
+										TRACE("now is exit,goto dock!!!\r\n");
+										if(motion1.start_seat)
+											Init_Docking();
+										else
+											Init_Cease();
+										break;
+								}
+						}
+				}
+		}
+}
+
+void Set_Seat_Grid(void)
+{
+	//充电座坐标(-2,0)，X坐标
+	s8 gridx,gridy;
+	Set_Coordinate_Seat(-1,-2);Set_Coordinate_Seat(-1,-1);Set_Coordinate_Seat(-1,0);Set_Coordinate_Seat(-1,1);Set_Coordinate_Seat(-1,2);
+	Set_Coordinate_Seat(-2,-2);Set_Coordinate_Seat(-2,-1);Set_Coordinate_Seat(-2,0);Set_Coordinate_Seat(-2,1);Set_Coordinate_Seat(-2,2);
+	Set_Coordinate_Seat(-3,-2);Set_Coordinate_Seat(-3,-1);Set_Coordinate_Seat(-3,0);Set_Coordinate_Seat(-3,1);Set_Coordinate_Seat(-3,2);
+}

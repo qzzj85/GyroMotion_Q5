@@ -21,8 +21,413 @@
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------		
+void LYBS_Cliff_Action(u8 bump_temp)
+{
+	switch (mode.bump)
+	{
+		case BUMP_LEFT_CLIFF:
+			switch (mode.step_bp)
+				{
+				case 0:
+					Speed=FAST_MOVE_SPEED;
+					if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS)) 		//后退
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 1:
+					if((e_l.sign==NEAR))					//左地检接地
+						{
+							mode.step_bp=0xF0;
+						}
+					else									//左地检悬崖
+						{
+							mode.step_bp++;
+						}
+					break;
+				case 2:
+					Speed=HIGH_MOVE_SPEED; 							
+					if(do_action(7,180*Angle_1))			//左轮不动向右转
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					if(e_l.sign==NEAR)			//qz modify 20180929 e_l--->e_r
+						{
+							mode.step_bp=0xf0;
+						}
+					break;
+				case 3:
+					Speed=TURN_SPEED; 								//左转10度
+					if(do_action(2,10*Angle_1))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 4:
+					Speed=MID_MOVE_SPEED; 								//前进1cm
+					if(do_action(3,1*CM_PLUS))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 5:
+					Speed=FAST_MOVE_SPEED; 								//后退10cm
+					if(do_action(4,10*CM_PLUS))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 6: 										//检查左地检
+					if(e_l.sign==NEAR)
+						{
+							stop_rap();
+							mode.step_bp=0XF0;					//OK去F0
+						}
+					else
+						{
+							mode.step_bp++;
+						}
+					break;
+				case 7:
+					Speed=TURN_SPEED; 								//右转10度
+					if(do_action(1,10*Angle_1))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 8:
+					Speed=MID_MOVE_SPEED; 								//前进1cm
+					if(do_action(3,1*CM_PLUS))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 9:
+					Speed=FAST_MOVE_SPEED; 								//后退10cm
+					if(do_action(4,10*CM_PLUS))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 10:										//检查左地检
+					if(e_l.sign==NEAR)
+						{
+							stop_rap();
+							mode.step_bp=0XF0;					//OK去F0
+						}
+					else
+						{
+							error_code=SEND_ERROR_DANGER;
+							dis_err_code=DIS_ERROR_DANGER;
+							Send_Voice(VOICE_ERROR_DANGER);
+							Init_Err();
+						}
+					break;
+				case 0XF0:
+					Speed=TURN_SPEED;
+					if(do_action(2,60*Angle_1))
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					if(bump_temp)
+						{
+							stop_rap();
+							mode.bump=bump_temp;
+							mode.step_bp=0;
+						}
+					break;
+				case 0xF1:
+					Speed=HIGH_MOVE_SPEED;
+					if(do_action(3,10*CM_PLUS))
+						{
+							stop_rap();
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.step=0;
+							mode.bump_time=giv_sys_time;
+						}
+					if(bump_temp)
+						{
+							stop_rap();
+							mode.bump=bump_temp;
+							mode.step_bp=0;
+						}
+					break;
+				}
+			break;
+			
+		case BUMP_MID_CLIFF:
+			switch (mode.step_bp)
+				{
+					case 0:
+						Speed=FAST_MOVE_SPEED;
+						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//后退
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 1:
+						if(e_m.sign==NEAR)
+							{
+								mode.step_bp=0xF0;
+							}
+						else
+							{
+								mode.step_bp++;
+							}
+						break;
+					case 2:
+						mode.step_bp++;
+						break;
+					case 3:
+						Speed=TURN_SPEED; 								//左转10度
+						if(do_action(1,10*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 4:
+						Speed=MID_MOVE_SPEED; 								//前进1cm
+						if(do_action(3,1*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 5:
+						Speed=FAST_MOVE_SPEED; 								//后退10cm
+						if(do_action(4,10*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 6: 										//检查左地检
+						if(e_m.sign==NEAR)
+							{
+								stop_rap();
+								mode.step_bp=0XF0;					//OK去F0
+							}
+						else
+							{
+								mode.step_bp++;
+							}
+						break;
+					case 7:
+						Speed=TURN_SPEED; 								//右转10度
+						if(do_action(2,10*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 8:
+						Speed=2000; 								//前进1cm
+						if(do_action(3,1*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 9:
+						Speed=FAST_MOVE_SPEED; 								//后退10cm
+						if(do_action(4,10*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 10:										//检查左地检
+						if(e_m.sign==NEAR)
+							{
+								stop_rap();
+								mode.step_bp=0XF0;					//OK去F0
+							}
+						else
+							{
+								error_code=SEND_ERROR_DANGER;
+								dis_err_code=DIS_ERROR_DANGER;
+								Send_Voice(VOICE_ERROR_DANGER);
+								Init_Err();
+							}
+						break;
+					case 0XF0:
+						Speed=TURN_SPEED;
+						if(do_action(2,100*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						if(bump_temp)
+							{
+								stop_rap();
+								mode.bump=bump_temp;
+								mode.step_bp=0;
+							}
+						break;
+					case 0xF1:
+						mode.bump=0;
+						mode.step_bp=0;
+						mode.step=0;
+						mode.bump_time=giv_sys_time;
+						return;
+				}
+			break;
+
+		case BUMP_RIGHT_CLIFF:
+			switch (mode.step_bp)
+				{
+					case 0:
+						Speed=FAST_MOVE_SPEED;
+						if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))		//后退
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 1:
+						stop_rap();
+						if((e_r.sign==NEAR))					//左地检接地
+							{
+								mode.step_bp=0xF0;
+							}
+						else									//左地检悬崖
+							{
+								mode.step_bp++;
+							}
+						break;
+					case 2:
+						Speed=HIGH_MOVE_SPEED;								
+						if(do_action(8,180*Angle_1))			//右轮不动向左转
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						if(e_r.sign==NEAR)
+							{
+								stop_rap();
+								mode.step_bp=0xF0;
+							}
+						break;
+					case 3:
+						Speed=TURN_SPEED;									//左转10度
+						if(do_action(1,10*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 4:
+						Speed=MID_MOVE_SPEED;									//前进1cm
+						if(do_action(3,1*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 5:
+						Speed=FAST_MOVE_SPEED;									//后退10cm
+						if(do_action(4,10*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 6:											//检查左地检
+						if(e_r.sign==NEAR)
+							{
+								stop_rap();
+								mode.step_bp=0XF0;					//OK去F0
+							}
+						else
+							{
+								mode.step_bp++;
+							}
+						break;
+					case 7:
+						Speed=TURN_SPEED; 								//右转10度
+						if(do_action(2,10*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 8:
+						Speed=MID_MOVE_SPEED; 								//前进1cm
+						if(do_action(3,1*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 9:
+						Speed=FAST_MOVE_SPEED; 								//后退10cm
+						if(do_action(4,10*CM_PLUS))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 10: 										//检查左地检
+						if(e_r.sign==NEAR)
+							{
+								stop_rap();
+								mode.step_bp=0XF0;					//OK去F0
+							}
+						else
+							{
+								error_code=SEND_ERROR_DANGER;
+								dis_err_code=DIS_ERROR_DANGER;
+								Send_Voice(VOICE_ERROR_DANGER);
+								Init_Err();
+							}
+						break;
+					case 0XF0:
+						Speed=TURN_SPEED;
+						if(do_action(2,120*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						if(bump_temp)
+							{
+								stop_rap();
+								mode.bump=bump_temp;
+								mode.step_bp=0;
+								
+							}
+						break;
+					case 0xF1:
+						mode.bump=0;
+						mode.step_bp=0;
+						mode.step=0;
+						mode.bump_time=giv_sys_time;
+						return;
+				}
+			break;
+	}
+}
+
+
 void YBS_Left_Bump(u8 out_enable)
-{  
+{ 
+#ifdef YBS_AVOID_SEAT
+	u32 l_speed,r_speed,temp_data1;
+	float radius;
+	static u32 start_length,end_length;
+	static bool no_enter=false;
+#endif
 	u32 m;
 	static u8 turn_dir=0,turn_angle=0;
 	static short tgt_angle=0;
@@ -37,7 +442,11 @@ void YBS_Left_Bump(u8 out_enable)
 			mode.step_bp=0;
 			mode.bump_flag=0;
 	        break;
-
+		case BUMP_MID_CLIFF:
+		case BUMP_LEFT_CLIFF:
+		case BUMP_RIGHT_CLIFF:
+			LYBS_Cliff_Action(m);
+		break;
 /*************************************************************************
 //      
 //                      地检
@@ -427,6 +836,61 @@ void YBS_Left_Bump(u8 out_enable)
 					break;
 			}
 		break;
+			
+#ifdef YBS_AVOID_SEAT
+		case BUMP_SEAT:
+			Set_Coordinate_Seat(now_gridx,now_gridy);
+			switch(mode.step_bp)
+				{
+					case 0:
+						Speed=TURN_SPEED;
+						if(do_action(2,80*Angle_1))
+							{
+								stop_rap();
+								mode.step_bp++;
+							}
+						break;
+					case 1:
+						l_speed=550;
+						r_speed=800;
+						radius=(float)(RING_RANGE*l_speed)/(r_speed-l_speed);	//半径约为20mm
+						end_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH/2);	//准备右偏转180度
+						start_length=r_ring.all_length;
+						mode.step_bp++;
+						no_enter=false;
+						break;
+					case 2:
+						l_speed=550;
+						r_speed=800;
+						enable_rap_no_length(FRONT,l_speed,FRONT,r_speed);
+						if(r_ring.all_length-start_length>end_length)
+							{
+								stop_rap();
+								mode.bump=0;
+								mode.step_bp=0;
+								mode.step=0;
+							}
+						if((m!=mode.bump)&(m>0))
+							{
+								stop_rap();
+								mode.bump=m;
+								mode.step_bp=0;
+								return;
+							}
+						if(mode.mode==DOCKING)
+							{
+								if(l_ring.all_length-start_length>(end_length/2))
+								{
+									stop_rap();
+									enable_hwincept();
+									no_enter=true;
+									Init_Docking();
+								}
+							}
+						break;
+				}
+			break;
+#endif
 
 		case BUMP_XOUTRANGE:
 		case BUMP_YOUTRANGE:

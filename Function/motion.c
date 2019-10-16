@@ -84,8 +84,6 @@ void Save_Abort_Data(void)
 	motion1.ypos_abort=Gyro_Data.y_pos;
 	motion1.tgtyaw_abort=motion1.tgt_yaw;
 	motion1.anti_tgtyaw_abort=motion1.anti_tgt_yaw;
-	motion1.leftright_abort=motion1.leftright;
-	motion1.repeat_sweep_abort=motion1.repeat_sweep;
 	grid.x_abort=grid.x;
 	grid.y_abort=grid.y;
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
@@ -695,6 +693,7 @@ void Set_AreaWorkTime(u32 min_num)
 
 void Work_TimeOut_Handle(void)
 {
+	u8 check_result=0;
 	u8 temp_nextaction=Read_CheckPoint_NextAction();
 	if((mode.mode==SWEEP)|(mode.mode==SHIFT))
 		{
@@ -707,7 +706,15 @@ void Work_TimeOut_Handle(void)
 							TRACE("now is sweep,goto area_check!!!\r\n");
 							motion1.area_ok=true;
 							Set_CurrNode_LeakInfo(motion1.area_ok);
-							Area_Check(0);
+							check_result=Area_Check(0);
+							if(check_result==4)
+								{
+									Init_Docking();
+								}
+							else
+								{
+									Init_Shift_Point1(0);
+								}
 						}
 					else
 						{
@@ -722,17 +729,34 @@ void Work_TimeOut_Handle(void)
 										motion1.area_ok=true;
 										Set_CurrNode_LeakInfo(motion1.area_ok);
 										Set_AreaWorkTime(5);
-										Area_Check(0);
+										check_result=Area_Check(0);
+										if(check_result==4)
+											{
+												Init_Docking();
+											}
+										else
+											{
+												Init_Shift_Point1(0);
+											}
 										break;
 									case CHECK_NEWAREA:
 										stop_rap();
 										TRACE("working time out!!!\r\n");
 										TRACE("now is shift,set new_area ok,and goto exit!!!\r\n");
 										Set_Curr_AllNewAreaOK();
-										Set_AreaWorkTime(5);
-										Area_Check(0);
+										Set_AreaWorkTime(10);
+										check_result=Area_Check(0);
+										if(check_result==4)
+											{
+												Init_Docking();
+											}
+										else
+											{
+												Init_Shift_Point1(0);
+											}
 										break;
 									case CHECK_GOEXIT:
+									case CHECK_DOCK:
 										stop_rap();
 										TRACE("working time out!!!\r\n");
 										TRACE("now is exit,goto dock!!!\r\n");
@@ -754,4 +778,16 @@ void Set_Seat_Grid(void)
 	Set_Coordinate_Seat(-1,-2);Set_Coordinate_Seat(-1,-1);Set_Coordinate_Seat(-1,0);Set_Coordinate_Seat(-1,1);Set_Coordinate_Seat(-1,2);
 	Set_Coordinate_Seat(-2,-2);Set_Coordinate_Seat(-2,-1);Set_Coordinate_Seat(-2,0);Set_Coordinate_Seat(-2,1);Set_Coordinate_Seat(-2,2);
 	Set_Coordinate_Seat(-3,-2);Set_Coordinate_Seat(-3,-1);Set_Coordinate_Seat(-3,0);Set_Coordinate_Seat(-3,1);Set_Coordinate_Seat(-3,2);
+}
+
+u8 Analysis_InSeatArea(s8 now_gridx,s8 now_gridy)
+{
+	if((now_gridx<=-1)&(now_gridx>=-3))
+		{
+			if((now_gridy<=2)&(now_gridy>=-2))
+				{
+					return 1;
+				}
+		}
+	return 0;
 }

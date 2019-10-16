@@ -173,7 +173,7 @@ void AutoReadKey(void)
 										else	//充电座充电
 											{
 												//需要补充退出充电座代码
-												Init_Quit_Charging();
+												Init_Quit_Charging(0);
 											}
 										break;
 									case CEASE:
@@ -664,7 +664,7 @@ void proc_wifi_ybs(void)
 							DelayMs(1);
 							stream_start(00);// 开始传输
 #endif
-							Init_First_Sweep(0);
+							Init_Right_YBS(1);
 						break;
 						case ERR:
 						case SLEEP:
@@ -683,7 +683,7 @@ void proc_wifi_ybs(void)
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
 						case SEAT_CHARGING:
-							Init_Quit_Charging();
+							Init_Quit_Charging(1);
 							break;
 						default:
 							break;
@@ -696,6 +696,7 @@ void proc_wifi_ybs(void)
 
 void proc_wifi_dock(void)
 {
+	u8 area_check=0;
 	switch(mode.mode)
 		{
 			case CEASE:
@@ -722,9 +723,9 @@ void proc_wifi_dock(void)
 				break;
 			case SWEEP:
 			case SHIFT:
-			case YBS:
 			case PASS2INIT:
 			case EXIT:
+			case YBS:
 				stop_rap();
 				Init_Docking();
 			default:
@@ -767,7 +768,7 @@ void proc_wifi_play()
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
 						case SEAT_CHARGING:
-							Init_Quit_Charging();
+							Init_Quit_Charging(0);
 							break;
 						default:
 							break;

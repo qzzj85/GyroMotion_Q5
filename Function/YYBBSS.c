@@ -1141,7 +1141,7 @@ u32  YBS_read_bump1(u8 out_enable)
 #endif
 	//if((r_hw.effectTop)&((mode.step==1)|(mode.step==2)|(mode.step==0x41)|(mode.step==0x42))&(mode.bump==0))
 	//if((rm_hw.effectTop|lm_hw.effectTop)&&(mode.bump==0))
-	if(top_time_sec>=11)
+	if(top_time_sec>=9)
 		{
 			if(!find_seat_first)
 				{
@@ -1662,7 +1662,7 @@ static int32_t xxxx_2;
 /*****************************************************************
 功能：初始化定点清扫的程序
 *****************************************************************/
-void Init_Right_YBS(u8 data1)
+void Init_Right_YBS(u8 direct_first)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -1693,7 +1693,7 @@ void Init_Right_YBS(u8 data1)
 	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
-	if(data1==0)
+	if(direct_first)
 		{
 			mode.step = 0x88;//QZ:原来为0x88;
 		}
@@ -1718,15 +1718,10 @@ void Init_Right_YBS(u8 data1)
 #endif
 
 	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
+	Init_Check_Status();//qz add 20180425
 //	mode.fun=YBS_read_bump1;
-#ifdef UV
-	//if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-	//	Set_UV();
-	//else									//qz add 20180910,经过调查发现,沿边时UV灯打开以后,会对右红外发现充电座信号产生严重影响,导致不能发现回充座，所以先关掉UV
-		Reset_UV();
-#endif
 
+	Sweep_Level_Set(sweep_suction);
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
@@ -1734,7 +1729,7 @@ void Init_Right_YBS(u8 data1)
 	YBS_check_base=false;
 }
 
-void Init_Left_YBS(u8 temp_data)
+void Init_Left_YBS(u8 direct_first)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -1767,7 +1762,7 @@ void Init_Left_YBS(u8 temp_data)
 	mode.time=giv_sys_time;
 
 	mode.status=1;
-	if(temp_data==0)
+	if(direct_first)
 		mode.step = 0x88;//QZ:原来为0x88;
 	else
 		mode.step=0x40;
@@ -1789,6 +1784,7 @@ void Init_Left_YBS(u8 temp_data)
 	//初始化检测的条件
 //	Init_Check_Status();//qz add 20180425
 //	mode.fun=YBS_read_bump1;
+	Sweep_Level_Set(sweep_suction);
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
 }
@@ -1890,7 +1886,7 @@ void Do_YBS_Exchange(void)
 		}
 }
 
-u8 Parse_ContinueInYBS(void)
+u8 Parse_ContinueInYBS(s8 now_gridx,s8 now_gridy)
 {
 	//static u8 check_step=0;
 	switch(motion1.continue_checkstep)
@@ -1905,8 +1901,16 @@ u8 Parse_ContinueInYBS(void)
 			case 1:
 				if(Judge_Ypos_Reach(motion1.ypos_ybs_start,POS_BIOS))
 					{
-						motion1.continue_checkstep=0;
-						return 1;
+						if((motion1.tgt_yaw==F_Angle_Const)&(now_gridx>grid.x_ybs_start))
+							{
+								motion1.continue_checkstep=0;
+								return 1;
+							}
+						else if((motion1.tgt_yaw==B_Angle_Const)&(now_gridx<grid.x_ybs_start))
+							{
+								motion1.continue_checkstep=0;
+								return 1;
+							}
 					}
 				break;
 		}

@@ -4669,7 +4669,7 @@ u8 Abort_Dock_YBS(void)
 	//if(find_home&ALL_TOP_ONLY)
 	if(top_time_sec>=6)
 		{
-			if(find_home&ALL_TOP_MASK)
+			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
 				{
 					stop_rap();
 					Init_Docking();

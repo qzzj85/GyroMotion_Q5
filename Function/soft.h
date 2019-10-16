@@ -102,7 +102,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			3
+#define		CORRECT_VERSION			4
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -921,6 +921,7 @@ typedef struct		//机器系统的工作状态
 	u8 			last_mode;			//qz add上一次的模式
 	u8 			last_sub_mode;
 	u8 			test_step;	
+	u8 			sweep_method;
 	
 	u8 			status;		//qz add 20180422，扫地机状态，SLAM下发“开始清扫后置1,停止清扫后清0，进入异常状态后，也会清0”
                 //底盘会用这个status来判断预约时间到了以后，需不需要打开预约灯
@@ -988,10 +989,9 @@ typedef struct 					//清扫结构体
 	bool 	xmax_ok;						//XMAX新区域检查完成标志
 	bool 	xmin_ok;						//XMIN新区域检查完成标志
 	bool 	repeat_sweep;			//重复扫标志，true:重复扫，false：无需要，沿边出现空旷区域时重复扫
-	bool 	repeat_sweep_abort;
-	bool 	leftright_abort;
 	bool 	pathpoint_ok;
 	bool	start_seat;
+	bool	force_dock;
 	
 	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
 	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边

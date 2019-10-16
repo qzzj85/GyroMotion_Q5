@@ -290,7 +290,7 @@ void voice_usart(u8 data)
 				{
 					if(giv_sys_time-mode.init_mode_time<100000)
 						{
-							Init_Quit_Charging();
+							Init_Quit_Charging(0);
 						}
 				}
 			#endif

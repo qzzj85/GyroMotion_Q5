@@ -1,6 +1,6 @@
 #include "AAA-Include.h"
 
-void Init_Quit_Charging(void)
+void Init_Quit_Charging(u8 sweep_method)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -15,6 +15,7 @@ void Init_Quit_Charging(void)
 //	mode.step=0x01;
 	mode.step=0x00;				//≥ı ºªØmode.step
 	mode.time=giv_sys_time;
+	mode.sweep_method=sweep_method;
 	WriteWorkState();
 
 	Sweep_Level_Set(STOP_ALL);
@@ -89,7 +90,15 @@ void Do_Quit_Chargeing(void)
 				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
-						Init_First_Sweep(1);
+						switch(mode.sweep_method)
+							{
+								case 0:									
+									Init_First_Sweep(1);
+									break;
+								case 1:
+									Init_Right_YBS(1);
+									break;
+							}
 					}
 				break;
 				

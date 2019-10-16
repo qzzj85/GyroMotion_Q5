@@ -21,6 +21,7 @@
 #define	CHECK_LEAKSWEEP		2
 #define	CHECK_NEWAREA		3
 #define	CHECK_GOEXIT		4
+#define	CHECK_DOCK			5
 
 #define	DIR_YMAX			1
 #define	DIR_XMAX			2
@@ -71,7 +72,7 @@ short Return_GridYPos_Point(s8 gridy);
 void Reset_CheckPoint_NextAction(void);
 void Set_CheckPoint_NextAction(u8 next_action);
 u8 Read_CheckPoint_NextAction(void);
-void Area_Check(u8 avoid_ybs);
+u8 Area_Check(u8 avoid_ybs);
 void Init_Gyro_Bios(void);
 u8 Gyro_Bios_Check(void);
 u8 Judge_GridYPOS_Reach_Large(s8 gridy);

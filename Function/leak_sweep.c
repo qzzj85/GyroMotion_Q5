@@ -176,10 +176,16 @@ void Init_LeakSweep(short tgt_yaw)
 
 void Do_LeakSweep(void)
 {
+	static u8 turn_dir=0;
+	u8 area_check=0;
+	s8 now_gridx,now_gridy,ydir=0;
 	ACC_DEC_Curve();
 	clr_all_hw_effect();
 	//LeakSweep_Bump_Action();
 	Sweep_Bump_Action(1,1);
+
+	now_gridx=grid.x;now_gridy=grid.y;
+	ydir=Read_Motion_YDir();
 	
 	if(mode.bump)
 		return;
@@ -213,10 +219,99 @@ void Do_LeakSweep(void)
 								l_rap.rap=TOP_MOVE_SPEED;
 							}
 					}
-
+				
+				if((motion1.tgt_yaw==B_Angle_Const)&(motion1.start_seat))//&(motion1.area_num<=2))
+					{
+						if(Analysis_InSeatArea(now_gridx,now_gridy))
+							{
+								stop_rap();
+								mode.step++;
+								TRACE("Motion in seat area!!!\r\n");
+							}
+					}
+				break;
+			case 2:
+				if(ydir>0)
+					{
+						if(now_gridy+1>grid.y_area_max)
+							{
+								area_check=Area_Check(0);
+								if(area_check==4)
+									{
+										Init_Docking();
+									}
+								else
+									{
+										Init_Shift_Point1(0);
+									}
+								return;
+							}
+					}
+				else if(ydir<0)
+					{
+						if(now_gridy-1<grid.y_area_min)
+							{
+								area_check=Area_Check(0);
+								if(area_check==4)
+									{
+										Init_Docking();
+									}
+								else
+									{
+										Init_Shift_Point1(0);
+									}
+								return;
+							}
+					}
+				if(motion1.repeat_sweep)
+					{
+						TRACE("call this in %d %s\r\n",__LINE__,__func__);
+						Init_Pass2Sweep();
+						motion1.repeat_sweep=false;
+						return;
+					}
+				if(!Read_LeftRight())		//需要准备左沿边
+					{
+						turn_dir=2; //左沿边，碰撞向右转
+					}
+				else				//需要准备右沿边
+					{
+						turn_dir=1; //右沿边，碰撞向左转
+					}
+				mode.step++;
+				break;
+			case 3:
+				Speed=TURN_SPEED;
+				if(do_action(turn_dir,100*Angle_1))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 4:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,HORIZON_LENGTH*CM_PLUS))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 5:
+				//Init_Back_Sweep();
+				TRACE("call this in %d %s\r\n",__LINE__,__func__);
+				Init_Pass2Sweep();
 				break;
 			case 0xF0:
-				Area_Check(0);
+				area_check=Area_Check(0);
+				if(area_check==4)
+					{
+						Init_Docking();
+					}
+				else
+					{
+						Init_Shift_Point1(0);
+					}
+				break;
 			//qz add 20190307 X坐标超出4M范围的措施
 		}
 }
@@ -398,7 +493,26 @@ void Do_Leak_BackSweep(void)
 								mode.step++;
 							}
 					}
-
+				if((motion1.tgt_yaw==B_Angle_Const)&(motion1.start_seat))//&(motion1.area_num<=2))
+					{
+						if(Analysis_InSeatArea(now_gridx,now_gridy))
+							{
+								stop_rap();
+								mode.step=20;
+								TRACE("Motion in seat area!!!\r\n");
+							}
+					}
+				break;
+			case 20:
+				if(motion1.repeat_sweep)
+					{
+						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+						Init_Pass2Sweep();
+					}
+				else
+					{
+						mode.step=2;
+					}
 				break;
 			case 2:
 				if(ydir>0)

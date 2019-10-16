@@ -2075,9 +2075,27 @@ u8 Get_TurnDir(short tgt_angle)
 		}
 }
 
-void Area_Check(u8 avoid_ybs)
+//return 
+//0:应该不会返回这个值
+//1:检查到漏扫区域
+//2:检查到新区域
+//3:回到上一个区域
+//4:已回到最开始出发点
+u8 Area_Check(u8 avoid_ybs)
 {
+	u8 curr_areanum=0,return_data=0;
 	TRACE("Enter in %s...\r\n",__func__);
+	curr_areanum=Read_CurrNode_AreaNO();
+	TRACE("curr_areanum=%d\r\n",curr_areanum);
+	
+	if(motion1.force_dock)
+		{
+			TRACE("Force Dock!!!\r\n");
+			motion1.area_ok=true;
+			Set_CurrNode_LeakInfo(motion1.area_ok);
+			Set_Curr_AllNewAreaOK();
+		}
+#if 0
 	if(mode.mode!=SHIFT)
 		{
 			TRACE("mode.mode!=SHIFT!!\r\n");
@@ -2101,7 +2119,56 @@ void Area_Check(u8 avoid_ybs)
 			//while(1);
 			Init_Shift_Point1(avoid_ybs);
 		}
+#endif
+
+	if(mode.mode!=SHIFT)
+		{
+			TRACE("mode.mode!=SHIFT!!\r\n");
+			TRACE("set worktime 10!!\r\n");
+			Set_AreaWorkTime(10);
+		}
+	
+	if(Find_Leak_Area())						//寻找当前区域漏扫
+		{
+			TRACE("Go to LeakArea!!!\r\n");
+			//Init_Shift_Point1(avoid_ybs);
+			return_data=1;
+		}
+	else if(Find_NextArea_Entry())				//无漏扫，寻找当前区域是否可以进入下一个新区域
+		{
+			TRACE("Go to NewArea!!!\r\n");
+			//Init_Shift_Point1(avoid_ybs);
+			return_data=2;
+		}
+	else										//无新区域
+		{
+			TRACE("Go to Exit!!!\r\n");
+			Find_ExitArea_Entry();
+			if(curr_areanum==1)		//是否是第一打扫区域,是则打扫完成
+				{
+					TRACE("This area is first sweep area!!");
+					TRACE("Goto original point and prepare to Dock!!\r\n");
+					Send_Voice(VOICE_SWEEP_DONE);
+					//while(1);
+					Set_CheckPoint_NextAction(CHECK_DOCK);
+					return_data=3;
+				}
+			else if(curr_areanum==0)
+				{
+					TRACE("This is in original area!!!\r\n");
+					TRACE("Prepare to Dock!!!\r\n");
+					return_data=4;
+				}
+			else								//不是，则进入下一区域
+				{
+					TRACE("This area isnot first sweep area!!\r\n");
+					TRACE("Go to Exit!!!\r\n");
+					return_data=3;
+				}
+			//Init_Shift_Point1(avoid_ybs);
+		}
 	TRACE("Out in %s...\r\n",__func__);
+	return 0;
 }
 
 void Init_Gyro_Bios(void)

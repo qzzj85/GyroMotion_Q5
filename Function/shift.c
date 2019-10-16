@@ -189,7 +189,7 @@ u8 Read_Shift_Bump(void)
 
 void Shift_BumpAction(void)
 {
-	u8 static turn_dir,turn_angle,bump_time=0,cliff_time=0;
+	u8 static turn_dir,turn_angle,bump_time=0,cliff_time=0,check_result;
 	u8 m,temp_data=0,nextaction=0;
 	s8 now_gridx,now_gridy,tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -568,8 +568,16 @@ void Shift_BumpAction(void)
 								}
 							else
 								{
-									Area_Check(1);
-								}
+									check_result=Area_Check(1);
+									if(check_result==4)
+										{
+											Init_Docking();
+										}
+									else
+										{
+											Init_Shift_Point1(1);
+										}
+									}
 							break;
 						case 10:
 							Speed=MID_MOVE_SPEED;
@@ -702,7 +710,9 @@ void Do_Shift_Point1(void)
 
 			return;
 		}
-
+	
+	if(Analysis_Check_Dock())
+		return;
 	
 	Shift_BumpAction();
 	if(mode.bump)
@@ -1744,8 +1754,10 @@ void Do_Shift_Point2(void)
 	static u32 length;
 	static u8 turn_dir;
 	s8 tgt_gridx2,tgt_gridy2,now_gridx,now_gridy;
+	u8 temp_nextaction=0;
 	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
 	now_gridx=grid.x;now_gridy=grid.y;
+	temp_nextaction=Read_CheckPoint_NextAction();
 	
 	ACC_DEC_Curve();
 	
@@ -1765,6 +1777,8 @@ void Do_Shift_Point2(void)
 			return;
 		}
 	
+	if(Analysis_Check_Dock())
+		return;
 	
 	Shift_BumpAction();
 	if(mode.bump)
@@ -1872,13 +1886,18 @@ void Do_Shift_Point2(void)
 				TRACE("tgt_gridx2=%d tgt_gridy2=%d\r\n",tgt_gridx2,tgt_gridy2);
 				TRACE("grid.x =%d grid.y=%d\r\n",grid.x,grid.y);
 //				if(check_point.go_exit)
-				if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
+				if(temp_nextaction==CHECK_GOEXIT)
 					{
 						Do_ExitAtion();
 						return;
 					}
 //				if(check_point.next_area)
-				if(Read_CheckPoint_NextAction()==CHECK_NEWAREA)
+				else if(temp_nextaction==CHECK_DOCK)
+					{
+						Init_Docking();
+						return;
+					}
+				else if(temp_nextaction==CHECK_NEWAREA)
 					{
 						TRACE("Prepare to next area sweep!!!\r\n");
 						TRACE("Next tgt_yaw=%d\r\n",check_point.next_tgtyaw);
@@ -2128,7 +2147,7 @@ u8 CheckOutRange_Clean_inShift(u16 data)
 
 u8 Abort_ShiftYBS(void)
 {
-	u8 temp_data=0,temp_nextaction=0;
+	u8 temp_data=0,temp_nextaction=0,area_check=0;
 	s8 now_gridx,now_gridy;
 	s8 tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -2213,7 +2232,60 @@ u8 Abort_ShiftYBS(void)
 							return 1;
 							
 						}
-					
+
+					area_check=Area_Check(1);
+					if(area_check==1)
+						{
+							if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
+								{
+									if(mode.last_sub_mode==SHIFTPOINT1)
+										{
+											if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
+												{
+													stop_rap();
+													TRACE("Find directly Way in %s\r\n",__func__);
+													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+													//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
+													//Init_Shift_Point2();
+													Init_Shift_Point1(2);
+													return 1;
+												}
+											if(Find_PathPoint_YBS(check_point.new_x1,check_point.new_y1))
+												{
+													stop_rap();
+													TRACE("Find indirectly nowallway in %s\r\n",__func__);
+													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+													check_point.use_pathpoint=true;
+													Init_Shift_Point1(2);
+													return 1;													
+												}
+										}
+								}
+							else
+								{
+									stop_rap();
+									Init_Shift_Point1(1);
+									return 1;
+								}
+						}
+					else if(area_check==4)
+						{
+							stop_rap();
+							Init_Docking();
+							return 1;
+						}
+					else
+						{
+							if(area_check==3)
+								Set_AreaWorkTime(10);
+							stop_rap();
+							Init_Shift_Point1(1);
+//							Set_AreaWorkTime(5);
+							return 1;
+						}
+#if 0
 					if(Find_Leak_Area())
 						{
 							if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
@@ -2266,6 +2338,7 @@ u8 Abort_ShiftYBS(void)
 							Init_Shift_Point1(1);
 							return 1;
 						}
+#endif
 				}
 			else
 				{
@@ -2299,7 +2372,15 @@ u8 Abort_ShiftYBS(void)
 							if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
 								{
 									stop_rap();
-									Area_Check(1);
+									area_check=Area_Check(1);
+									if(area_check==4)
+										{
+											Init_Docking();
+										}
+									else
+										{
+											Init_Shift_Point1(1);
+										}
 									return 1;
 								}							
 						}
@@ -2322,15 +2403,32 @@ u8 Abort_ShiftYBS(void)
 										TRACE("abort now action,prepare to next action!!!\r\n");
 										motion1.area_ok=true;
 										Set_CurrNode_LeakInfo(motion1.area_ok);
-										Area_Check(1);
+										area_check=Area_Check(1);
+										if(area_check==4)
+											{
+												Init_Docking();
+											}
+										else
+											{
+												Init_Shift_Point1(1);
+											}
 										return 1;
 									case CHECK_NEWAREA:
 										TRACE("next action is NEWAREA!!!\r\n");
 										TRACE("Area check again!!!\r\n");
 										Set_Curr_AllNewAreaOK();
-										Area_Check(1);
+										area_check=Area_Check(1);
+										if(area_check==4)
+											{
+												Init_Docking();
+											}
+										else
+											{
+												Init_Shift_Point1(1);
+											}
 										return 1;
 									case CHECK_GOEXIT:
+									case CHECK_DOCK:
 										TRACE("now action is GOEXIT!!!\r\n");
 										TRACE("That means can't go back!!!\r\n");
 										Init_Docking();
@@ -2421,6 +2519,9 @@ void Do_ShiftYBS(void)
 		return;
 	
 	if(Abort2Sweep())
+		return;
+
+	if(Analysis_Check_Dock())
 		return;
 	
 	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
@@ -2901,7 +3002,7 @@ void Do_ShiftYBS(void)
 				mode.step++;
 				break;
 			case 0xD1:
-				Area_Check(1);
+				//Area_Check(1);
 				break;
 				//	不停继续转圈
 
@@ -2914,9 +3015,11 @@ void Do_ShiftYBS(void)
 //function:此函数被调用时，已经退出之前清扫的区域，返回到开始进入之前区域的上一个区域，然后直行一些处理动作
 void Do_ExitAtion(void)
 {	
+	u8 area_check=0;
 	Del_AreaNode_End();							//删除上一清扫区域的节点
 	Get_CurrNode_Info();						//获取当前区域的节点信息
 	Cal_PosArea_Max();							//获取当前区域的坐标信息
+#if 0
 	if(Find_Leak_Area())						//寻找当前区域漏扫
 		{
 			Init_Shift_Point1(0);
@@ -2946,8 +3049,20 @@ void Do_ExitAtion(void)
 					Init_Shift_Point1(0);
 				}
 		}
+	
+#endif
+	area_check=Area_Check(0);
+	if(area_check==4)
+		{
+			Init_Docking();
+		}
+	else
+		{
+			Init_Shift_Point1(0);
+		}
 	TRACE("set worktime 10!!\r\n");
 	Set_AreaWorkTime(10);
+
 }
 
 u8 Abort2Sweep(void)
@@ -3435,6 +3550,8 @@ void Do_ShiftExit_YBS(void)
 	if(Abort_ShiftExit_YBS())
 		return;
 	
+	if(Analysis_Check_Dock())
+		return;
 	
 	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
 		{
@@ -3910,6 +4027,38 @@ void Do_ShiftExit_YBS(void)
 				mode.step=0x88;
 				break;
 		}	//	end of		switch (mode.step)	//step路径执行的步骤
+}
+
+u8 Analysis_Check_Dock(void)
+{
+#if 1
+	u32 find_home=ReadHwSign_My();
+	u8 next_action=Read_CheckPoint_NextAction();
+
+	if(next_action!=CHECK_DOCK)
+		return 0;
+
+	if(top_time_sec>=6)
+		{
+			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
+				{
+					stop_rap();
+					Init_Docking();
+					return 1;
+				}
+		}
+
+	if(Analysis_InSeatArea(grid.x, grid.y))
+		{
+			stop_rap();
+			TRACE("Motion in seat area!!!\r\n");
+			Init_Docking();
+			return 1;
+		}
+	return 0;
+#else
+	return 0;
+#endif
 }
 
 void Nothing(void)

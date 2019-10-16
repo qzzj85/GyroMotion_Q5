@@ -677,6 +677,7 @@ void Do_FirstInit_Sweep(void)
 				motion1.ypos_start=Gyro_Data.y_pos; 			//qz add 20190307
 				motion1.sweep_time=0;
 				motion1.continue_checkstep=0;
+				motion1.force_dock=false;
 				mode.status=1;
 				TRACE("Enter Init_First_Sweep!\r\n");
 				TRACE("F_Angle_Const=%d\r\n",F_Angle_Const);
@@ -701,7 +702,7 @@ void Do_FirstInit_Sweep(void)
 
 void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 {
-	u8 m=0;
+	u8 m=0,area_check=0;
 	static u8 turn_dir=0,turn_angle=0,cliff_time=0;
 	static short tgt_angle=0;
 	s8 now_gridx,now_gridy,last_gridy,next_gridy,ydir;
@@ -1465,7 +1466,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 50:
 							switch(mode.bump)
 								{
-									case BUMP_XOUTRANGE:
+									case BUMP_XMAX_OUT:
 										tgt_angle=F_Angle_Const;
 										mode.step_bp++;
 										break;
@@ -1486,7 +1487,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										mode.step_bp++;
 										break;
 									default:
-										mode.step_bp=1;
+										mode.bump=0;
+										mode.step_bp=0;
+										mode.bump_flag=false;
 										break;
 								}
 							break;
@@ -1556,7 +1559,15 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							if(((now_gridy==grid.y_area_max)&(ydir>0))|((now_gridy==grid.y_area_min)&(ydir<0)))
 								{
-									Area_Check(0);
+									area_check=Area_Check(0);
+									if(area_check==4)
+										{
+											Init_Docking();
+										}
+									else
+										{
+											Init_Shift_Point1(0);
+										}
 									return;
 								}
 							
@@ -1848,6 +1859,7 @@ void Init_NormalSweep(short tgt_yaw)
 
 void Do_NormalSweep(void)
 {	
+	u8 area_check=0;
 	s8 now_gridx,now_gridy,ydir;
 	static u8 turn_dir=0;
 	
@@ -1909,16 +1921,13 @@ void Do_NormalSweep(void)
 								l_rap.rap=TOP_MOVE_SPEED;
 							}
 					}
-				if((motion1.tgt_yaw==B_Angle_Const)&(motion1.start_seat)&(motion1.area_num<=2))
+				if((motion1.tgt_yaw==B_Angle_Const)&(motion1.start_seat))//&(motion1.area_num<=2))
 					{
-						if((now_gridx<=-1)&(now_gridx>=-3))
+						if(Analysis_InSeatArea(now_gridx,now_gridy))
 							{
-								if((now_gridy<=2)&(now_gridy>=-2))
-									{
-										stop_rap();
-										TRACE("motion in Seat Area!!!\r\n");
-										mode.step++;
-									}
+								stop_rap();
+								mode.step++;
+								TRACE("Motion in seat area!!!\r\n");
 							}
 					}
 				break;
@@ -1927,7 +1936,15 @@ void Do_NormalSweep(void)
 					{
 						if(now_gridy+1>grid.y_area_max)
 							{
-								Area_Check(0);
+								area_check=Area_Check(0);
+								if(area_check==4)
+									{
+										Init_Docking();
+									}
+								else
+									{
+										Init_Shift_Point1(0);
+									}
 								return;
 							}
 					}
@@ -1935,7 +1952,15 @@ void Do_NormalSweep(void)
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
-								Area_Check(0);
+								area_check=Area_Check(0);
+								if(area_check==4)
+									{
+										Init_Docking();
+									}
+								else
+									{
+										Init_Shift_Point1(0);
+									}
 								return;
 							}
 					}
@@ -2136,6 +2161,7 @@ void Do_BackSweep(void)
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+2);
 								mode.step++;
+								return;
 							}
 					}
 
@@ -2149,20 +2175,31 @@ void Do_BackSweep(void)
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+2);
 								mode.step++;
+								return;
 							}
 					}
-
-				#if 0
-				//if((coordinate[grid.y][grid.x].clean))
-				if(Read_Coordinate_Clean(grid.x,grid.y))
+				
+				if((motion1.tgt_yaw==B_Angle_Const)&(motion1.start_seat))//&(motion1.area_num<=2))
 					{
-						TRACE("BACK OFF!!!\\r\n::");
-						while(1);
+						if(Analysis_InSeatArea(now_gridx,now_gridy))
+							{
+								stop_rap();
+								mode.step=20;
+								TRACE("Motion in seat area!!!\r\n");
+							}
 					}
-				#endif
-				//qz add end
 				break;
-			//qz add 20190307 X坐标超出4M范围的措施
+			case 20:
+				if(motion1.repeat_sweep)
+					{
+						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+						Init_Pass2Sweep();
+					}
+				else
+					{
+						mode.step=2;
+					}
+				break;
 			case 2:
 				if(ydir>0)
 					{
@@ -3045,6 +3082,7 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 
 u8 YBS_AbortFor_Sweep(void)
 {
+	u8 area_check=0;
 	s8 temp_data1,now_gridx,now_gridy;
 	short xpos,ypos;
 	s8 ydir=Read_Motion_YDir();
@@ -3073,7 +3111,15 @@ u8 YBS_AbortFor_Sweep(void)
 							TRACE("back check!!!\r\n");
 							//Logout_Area_Coordinate();
 							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(1);
+							area_check=Area_Check(1);
+							if(area_check==4)
+								{
+									Init_Docking();
+								}
+							else
+								{
+									Init_Shift_Point1(1);
+								}
 							return 1;
 //							Logout_Area_Coordinate();
 							//while(1);
@@ -3180,7 +3226,15 @@ u8 YBS_AbortFor_Sweep(void)
 							TRACE("back check!!!\r\n");
 							//Logout_Area_Coordinate();
 							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(1);
+							area_check=Area_Check(1);
+							if(area_check==4)
+								{
+									Init_Docking();
+								}
+							else
+								{
+									Init_Shift_Point1(1);
+								}
 							return 1;
 //							Logout_Area_Coordinate();
 							//while(1);
@@ -3199,12 +3253,20 @@ u8 YBS_AbortFor_Sweep(void)
 			stop_rap();
 			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
 			TRACE("stop for Area Check!!!\r\n");
-			Area_Check(1);
+			area_check=Area_Check(1);
+			if(area_check==4)
+				{
+					Init_Docking();
+				}
+			else
+				{
+					Init_Shift_Point1(1);
+				}
 			return 1;
 		}
 
 	//判断沿边时是否绕过障碍，绕过则继续直行清扫
-	if((Parse_ContinueInYBS())&(mode.step<0xD0))		
+	if((Parse_ContinueInYBS(now_gridx,now_gridy))&(mode.step<0xD0))		
 		{
 			stop_rap();
 			mode.step=0xD0;
@@ -3228,7 +3290,15 @@ u8 YBS_AbortFor_Sweep(void)
 					TRACE("YBS check base!!!\r\n");
 					//y坐标回溯超过20cm时，开启左沿边
 					YBS_check_base=false;
-					Area_Check(0);
+					area_check=Area_Check(0);
+					if(area_check==4)
+						{
+							Init_Docking();
+						}
+					else
+						{
+							Init_Shift_Point1(0);
+						}
 					return 1;
 				}
 		}
@@ -3242,7 +3312,15 @@ u8 YBS_AbortFor_Sweep(void)
 					TRACE("The Motion ybs reach the orignal point!!!\r\n");
 					motion1.area_ok=true;
 					Set_CurrNode_LeakInfo(motion1.area_ok);
-					Area_Check(0);
+					area_check=Area_Check(0);
+					if(area_check==4)
+						{
+							Init_Docking();
+						}
+					else
+						{
+							Init_Shift_Point1(0);
+						}
 				}
 		}
 #endif

@@ -370,7 +370,7 @@ static unsigned char dp_download_mode_handle(const unsigned char value[], unsign
       break;
     
     case 1:			//沿边清扫
-      	  proc_wifi_play();
+      	  proc_wifi_ybs();
       break;
       
     case 2:			//定点清扫

@@ -958,7 +958,7 @@ void stop_rap(void)
 #ifdef GYRO_CAL
 	if(mode.status)
 		{
-			if((e_l.sign==FARN)|(e_m.sign==FARN)|(e_r.sign==FARN))
+			if((e_l.sign==NEAR)|(e_m.sign==NEAR)|(e_r.sign==NEAR))
 				{
 					if(gyro_cal_flag)
 						{

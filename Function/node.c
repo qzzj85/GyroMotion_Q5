@@ -17,8 +17,8 @@ struct AREA_NODE						//区域节点结构体，用于保存当前区域的信息，所有区域节点组成
 	s8 exit_gridx2;						//区域入口点2 X坐标
 	s8 exit_gridy2;						//区域入口点2 Y坐标
 	short exit_tgtyaw;
-	s8 gridx_sweep_start;
-	s8 gridy_sweep_start;
+	s8 gridx_area_start;
+	s8 gridy_area_start;
 	u8 y_acc;
 	u8 x_acc;
 	struct AREA_NODE *last_node;
@@ -94,8 +94,8 @@ u8 Add_AreaNode_End(void)
 	p->area_num=motion1.area_num;
 	p->exit_area_num=motion1.exit_area_num;
 	p->clean=false;
-	p->gridx_sweep_start=grid.x_sweep_start;
-	p->gridy_sweep_start=grid.y_sweep_start;
+	p->gridx_area_start=grid.x_area_start;
+	p->gridy_area_start=grid.y_area_start;
 	p->y_acc=motion1.y_acc;
 	p->x_acc=motion1.x_acc;
 	p->area_ok=motion1.area_ok;
@@ -182,8 +182,8 @@ void Load_CurrNode_Info(void)
 			curr_node->exit_tgtyaw=check_point.next_tgtyaw;
 		}
 	
-	curr_node->gridx_sweep_start=grid.x_sweep_start;
-	curr_node->gridy_sweep_start=grid.y_sweep_start;
+	curr_node->gridx_area_start=grid.x_area_start;
+	curr_node->gridy_area_start=grid.y_area_start;
 	curr_node->x_acc=motion1.x_acc;
 	curr_node->y_acc=motion1.y_acc;
 	curr_node->area_ok=motion1.area_ok;
@@ -203,8 +203,8 @@ void Load_CurrNode_Info(void)
 
 void Get_CurrNode_Info(void)
 {
-	grid.x_sweep_start=curr_node->gridx_sweep_start;
-	grid.y_sweep_start=curr_node->gridy_sweep_start;
+	grid.x_area_start=curr_node->gridx_area_start;
+	grid.y_area_start=curr_node->gridy_area_start;
 	motion1.x_acc=curr_node->x_acc;
 	motion1.y_acc=curr_node->y_acc;
 	motion1.area_num=curr_node->area_num;
@@ -219,8 +219,8 @@ void Get_CurrNode_Info(void)
 	TRACE("Get CurrNode Info!!!\r\n");
 	TRACE("CurrNode.area_num=%d\r\n",curr_node->area_num);
 	TRACE("motion1.area_num=%d\r\n",motion1.area_num);
-	TRACE("grid.x_sweep_start=%d\r\n",grid.x_sweep_start);
-	TRACE("grid.y_sweep_start=%d\r\n",grid.y_sweep_start);
+	TRACE("grid.x_area_start=%d\r\n",grid.x_area_start);
+	TRACE("grid.y_area_start=%d\r\n",grid.y_area_start);
 	TRACE("motion1.x_acc=%d\r\n",motion1.x_acc);
 	TRACE("motion1.y_acc=%d\r\n",motion1.y_acc);
 	TRACE("motion1 ymax check %d\r\n",motion1.ymax_ok);

@@ -16,6 +16,7 @@ u8 Abort2Sweep(void);
 void Init_ShiftExit_RightYBS(u8 temp_data);
 void Init_ShiftExit_LeftYBS(u8 temp_data);
 u8 Analysis_Check_Dock(void);
+u8 Force_Dock(void);
 
 
 #endif

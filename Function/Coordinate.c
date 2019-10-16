@@ -721,6 +721,131 @@ s8 Return_MinClean_GridX(s8 gridy,u8 nowall)
 	return temp_gridx;
 }
 
+s8 Return_MaxClean_AllGridy(s8 gridx,u8 nowall)
+{
+	s8 temp_gridy;u8 area_num;
+	for(temp_gridy=GRID_MAX;temp_gridy!=GRID_MIN;temp_gridy--)
+		{
+			if(!nowall)
+				{
+					if(Read_Coordinate_Clean(gridx,temp_gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(gridx,temp_gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+			else
+				{
+					if(Read_Coordinate_CleanNoWall(gridx,temp_gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(gridx,temp_gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+		}
+	return temp_gridy;
+}
+
+s8 Return_MinClean_AllGridY(s8 gridx,u8 nowall)
+{
+	s8 temp_gridy;u8 area_num;
+	for(temp_gridy=GRID_MIN;temp_gridy!=GRID_MAX;temp_gridy++)
+		{
+			if(!nowall)
+				{
+					if(Read_Coordinate_Clean(gridx,temp_gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(gridx,temp_gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+			else
+				{
+					if(Read_Coordinate_CleanNoWall(gridx,temp_gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(gridx,temp_gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+		}
+	return temp_gridy;
+}
+
+s8 Return_MaxClean_GridXAll(s8 gridy,u8 nowall)
+{	
+	s8 temp_gridx;u8 area_num;
+	for(temp_gridx=GRID_MAX;temp_gridx!=GRID_MIN;temp_gridx--)
+		{
+			if(!nowall)
+				{
+					if(Read_Coordinate_Clean(temp_gridx,gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(temp_gridx,gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+			else
+				{
+					if(Read_Coordinate_CleanNoWall(temp_gridx,gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(temp_gridx,gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+		}
+	return temp_gridx;
+//	return 2;
+}
+
+s8 Return_MinClean_GridXAll(s8 gridy,u8 nowall)
+{
+	s8 temp_gridx;u8 area_num;
+	for(temp_gridx=GRID_MIN;temp_gridx!=GRID_MAX;temp_gridx++)
+		{
+			if(!nowall)
+				{
+					if(Read_Coordinate_Clean(temp_gridx,gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(temp_gridx,gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+			else
+				{
+					if(Read_Coordinate_CleanNoWall(temp_gridx,gridy))
+						{
+#if 1
+							area_num=Read_Coordinate_AreaNo(temp_gridx,gridy);
+							if(area_num==motion1.area_num)
+#endif
+								break;
+						}
+				}
+		}
+	return temp_gridx;
+}
+
 /*--------------------------------------------
 function:寻找下一区域的Y边界出口
 input:minormax:可以从两个方向寻找 
@@ -2088,13 +2213,6 @@ u8 Area_Check(u8 avoid_ybs)
 	curr_areanum=Read_CurrNode_AreaNO();
 	TRACE("curr_areanum=%d\r\n",curr_areanum);
 	
-	if(motion1.force_dock)
-		{
-			TRACE("Force Dock!!!\r\n");
-			motion1.area_ok=true;
-			Set_CurrNode_LeakInfo(motion1.area_ok);
-			Set_Curr_AllNewAreaOK();
-		}
 #if 0
 	if(mode.mode!=SHIFT)
 		{
@@ -2148,7 +2266,9 @@ u8 Area_Check(u8 avoid_ybs)
 				{
 					TRACE("This area is first sweep area!!");
 					TRACE("Goto original point and prepare to Dock!!\r\n");
-					Send_Voice(VOICE_SWEEP_DONE);
+					Send_Voice(VOICE_VOLUME_3);
+					Send_Voice(VOICE_VOLUME_3);
+					Send_Voice(VOICE_VOLUME_3);
 					//while(1);
 					Set_CheckPoint_NextAction(CHECK_DOCK);
 					return_data=3;
@@ -2157,6 +2277,7 @@ u8 Area_Check(u8 avoid_ybs)
 				{
 					TRACE("This is in original area!!!\r\n");
 					TRACE("Prepare to Dock!!!\r\n");
+					Init_Docking();
 					return_data=4;
 				}
 			else								//不是，则进入下一区域
@@ -2168,7 +2289,7 @@ u8 Area_Check(u8 avoid_ybs)
 			//Init_Shift_Point1(avoid_ybs);
 		}
 	TRACE("Out in %s...\r\n",__func__);
-	return 0;
+	return return_data;
 }
 
 void Init_Gyro_Bios(void)

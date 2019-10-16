@@ -80,6 +80,11 @@ s8 Cal_Real_Grid (s8 grid);
 u8 Can_Entry_Point(s8 gridx,s8 gridy,u8 check_ydir);
 void Reset_XY(void);
 
+s8 Return_MaxClean_GridXAll(s8 gridy,u8 nowall);
+s8 Return_MinClean_GridXAll(s8 gridy,u8 nowall);
+
+
+
 #endif
 
 

@@ -200,7 +200,7 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 	else
 		return 0;
 
-	if(ygrid_abort==grid.y_sweep_start)
+	if(ygrid_abort==grid.y_area_start)
 		return 0;
 	if(Read_Motion_BackSweep())
 		return 0;
@@ -493,32 +493,32 @@ void Cal_PosArea_Max(void)
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("motion1.xacc=%d yacc=%d\r\n",motion1.x_acc,motion1.y_acc);
 
-	motion1.xpos_start_area=Return_GridXPos_Point(grid.x_sweep_start);
-	motion1.ypos_start_area=Return_GridYPos_Point(grid.y_sweep_start);
+	motion1.xpos_start_area=Return_GridXPos_Point(grid.x_area_start);
+	motion1.ypos_start_area=Return_GridYPos_Point(grid.y_area_start);
 
 	switch(motion1.x_acc)
 		{
 			case 0:				//沿X轴负方向(B_Angle_Const)清扫
-				grid.x_area_max=grid.x_sweep_start;
+				grid.x_area_max=grid.x_area_start;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start-20;
+				grid.x_area_min=grid.x_area_start-20;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 				break;
 			case 1:				//沿X轴正方向(F_Angle_Const)清扫
-				grid.x_area_max=grid.x_sweep_start+20;
+				grid.x_area_max=grid.x_area_start+20;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start;
+				grid.x_area_min=grid.x_area_start;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 				break;
 			case 2:				//沿X轴双方向清扫
-				grid.x_area_max=grid.x_sweep_start+10;
+				grid.x_area_max=grid.x_area_start+10;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start-10;
+				grid.x_area_min=grid.x_area_start-10;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 			default:
@@ -539,27 +539,27 @@ void Cal_PosArea_Max(void)
 	switch (motion1.y_acc)
 		{
 			case 0:				//沿Y轴负方向(L_Angle_Const)清扫
-				grid.y_area_max=grid.y_sweep_start;
+				grid.y_area_max=grid.y_area_start;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start-20;
+				grid.y_area_min=grid.y_area_start-20;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;
 				break;
 			case 1:				//沿Y轴正方向(R_Angle_Const)清扫			
-				grid.y_area_max=grid.y_sweep_start+20;
+				grid.y_area_max=grid.y_area_start+20;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start;
+				grid.y_area_min=grid.y_area_start;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;
 				break;
 			case 2:				//沿Y轴双方向清扫
 			default:
-				grid.y_area_max=grid.y_sweep_start+10;
+				grid.y_area_max=grid.y_area_start+10;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start-10;
+				grid.y_area_min=grid.y_area_start-10;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;				
 				break;				
@@ -576,8 +576,8 @@ void Cal_PosArea_Max(void)
 		temp_pos=motion1.ypos_start+RANGE_MAX;
 	motion1.ypos_max_area=temp_pos;
 	
-	TRACE("Grid.x_sweep_start=%d\r\n",grid.x_sweep_start);
-	TRACE("Gird.y_sweep_start=%d\r\n",grid.y_sweep_start);
+	TRACE("Grid.x_area_start=%d\r\n",grid.x_area_start);
+	TRACE("Gird.y_area_start=%d\r\n",grid.y_area_start);
 	TRACE("Grid.x_area_max=%d\r\n",grid.x_area_max);
 	TRACE("Grid.x_area_min=%d\r\n",grid.x_area_min);
 	TRACE("Grid.y_area_max=%d\r\n",grid.y_area_max);
@@ -706,15 +706,8 @@ void Work_TimeOut_Handle(void)
 							TRACE("now is sweep,goto area_check!!!\r\n");
 							motion1.area_ok=true;
 							Set_CurrNode_LeakInfo(motion1.area_ok);
-							check_result=Area_Check(0);
-							if(check_result==4)
-								{
-									Init_Docking();
-								}
-							else
-								{
-									Init_Shift_Point1(0);
-								}
+							Area_Check(0);
+							Init_Shift_Point1(0);
 						}
 					else
 						{
@@ -729,15 +722,8 @@ void Work_TimeOut_Handle(void)
 										motion1.area_ok=true;
 										Set_CurrNode_LeakInfo(motion1.area_ok);
 										Set_AreaWorkTime(5);
-										check_result=Area_Check(0);
-										if(check_result==4)
-											{
-												Init_Docking();
-											}
-										else
-											{
-												Init_Shift_Point1(0);
-											}
+										Area_Check(0);
+										Init_Shift_Point1(0);
 										break;
 									case CHECK_NEWAREA:
 										stop_rap();
@@ -745,25 +731,15 @@ void Work_TimeOut_Handle(void)
 										TRACE("now is shift,set new_area ok,and goto exit!!!\r\n");
 										Set_Curr_AllNewAreaOK();
 										Set_AreaWorkTime(10);
-										check_result=Area_Check(0);
-										if(check_result==4)
-											{
-												Init_Docking();
-											}
-										else
-											{
-												Init_Shift_Point1(0);
-											}
+										Area_Check(0);
+										Init_Shift_Point1(0);
 										break;
 									case CHECK_GOEXIT:
 									case CHECK_DOCK:
 										stop_rap();
 										TRACE("working time out!!!\r\n");
 										TRACE("now is exit,goto dock!!!\r\n");
-										if(motion1.start_seat)
-											Init_Docking();
-										else
-											Init_Cease();
+										Init_Docking();
 										break;
 								}
 						}

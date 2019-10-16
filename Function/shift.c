@@ -240,14 +240,19 @@ void Shift_BumpAction(void)
 								{
 									if((mode.bump==BUMP_LEFT_CLIFF))
 										{
-											Init_ShiftExit_LeftYBS(1);
+											Init_ShiftExit_LeftYBS(0);
 											return;
 										}
 									else
 										{
-											Init_ShiftExit_RightYBS(1);
+											Init_ShiftExit_RightYBS(0);
 											return;
 										}
+								}
+							else if(nextaction==CHECK_DOCK)
+								{
+									Init_Dock_RightYBS(0);
+									return;
 								}
 							
 							if(mode.sub_mode==SHIFTPOINT1)
@@ -377,6 +382,11 @@ void Shift_BumpAction(void)
 															Init_ShiftExit_RightYBS(1);
 															return;
 														}
+												}
+											else if(nextaction==CHECK_DOCK)
+												{
+													Init_Dock_RightYBS(0);
+													return;
 												}
 
 											if(mode.sub_mode==SHIFTPOINT1)
@@ -568,16 +578,9 @@ void Shift_BumpAction(void)
 								}
 							else
 								{
-									check_result=Area_Check(1);
-									if(check_result==4)
-										{
-											Init_Docking();
-										}
-									else
-										{
-											Init_Shift_Point1(1);
-										}
-									}
+									Area_Check(1);
+									Init_Shift_Point1(1);
+								}
 							break;
 						case 10:
 							Speed=MID_MOVE_SPEED;
@@ -619,12 +622,6 @@ void Init_Shift_Point1(u8 pre_action)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SHIFT;			
@@ -810,6 +807,11 @@ void Do_Shift_Point1(void)
 //							TRACE("Goto mode step 60\r\n");
 //							mode.step=60;
 							mode.step++;
+							if(Read_CurrNode_AreaNO()>1)
+								{
+									if(Read_CheckPoint_NextAction()==CHECK_DOCK)
+										mode.step=10;
+								}
 							break;
 						case 1:
 							TRACE("motion can directly move with Y-axis first,X-axis Second!!\r\n");
@@ -842,8 +844,22 @@ void Do_Shift_Point1(void)
 						mode.step=60;
 					}
 				break;
-
-			
+			case 10:
+				TRACE("motion need dock and area num=%d\r\n",Read_CurrNode_AreaNO());
+				temp_result=Find_PathPoint_WayAll(check_point.new_x1,check_point.new_y1);
+				if(temp_result)
+					{
+						TRACE("motion can use pathpoint move!!!\r\n");
+						TRACE("go to PATHPOINT step!!!\r\n");
+						mode.step=SHIFTMODE_STEP_PATHPOINT;
+					}
+				else
+					{
+						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+						Init_Docking();
+					}
+				break;
+				
 			//可以先从Y方向，再从X方向直接到目标点
 			case 20:
 				if(now_gridy>tgt_gridy1)
@@ -1700,12 +1716,6 @@ void Init_Shift_Point2(void)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SHIFT;			
@@ -1894,6 +1904,7 @@ void Do_Shift_Point2(void)
 //				if(check_point.next_area)
 				else if(temp_nextaction==CHECK_DOCK)
 					{
+						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 						Init_Docking();
 						return;
 					}
@@ -1952,12 +1963,6 @@ void Init_Shift_RightYBS(u8 temp_data)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif	 
 	Init_Action();
 	//	ReInitAd();
 	//clr_all_hw_struct();				//清零回充信号标志	//qz modify 20181210 effect-->struct	//qz mask 20181215
@@ -2018,13 +2023,6 @@ void Init_Shift_LeftYBS(u8 temp_data)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
-	 
 	Init_Action();
 	//	ReInitAd();
 	clr_all_hw_effect();				//清零回充信号标志
@@ -2273,13 +2271,14 @@ u8 Abort_ShiftYBS(void)
 					else if(area_check==4)
 						{
 							stop_rap();
+							TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 							Init_Docking();
 							return 1;
 						}
 					else
 						{
 							if(area_check==3)
-								Set_AreaWorkTime(10);
+							Set_AreaWorkTime(10);
 							stop_rap();
 							Init_Shift_Point1(1);
 //							Set_AreaWorkTime(5);
@@ -2372,15 +2371,8 @@ u8 Abort_ShiftYBS(void)
 							if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
 								{
 									stop_rap();
-									area_check=Area_Check(1);
-									if(area_check==4)
-										{
-											Init_Docking();
-										}
-									else
-										{
-											Init_Shift_Point1(1);
-										}
+									Area_Check(1);
+									Init_Shift_Point1(1);
 									return 1;
 								}							
 						}
@@ -2403,29 +2395,17 @@ u8 Abort_ShiftYBS(void)
 										TRACE("abort now action,prepare to next action!!!\r\n");
 										motion1.area_ok=true;
 										Set_CurrNode_LeakInfo(motion1.area_ok);
-										area_check=Area_Check(1);
-										if(area_check==4)
-											{
-												Init_Docking();
-											}
-										else
-											{
-												Init_Shift_Point1(1);
-											}
+										
+										Area_Check(1);
+										Init_Shift_Point1(1);
 										return 1;
 									case CHECK_NEWAREA:
 										TRACE("next action is NEWAREA!!!\r\n");
 										TRACE("Area check again!!!\r\n");
 										Set_Curr_AllNewAreaOK();
-										area_check=Area_Check(1);
-										if(area_check==4)
-											{
-												Init_Docking();
-											}
-										else
-											{
-												Init_Shift_Point1(1);
-											}
+										
+										Area_Check(1);
+										Init_Shift_Point1(1);
 										return 1;
 									case CHECK_GOEXIT:
 									case CHECK_DOCK:
@@ -3016,7 +2996,15 @@ void Do_ShiftYBS(void)
 void Do_ExitAtion(void)
 {	
 	u8 area_check=0;
+	
+	TRACE("Enter in %s..\r\n");
 	Del_AreaNode_End();							//删除上一清扫区域的节点
+	if(Read_CurrNode_AreaNO()==0)
+		{
+			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+			Init_Docking();
+			return;
+		}
 	Get_CurrNode_Info();						//获取当前区域的节点信息
 	Cal_PosArea_Max();							//获取当前区域的坐标信息
 #if 0
@@ -3051,15 +3039,14 @@ void Do_ExitAtion(void)
 		}
 	
 #endif
-	area_check=Area_Check(0);
-	if(area_check==4)
+	if(motion1.force_dock)
 		{
-			Init_Docking();
+			TRACE("Force Dock!!!\r\n");
+			Force_Dock();
+			return;
 		}
-	else
-		{
-			Init_Shift_Point1(0);
-		}
+	Area_Check(0);
+	Init_Shift_Point1(0);
 	TRACE("set worktime 10!!\r\n");
 	Set_AreaWorkTime(10);
 
@@ -3286,12 +3273,6 @@ void Init_ShiftExit_RightYBS(u8 temp_data)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif	 
 	Init_Action();
 	//	ReInitAd();
 	//clr_all_hw_struct();				//清零回充信号标志	//qz modify 20181210 effect-->struct	//qz mask 20181215
@@ -3352,12 +3333,6 @@ void Init_ShiftExit_LeftYBS(u8 temp_data)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
 	 
 	Init_Action();
 	//	ReInitAd();
@@ -4043,6 +4018,7 @@ u8 Analysis_Check_Dock(void)
 			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
 				{
 					stop_rap();
+					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 					Init_Docking();
 					return 1;
 				}
@@ -4060,6 +4036,36 @@ u8 Analysis_Check_Dock(void)
 	return 0;
 #endif
 }
+
+u8 Force_Dock(void)
+{
+	u8 temp_data1=0,temp_data2=0;
+	TRACE("Enter in %s...\r\n",__func__);
+	temp_data1=Find_Directly_Way(grid.x_start,grid.y_start);
+	temp_data2=Find_PathPoint_WayAll(grid.x_start,grid.y_start);
+	if(temp_data1|temp_data2)
+		{
+			check_point.new_x1=grid.x_start;
+			check_point.new_y1=grid.y_start;
+			check_point.new_x2=grid.x_start;
+			check_point.new_y2=grid.y_start;
+			Set_CheckPoint_NextAction(CHECK_DOCK);
+			Init_Shift_Point1(0);
+		}
+	else
+		{
+			TRACE("Can't Directly to 00!!\r\n");
+			motion1.area_ok=true;
+			Set_CurrNode_LeakInfo(motion1.area_ok);
+			Set_Curr_AllNewAreaOK();
+			Area_Check(0);						
+			//Set_CheckPoint_NextAction(CHECK_DOCK);
+			Init_Shift_Point1(0);
+		}
+	TRACE("Out %s!!\r\n",__func__);
+	return 0;
+}
+
 
 void Nothing(void)
 {

@@ -34,4 +34,10 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy);
 
 u8 Add_PathPoint(s8 gridx,s8 gridy,u8 data);
 
+u8 Find_PathPoint_WayAll(s8 tgt_gridx,s8 tgt_gridy);
+s8 Find_Adjoin_GapAll(s8 gridx1,s8 gridy1,s8 gridy2);
+u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid);
+u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy);
+
+
 #endif

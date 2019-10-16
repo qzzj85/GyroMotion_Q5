@@ -24,7 +24,7 @@
 #define		DOCK_SWEEP_PWM			200
 #define 	STOP_FJ   				0
 #define 	STOP_ALL	  			0
-#define		DOCK_SWEEP_LEVEL		4
+#define		SWEEP_LEVEL_DOCK		4
 
 #define		MB_STD_PWM				200
 #define		FAN_STD_PWM				1000

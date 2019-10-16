@@ -106,12 +106,6 @@ void Init_LeakSweep(short tgt_yaw)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SWEEP;			
@@ -235,15 +229,8 @@ void Do_LeakSweep(void)
 					{
 						if(now_gridy+1>grid.y_area_max)
 							{
-								area_check=Area_Check(0);
-								if(area_check==4)
-									{
-										Init_Docking();
-									}
-								else
-									{
-										Init_Shift_Point1(0);
-									}
+								Area_Check(0);
+								Init_Shift_Point1(0);
 								return;
 							}
 					}
@@ -251,15 +238,8 @@ void Do_LeakSweep(void)
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
-								area_check=Area_Check(0);
-								if(area_check==4)
-									{
-										Init_Docking();
-									}
-								else
-									{
-										Init_Shift_Point1(0);
-									}
+								Area_Check(0);
+								Init_Shift_Point1(0);
 								return;
 							}
 					}
@@ -302,15 +282,8 @@ void Do_LeakSweep(void)
 				Init_Pass2Sweep();
 				break;
 			case 0xF0:
-				area_check=Area_Check(0);
-				if(area_check==4)
-					{
-						Init_Docking();
-					}
-				else
-					{
-						Init_Shift_Point1(0);
-					}
+				Area_Check(0);
+				Init_Shift_Point1(0);
 				break;
 			//qz add 20190307 X坐标超出4M范围的措施
 		}
@@ -331,12 +304,6 @@ void Init_Leak_BackSweep(short tgt_yaw)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SWEEP;			

@@ -15,12 +15,6 @@ void Init_RunTest(void)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = TEST;			
@@ -409,32 +403,32 @@ void Cal_PosArea_Max_Test(void)
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("motion1.xacc=%d yacc=%d\r\n",motion1.x_acc,motion1.y_acc);
 
-	motion1.xpos_start_area=Return_GridXPos_Point(grid.x_sweep_start);
-	motion1.ypos_start_area=Return_GridYPos_Point(grid.y_sweep_start);
+	motion1.xpos_start_area=Return_GridXPos_Point(grid.x_area_start);
+	motion1.ypos_start_area=Return_GridYPos_Point(grid.y_area_start);
 
 	switch(motion1.x_acc)
 		{
 			case 0:				//沿X轴负方向(B_Angle_Const)清扫
-				grid.x_area_max=grid.x_sweep_start;
+				grid.x_area_max=grid.x_area_start;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start-20;
+				grid.x_area_min=grid.x_area_start-20;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 				break;
 			case 1:				//沿X轴正方向(F_Angle_Const)清扫
-				grid.x_area_max=grid.x_sweep_start+5;
+				grid.x_area_max=grid.x_area_start+5;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start;
+				grid.x_area_min=grid.x_area_start;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 				break;
 			case 2:				//沿X轴双方向清扫
-				grid.x_area_max=grid.x_sweep_start+10;
+				grid.x_area_max=grid.x_area_start+10;
 				if(grid.x_area_max>GRID_MAX)
 					grid.x_area_max=GRID_MAX;
-				grid.x_area_min=grid.x_sweep_start-10;
+				grid.x_area_min=grid.x_area_start-10;
 				if(grid.x_area_min<GRID_MIN)
 					grid.x_area_min=GRID_MIN;
 			default:
@@ -455,27 +449,27 @@ void Cal_PosArea_Max_Test(void)
 	switch (motion1.y_acc)
 		{
 			case 0:				//沿Y轴负方向(L_Angle_Const)清扫
-				grid.y_area_max=grid.y_sweep_start;
+				grid.y_area_max=grid.y_area_start;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start-20;
+				grid.y_area_min=grid.y_area_start-20;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;
 				break;
 			case 1:				//沿Y轴正方向(R_Angle_Const)清扫			
-				grid.y_area_max=grid.y_sweep_start+5;
+				grid.y_area_max=grid.y_area_start+5;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start;
+				grid.y_area_min=grid.y_area_start;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;
 				break;
 			case 2:				//沿Y轴双方向清扫
 			default:
-				grid.y_area_max=grid.y_sweep_start+10;
+				grid.y_area_max=grid.y_area_start+10;
 				if(grid.y_area_max>GRID_MAX)
 					grid.y_area_max=GRID_MAX;
-				grid.y_area_min=grid.y_sweep_start-10;
+				grid.y_area_min=grid.y_area_start-10;
 				if(grid.y_area_min<GRID_MIN)
 					grid.y_area_min=GRID_MIN;				
 				break;				
@@ -492,8 +486,8 @@ void Cal_PosArea_Max_Test(void)
 		temp_pos=motion1.ypos_start+RANGE_MAX;
 	motion1.ypos_max_area=temp_pos;
 	
-	TRACE("Grid.x_sweep_start=%d\r\n",grid.x_sweep_start);
-	TRACE("Gird.y_sweep_start=%d\r\n",grid.y_sweep_start);
+	TRACE("Grid.x_sweep_start=%d\r\n",grid.x_area_start);
+	TRACE("Gird.y_sweep_start=%d\r\n",grid.y_area_start);
 	TRACE("Grid.x_area_max=%d\r\n",grid.x_area_max);
 	TRACE("Grid.x_area_min=%d\r\n",grid.x_area_min);
 	TRACE("Grid.y_area_max=%d\r\n",grid.y_area_max);
@@ -561,8 +555,8 @@ void Init_SweepTest(void)
 	motion1.xmax_ok=false;
 	motion1.xmin_ok=false;
 	
-	grid.x_sweep_start=grid.x;
-	grid.y_sweep_start=grid.y;
+	grid.x_area_start=grid.x;
+	grid.y_area_start=grid.y;
 
 	Cal_PosArea_Max_Test();
 	if(Add_AreaNode_End())

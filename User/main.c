@@ -140,7 +140,6 @@ int main(void)
 //	TRACE("angle=%d\r\n",(int)(atan2(fabs(-31),fabs(-26))*57.295));
 //	while(1);
 
-//	Send_Voice(VOICE_DOCK_START);
 #ifdef DEBUG_Enter_Mode
 	TRACE("============welcome to sweeper!=============\r\n");
 #endif

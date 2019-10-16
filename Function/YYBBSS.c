@@ -1673,12 +1673,6 @@ void Init_Right_YBS(u8 direct_first)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed();					//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif	 
 	Init_Action();
 	//	ReInitAd();
 	//clr_all_hw_struct();				//清零回充信号标志	//qz modify 20181210 effect-->struct	//qz mask 20181215
@@ -1740,13 +1734,6 @@ void Init_Left_YBS(u8 direct_first)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
-	 
 	Init_Action();
 	//	ReInitAd();
 	clr_all_hw_effect();				//清零回充信号标志
@@ -1804,12 +1791,6 @@ u8 Init_YBS_Exchange(u8 next_ybs_mode)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
 	 
 	Init_Action();
 	//	ReInitAd();
@@ -1946,7 +1927,7 @@ u8 Analysis_NeedBack_YBS(s8 ygrid_abort)
 					return 0;						//无需判断
 				}
 		}
-	if(ygrid_abort==grid.y_sweep_start)
+	if(ygrid_abort==grid.y_area_start)
 		{
 			TRACE("ygrid_abort is sweep start.No need analysis!!!\r\n");
 			return 0;

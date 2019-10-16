@@ -696,7 +696,7 @@ void proc_wifi_ybs(void)
 
 void proc_wifi_dock(void)
 {
-	u8 area_check=0;
+	motion1.force_dock=true;
 	switch(mode.mode)
 		{
 			case CEASE:
@@ -727,7 +727,10 @@ void proc_wifi_dock(void)
 			case EXIT:
 			case YBS:
 				stop_rap();
-				Init_Docking();
+				Send_Voice(VOICE_DOCK_START);
+				Sweep_Level_Set(SWEEP_LEVEL_DOCK);
+				Force_Dock();
+				break;
 			default:
 				break;
 		}

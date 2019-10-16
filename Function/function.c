@@ -4062,7 +4062,7 @@ void Sweep_Level_Set(u16 sweep_suction)
 			break;
 
 			//qz add 20180515
-			case DOCK_SWEEP_LEVEL:		//Dock_Mode:
+			case SWEEP_LEVEL_DOCK:		//Dock_Mode:
 				Set_BS_Level(DOCK_SWEEP_PWM);
 				Set_ZS_Level(STOP_ALL);
 				Set_FJ_Level(STOP_ALL);

@@ -99,10 +99,11 @@
 //#define		STOP_SPD_CNT			1
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
+//#define		OUT_8MHZ				1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			4
+#define		CORRECT_VERSION			5
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -1037,10 +1038,12 @@ typedef struct					//坐标格坐标结构体
 	s8 y_area_min;				//区域内Y能达到的最小坐标格
 	s8 x_straight_start;		//每次开始直行清扫时的X坐标
 	s8 y_straight_start;		//每次开始直行清扫时的Y坐标
-	s8 x_sweep_start;			//区域打扫时起始X坐标	
-	s8 y_sweep_start;			//区域打扫时起始Y坐标
+	s8 x_area_start;			//区域打扫时起始X坐标	
+	s8 y_area_start;			//区域打扫时起始Y坐标
 	s8 x_ybs_start;
 	s8 y_ybs_start;
+	s8 y_start;
+	s8 x_start;
 }GRID;
 
 typedef struct					//补扫检查信息结构体

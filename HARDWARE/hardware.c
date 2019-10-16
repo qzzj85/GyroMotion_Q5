@@ -128,6 +128,14 @@ void Init_Hardware (void)
   ///////////////////////PE浮空输入 
   	GPIO_InitStructure.GPIO_Pin =CHARGE_DC|R_SPEED|L_SPEED|PWR_SWITCH_PIN|KEY_2|FAN_SPEED_PIN|MB_SPEED_PIN;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
+
+#ifdef OUT_8MHZ
+  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_8;		//左边扫保护引脚，暂时按照GPIO读取
+	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	RCC_MCOConfig(RCC_MCO_HSI);
+#endif
 /**************************/
 //
 //上拉上拉上拉上拉上拉上拉

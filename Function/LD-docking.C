@@ -47,6 +47,14 @@ u32 dock_ybs_time=0;
 ******************************************************************/
 void Init_Docking(void)
 {
+	if((!motion1.force_dock)&(!motion1.start_seat))
+		{
+			TRACE("No force dock,No seat start!!\r\n");
+			Init_Cease();
+			return;
+		}
+
+	motion1.force_dock=false;
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化设置的值********************/
@@ -72,7 +80,7 @@ void Init_Docking(void)
 	WriteWorkState();
 //	ReInitAd();
 
-	Sweep_Level_Set(DOCK_SWEEP_LEVEL);
+	Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 //	mode.Info_Abort=1;		//qz add:根据张云鹏要求，小回充模式下可以仅限停止指令
 	mode.All_Info_Abort=0;			//qz add 20180919
 	SLAM_DOCK=false;
@@ -4672,6 +4680,7 @@ u8 Abort_Dock_YBS(void)
 			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
 				{
 					stop_rap();
+					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 					Init_Docking();
 					return 1;
 				}
@@ -4690,12 +4699,6 @@ void Init_Dock_RightYBS(u8 direct_first)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif	 
 	Init_Action();
 	//	ReInitAd();
 	//clr_all_hw_struct();				//清零回充信号标志	//qz modify 20181210 effect-->struct	//qz mask 20181215
@@ -4755,12 +4758,6 @@ void Init_Dock_LeftYBS(u8 temp_data)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
 	 
 	Init_Action();
 	//	ReInitAd();

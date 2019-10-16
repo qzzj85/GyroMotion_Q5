@@ -602,8 +602,8 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 	motion1.xmin_ok=false;
 	
 //	Del_All_Sweep_Bump_Node();
-	grid.x_sweep_start=grid.x;
-	grid.y_sweep_start=grid.y;
+	grid.x_area_start=grid.x;
+	grid.y_area_start=grid.y;
 
  	Cal_PosArea_Max();
 	if(Add_AreaNode_End())
@@ -679,6 +679,8 @@ void Do_FirstInit_Sweep(void)
 				motion1.continue_checkstep=0;
 				motion1.force_dock=false;
 				mode.status=1;
+				grid.x_start=grid.x;
+				grid.y_start=grid.y;
 				TRACE("Enter Init_First_Sweep!\r\n");
 				TRACE("F_Angle_Const=%d\r\n",F_Angle_Const);
 				TRACE("B_Angle_Const=%d\r\n",B_Angle_Const);
@@ -692,6 +694,8 @@ void Do_FirstInit_Sweep(void)
 				TRACE("X Range min=%dcm\r\n",motion1.xpos_start-RANGE_MIN);
 				TRACE("GRID_MAX=%d\r\n",GRID_MAX);
 				TRACE("GRID_MIN=%d\r\n",GRID_MIN);
+				TRACE("grid.x_start=%d\r\n",grid.x_start);
+				TRACE("grid.y_start=%d\r\n",grid.y_start);
 				Cal_Grid_Pos();
 				Init_Check_Status();
 				Sweep_Level_Set(sweep_suction);
@@ -1559,15 +1563,8 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							if(((now_gridy==grid.y_area_max)&(ydir>0))|((now_gridy==grid.y_area_min)&(ydir<0)))
 								{
-									area_check=Area_Check(0);
-									if(area_check==4)
-										{
-											Init_Docking();
-										}
-									else
-										{
-											Init_Shift_Point1(0);
-										}
+									Area_Check(0);
+									Init_Shift_Point1(0);
 									return;
 								}
 							
@@ -1679,7 +1676,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 					{
 						case 0:
 							Set_Coordinate_Seat(now_gridx,now_gridy);
-							Set_Coordinate_Wall(now_gridx,now_gridy);
+							//Set_Coordinate_Wall(now_gridx,now_gridy);
 							if(motion1.repeat_sweep)
 								{
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
@@ -1748,7 +1745,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									stop_rap();
 									Set_Coordinate_Seat(now_gridx,now_gridy);
-									Set_Coordinate_Wall(now_gridx,now_gridy);
+									//Set_Coordinate_Wall(now_gridx,now_gridy);
 									mode.step_bp++;
 								}
 							break;
@@ -1796,12 +1793,6 @@ void Init_NormalSweep(short tgt_yaw)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SWEEP;			
@@ -1936,15 +1927,8 @@ void Do_NormalSweep(void)
 					{
 						if(now_gridy+1>grid.y_area_max)
 							{
-								area_check=Area_Check(0);
-								if(area_check==4)
-									{
-										Init_Docking();
-									}
-								else
-									{
-										Init_Shift_Point1(0);
-									}
+								Area_Check(0);
+								Init_Shift_Point1(0);
 								return;
 							}
 					}
@@ -1952,15 +1936,8 @@ void Do_NormalSweep(void)
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
-								area_check=Area_Check(0);
-								if(area_check==4)
-									{
-										Init_Docking();
-									}
-								else
-									{
-										Init_Shift_Point1(0);
-									}
+								Area_Check(0);
+								Init_Shift_Point1(0);
 								return;
 							}
 					}
@@ -2021,12 +1998,6 @@ void Init_Back_Sweep(short tgt_yaw)
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发送
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif		 
 	Init_Action();
 	
 	mode.mode = SWEEP;			
@@ -2961,12 +2932,6 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed();					//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif	 
 	Init_Action();
 	//	ReInitAd();
 	//clr_all_hw_struct();				//清零回充信号标志	//qz modify 20181210 effect-->struct	//qz mask 20181215
@@ -3033,12 +2998,6 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
 	Enable_Speed(); 				//打开速度检测
-#if 0
-	if(DOCK_SWEEP)
-		Sweep_Level_Set(DOCK_SWEEP_LEVEL);
-	else
-		Sweep_Level_Set(sweep_suction);
-#endif
 	 
 	Init_Action();
 	//	ReInitAd();
@@ -3111,15 +3070,8 @@ u8 YBS_AbortFor_Sweep(void)
 							TRACE("back check!!!\r\n");
 							//Logout_Area_Coordinate();
 							//y坐标回溯超过20cm时，开启左沿边
-							area_check=Area_Check(1);
-							if(area_check==4)
-								{
-									Init_Docking();
-								}
-							else
-								{
-									Init_Shift_Point1(1);
-								}
+							Area_Check(0);
+							Init_Shift_Point1(0);
 							return 1;
 //							Logout_Area_Coordinate();
 							//while(1);
@@ -3226,15 +3178,8 @@ u8 YBS_AbortFor_Sweep(void)
 							TRACE("back check!!!\r\n");
 							//Logout_Area_Coordinate();
 							//y坐标回溯超过20cm时，开启左沿边
-							area_check=Area_Check(1);
-							if(area_check==4)
-								{
-									Init_Docking();
-								}
-							else
-								{
-									Init_Shift_Point1(1);
-								}
+							Area_Check(1);
+							Init_Shift_Point1(1);
 							return 1;
 //							Logout_Area_Coordinate();
 							//while(1);
@@ -3253,15 +3198,8 @@ u8 YBS_AbortFor_Sweep(void)
 			stop_rap();
 			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
 			TRACE("stop for Area Check!!!\r\n");
-			area_check=Area_Check(1);
-			if(area_check==4)
-				{
-					Init_Docking();
-				}
-			else
-				{
-					Init_Shift_Point1(1);
-				}
+			Area_Check(1);
+			Init_Shift_Point1(1);
 			return 1;
 		}
 
@@ -3284,21 +3222,14 @@ u8 YBS_AbortFor_Sweep(void)
 
 	if(YBS_check_base)
 		{
-			if((now_gridx==grid.x_sweep_start)&(now_gridy==grid.y_sweep_start))
+			if((now_gridx==grid.x_area_start)&(now_gridy==grid.y_area_start))
 				{
 					stop_rap();
 					TRACE("YBS check base!!!\r\n");
 					//y坐标回溯超过20cm时，开启左沿边
 					YBS_check_base=false;
-					area_check=Area_Check(0);
-					if(area_check==4)
-						{
-							Init_Docking();
-						}
-					else
-						{
-							Init_Shift_Point1(0);
-						}
+					Area_Check(1);
+					Init_Shift_Point1(1);
 					return 1;
 				}
 		}
@@ -3312,15 +3243,8 @@ u8 YBS_AbortFor_Sweep(void)
 					TRACE("The Motion ybs reach the orignal point!!!\r\n");
 					motion1.area_ok=true;
 					Set_CurrNode_LeakInfo(motion1.area_ok);
-					area_check=Area_Check(0);
-					if(area_check==4)
-						{
-							Init_Docking();
-						}
-					else
-						{
-							Init_Shift_Point1(0);
-						}
+					Area_Check(1);
+					Init_Shift_Point1(1);
 				}
 		}
 #endif

@@ -987,11 +987,26 @@ void YBS_Left_Bump(u8 out_enable)
 						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
 							{
 								stop_rap();
-								mode.step_bp++;
+								mode.step_bp=100;
+								mode.bump_time=giv_sys_time;
+							}
+						break;
+					case 100:				//增加这个的目的，是按照当前角度走5cm，如果出现LF/LB/RF/RB等双重出界，可以暂时摆脱该区域
+						Speed=HIGH_MOVE_SPEED;
+						if(do_action(3,5*CM_PLUS))
+							{
+								stop_rap();
+								mode.step=3;
+							}
+						if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
+							{
+								stop_rap();
+								mode.step_bp=4;
+								return;
 							}
 						break;
 					case 3:
-						Speed=HIGH_MOVE_SPEED;
+						Speed=FAST_MOVE_SPEED;
 						//if(do_action(3,FARAWAY*CM_PLUS))
 						if(do_action_my(3,FARAWAY*CM_PLUS,tgt_angle))
 							{

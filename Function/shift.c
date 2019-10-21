@@ -807,7 +807,7 @@ void Do_Shift_Point1(void)
 //							TRACE("Goto mode step 60\r\n");
 //							mode.step=60;
 							mode.step++;
-							if(Read_CurrNode_AreaNO()>1)
+							//if(Read_CurrNode_AreaNO()>1)
 								{
 									if(Read_CheckPoint_NextAction()==CHECK_DOCK)
 										mode.step=10;
@@ -4043,6 +4043,11 @@ u8 Force_Dock(void)
 	TRACE("Enter in %s...\r\n",__func__);
 	temp_data1=Find_Directly_Way(grid.x_start,grid.y_start);
 	temp_data2=Find_PathPoint_WayAll(grid.x_start,grid.y_start);
+	
+	motion1.area_ok=true;
+	Set_CurrNode_LeakInfo(motion1.area_ok);
+	Set_Curr_AllNewAreaOK();
+	
 	if(temp_data1|temp_data2)
 		{
 			check_point.new_x1=grid.x_start;
@@ -4055,9 +4060,6 @@ u8 Force_Dock(void)
 	else
 		{
 			TRACE("Can't Directly to 00!!\r\n");
-			motion1.area_ok=true;
-			Set_CurrNode_LeakInfo(motion1.area_ok);
-			Set_Curr_AllNewAreaOK();
 			Area_Check(0);						
 			//Set_CheckPoint_NextAction(CHECK_DOCK);
 			Init_Shift_Point1(0);

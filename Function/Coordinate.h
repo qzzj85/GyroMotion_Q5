@@ -77,11 +77,12 @@ void Init_Gyro_Bios(void);
 u8 Gyro_Bios_Check(void);
 u8 Judge_GridYPOS_Reach_Large(s8 gridy);
 s8 Cal_Real_Grid (s8 grid);
-u8 Can_Entry_Point(s8 gridx,s8 gridy,u8 check_ydir);
+u8 Can_Entry_Point(void);
 void Reset_XY(void);
 
 s8 Return_MaxClean_GridXAll(s8 gridy,u8 nowall);
 s8 Return_MinClean_GridXAll(s8 gridy,u8 nowall);
+u8 Can_Entry_NewArea(CHECK_POINT *check_point);
 
 
 

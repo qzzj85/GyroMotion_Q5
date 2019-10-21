@@ -962,13 +962,14 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 	s8 temp_gridmax1,temp_gridmax2,temp_gridmin1,temp_gridmin2;
 	u8 temp_area1,temp_area2,temp_area3,temp_area4,result=0;
 	s8 temp_gridx,temp_gridx1,temp_gridy;
+	CHECK_POINT temp_check_point;
 	
 	if(minormax)					//minormax为1，YMAX边界，起点为x_area_min,y_area_max
 		{
 			if(motion1.ymax_ok)
 				{
 					return 0x7f;
-				}		
+				}
 			temp_gridx=grid.x_area_min;
 			temp_gridy=grid.y_area_max;
 			//TRACE("analysis Ymax next area entry...\r\n");
@@ -993,9 +994,9 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 							temp_area3=Read_Coordinate_AreaNo(temp_gridx,  grid.y_area_max+2);
 							temp_area4=Read_Coordinate_AreaNo(temp_gridx+1,grid.y_area_max+2);
 							if((temp_area1==0)&(temp_area2==0)&(temp_area3==0)&(temp_area4==0))
-							//if((temp_data2==0)&(temp_data4==0))
 								{
-									temp_gridx1=temp_gridx+1;
+									temp_gridx1=temp_gridx;
+									temp_check_point.backup_grid=0;
 									while(temp_gridx1<grid.x_area_max)
 										{
 											temp_gridmax1=Return_MaxClean_GridY(temp_gridx1,1);
@@ -1003,7 +1004,10 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 											temp_area2=Read_Coordinate_AreaNo(temp_gridx1,grid.y_area_max+2);
 											//if((Return_MaxClean_GridY(temp_gridx1,1)==grid.y_area_max)&((Read_Coordinate_AreaNo(temp_gridx1,grid.y_area_max+1)==0)))
 											if((temp_gridmax1==grid.y_area_max)&(temp_area1==0)&(temp_area2==0))
-												temp_gridx1++;
+												{
+													temp_gridx1++;
+													temp_check_point.backup_grid++;
+												}
 											else
 												break;
 										}
@@ -1018,11 +1022,18 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				}
 			if(result)
 				{
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy));
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx+1,Read_Coordinate_Data(temp_gridx+1,temp_gridy));
-					//temp_gridx=(temp_gridx1+temp_gridx)/2;
-					temp_gridx=(temp_gridx1+temp_gridx+1)/2;
-					//TRACE("Find Ymax next area entry! gridx=%d\r\n",temp_gridx);
+					temp_check_point.new_x1=temp_gridx;
+					temp_check_point.new_y1=grid.y_area_max;
+					temp_check_point.new_area_dir=DIR_YMAX;
+					if(!Can_Entry_NewArea(&temp_check_point))
+						{
+							//TRACE("Can't find Ymax next area entry!!!\r\n");
+							TRACE("YMAX area check complete!!!\r\n");
+							motion1.ymax_ok=true;
+							Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+							return 0x7f;
+						}
+					temp_gridx=(temp_gridx1+temp_gridx)/2;
 					return temp_gridx;
 				}
 			else
@@ -1065,15 +1076,19 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 							if((temp_area1==0)&(temp_area2==0)&(temp_area3==0)&(temp_area4==0))
 							//if((temp_data2==0)&(temp_data4==0))
 								{
-									temp_gridx1=temp_gridx-1;
+									temp_gridx1=temp_gridx;
+									temp_check_point.backup_grid=0;
 									while(temp_gridx1>grid.x_area_min)
 										{
-											temp_gridmin1=Return_MinClean_GridX(temp_gridx1,1);
+											temp_gridmin1=Return_MinClean_GridY(temp_gridx1,1);
 											temp_area1=Read_Coordinate_AreaNo(temp_gridx1,grid.y_area_min-1);
 											temp_area2=Read_Coordinate_AreaNo(temp_gridx1,grid.y_area_min-2);
 											//if((Return_MinClean_GridY(temp_gridx1,1)==grid.y_area_min)&((Read_Coordinate_AreaNo(temp_gridx1,grid.y_area_min-1)==0)))
-											if((temp_gridmin1==grid.x_area_min)&(temp_area1==0)&(temp_area2==0))
-												temp_gridx1--;
+											if((temp_gridmin1==grid.y_area_min)&(temp_area1==0)&(temp_area2==0))
+												{
+													temp_gridx1--;
+													temp_check_point.backup_grid++;
+												}
 											else
 												break;
 										}
@@ -1087,12 +1102,20 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 						}
 				}
 			if(result)
-				{				
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy));
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx-1,Read_Coordinate_Data(temp_gridx-1,temp_gridy));
-					//temp_gridx=(temp_gridx1+temp_gridx)/2;
-					temp_gridx=(temp_gridx1+temp_gridx-1)/2;
-					//TRACE("Find Ymin next area entry! gridx=%d\r\n",temp_gridx);
+				{	
+					temp_check_point.new_x1=temp_gridx;
+					temp_check_point.new_y1=grid.y_area_min;
+					temp_check_point.new_area_dir=DIR_YMIN;
+					if(!Can_Entry_NewArea(&temp_check_point))
+						{
+							//TRACE("Can't find Ymin next area entry!!!\r\n");
+							TRACE("YMIN area check complete!!!\r\n");
+							motion1.ymin_ok=true;
+							Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+							return 0x7f;
+						}
+					temp_gridx=(temp_gridx1+temp_gridx)/2;
+					//temp_gridx=(temp_gridx1+temp_gridx-1)/2;
 					return temp_gridx;
 				}
 			else
@@ -1326,8 +1349,9 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 //	s8 temp_data2=0,temp_data3=0,temp_data4=0,temp_data5=0,result=0;
 	s8 temp_gridmax1,temp_gridmax2,temp_gridmin1,temp_gridmin2;
 	u8 temp_area1,temp_area2,temp_area3,temp_area4,result=0;
-	s8 temp_gridy,temp_gridx;
-
+	s8 temp_gridy,temp_gridx,temp_gridy1;
+	CHECK_POINT temp_check_point;
+	
 	if(minormax)					//minormax为1，XMAX边界，起点为x_area_max,y_area_max
 		{
 			if(motion1.xmax_ok)
@@ -1359,6 +1383,25 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 							if((temp_area1==0)&(temp_area2==0)&(temp_area3==0)&(temp_area4==0))
 							//if((temp_data2==0)&(temp_data4==0))
 								{
+#if 1
+									temp_gridy1=temp_gridy;
+									temp_check_point.backup_grid=0;
+									while(temp_gridy1<grid.y_area_max)
+										{
+											temp_area1=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy1);
+											temp_area2=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy1);
+											temp_gridmax1=Return_MaxClean_GridX(temp_gridy1,1);
+											if((temp_gridmax1==grid.x_area_max)&(temp_area1==0)&(temp_area2==0))
+												{
+													temp_gridy1++;
+													temp_check_point.backup_grid++;
+												}
+											else
+												{
+													break;
+												}
+										}
+#endif
 									result=1;
 									break;
 								}
@@ -1370,10 +1413,19 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 				}
 			if(result)
 				{
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy));
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy+1,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy+1));
-					//TRACE("Find Xmax next area entry! gridy=%d\r\n",temp_gridy);
-					temp_gridy=temp_gridy+1;
+					temp_check_point.new_x1=grid.x_area_max;
+					temp_check_point.new_y1=temp_gridy;
+					temp_check_point.new_area_dir=DIR_XMAX;
+					if(!Can_Entry_NewArea(&temp_check_point))
+						{
+							//TRACE("Can't find Xmax next area entry!!!\r\n");
+							TRACE("XMAX area check complete!!!\r\n");
+							motion1.xmax_ok=true;
+							Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+							return 0x7f;
+						}
+					temp_gridy=(temp_gridy+temp_gridy1)/2;
+					//temp_gridy=temp_gridy+1;
 					return temp_gridy;
 				}
 			else
@@ -1414,8 +1466,26 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 							temp_area3=Read_Coordinate_AreaNo(grid.x_area_min-2,temp_gridy);
 							temp_area4=Read_Coordinate_AreaNo(grid.x_area_min-2,temp_gridy+1);
 							if((temp_area1==0)&(temp_area2==0)&(temp_area3==0)&(temp_area4==0))
-							//if((temp_data2==0)&(temp_data4==0))
 								{
+#if 1
+									temp_gridy1=temp_gridy;
+									temp_check_point.backup_grid=0;
+									while(temp_gridy1<grid.y_area_max)
+										{
+											temp_area1=Read_Coordinate_AreaNo(grid.x_area_min-1,temp_gridy1);
+											temp_area2=Read_Coordinate_AreaNo(grid.x_area_min-2,temp_gridy1);
+											temp_gridmax1=Return_MinClean_GridX(temp_gridy1,1);
+											if((temp_gridmax1==grid.x_area_min)&(temp_area1==0)&(temp_area2==0))
+												{
+													temp_gridy1++;
+													temp_check_point.backup_grid++;
+												}
+											else
+												{
+													break;
+												}
+										}
+#endif
 									result=1;
 									break;
 								}
@@ -1427,10 +1497,19 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 				}
 			if(result)
 				{
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy));
-					//TRACE("Coor[%d][%d]=%d\r\n",temp_gridy+1,temp_gridx,Read_Coordinate_Data(temp_gridx,temp_gridy+1));
-					//TRACE("Find Xmin next area entry! gridy=%d\r\n",temp_gridy);
-					temp_gridy=temp_gridy+1;
+					temp_check_point.new_x1=grid.x_area_min;
+					temp_check_point.new_y1=temp_gridy;
+					temp_check_point.new_area_dir=DIR_XMIN;
+					if(!Can_Entry_NewArea(&temp_check_point))
+						{
+							//TRACE("Can't find Xmin next area entry!!!\r\n");
+							TRACE("XMIN area check complete!!!\r\n");
+							motion1.xmin_ok=true;
+							Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+							return 0x7f;
+						}
+					//temp_gridy=temp_gridy+1;
+					temp_gridy=(temp_gridy+temp_gridy1)/2;
 					return temp_gridy;
 				}
 			else
@@ -1471,7 +1550,7 @@ void Init_CheckPoint(void)
 	check_point.use_pathpoint=false;
 	Reset_CheckPoint_NextAction();
 	check_point.ybs_dir=0;
-	check_point.backup_gridx=0;
+	check_point.backup_grid=0;
 }
 
 void Logout_CheckPoint(void)
@@ -1492,12 +1571,12 @@ void Logout_CheckPoint(void)
 		}
 }
 
-u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
+u8 Analysis_Leak_Point(void)
 {
 	s8 max_cleanx1,min_cleanx1,max_cleanx2,min_cleanx2,check_gridy1,check_gridy2,check_gridy3;
 	s8 data1=0,temp_gridx,temp1_gridx;
-	max_cleanx1=check_point1->max_cleanx1;min_cleanx1=check_point1->min_cleanx1;check_gridy1=check_point1->y1;
-	max_cleanx2=check_point1->max_cleanx2;min_cleanx2=check_point1->min_cleanx2;check_gridy2=check_point1->y2;
+	max_cleanx1=check_point.max_cleanx1;min_cleanx1=check_point.min_cleanx1;check_gridy1=check_point.y1;
+	max_cleanx2=check_point.max_cleanx2;min_cleanx2=check_point.min_cleanx2;check_gridy2=check_point.y2;
 	s8 start_checky=grid.y;
 
 	///////////先进行max min检查///////////////////
@@ -1515,17 +1594,18 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 						{
 							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(Read_Coordinate_Clean(temp_gridx+1,check_gridy1)))
 								{
-									if(check_point1->y2<start_checky)
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
 										{
-											check_point1->ydir=0;
-											check_point1->ybs_dir=LEFT;
+											check_point.ydir=0;
+											check_point.ybs_dir=LEFT;
 										}
 									else
 										{
-											check_point1->ydir=1;
-											check_point1->ybs_dir=RIGHT;
+											check_point.ydir=1;
+											check_point.ybs_dir=RIGHT;
 										}
-									if(Can_Entry_Point(temp_gridx, check_gridy1, check_point1->ydir))
+									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx+1;
 											temp1_gridx=temp_gridx;
@@ -1533,7 +1613,7 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 												{
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
 														{
-															check_point1->backup_gridx++;
+															check_point.backup_grid++;
 															temp1_gridx++;
 														}
 													else
@@ -1542,12 +1622,13 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 														}
 												}
 		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point1->new_x1=temp_gridx;
-											check_point1->new_y1=check_gridy1;
-											check_point1->new_x2=temp_gridx;
-											check_point1->new_y2=check_gridy2;
-											check_point1->next_tgtyaw=F_Angle_Const;
-											return 1;
+											check_point.new_x1=temp_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=temp_gridx;
+											check_point.new_y2=check_gridy2;
+											check_point.next_tgtyaw=F_Angle_Const;
+											if(Can_Entry_Point())
+												return 1;
 										}
 								}
 						}
@@ -1558,17 +1639,18 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 						{
 							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy2))&(Read_Coordinate_Clean(temp_gridx+1,check_gridy2)))
 								{
-									if(check_point1->y2<start_checky)
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
 										{
-											check_point1->ydir=1;
-											check_point1->ybs_dir=RIGHT;
+											check_point.ydir=1;
+											check_point.ybs_dir=RIGHT;
 										}
 									else
 										{
-											check_point1->ydir=0;
-											check_point1->ybs_dir=LEFT;
+											check_point.ydir=0;
+											check_point.ybs_dir=LEFT;
 										}
-									if(Can_Entry_Point(temp_gridx, check_gridy2, check_point1->ydir))
+									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx+1;
 											temp1_gridx=temp_gridx;
@@ -1577,7 +1659,7 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
 														{
 															temp1_gridx++;
-															check_point.backup_gridx++;
+															check_point.backup_grid++;
 														}
 													else
 														{
@@ -1585,12 +1667,13 @@ u8 Analysis_Leak_Point(CHECK_POINT *check_point1)
 														}
 												}
 		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point1->new_x1=temp_gridx;
-											check_point1->new_y1=check_gridy2;
-											check_point1->new_x2=temp_gridx;
-											check_point1->new_y2=check_gridy1;
-											check_point1->next_tgtyaw=F_Angle_Const;
-											return 1;
+											check_point.new_x1=temp_gridx;
+											check_point.new_y1=check_gridy2;
+											check_point.new_x2=temp_gridx;
+											check_point.new_y2=check_gridy1;
+											check_point.next_tgtyaw=F_Angle_Const;
+											if(Can_Entry_Point())
+												return 1;
 										}
 								}
 						}
@@ -1610,17 +1693,18 @@ LEAK_POINT_MIN_CHECK:
 						{
 							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy2))&(Read_Coordinate_Clean(temp_gridx-1,check_gridy2)))
 								{
-									if(check_point1->y2<start_checky)
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
 										{
-											check_point1->ydir=1;
-											check_point1->ybs_dir=LEFT;
+											check_point.ydir=1;
+											check_point.ybs_dir=LEFT;
 										}
 									else
 										{
-											check_point1->ydir=0;
-											check_point1->ybs_dir=RIGHT;
+											check_point.ydir=0;
+											check_point.ybs_dir=RIGHT;
 										}
-									if(Can_Entry_Point(temp_gridx, check_gridy2, check_point1->ydir))
+									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx-1;
 											temp1_gridx=temp_gridx;
@@ -1629,7 +1713,7 @@ LEAK_POINT_MIN_CHECK:
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
 														{
 															temp1_gridx--;
-															check_point1->backup_gridx--;
+															check_point.backup_grid--;
 														}
 													else
 														{
@@ -1637,12 +1721,13 @@ LEAK_POINT_MIN_CHECK:
 														}
 												}
 		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point1->new_x1=temp_gridx;
-											check_point1->new_y1=check_gridy2;
-											check_point1->new_x2=temp_gridx;
-											check_point1->new_y2=check_gridy1;
-											check_point1->next_tgtyaw=B_Angle_Const;
-											return 1;
+											check_point.new_x1=temp_gridx;
+											check_point.new_y1=check_gridy2;
+											check_point.new_x2=temp_gridx;
+											check_point.new_y2=check_gridy1;
+											check_point.next_tgtyaw=B_Angle_Const;
+											if(Can_Entry_Point())
+												return 1;
 										}
 								}
 						}
@@ -1653,17 +1738,18 @@ LEAK_POINT_MIN_CHECK:
 						{
 							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(Read_Coordinate_Clean(temp_gridx-1,check_gridy1)))
 								{
-									if(check_point1->y2<start_checky)
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
 										{
-											check_point1->ydir=0;
-											check_point1->ybs_dir=RIGHT;
+											check_point.ydir=0;
+											check_point.ybs_dir=RIGHT;
 										}
 									else
 										{
-											check_point1->ydir=1;
-											check_point1->ybs_dir=LEFT;
+											check_point.ydir=1;
+											check_point.ybs_dir=LEFT;
 										}
-									if(Can_Entry_Point(temp_gridx, check_gridy1, check_point1->ydir))
+									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx-1;
 											temp1_gridx=temp_gridx;
@@ -1672,7 +1758,7 @@ LEAK_POINT_MIN_CHECK:
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
 														{
 															temp1_gridx--;
-															check_point1->backup_gridx--;
+															check_point.backup_grid--;
 														}
 													else
 														{
@@ -1680,18 +1766,20 @@ LEAK_POINT_MIN_CHECK:
 														}
 												}
 		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point1->new_x1=temp_gridx;
-											check_point1->new_y1=check_gridy1;
-											check_point1->new_x2=temp_gridx;
-											check_point1->new_y2=check_gridy2;
-											check_point1->next_tgtyaw=B_Angle_Const;
-											return 1;
+											check_point.new_x1=temp_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=temp_gridx;
+											check_point.new_y2=check_gridy2;
+											check_point.next_tgtyaw=B_Angle_Const;
+											if(Can_Entry_Point())
+												return 1;
 										}
 								}
 						}
 				}
 		}
 
+#if 0
 	////////////再进行中间漏扫检查/////////////
 	////////////再进行中间漏扫检查/////////////
 	if(check_gridy1>check_gridy2)
@@ -1714,20 +1802,21 @@ LEAK_POINT_MIN_CHECK:
 					{
 					if((Read_Coordinate_CleanNoWall(temp_gridx-1,check_gridy2))&(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy2))&(Read_Coordinate_CleanNoWall(temp_gridx+1,check_gridy2)))
 						{
-							check_point1->new_x1=temp_gridx;
-							check_point1->new_y1=check_gridy2;
-							check_point1->new_x2=temp_gridx;
-							check_point1->new_y2=check_gridy1;
-							check_point1->next_tgtyaw=B_Angle_Const;
-							if(check_point1->y2<start_checky)
-								check_point1->ydir=1;
+							check_point->new_x1=temp_gridx;
+							check_point->new_y1=check_gridy2;
+							check_point->new_x2=temp_gridx;
+							check_point->new_y2=check_gridy1;
+							check_point->next_tgtyaw=B_Angle_Const;
+							if(check_point->y2<start_checky)
+								check_point->ydir=1;
 							else
-								check_point1->ydir=0;
+								check_point->ydir=0;
 							return 1;
 						}
 					}
 				}
 		}
+#endif
 
 #if 0
 	if(check_gridy2>check_gridy1)
@@ -1750,15 +1839,15 @@ LEAK_POINT_MIN_CHECK:
 					{
 					if((Read_Coordinate_CleanNoWall(temp_gridx-1,check_gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx+1,check_gridy1)))
 						{
-							check_point1->new_x1=temp_gridx;
-							check_point1->new_y1=check_gridy1;
-							check_point1->new_x2=temp_gridx;
-							check_point1->new_y2=check_gridy2;
-							check_point1->next_tgtyaw=F_Angle_Const;
-							if(check_point1->y2<start_checky)
-								check_point1->ydir=0;
+							check_point->new_x1=temp_gridx;
+							check_point->new_y1=check_gridy1;
+							check_point->new_x2=temp_gridx;
+							check_point->new_y2=check_gridy2;
+							check_point->next_tgtyaw=F_Angle_Const;
+							if(check_point->y2<start_checky)
+								check_point->ydir=0;
 							else
-								check_point1->ydir=1;
+								check_point->ydir=1;
 							return 1;
 						}
 					}
@@ -1832,7 +1921,7 @@ u8 Find_Leak_Area(void)
 															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
 																{
 																	temp_gridx++;
-																	check_point.backup_gridx++;
+																	check_point.backup_grid++;
 																}
 															else
 																break;
@@ -1855,7 +1944,7 @@ u8 Find_Leak_Area(void)
 									break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
 								}
 						}
-					if(Analysis_Leak_Point(&check_point))
+					if(Analysis_Leak_Point())
 						{
 							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 							TRACE("find leak area!\r\n");
@@ -1901,7 +1990,7 @@ u8 Find_Leak_Area(void)
 															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
 																{
 																	temp_gridx++;
-																	check_point.backup_gridx++;
+																	check_point.backup_grid++;
 																}
 															else
 																break;
@@ -1926,7 +2015,7 @@ u8 Find_Leak_Area(void)
 									break;
 								}
 						}					
-					if(Analysis_Leak_Point(&check_point))
+					if(Analysis_Leak_Point())
 						{
 							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 							TRACE("find leak area!\r\n");
@@ -1976,7 +2065,7 @@ u8 Find_Leak_Area(void)
 															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
 																{
 																	temp_gridx++;
-																	check_point.backup_gridx++;
+																	check_point.backup_grid++;
 																}
 															else
 																break;
@@ -1999,7 +2088,7 @@ u8 Find_Leak_Area(void)
 									break;
 								}
 						}					
-					if(Analysis_Leak_Point(&check_point))
+					if(Analysis_Leak_Point())
 						{
 							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 							TRACE("find leak area!\r\n");
@@ -2044,7 +2133,7 @@ u8 Find_Leak_Area(void)
 															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
 																{
 																	temp_gridx++;
-																	check_point.backup_gridx++;
+																	check_point.backup_grid++;
 																}
 															else
 																break;
@@ -2069,7 +2158,7 @@ u8 Find_Leak_Area(void)
 									break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
 								}
 						}
-					if(Analysis_Leak_Point(&check_point))
+					if(Analysis_Leak_Point())
 						{
 							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
 							TRACE("find leak area!\r\n");
@@ -2382,21 +2471,320 @@ u8 Gyro_Bios_Check(void)
 	return 0;
 }
 
-u8 Can_Entry_Point(s8 gridx,s8 gridy,u8 check_ydir)
+//function：查看Entry_Point是不是被墙包围
+u8 Can_Entry_Point(void)
 {
-	s8 check_gridy,check_gridx1,check_gridx2,check_gridx3;
-	check_gridx1=gridx+1;
-	if(check_ydir>0)
+	s8 cnt;
+	u8 ydir=0,num=0,i,first_len,second_len,check_result=0;
+	ydir=check_point.ydir;
+	cnt=check_point.backup_grid;
+	num=abs(cnt);
+	first_len=num+2;
+	second_len=num+4;
+	if(!num)
 		{
-			check_gridy=gridy-1;
+			TRACE("backup gridx=0!!\r\n");
+			return 0;
+		}
+	POINT_GRID entry_point[num];
+	POINT_GRID first_check[first_len],second_check[second_len];
+	for(i=0;i<num;i++)
+		{
+			if(cnt>0)
+				entry_point[i].gridx=check_point.new_x1+i;
+			else
+				entry_point[i].gridx=check_point.new_x1-i;
+			entry_point[i].gridy=check_point.new_y1;
+			first_check[i].gridx=entry_point[i].gridx;
+			if(ydir)
+				{
+					first_check[i].gridy=check_point.new_y1-1;
+					second_check[i].gridy=check_point.new_y1-2;
+				}
+			else
+				{
+					first_check[i].gridy=check_point.new_y1+1;
+					second_check[i].gridy=check_point.new_y1+2;
+				}
+		}
+
+	if(ydir)
+		{
+			if(cnt>0)
+				{
+					first_check[first_len-1].gridx=entry_point[0].gridx-1;
+					first_check[first_len-1].gridy=check_point.new_y1;
+					first_check[first_len-2].gridx=entry_point[num-1].gridx+1;
+					first_check[first_len-2].gridy=check_point.new_y1;
+
+					second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+					second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+					second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+					second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+
+					second_check[second_len-3].gridx=entry_point[0].gridx-1;
+					second_check[second_len-3].gridy=check_point.new_y1-1;
+					second_check[second_len-4].gridx=entry_point[num-1].gridx+1;
+					second_check[second_len-4].gridy=check_point.new_y1-1;
+				}
+			else
+				{
+					first_check[first_len-1].gridx=entry_point[0].gridx+1;
+					first_check[first_len-1].gridy=check_point.new_y1;
+					first_check[first_len-2].gridx=entry_point[num-1].gridx-1;
+					first_check[first_len-2].gridy=check_point.new_y1;
+
+					second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+					second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+					second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+					second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+
+					second_check[second_len-3].gridx=entry_point[0].gridx+1;
+					second_check[second_len-3].gridy=check_point.new_y1-1;
+					second_check[second_len-4].gridx=entry_point[num-1].gridx-1;
+					second_check[second_len-4].gridy=check_point.new_y1-1;
+				}
 		}
 	else
 		{
-			check_gridy=gridy+1;
+			if(cnt>0)
+				{
+					first_check[first_len-1].gridx=entry_point[0].gridx-1;
+					first_check[first_len-1].gridy=check_point.new_y1;
+					first_check[first_len-2].gridx=entry_point[num-1].gridx+1;
+					first_check[first_len-2].gridy=check_point.new_y1;
+					
+					second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+					second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+					second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+					second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+					
+					second_check[second_len-3].gridx=entry_point[0].gridx-1;
+					second_check[second_len-3].gridy=check_point.new_y1+1;
+					second_check[second_len-4].gridx=entry_point[num-1].gridx+1;
+					second_check[second_len-4].gridy=check_point.new_y1+1;
+				}
+			else
+				{
+					first_check[first_len-1].gridx=entry_point[0].gridx+1;
+					first_check[first_len-1].gridy=check_point.new_y1;
+					first_check[first_len-2].gridx=entry_point[num-1].gridx-1;
+					first_check[first_len-2].gridy=check_point.new_y1;
+					
+					second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+					second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+					second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+					second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+					
+					second_check[second_len-3].gridx=entry_point[0].gridx+1;
+					second_check[second_len-3].gridy=check_point.new_y1+1;
+					second_check[second_len-4].gridx=entry_point[num-1].gridx-1;
+					second_check[second_len-4].gridy=check_point.new_y1+1;
+				}
 		}
-	if(!Read_Coordinate_CleanNoWall(check_gridx1,check_gridy))
+	
+	check_result=0;
+	for(i=0;i<first_len;i++)
 		{
-			return 1;
+			if((Read_Coordinate_Wall(first_check[i].gridx, first_check[i].gridy))\
+				|(!Read_Coordinate_Clean(first_check[i].gridx, first_check[i].gridy)))
+				check_result++;
 		}
+	if(check_result>=first_len)
+		{
+			TRACE("Entry Point has surround by firstwall!!\r\n");
+			for(i=0;i<num;i++)
+				Set_Coordinate_Wall(entry_point[i].gridx,entry_point[i].gridy);
+			return 0;
+		}
+	
+	check_result=0;
+	for(i=0;i<second_len;i++)
+		{
+			if((Read_Coordinate_Wall(second_check[i].gridx, second_check[i].gridy))\
+				|(!Read_Coordinate_Clean(second_check[i].gridx, second_check[i].gridy)))
+				check_result++;
+		}
+	if(check_result>=second_len)
+		{
+			TRACE("Entry Point has surround by secondwall!!\r\n");
+			for(i=0;i<num;i++)
+				Set_Coordinate_Wall(entry_point[i].gridx,entry_point[i].gridy);
+			return 0;
+		}
+	
+	return 1;
 }
 
+u8 Can_Entry_NewArea(CHECK_POINT *check_point)
+{
+	u8 new_area_dir,i=0,check_result=0;
+	u8 len,first_len,second_len;
+	new_area_dir=check_point->new_area_dir;
+	len=check_point->backup_grid;
+	first_len=len+2;second_len=len+4;
+	POINT_GRID first_check[first_len],second_check[second_len],check[len];
+
+	if(check_point->backup_grid==0)
+		{
+			TRACE("backup grid=0!!\r\n");
+			return 0;
+		}
+	if(new_area_dir==DIR_YMAX)
+		{
+			len=check_point->backup_grid;
+			for(i=0;i<len;i++)
+				{
+					check[i].gridx=check_point->new_x1+i;
+					check[i].gridy=check_point->new_y1;
+					first_check[i].gridx=check_point->new_x1+i;
+					first_check[i].gridy=check_point->new_y1-1;
+					second_check[i].gridx=check_point->new_x1+i;
+					second_check[i].gridy=check_point->new_y1-2;
+				}
+			first_check[first_len-1].gridx=first_check[0].gridx-1;
+			first_check[first_len-1].gridy=check_point->new_y1;
+			first_check[first_len-2].gridx=first_check[i-1].gridx+1;
+			first_check[first_len-2].gridy=check_point->new_y1;
+			
+			second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+			second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+			second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+			second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+			
+			second_check[second_len-3].gridx=second_check[0].gridx-1;
+			second_check[second_len-3].gridy=check_point->new_y1-1;
+			second_check[second_len-4].gridx=second_check[i-1].gridx+1;
+			second_check[second_len-4].gridy=check_point->new_y1-1;
+		}
+	else if(new_area_dir==DIR_YMIN)
+		{
+			len=check_point->backup_grid;
+			first_len=len+2;second_len=len+4;
+
+			POINT_GRID first_check[first_len],second_check[second_len];
+			for(i=0;i<len;i++)
+				{
+					check[i].gridx=check_point->new_x1-i;
+					check[i].gridy=check_point->new_y1;
+					first_check[i].gridx=check_point->new_x1-i;
+					first_check[i].gridy=check_point->new_y1+1;
+					second_check[i].gridx=check_point->new_x1-i;
+					second_check[i].gridy=check_point->new_y1+2;
+				}
+			first_check[first_len-1].gridx=first_check[0].gridx+1;
+			first_check[first_len-1].gridy=check_point->new_y1;
+			first_check[first_len-2].gridx=first_check[i-1].gridx-1;
+			first_check[first_len-2].gridy=check_point->new_y1;
+			
+			second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+			second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+			second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+			second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+			
+			second_check[second_len-3].gridx=second_check[0].gridx+1;
+			second_check[second_len-3].gridy=check_point->new_y1+1;
+			second_check[second_len-4].gridx=second_check[i-1].gridx-1;
+			second_check[second_len-4].gridy=check_point->new_y1+1;
+		}
+	else if(new_area_dir==DIR_XMAX)
+		{
+			len=check_point->backup_grid;
+			first_len=len+2;second_len=len+4;
+			
+			POINT_GRID first_check[first_len],second_check[second_len];
+			for(i=0;i<len;i++)
+				{
+					check[i].gridx=check_point->new_x1;
+					check[i].gridy=check_point->new_y1+i;
+					first_check[i].gridx=check_point->new_x1-1;
+					first_check[i].gridy=check_point->new_y1+i;
+					second_check[i].gridx=check_point->new_x1-2;
+					second_check[i].gridy=check_point->new_y1+i;
+				}
+			first_check[first_len-1].gridx=check_point->new_x1;
+			first_check[first_len-1].gridy=first_check[0].gridy-1;
+			first_check[first_len-2].gridx=check_point->new_x1;
+			first_check[first_len-2].gridy=first_check[i-1].gridy+1;
+			
+			second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+			second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+			second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+			second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+			
+			second_check[second_len-3].gridx=check_point->new_x1-1;
+			second_check[second_len-3].gridy=second_check[0].gridy-1;
+			second_check[second_len-4].gridx=check_point->new_x1-1;
+			second_check[second_len-4].gridy=second_check[i-1].gridy+1;
+		}
+	else if(new_area_dir==DIR_XMIN)
+		{
+			len=check_point->backup_grid;
+			first_len=len+2;second_len=len+4;
+			
+			POINT_GRID first_check[first_len],second_check[second_len];
+			for(i=0;i<len;i++)
+				{
+					check[i].gridx=check_point->new_x1;
+					check[i].gridy=check_point->new_y1+i;
+					first_check[i].gridx=check_point->new_x1+1;
+					first_check[i].gridy=check_point->new_y1+i;
+					second_check[i].gridx=check_point->new_x1+2;
+					second_check[i].gridy=check_point->new_y1+i;
+				}
+			first_check[first_len-1].gridx=check_point->new_x1;
+			first_check[first_len-1].gridy=first_check[0].gridy-1;
+			first_check[first_len-2].gridx=check_point->new_x1;
+			first_check[first_len-2].gridy=first_check[i-1].gridy+1;
+			
+			second_check[second_len-1].gridx=first_check[first_len-1].gridx;
+			second_check[second_len-1].gridy=first_check[first_len-1].gridy;
+			second_check[second_len-2].gridx=first_check[first_len-2].gridx;
+			second_check[second_len-2].gridy=first_check[first_len-2].gridy;
+			
+			second_check[second_len-3].gridx=check_point->new_x1-1;
+			second_check[second_len-3].gridy=second_check[0].gridy-1;
+			second_check[second_len-4].gridx=check_point->new_x1-1;
+			second_check[second_len-4].gridy=second_check[i-1].gridy+1;
+		}
+	else
+		{
+			TRACE("no check area dir!!!\r\n");
+			return 0;
+		}
+
+	check_result=0;
+	for(i=0;i<first_len;i++)
+		{
+			if(Read_Coordinate_Wall(first_check[i].gridx,first_check[i].gridy)\
+				|(!Read_Coordinate_Clean(first_check[i].gridx,first_check[i].gridy)))
+				check_result++;
+		}
+	if(check_result>=first_len)
+		{
+			TRACE("New Area has surround by firstwall!!\r\n");
+			for(i=0;i<len;i++)
+				{
+					Set_Coordinate_Wall(check[i].gridx,check[i].gridy);
+					return 0;
+				}
+		}
+
+	check_result=0;
+	for(i=0;i<second_len;i++)
+		{
+			if(Read_Coordinate_Wall(second_check[i].gridx,second_check[i].gridy)\
+				|(!Read_Coordinate_Clean(second_check[i].gridx,second_check[i].gridy)))
+				check_result++;
+		}
+	if(check_result>=second_len)
+		{
+			TRACE("New Area has surround by secondwall!!\r\n");
+			for(i=0;i<len;i++)
+				{
+					Set_Coordinate_Wall(check[i].gridx,check[i].gridy);
+					return 0;
+				}
+		}
+	return 1;
+}

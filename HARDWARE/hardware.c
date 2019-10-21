@@ -611,7 +611,11 @@ return GPIO_ReadInputDataBit(GPIO_DC, CHARGE_DC)  ;
 **********************************************************/
 u8 Read_Charge_Seat(void)
 {
-return GPIO_ReadInputDataBit(GPIO_SEAT, CHARGE_SEAT)  ;
+#ifndef OUT_8MHZ
+	return GPIO_ReadInputDataBit(GPIO_SEAT, CHARGE_SEAT)  ;
+#else
+	return 0;
+#endif
 }
  
 /**********************************************************

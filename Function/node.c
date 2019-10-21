@@ -279,16 +279,16 @@ u8 Set_CurrNode_NewAreaInfo(bool area_ok,u8 num)
 {
 	switch(num)
 		{
-			case 1:
+			case DIR_YMAX:				//YMAXÇøÓò
 				curr_node->ymax_ok=area_ok;
 				break;
-			case 2:
+			case DIR_XMAX:				//XMAXÇøÓò
 				curr_node->xmax_ok=area_ok;
 				break;
-			case 3:
+			case DIR_YMIN:
 				curr_node->ymin_ok=area_ok;
 				break;
-			case 4:
+			case DIR_XMIN:
 				curr_node->xmin_ok=area_ok;
 				break;
 			default:

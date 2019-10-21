@@ -610,26 +610,12 @@ u8 Analysis_LastYClean(void)
 				check_gridy=now_gridy-1;
 				if(motion1.tgt_yaw==F_Angle_Const)			//清扫角度为F_Angle_Const
 					{
-#if 0
-						if(now_gridx+3>grid.x_area_max)
-							return 0;
-						check_gridx1=now_gridx+1;
-						check_gridx2=now_gridx+2;
-						check_gridx3=now_gridx+3;
-#endif
 						if(now_gridx+1>grid.x_area_max)
 							return 0;
 						check_gridx1=now_gridx+1;
 					}
 				else										//清扫角度为B_Angle_Const
 					{
-#if 0
-						if(now_gridx-3<grid.x_area_min)
-							return 0;
-						check_gridx1=now_gridx-1;
-						check_gridx2=now_gridx-2;
-						check_gridx3=now_gridx-3;
-#endif
 						if(now_gridx-1<grid.x_area_min)
 							return 0;
 						check_gridx1=now_gridx-1;
@@ -648,26 +634,12 @@ u8 Analysis_LastYClean(void)
 				check_gridy=now_gridy+1;
 				if(motion1.tgt_yaw==F_Angle_Const)			//清扫角度为F_Angle_Const
 					{
-#if 0
-						if(now_gridx+3>grid.x_area_max)
-							return 0;
-						check_gridx1=now_gridx+1;
-						check_gridx2=now_gridx+2;
-						check_gridx3=now_gridx+3;
-#endif
 						if(now_gridx+1>grid.x_area_max)
 							return 0;
 						check_gridx1=now_gridx+1;
 					}
 				else										//清扫角度为B_Angle_Const
 					{
-#if 0
-						if(now_gridx-3<grid.x_area_min)
-							return 0;
-						check_gridx1=now_gridx-1;
-						check_gridx2=now_gridx-2;
-						check_gridx3=now_gridx-3;
-#endif
 						if(now_gridx-1<grid.x_area_min)
 							return 0;
 						check_gridx1=now_gridx-1;
@@ -728,8 +700,36 @@ void Work_TimeOut_Handle(void)
 									case CHECK_NEWAREA:
 										stop_rap();
 										TRACE("working time out!!!\r\n");
-										TRACE("now is shift,set new_area ok,and goto exit!!!\r\n");
-										Set_Curr_AllNewAreaOK();
+										switch(check_point.new_area_dir)
+											{
+												case DIR_YMAX:
+													TRACE("Dir Ymax timeout!!!,Set Ymax Ok!\r\n");
+													motion1.ymax_ok=true;
+													Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+												break;
+												case DIR_XMAX:
+													TRACE("DIR_XMAX timeout!!!,Set Xmax Ok!\r\n");
+													motion1.xmax_ok=true;
+													Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+												break;
+												case DIR_YMIN:
+													TRACE("DIR_YMIN timeout!!!,Set Ymin Ok!\r\n");
+													motion1.ymin_ok=true;
+													Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+												break;
+												case DIR_XMIN:
+													TRACE("DIR_XMIN timeout!!!,Set Xmin Ok!\r\n");
+													motion1.xmin_ok=true;
+													Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+												break;
+												default:
+													TRACE("Set AllNewArea OK!!\r\n");
+													Set_Curr_AllNewAreaOK();
+													break;
+													
+											}
+										//Set_Curr_AllNewAreaOK();
+										TRACE("Set Working time max 10min!\r\n");
 										Set_AreaWorkTime(10);
 										Area_Check(0);
 										Init_Shift_Point1(0);

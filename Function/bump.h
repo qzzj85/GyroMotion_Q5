@@ -45,6 +45,10 @@
 #define BUMP_RF_OUT			108				//右上点
 #define BUMP_LB_OUT 		109				//左下点
 #define BUMP_RB_OUT  		110				//右下点
+
+#define	BUMP_XMAX_CLEAN		120
+#define	BUMP_XMIN_CLEAN		121
+
 extern u8 bump_value;
 extern bool bump_exiton;
 extern u32 bump_exitoff_time;

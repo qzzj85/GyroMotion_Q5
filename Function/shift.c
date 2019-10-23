@@ -197,6 +197,13 @@ void Shift_BumpAction(void)
 	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
 	m=Read_Shift_Bump();
 
+	if(Analysis_Stop_StartArea())
+		{
+			stop_rap();
+			TRACE("motion is in start area!!!\r\n");
+			Init_Cease();
+		}
+
 	
 	switch(mode.bump)
 		{
@@ -2284,60 +2291,6 @@ u8 Abort_ShiftYBS(void)
 //							Set_AreaWorkTime(5);
 							return 1;
 						}
-#if 0
-					if(Find_Leak_Area())
-						{
-							if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
-								{
-									if(mode.last_sub_mode==SHIFTPOINT1)
-										{
-											if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
-												{
-													stop_rap();
-													TRACE("Find directly Way in %s\r\n",__func__);
-													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
-													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
-													//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
-													//Init_Shift_Point2();
-													Init_Shift_Point1(2);
-													return 1;
-												}
-											if(Find_PathPoint_YBS(check_point.new_x1,check_point.new_y1))
-												{
-													stop_rap();
-													TRACE("Find indirectly nowallway in %s\r\n",__func__);
-													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
-													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
-													check_point.use_pathpoint=true;
-													Init_Shift_Point1(2);
-													return 1;													
-												}
-										}
-								}
-							else
-								{
-									stop_rap();
-									Init_Shift_Point1(1);
-									return 1;
-								}
-						}
-					else if(Find_NextArea_Entry())
-						{ 
-							stop_rap();
-							Init_Shift_Point1(1);
-							return 1;
-						}
-					else								//都没有找到新的出口，准备沿边
-						{
-							stop_rap();
-							Find_ExitArea_Entry();
-							TRACE("Go to Exit!!!\r\n");
-							TRACE("set worktime 10!!\r\n");
-							Set_AreaWorkTime(10);
-							Init_Shift_Point1(1);
-							return 1;
-						}
-#endif
 				}
 			else
 				{
@@ -2379,7 +2332,7 @@ u8 Abort_ShiftYBS(void)
 				}
 		}
 
-	if(giv_sys_time-mode.time>150000)
+	if(giv_sys_time-mode.time>600000)				//原来是15s
 		{
 			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
 				{
@@ -2417,6 +2370,14 @@ u8 Abort_ShiftYBS(void)
 						}
 				}
 		}
+
+	if(Analysis_Stop_StartArea())
+		{
+			stop_rap();
+			TRACE("motion is in start area!!!\r\n");
+			Init_Cease();
+		}
+
 	return 0;
 }
 
@@ -2732,17 +2693,6 @@ void Do_ShiftYBS(void)
 					mode.step = 0x10;
 				}
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x10:		
 				Wall_lost_Start_Pos = l_ring.all_length;							//	旋转 
@@ -2900,17 +2850,6 @@ void Do_ShiftYBS(void)
 					}
 				//qz add end
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 
@@ -3166,12 +3105,14 @@ u8 Abort2Sweep(void)
 					{
 						if(check_point.ydir>0)
 							{
-								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								if(Is_Close_Angle(L_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
 									}
-								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								else if(Is_Close_Angle(R_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy+1;
@@ -3183,12 +3124,14 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								if(Is_Close_Angle(L_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
 									}
-								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								else if(Is_Close_Angle(R_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy-1;
@@ -3203,12 +3146,14 @@ u8 Abort2Sweep(void)
 					{
 						if(check_point.ydir>0)
 							{
-								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								if(Is_Close_Angle(L_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
 									}
-								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								else if(Is_Close_Angle(R_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy+1;
@@ -3220,12 +3165,14 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
+								if(Is_Close_Angle(L_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
 									}
-								else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
+								else if(Is_Close_Angle(R_Angle_Const,now_angle))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy-1;
@@ -3386,6 +3333,14 @@ u8 Abort_ShiftExit_YBS(void)
 	now_gridx=grid.x;now_gridy=grid.y;
 
 	temp_areano=Read_Coordinate_AreaNo(now_gridx,now_gridy);
+
+	if(Analysis_Stop_StartArea())
+		{
+			stop_rap();
+			TRACE("motion is in start area!!!\r\n");
+			Init_Cease();
+		}
+	
 	if(temp_areano==motion1.exit_area_num)
 		{
 			TRACE("now grid is in the exit area num!!!\r\n");
@@ -3756,17 +3711,6 @@ void Do_ShiftExit_YBS(void)
 					mode.step = 0x10;
 				}
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x10:		
 				Wall_lost_Start_Pos = l_ring.all_length;							//	旋转 
@@ -3924,17 +3868,6 @@ void Do_ShiftExit_YBS(void)
 					}
 				//qz add end
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 
@@ -4068,6 +4001,19 @@ u8 Force_Dock(void)
 	return 0;
 }
 
+
+u8 Analysis_Stop_StartArea(void)
+{
+	if(motion1.area_num==1)
+		{
+			if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
+				{
+					if((abs(grid.x-grid.x_start)<2)&(abs(grid.y-grid.y_start)<2))
+						return 1;
+				}
+		}
+	return 0;
+}
 
 void Nothing(void)
 {

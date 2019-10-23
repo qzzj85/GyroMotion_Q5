@@ -20,7 +20,7 @@ void Init_Err(void)
 	clr_ram();
 
 	stop_rap();						//停止轮子
-	Sweep_Level_Set(STOP_ALL);		//关闭风机
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
 	Disable_earth();				//关闭地检
 //	Enable_earth();
 	Disable_wall();					//关闭墙检

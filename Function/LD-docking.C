@@ -569,7 +569,7 @@ void Do_Docking_My(void)
 				TRACE("enter in DOCKMODE_STEP_CHARGE!\r\n");
 #endif
 				
-				Sweep_Level_Set(STOP_ALL);
+				Sweep_Level_Set(SWEEP_LEVEL_STOP);
 				return;
 	  	}
 	  
@@ -5111,17 +5111,6 @@ void Do_Docking_YBS(void)
 					mode.step = 0x10;
 				}
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x10:		
 				Wall_lost_Start_Pos = l_ring.all_length;							//	Ðý×ª 
@@ -5279,17 +5268,6 @@ void Do_Docking_YBS(void)
 					}
 				//qz add end
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	Ðý×ª 

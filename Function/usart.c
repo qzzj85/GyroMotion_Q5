@@ -611,67 +611,53 @@ void Uart1_Comunication(void)
 
 void Uart3_Communication(void)
 {
-#if 0
-	static u8 Rxbuff_now=0;
-	u8 COMBUF3[19];
-	u8 checksum=0,i=0;
-
-	if(Rxbuff_now>=128)
-		Rxbuff_now=Rxbuff_now%128;
-
-	if((USART3_RX_BUF[Rxbuff_now%128]==0xAA)&(USART3_RX_BUF[(Rxbuff_now+1)%128]==0xAA))
-		{
-			for(i=0;i<19;i++)
-			{
-				COMBUF3[i]=USART3_RX_BUF[(Rxbuff_now+i)%128];
-//				USART3_RX_BUF[(Rxbuff_now+i)%128]=0;
-				if((i>1)&(i<18))
-					checksum+=COMBUF3[i];
-			}
-			
-			if(checksum!=COMBUF3[18])
-			{
-				Rxbuff_now+=18;
-				return;
-			}
-		
-			Gyro_Data.yaw=(COMBUF3[4]<<8)+COMBUF3[3];
-			Gyro_Data.pitch=(COMBUF3[6]<<8)+COMBUF3[5];
-			Gyro_Data.roll=(COMBUF3[8]<<8)+COMBUF3[7];
-			Gyro_Data.x_acc=(COMBUF3[10]<<8)+COMBUF3[9];
-			Gyro_Data.y_acc=(COMBUF3[12]<<8)+COMBUF3[11];
-			Gyro_Data.z_acc=(COMBUF3[14]<<8)+COMBUF3[13];
-			Gyro_Data.start_check_time=giv_sys_time;
-
-			Rxbuff_now+=18;
-		}
-	else
-		{
-			Rxbuff_now++;
-			return;
-		}
-#else
-#if 1
-	u8 temp_checksum=0;
+	u16 cnt_checksum=0,rece_checksum=0,num=0;
 	unsigned char COMBUF3[USART3_RX_SIZE];
 //	short temp_x=0,temp_y=0;
 
 	if(UART3.Rece_Done==false)
 		return;
 	UART3.Rece_Done=false;
-
+	
+#ifdef YIS055
+	if((USART3_RX_BUF[0]==0x59)&&(USART3_RX_BUF[1]==0x49)&(USART3_RX_BUF[2]==0X53))
+#else
 	if((USART3_RX_BUF[0]==0XAA)&&(USART3_RX_BUF[1]==0XAA))
+#endif
+
 	{
 		memcpy(COMBUF3,USART3_RX_BUF,USART3_RX_SIZE);
-		u8 num=2;
+#ifdef YIS055
+		num=3;
+#else
+		num=2;
+#endif
+
+#ifdef YIS055
+		while(num<USART3_RX_SIZE-2)
+#else
 		while(num<USART3_RX_SIZE-1)
+#endif
 		{
-			temp_checksum+=COMBUF3[num];
+			cnt_checksum+=COMBUF3[num];
 			num++;
 		}
-		if(temp_checksum==COMBUF3[USART3_RX_SIZE-1])
+		
+#ifdef YIS055
+		rece_checksum=(COMBUF3[USART3_RX_SIZE-2]<<8)+COMBUF3[USART3_RX_SIZE-1];
+#else
+		rece_checksum=COMBUF3[USART3_RX_SIZE-1];
+#endif
+
+		if(cnt_checksum==rece_checksum)
 			{
+			
+#ifdef YIS055
+				Gyro_Data.yaw=(COMBUF3[7]<<8)+COMBUF3[8];
+#else
 				Gyro_Data.yaw=(COMBUF3[4]<<8)+COMBUF3[3];
+#endif
+
 #ifdef GYRO_COMPENSATION
 				long	yaw_temp ;
 				yaw_temp = Gyro_Data.yaw -old_yaw;
@@ -719,8 +705,6 @@ void Uart3_Communication(void)
 	memset(USART3_RX_BUF,0,USART3_RX_SIZE);
 	memset(COMBUF3,0,USART3_RX_SIZE);
 	DMA_Cmd(DMA1_Channel3,ENABLE);
-#endif
-#endif
 }
 
 

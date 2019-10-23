@@ -15,6 +15,8 @@
 #define		REMOTE_TIME				0XB4
 #define		REMOTE_SET				0XB3
 #define		REMOTE_PREEN			0X2A
+#define		REMOTE_START			0X85
+#define		REMOTE_FAN				0XB5
 
 typedef enum
 {
@@ -32,6 +34,8 @@ typedef enum
 	REMOTE_KEY_TIME,
 	REMOTE_KEY_SET,
 	REMOTE_KEY_PREEEN,
+	REMOTE_KEY_START,
+	REMOTE_KEY_FAN,
 }REMOTE_KEY;
 
 
@@ -50,6 +54,9 @@ extern u32 voice_time;
 void Init_Remote_Info(void);
 void Clr_Remote_Info(void);
 void Remote_Handle(void);
+void Init_Remote_Move(void);
+void Do_Remote_Move(void);
+
 #endif
 
 

@@ -17,7 +17,7 @@ void Init_Switchoff(void)
 	clr_ram();
 
 	stop_rap();						//停止轮子
-	Sweep_Level_Set(STOP_ALL);		//关闭风机
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
 	Disable_earth();
 	Disable_wall();
 	disable_hwincept();//禁止红外接收电源
@@ -34,7 +34,7 @@ void Init_Switchoff(void)
 	power.pwm = 0;
 	power.step=0;
 	disable_pwm(CHARGE_PWM);
-	Sweep_Level_Set(STOP_ALL);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	Init_Charge_Data();					//qz add 20180522
 
 	

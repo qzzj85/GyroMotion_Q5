@@ -832,7 +832,7 @@ void ChargeControl_Volt_My(void)
 		//2、电池的绝对温度大于50度
 		//3、在电池温度大于40度的情况下，滇池温度每分钟上升速度大于1.5度
 		case 3:
-		Charge_PID_Ctr(500);
+		Charge_PID_Ctr(800);
 		//判断电池的绝对温度大于50度或者电池电压大于21伏,电池转为涓流充电	 2369
 			if((battery_voltage > VOL_16_8V))	//qz modify 20180703:1805 16V 1861:16.5V
 			{
@@ -1861,18 +1861,18 @@ u32 curr;//耗电电流
 							case SELF_TEST:
 								if(MidBrush.flag)
 									{
-									switch(sweep_suction)
+									switch(sweep_level)
 										{
-											case STOP_ALL:
+											case SWEEP_LEVEL_STOP:
 												curr=(MAIN_CUR);
 												break;
-											case SILENCE:
+											case SWEEP_LEVEL_SILENCE:
 												curr=((MAIN_CUR+SB_SILENCE_CUR));	//qz modify 20181120:因为风机电流可测，所以取消风机电流
 												break;
-											case STANDARD:								
+											case SWEEP_LEVEL_STANDARD:								
 												curr=((MAIN_CUR+SB_STANDARD_CUR));
 												break;
-											case FORCE:
+											case SWEEP_LEVEL_FORCE:
 												curr=((MAIN_CUR+SB_FORCE_CUR));
 												break;
 										}
@@ -1885,19 +1885,19 @@ u32 curr;//耗电电流
 				case YBS:
 					if(MidBrush.flag)
 						{
-						switch(sweep_suction)
+						switch(sweep_level)
 							{
-								case STOP_ALL:
+								case SWEEP_LEVEL_STOP:
 									curr=(MAIN_CUR);
 									break;
-								case SILENCE:
+								case SWEEP_LEVEL_SILENCE:
 									curr=((MAIN_CUR+SB_SILENCE_CUR));
 									break;
-								case STANDARD:
+								case SWEEP_LEVEL_STANDARD:
 
 									curr=((MAIN_CUR+SB_STANDARD_CUR));
 									break;
-								case FORCE:
+								case SWEEP_LEVEL_FORCE:
 									curr=((MAIN_CUR+SB_FORCE_CUR));
 									break;
 							}

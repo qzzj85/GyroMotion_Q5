@@ -126,6 +126,7 @@ void Do_Cease(void)
 				break;
 			case 3:
 				Send_Voice(VOICE_DOCK_START);
+				motion1.start_seat=true;
 				Init_Docking();
 				break;
 		}
@@ -160,7 +161,7 @@ void Init_Cease(void)
 	Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed();					//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
-	Sweep_Level_Set(STOP_ALL);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 		
 	/****设置机器的工作模式******/   
 	mode.mode = CEASE; 

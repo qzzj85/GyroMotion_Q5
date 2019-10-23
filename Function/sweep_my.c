@@ -161,6 +161,12 @@ u8 Check_Already_YClean(void)
 	u8 area_no;
 	now_gridx=grid.x;now_gridy=grid.y;
 	ydir=Read_Motion_YDir();
+
+	if(now_gridy>=grid.y_area_max)
+		return 0;
+	if(now_gridy<=grid.y_area_min)
+		return 0;
+	
 	if(ydir>0)
 		{
 			check_gridy=now_gridy+1;
@@ -680,7 +686,7 @@ void Do_FirstInit_Sweep(void)
 				break;
 
 			case 1:
-				if(giv_sys_time-mode.time<30000)
+				if(giv_sys_time-mode.time<5000)
 					return;
 				
 				Init_Coordinate();
@@ -733,7 +739,7 @@ void Do_FirstInit_Sweep(void)
 				TRACE("grid.y_start=%d\r\n",grid.y_start);
 				Cal_Grid_Pos();
 				Init_Check_Status();
-				Sweep_Level_Set(sweep_suction);
+				Sweep_Level_Set(sweep_level);
 				Init_Init_Sweep(F_Angle_Const,2,1); 		//第一次清扫,X轴双方向,Y轴正向
 			//	Del_All_Sweep_Bump_Node();
 		}
@@ -958,80 +964,6 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							//Logout_Area_Coordinate();
 							//while(1);
 							break;
-						case 20:
-							if(giv_sys_time-mode.bump_time<100)
-								return;
-							Set_Coordinate_WallClean(now_gridx,now_gridy);
-							mode.step_bp++;
-							break;
-						case 21:
-							Speed=TURN_SPEED;
-							if(do_action(turn_dir,turn_angle*Angle_1))
-								{
-									stop_rap();
-									mode.step_bp++;
-								}
-							break;
-						case 22:
-							Speed=MID_MOVE_SPEED;
-							Set_Coordinate_WallClean(now_gridx,now_gridy);
-							if(do_action(3,5*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_bp++;
-								}
-							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
-								{
-									stop_rap();
-									mode.bump=m;
-									mode.step_bp=0;
-									
-								}
-							if((now_gridy==last_gridy)&(Judge_GridYPOS_Nearby_Reach(bump_gridy)))
-								{
-									stop_rap();
-									TRACE("last_gridy=%d now_gridy=%d\r\n",last_gridy,now_gridy);
-									//Init_Sweep_LeftYBS(1);
-									motion1.tgt_yaw=motion1.anti_tgt_yaw;
-									motion1.repeat_sweep=false;
-									Init_Pass2Sweep();
-								}
-							break;
-						case 23:
-							Set_Coordinate_WallClean(now_gridx,now_gridy);
-							if(turn_dir==2)
-								enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
-							else
-								enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
-								{
-									stop_rap();
-									TRACE("Angle repeat in %s %d\r\n",__func__,__LINE__);
-									mode.bump=0;
-									mode.step_bp=0;
-									mode.bump_flag=false;
-									mode.step=0;
-									grid.y_straight_start=grid.y;
-									grid.x_straight_start=grid.x;
-									mode.bump_time=giv_sys_time;
-								}
-							if((now_gridy==last_gridy)&(Judge_GridYPOS_Nearby_Reach(bump_gridy)))
-								{
-									stop_rap();
-									TRACE("last_gridy=%d now_gridy=%d\r\n",last_gridy,now_gridy);
-									//Init_Sweep_LeftYBS(1);
-									motion1.tgt_yaw=motion1.anti_tgt_yaw;
-									motion1.repeat_sweep=false;
-									Init_Pass2Sweep();
-								}
-							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
-								{
-									stop_rap();
-									TRACE("bump again in %s %d\r\n",__func__,__LINE__);
-									mode.bump=m;
-									mode.step_bp=0;
-								}
-							break;
 					}
 				break;
 				
@@ -1097,7 +1029,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									mode.step_bp=10;
 								}
-							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean()))
+							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean())&(!motion1.first_leak_y))
 								{
 									TRACE("Last Y has clean,prepare to LeftYBS!!!\r\n");
 									turn_dir=2;
@@ -1121,6 +1053,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									motion1.repeat_sweep=false;
 									return;
 								}
+							
 							if(Read_Motion_BackSweep())
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
@@ -1222,7 +1155,16 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
-							
+
+							if(m>BUMP_OUTRANGE)
+								{
+									stop_rap();
+									TRACE("BUMP OUTRANGE!!\r\n");
+									mode.bump=m;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									return;
+								}
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
 									if(now_gridy==last_gridy)
@@ -1294,6 +1236,15 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
+							if(m>BUMP_OUTRANGE)
+								{
+									stop_rap();
+									TRACE("BUMP OUTRANGE!!\r\n");
+									mode.bump=m;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									return;
+								}
 							break;
 					}
 				break;
@@ -1358,7 +1309,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									mode.step_bp=10;
 								}
-							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean()))
+							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean())&(!motion1.first_leak_y))
 								{
 									TRACE("Last Y has clean,prepare to RightYBS!!!\r\n");
 									turn_dir=1;
@@ -1482,6 +1433,15 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
+							if(m>BUMP_OUTRANGE)
+								{
+									stop_rap();
+									TRACE("BUMP OUTRANGE!!\r\n");
+									mode.bump=m;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									return;
+								}
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
 									if(now_gridy==last_gridy)
@@ -1553,6 +1513,15 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
 								}
+							if(m>BUMP_OUTRANGE)
+								{
+									stop_rap();
+									TRACE("BUMP OUTRANGE!!\r\n");
+									mode.bump=m;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									return;
+								}
 							break;
 							
 								
@@ -1578,29 +1547,31 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							mode.step_bp=50;
 							break;
 						case 50:
-
-							if(Check_Already_YClean())
+							if((mode.bump==BUMP_XMAX_OUT)|(mode.bump==BUMP_XMIN_OUT))
 								{
-									TRACE("next Y has clean!!!\r\n");
-									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
-									if(motion1.repeat_sweep)
+									if(Check_Already_YClean())
 										{
-											Init_Pass2Sweep();
-											motion1.repeat_sweep=false;
-										}
-									else
-										{
-											if(Read_Motion_BackSweep())
+											TRACE("next Y has clean!!!\r\n");
+											TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+											if(motion1.repeat_sweep)
 												{
-													Init_Stop_BackSweep();
+													Init_Pass2Sweep();
+													motion1.repeat_sweep=false;
 												}
 											else
 												{
-													Area_Check(0);
-													Init_Shift_Point1(0);
+													if(Read_Motion_BackSweep())
+														{
+															Init_Stop_BackSweep();
+														}
+													else
+														{
+															Area_Check(0);
+															Init_Shift_Point1(0);
+														}
 												}
+											return;
 										}
-									return;
 								}
 						
 							switch(mode.bump)
@@ -1696,7 +1667,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 											return;
 										}
 								}
-							if(((now_gridy==grid.y_area_max)&(ydir>0))|((now_gridy==grid.y_area_min)&(ydir<0)))
+							if(((now_gridy>=grid.y_area_max)&(ydir>0))|((now_gridy<=grid.y_area_min)&(ydir<0)))
 								{
 									Area_Check(0);
 									Init_Shift_Point1(0);
@@ -2123,7 +2094,7 @@ void Init_NormalSweep(short tgt_yaw)
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
 
-//	Sweep_Level_Set(sweep_suction);
+//	Sweep_Level_Set(sweep_level);
 	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
@@ -2207,10 +2178,12 @@ void Do_NormalSweep(void)
 							}
 					}
 				break;
+				
+			////////////////////发现充电座处理////////////////////////
 			case 2:
 				if(ydir>0)
 					{
-						if(now_gridy+1>grid.y_area_max)
+						if(now_gridy+1>grid.y_area_max)			//发现充电座以后，如果已经到达边界，则检查
 							{
 								Area_Check(0);
 								Init_Shift_Point1(0);
@@ -2219,14 +2192,14 @@ void Do_NormalSweep(void)
 					}
 				else if(ydir<0)
 					{
-						if(now_gridy-1<grid.y_area_min)
+						if(now_gridy-1<grid.y_area_min)			//发现充电座以后，如果已经到达边界，则检查
 							{
 								Area_Check(0);
 								Init_Shift_Point1(0);
 								return;
 							}
 					}
-				if(motion1.repeat_sweep)
+				if(motion1.repeat_sweep)						//没有达到边界，且需要重扫
 					{
 						TRACE("call this in %d %s\r\n",__LINE__,__func__);
 						Init_Pass2Sweep();
@@ -2703,6 +2676,12 @@ void Do_Pass2Sweep(void)
 							Init_Back_Sweep(tgt_angle);
 						else
 							Init_Leak_BackSweep(tgt_angle);
+					}
+
+				if(motion1.leakon)
+					{
+						if((motion1.first_leak_y!=grid.y)&(motion1.first_leak_y))
+							motion1.first_leak_y=0;
 					}
 				break;
 		}
@@ -3858,18 +3837,6 @@ void Sweep_YBS(void)
 					//qz add end
 					mode.step = 0x10;
 				}
-
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160)) 	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x10: 	  	
 				Wall_lost_Start_Pos = l_ring.all_length;							//	旋转 
@@ -4027,17 +3994,6 @@ void Sweep_YBS(void)
 					}
 				//qz add end
 
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160)) 	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 

@@ -48,7 +48,7 @@ void Init_Sleep(void)
 	Enable_Speed();  								//关闭红外灯光发送 
 	WriteWorkState(); 
 
-	Sweep_Level_Set(STOP_ALL);						//关闭风机
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);						//关闭风机
 
 	CHECK_STATUS_FLAG=false;						//禁止异常检测
 	Init_Check_Status();

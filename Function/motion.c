@@ -204,6 +204,8 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 		return 0;
 	if(Read_Motion_BackSweep())
 		return 0;
+	if(motion1.first_leak_y)
+		return 0;
 	TRACE("Analysis NeedBack...\r\n");
 	//if(motion1.tgt_yaw==F_Angle)
 #if 0
@@ -764,6 +766,24 @@ u8 Analysis_InSeatArea(s8 now_gridx,s8 now_gridy)
 				{
 					return 1;
 				}
+		}
+	return 0;
+}
+
+u8 Is_Close_Angle(short tgt_angle,short now_angle)
+{
+	int temp_angle=0;
+	temp_angle=now_angle-tgt_angle;
+	if(abs(temp_angle>18000))
+		{
+			if(temp_angle>0)
+				temp_angle=36000-temp_angle;
+			else
+				temp_angle=36000+temp_angle;
+		}
+	if(abs(temp_angle)<3000)
+		{
+			return 1;
 		}
 	return 0;
 }

@@ -11,7 +11,7 @@
 #define RING_FIX_OFFSET	500
 #define	ROTATE_OFFSET	15
 
-u8 sweep_suction=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
+u8 sweep_level=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
 u8 sweep_suction_last=0x99;
 bool BS_NO_TIME_FLAG=false;			//qz add:边扫时间标志，在低速状态下，再TIM2定时器中通过此标志翻转边扫引脚，达到降速的目的
 bool CHECK_STATUS_FLAG=false;
@@ -305,6 +305,9 @@ void Action_Mode(void)
 				break;
 			case TEST:
 				Do_RunTest();
+				break;
+			case MODE_REMOTE:
+				Do_Remote_Move();
 				break;
 	  /*********************默认状态***********************/
 			default :
@@ -910,7 +913,7 @@ u8 Action_Protect_My(u8 abnoraml)
 										mode.step_abn=0;
 										mode.step=0;
 										mode.step_mk=0;					//qz add 20180919
-										Sweep_Level_Set(sweep_suction);	//重新打开清扫等级
+										Sweep_Level_Set(sweep_level);	//重新打开清扫等级
 									}
 							}
 							break;
@@ -1064,7 +1067,7 @@ u8 Action_Protect_My(u8 abnoraml)
 										mode.step_abn=0;
 										mode.step=0;				//恢复模式步骤qz add 20180801
 										mode.step_mk=0;				//qz add 20180919
-										Sweep_Level_Set(sweep_suction);	//重新打开清扫等级
+										Sweep_Level_Set(sweep_level);	//重新打开清扫等级
 									}
 							}
 							break;
@@ -4035,27 +4038,26 @@ void Set_ZS_Level(u16 level)
 	Set_MidBrush_Pwm(level);
 }
 
-void Sweep_Level_Set(u16 sweep_suction)
+void Sweep_Level_Set(u16 sweep_level)
 {
-	u8 data=sweep_suction;
-	switch (data)
+	switch (sweep_level)
 		{
-			case STOP_ALL:
-				Set_BS_Level(STOP_ALL);
-				Set_ZS_Level(STOP_ALL);
-				Set_FJ_Level(STOP_ALL);
+			case SWEEP_LEVEL_STOP:
+				Set_BS_Level(SWEEP_LEVEL_STOP);
+				Set_ZS_Level(SWEEP_LEVEL_STOP);
+				Set_FJ_Level(SWEEP_LEVEL_STOP);
 			break;
-			case STANDARD:
+			case SWEEP_LEVEL_STANDARD:
 				Set_BS_Level(STANDARD_PWM);
 				Set_ZS_Level(MB_STD_PWM);
 				Set_FJ_Level(FAN_STD_PWM);
 			break;
-			case SILENCE:
+			case SWEEP_LEVEL_SILENCE:
 				Set_BS_Level(SILENCE_PWM);
 				Set_ZS_Level(SILENCE_PWM);
 				Set_FJ_Level(SILENCE_PWM);
 			break;
-			case FORCE:
+			case SWEEP_LEVEL_FORCE:
 				Set_BS_Level(FORCE_PWM);
 				Set_ZS_Level(FORCE_PWM);
 				Set_FJ_Level(FORCE_PWM);
@@ -4064,8 +4066,8 @@ void Sweep_Level_Set(u16 sweep_suction)
 			//qz add 20180515
 			case SWEEP_LEVEL_DOCK:		//Dock_Mode:
 				Set_BS_Level(DOCK_SWEEP_PWM);
-				Set_ZS_Level(STOP_ALL);
-				Set_FJ_Level(STOP_ALL);
+				Set_ZS_Level(SWEEP_LEVEL_STOP);
+				Set_FJ_Level(SWEEP_LEVEL_STOP);
 			break;
 			//qz add end
 				

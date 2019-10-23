@@ -18,7 +18,7 @@ void Init_Quit_Charging(u8 sweep_method)
 	mode.sweep_method=sweep_method;
 	WriteWorkState();
 
-	Sweep_Level_Set(STOP_ALL);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	//mode.Info_Abort=1;		//qz add 20180316:屏蔽导航板命令 //qz mask 20180522
 	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.Info_Abort=0;
@@ -57,6 +57,15 @@ void Do_Quit_Chargeing(void)
 					return;
 				tgt_angle=Gyro_Data.yaw;
 				anti_tgt_angle=Get_Reverse_Angle(tgt_angle);
+
+#ifdef TUYA_WIFI
+				mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+				wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+				DelayMs(1);
+				stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+				DelayMs(1);
+				stream_start(00);// 开始传输
+#endif
 				mode.step++;
 			case 0x01:
 				Speed=HIGH_MOVE_SPEED;

@@ -14,20 +14,20 @@
 #define	PWM_SWEEP_PRESCALER	0
 
 //hzh  风机等级
-#define		STANDARD				1
-#define		FORCE					3
-#define		SILENCE					2
 #define 	SILENCE_PWM   			PWM_CHARGE_MAX/5
 #define		SB_STANDARD_PWM			500
 #define 	STANDARD_PWM  			1600//PWM_CHARGE_MAX/2		//qz add 20180804
 #define 	FORCE_PWM     			2000//PWM_CHARGE_MAX*4/5
 #define		DOCK_SWEEP_PWM			200
-#define 	STOP_FJ   				0
-#define 	STOP_ALL	  			0
+
+#define 	SWEEP_LEVEL_STOP	  	0
+#define		SWEEP_LEVEL_STANDARD	1
+#define		SWEEP_LEVEL_FORCE		3
+#define		SWEEP_LEVEL_SILENCE		2
 #define		SWEEP_LEVEL_DOCK		4
 
 #define		MB_STD_PWM				200
-#define		FAN_STD_PWM				1000
+#define		FAN_STD_PWM				900
 
 void  Init_PWM(void);
 void  enable_pwm(u16 channel,u16  pwm);

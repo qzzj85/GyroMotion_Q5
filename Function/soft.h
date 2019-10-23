@@ -73,7 +73,7 @@
 #define		NEW_PWR_CAL				1					//使用2600MAH初始化电池及电量计算方法
 //#define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
 #define		COMMAND_CLIFF_ACTION	1					//新悬崖规避动作
-//#define		REMOTE					1				//使用遥控器功能
+#define		REMOTE					1				//使用遥控器功能
 #define		REPEAT_DOCK				1					//再接续回充功能
 #define		SHUTDOWN_MODE			1					//关机功能
 #define		INTERFERENCE_ACTION		1					//红外信号抗干扰
@@ -93,17 +93,18 @@
 //#define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
 #define		RING_PWM_CTL			1					//轮子PWM切断控制
-//#define		GYRO_CAL				1				//惯导校准代码
+#define		GYRO_CAL				1				//惯导校准代码
 //#define		GYRO_COMPENSATION		1					//惯导角度补偿
 //#define		MILE_COMPENSATION		1					//里程计补偿
 //#define		STOP_SPD_CNT			1
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
-#define		OUT_8MHZ				1
+//#define		OUT_8MHZ				1
+#define		YIS055					1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			6
+#define		CORRECT_VERSION			7
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -183,6 +184,9 @@
 #define		DIPAN_REQ_SLEEP			0X0E
 #define		DIPAN_REQ_DOCKYBS		0X0F	//底盘进入小回充以后又丢失信号，请求再次进入沿边
 #define		DIPAN_REQ_FACTORY		0X10
+
+#define		SWEEP_METHOD_GUIHUA		0
+#define		SWEEP_METHOD_YBS		1
 
 //QZ:dm=0,return; dm=1,左转; dm=2,右转; dm=3,前进; dm=4,后退; dm=5,左轮不动向左转; dm=6,右轮不动向右转;
 //	 dm=7,右轮不动向左转; dm=8,左轮不动向右转 18:顺时针走螺旋形; 19:逆时针走螺旋形; 21 走螺旋线
@@ -293,54 +297,56 @@
 #define 	SWEEP_GONG       0X80				 //工型清扫
 #endif
 //qz add 自有协议
-#define CEASE 			0x01
-
-#define YBS 			0x03
-#define SPOT 			0x06
-#define LUOXUAN 		0X06
+//////////////////////主模式///////////////////////////////
+#define CEASE 				0x01
+#define	MODE_REMOTE			0X02
+#define YBS 				0x03
+#define SPOT 				0x06
+#define LUOXUAN 			0X06
 //#define SLAM_DOCK_MODE	0x04	//qz 20180417:大回充
-#define DOCKING 		0X04		//qz 20180416:小回充
-#define	SWEEP			0X07		//清扫及清扫子模式
-#define	SHIFT			0X08		//转移及转移子模式
-#define EXIT			0X09		//退出区域模式
+#define DOCKING 			0X04		//qz 20180416:小回充
+#define	SWEEP				0X07		//清扫及清扫子模式
+#define	SHIFT				0X08		//转移及转移子模式
+#define EXIT				0X09		//退出区域模式
+#define CHARGEING 			0x0D
+#define SLEEP 				0x0E
+#define TEST				0x0F
+#define PASS2INIT			0X10
+#define ERR 				0xFF
 
-#define CHARGEING 		0x0D
-#define SLEEP 			0x0E
-#define TEST			0x0F
-#define ERR 			0xFF
+//////////////////////子模式/////////////////////////////////
+#define QUIT_CHARGING 		0XFE		//退出充电座子模式，主模式：CEASE
+#define	SELF_TEST			0xFD		//自测子模式,主模式：CEASE
+#define	BURNIN_TEST			0xFC		//老化子模式,主模式：TEST
+#define	DEAD				0xFB		//低功耗子模式,主模式：CEASE
+#define	SWITCHOFF			0XFA		//开关未打开子模式,主模式：CHARGE
+#define	YBS_SUB_RIGHT		0XF9
+#define	YBS_SUB_LEFT		0XF8
+#define	DC_CHARGING			0XF7		//DC直充充电模式，主模式：CHARGING
+#define	SEAT_CHARGING		0XF6		//充电座充电模式, 主模式: CHARGING
+#define SHUTDOWN			0XF5		//关机模式，主模式：CEASE
+#define FACTORY_TEST		0XF4		//厂测子模式,主模式：CEASE
+#define	YBS_SUB_EXCHANGE 	0XF3
 
-#define QUIT_CHARGING 	0XFE		//退出充电座子模式，主模式：CEASE
-#define	SELF_TEST		0xFD		//自测子模式,主模式：CEASE
-#define	BURNIN_TEST		0xFC		//老化子模式,主模式：TEST
-#define	DEAD			0xFB		//低功耗子模式,主模式：CEASE
-#define	SWITCHOFF		0XFA		//开关未打开子模式,主模式：CHARGE
-#define	YBS_SUB_RIGHT	0XF9
-#define	YBS_SUB_LEFT	0XF8
-#define	DC_CHARGING		0XF7		//DC直充充电模式，主模式：CHARGING
-#define	SEAT_CHARGING	0XF6		//充电座充电模式, 主模式: CHARGING
-#define SHUTDOWN		0XF5		//关机模式，主模式：CEASE
-#define FACTORY_TEST	0XF4		//厂测子模式,主模式：CEASE
-#define	YBS_SUB_EXCHANGE 0XF3
-
-#define	NORMAL_SWEEP	0XF3
-#define	PASS2SWEEP		0XF2
-#define	BACK2YBSSTART	0XF1
-#define	BACK_SWEEP		0XF0
-#define	STOP_BACKSWEEP 	0XEF
-#define PASS2INIT		0XEE
+#define	NORMAL_SWEEP		0XF3
+#define	PASS2SWEEP			0XF2
+#define	BACK2YBSSTART		0XF1
+#define	BACK_SWEEP			0XF0
+#define	STOP_BACKSWEEP 		0XEF
 #define	SWEEP_FIRST_INIT	0XED
 
+#define SHIFTPOINT1			0XD0
+#define	SHIFTPOINT2			0XD1
+#define LEAK_SWEEP			0XD2
+#define PASS2LEAKSWEEP  	0XD3
+#define SHIFT_LEFT_YBS  	0XD4
+#define SHIFT_RIGHT_YBS 	0XD5
+#define	LEAK_BACKSWEEP		0XD6
+#define	STOP_LEAKBACK		0XD7
 
-#define SHIFTPOINT1		0XD0
-#define	SHIFTPOINT2		0XD1
-#define LEAK_SWEEP		0XD2
-#define PASS2LEAKSWEEP  0XD3
-#define SHIFT_LEFT_YBS  0XD4
-#define SHIFT_RIGHT_YBS 0XD5
-#define	LEAK_BACKSWEEP	0XD6
-#define	STOP_LEAKBACK	0XD7
-#define	RUN_TEST		0xC0
+#define	RUN_TEST			0xC0
 
+#define	SUBMODE_REMOTE_MOVE			0XB0
 //#define     COMMANDER_x10           0X10         //  指令模式
 
 //#define     YBS           0X20    	     //  沿墙模式
@@ -832,8 +838,12 @@ typedef struct
 {
 	bool island;			//孤岛
 	bool check_flag;
+	
 	u8 check_step;
 	s8 result;
+	s8 island_gridx;
+	s8 island_gridy;
+	
 	short check_angle;
 	int acc_angle;
 }GYRO_BIOS;
@@ -1003,6 +1013,7 @@ typedef struct 					//清扫结构体
 	u8 		sweep_time;				//区域打扫次数，用于新开辟区域时的编号增加，从#1开始
 	u8 		area_num;				//当前区域编号
 	u8 		exit_area_num;			//退出区域编号
+	s8		first_leak_y;
 
 	short 	xpos_ybs_start;		//弓形直线行走切换为沿边时起始点x坐标
 	short 	xpos_start;			//起始点x坐标

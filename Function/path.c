@@ -1551,6 +1551,7 @@ u8 Judge_YBS_Dir(void)
 				break;
 		}
 	TRACE("ybs_dir=%d in %s\r\n",ybs_dir,__func__);
+	return ybs_dir;
 }
 
 u8 Find_PathPoint_WayAll(s8 tgt_gridx,s8 tgt_gridy)

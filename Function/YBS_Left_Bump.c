@@ -996,7 +996,7 @@ void YBS_Left_Bump(u8 out_enable)
 						if(do_action(3,5*CM_PLUS))
 							{
 								stop_rap();
-								mode.step=3;
+								mode.step_bp=3;
 							}
 						if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 							{

@@ -346,18 +346,6 @@ void YBS_YBS(void)
 					//qz add end
 					mode.step = 0x10;
 				}
-
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x10:		
 				Wall_lost_Start_Pos = l_ring.all_length;							//	旋转 
@@ -514,18 +502,6 @@ void YBS_YBS(void)
 						mode.step=0x40;
 					}
 				//qz add end
-
-#if 0
-				//qz add 20190107
-				if((YBS_Continue_Time>0)&(YBS_Wall_Distance>160))	
-					{
-						stop_rap();
-						mode.step=0xf0;
-						Init_Pass2Sweep();
-						return;
-					}
-				//qz add end
-#endif
 				break;
 			case 0x50:
 				Wall_lost_Start_Pos = r_ring.all_length;							//	旋转 
@@ -1715,7 +1691,7 @@ void Init_Right_YBS(u8 direct_first)
 	Init_Check_Status();//qz add 20180425
 //	mode.fun=YBS_read_bump1;
 
-	Sweep_Level_Set(sweep_suction);
+	Sweep_Level_Set(sweep_level);
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
@@ -1771,7 +1747,7 @@ void Init_Left_YBS(u8 direct_first)
 	//初始化检测的条件
 //	Init_Check_Status();//qz add 20180425
 //	mode.fun=YBS_read_bump1;
-	Sweep_Level_Set(sweep_suction);
+	Sweep_Level_Set(sweep_level);
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
 }

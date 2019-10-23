@@ -173,7 +173,7 @@ void AutoReadKey(void)
 										else	//充电座充电
 											{
 												//需要补充退出充电座代码
-												Init_Quit_Charging(0);
+												Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 											}
 										break;
 									case CEASE:
@@ -683,7 +683,7 @@ void proc_wifi_ybs(void)
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
 						case SEAT_CHARGING:
-							Init_Quit_Charging(1);
+							Init_Quit_Charging(SWEEP_METHOD_YBS);
 							break;
 						default:
 							break;
@@ -771,7 +771,7 @@ void proc_wifi_play()
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
 						case SEAT_CHARGING:
-							Init_Quit_Charging(0);
+							Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 							break;
 						default:
 							break;

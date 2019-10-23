@@ -85,9 +85,10 @@ void log_out(void)
 	TRACE("c_p.new x2=%d y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 	TRACE("m.area_num=%d\r\n",motion1.area_num);
 	TRACE("m.ydir=%d\r\n",motion1.y_dir);
-	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
+//	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
 //	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
 //	TRACE("w_m.siag=%d\r\n",w_m.sign);
+	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
 	TRACE("top=%d\r\n",top_time_sec);
 	u32 min=(giv_sys_time-motion1.worktime)/10000/60;
 	u32 sec=(giv_sys_time-motion1.worktime)/10000-min*60;

@@ -34,7 +34,13 @@
 
 //#define USART3_DMA 1		//QZ
 #define	USART3_TX_SIZE	128
-#define USART3_RX_SIZE	19//23
+
+#ifdef YIS055
+	#define	USART3_RX_SIZE	23
+#else
+	#define USART3_RX_SIZE	19//23
+#endif
+
 #define	USART2_TX_SIZE	128
 #define	USART2_RX_SIZE	128
 #ifdef TUYA_WIFI

@@ -22,7 +22,7 @@ extern WORK_MODE gsv_work_mode;	 //当前机器所在的工作状态，其取值范围为SWEEP、
 							 //才会变为SWEEP或者SPOT
 							 
 							 	
-extern u8 sweep_suction;
+extern u8 sweep_level;
 
 
 
@@ -98,7 +98,7 @@ int Check_Gyro_angle(u8 dir);
 u8 Check_Rotate_Skid(void);
 
 //qz add 20180319
-void Sweep_Level_Set(u16 sweep_suction);
+void Sweep_Level_Set(u16 sweep_level);
 void Check_Status(void);
 u8 Key_Status_Check_Low(KEY* key);
 u8 Key_Status_Check_High(KEY* key);

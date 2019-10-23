@@ -29,12 +29,6 @@ void Remote_Handle(void)
 
 	//Clr_Remote_Info();
 
-	if((giv_sys_time-remote_info.key_time>100000)&(Dis_TimeSet))
-		{
-			Dis_TimeSet=false;
-			Dis_H_M_Glint=false;
-		}
-
 	if(!remote_info.effect)
 		return;
 
@@ -56,48 +50,12 @@ void Remote_Handle(void)
 				//机器处于工作状态，退出
 				if(mode.status)
 					break;
-				
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if(((mode.mode==CHARGEING))&(!Dis_TimeSet))
+				if((mode.mode==CHARGEING))
 					return;
-				if(Dis_TimeSet)
-					{
-						if(!Dis_H_M_Glint)
-							{
-								Dis_Hour_Set++;
-								if(Dis_Hour_Set>23)
-									Dis_Hour_Set=0;
-							}
-						else
-							{
-								Dis_Min_Set++;
-								if(Dis_Min_Set>59)
-									Dis_Min_Set=0;
-							}
-					}
-
-				//如果处于自测程序的音量测试阶段，则进行音量加处理
-				else if((mode.sub_mode==SELF_TEST)&(mode.test_item==TST_VOCIE)&(mode.test_step==2))
-					{
-						voice_level++;
-						if(voice_level>0xef)
-							voice_level=0xef;
-						Set_Voice_Level(voice_level);
-						mode.test_step=1;
-					}
-				//如果处于自测程序的回充测试阶段，则进行此处理
-				else if((mode.sub_mode==SELF_TEST)&(mode.test_item==TST_DOCK)&(mode.test_step==1))
-					{
-						if((remote_info.rece_ir==RECE_MID)&(!m_hw_test))
-							{
-								m_hw_test=true;
-								Send_Voice(VOICE_VOLUME_2);
-								Dis_YBS=true;
-							}
-					}
-				else 
-					Slam_Data.dipan_req=DIPAN_REQ_FORWORD;
-				remote_info.key_time=giv_sys_time;
+				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+					Init_Remote_Move();
+				//remote_info.key_time=giv_sys_time;
 				break;
 			case REMOTE_KEY_LEFT:
 				//机器处于工作状态，退出
@@ -105,104 +63,76 @@ void Remote_Handle(void)
 					break;
 				
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING)&(!Dis_TimeSet))
+				if((mode.mode==CHARGEING))
 					return;
-				
-				if(Dis_TimeSet)
-					{
-						Dis_H_M_Glint^=1;
-					}
-				else if((mode.sub_mode==SELF_TEST)&(mode.test_item==TST_DOCK)&(mode.test_step==1))
-					{
-						if((remote_info.rece_ir==RECE_LEFT)&(!l_hw_test))
-							{
-								l_hw_test=true;
-								Send_Voice(VOICE_VOLUME_2);
-								Dis_Guihua=true;
-							}
-					}
-				else
-					Slam_Data.dipan_req=DIPAN_REQ_LEFT;
-				
-				remote_info.key_time=giv_sys_time;
+				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+					Init_Remote_Move();
 				break;
 			case REMOTE_KEY_RIGHT:
 				//机器处于工作状态，退出
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING)&(!Dis_TimeSet))
-					break;
-				
-				if(Dis_TimeSet)
-					{
-						Dis_H_M_Glint^=1;
-					}
-				/////机器处于回充测试状态，按右键给右红外测试
-				else if((mode.sub_mode==SELF_TEST)&(mode.test_item==TST_DOCK)&(mode.test_step==1))
-					{
-						if((remote_info.rece_ir==RECE_RIGHT)&(!r_hw_test))
-							{
-								r_hw_test=true;
-								Send_Voice(VOICE_VOLUME_2);
-								Dis_Zhongdian=true;
-							}
-					}
-				else
-					Slam_Data.dipan_req=DIPAN_REQ_RIGHT;
-
-				remote_info.key_time=giv_sys_time;
+				if((mode.mode==CHARGEING))
+					return;
+				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+					Init_Remote_Move();
 				break;
 			case REMOTE_KEY_BACK:
 				//机器处于工作状态，退出
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING)&(!Dis_TimeSet))
-					break;
-
-				if(Dis_TimeSet)
-					{
-						if(!Dis_H_M_Glint)
-							{
-								if(Dis_Hour_Set==0)
-									Dis_Hour_Set=23;
-								else
-									Dis_Hour_Set--;
-							}
-						else
-							{
-								if(Dis_Min_Set==0)
-									Dis_Min_Set=59;
-								else
-									Dis_Min_Set--;
-							}
-					}
-				else if((mode.sub_mode==SELF_TEST)&(mode.test_item==TST_VOCIE)&(mode.test_step==2))
-					{
-						voice_level--;
-						if(voice_level<0xe0)
-							voice_level=0xe0;
-						Set_Voice_Level(voice_level);
-						mode.test_step=1;
-					}
-				//qz add 20180828
-				else
-					Slam_Data.dipan_req=DIPAN_REQ_BACK;
-
-				remote_info.key_time=giv_sys_time;
+				if((mode.mode==CHARGEING))
+					return;
+				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+					Init_Remote_Move();
 				break;
 
 			////////模式性按键///////
 			////////模式性按键///////
 			case REMOTE_KEY_DOCK:
-				/////机器处于充电状态，退出
-				if(mode.mode==CHARGEING)
-					break;
-				////机器出于时间预约设置中，退出
+				motion1.force_dock=true;
+				switch(mode.mode)
+					{
+						case CEASE:
+							switch(mode.sub_mode)
+								{
+									case CEASE:
+#ifdef TUYA_WIFI
+										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+										DelayMs(1);
+										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+										DelayMs(1);
+										stream_start(00);// 开始传输
+#endif
+										Init_Docking();
+									break;
+									case ERR:
+									case SLEEP:
+										Init_Docking();
+									break;
+									default:
+										break;
+								}
+							break;
+						case SWEEP:
+						case SHIFT:
+						case PASS2INIT:
+						case EXIT:
+						case YBS:
+							stop_rap();
+							Send_Voice(VOICE_DOCK_START);
+							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
+							Force_Dock();
+							break;
+						default:
+							break;
+					}
+				break;
 				
-				Slam_Data.dipan_req_pre=DIPAN_REQ_DOCK;
-				Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
+				
 #ifdef REMOTE_DEBUG
 				TRACE("Remote Dock key,request dock!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
@@ -211,166 +141,490 @@ void Remote_Handle(void)
 			case REMOTE_KEY_GUIHUA:
 				//机器处于工作状态，退出
 				if(mode.status)
-					break;
-				////机器出于时间预约设置中，退出
-				
-				Slam_Data.dipan_req_pre=DIPAN_REQ_SWEEP;
-				Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
+					break;				
 #ifdef REMOTE_DEBUG
 				TRACE("Remote GUIHUA key,request guihua!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
+				switch(mode.mode)
+					{
+						case CEASE:
+							switch(mode.sub_mode)
+								{
+									case CEASE:
+#ifdef TUYA_WIFI
+										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+										DelayMs(1);
+										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+										DelayMs(1);
+										stream_start(00);// 开始传输
+#endif
+										Init_First_Sweep(0);
+										break;
+									default:
+										break;
+										
+								}
+							break;
+						case CHARGEING:
+							switch(mode.sub_mode)
+								{
+									case DC_CHARGING:
+										Send_Voice(VOICE_ERROR_DC_EXIST);
+										break;
+									case SEAT_CHARGING:
+										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+										break;
+									default:
+										break;
+								}
+							break;
+						default:
+							break;
+					}
 				break;
 			case REMOTE_KEY_YBS:
-				//机器处于工作状态，退出
-				if(mode.status)
-					break;
-				////机器出于时间预约设置中，退出
-				if(Dis_TimeSet)
-					break;
-				Slam_Data.dipan_req_pre=DIPAN_REQ_YBS;
-				Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
+				switch(mode.mode)
+					{
+						case CEASE:
+							switch(mode.sub_mode)
+								{
+									case CEASE:
+#ifdef TUYA_WIFI
+										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+										DelayMs(1);
+										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+										DelayMs(1);
+										stream_start(00);// 开始传输
+#endif
+										Init_Right_YBS(1);
+									break;
+									default:
+										break;
+								}
+							break;
+						case CHARGEING:
+							switch(mode.sub_mode)
+								{
+									case SWITCHOFF:
+										break;
+									case DC_CHARGING:
+										Send_Voice(VOICE_ERROR_DC_EXIST);
+										break;
+									case SEAT_CHARGING:
+										Init_Quit_Charging(SWEEP_METHOD_YBS);
+										break;
+									default:
+										break;
+								}
+							break;
+						default:
+							break;
+					}
+				break;
+			case REMOTE_KEY_START:
 #ifdef REMOTE_DEBUG
-				TRACE("Remote YBS key,request YBS!\r\n");
+				TRACE("Remote GUIHUA key,request guihua!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
-				break;
-			case REMOTE_KEY_SPOT:
-				//机器处于工作状态，退出
-				if(mode.status)
-					break;
-				////机器出于时间预约设置中，退出
-				if(Dis_TimeSet)
-					break;
-				Slam_Data.dipan_req_pre=DIPAN_REQ_SPOT;
-				Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
-#ifdef REMOTE_DEBUG
-				TRACE("Remote SPOT key,request SPOT!\r\n");
-				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
+				switch(mode.mode)
+					{
+						case CEASE:
+							switch(mode.sub_mode)
+								{
+									case CEASE:
+#ifdef TUYA_WIFI
+										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+										DelayMs(1);
+										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+										DelayMs(1);
+										stream_start(00);// 开始传输
 #endif
+										Init_First_Sweep(0);
+										break;
+									case SLEEP:
+									case ERR:
+										Init_Cease();
+										break;
+									default:
+										break;
+										
+								}
+							break;
+						case CHARGEING:
+							switch(mode.sub_mode)
+								{
+									case DC_CHARGING:
+										Send_Voice(VOICE_ERROR_DC_EXIST);
+										break;
+									case SEAT_CHARGING:
+										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+										break;
+									default:
+										break;
+								}
+							break;
+						case SWEEP:
+						case SHIFT:
+						case PASS2INIT:
+						case EXIT:
+						case YBS:
+							stop_rap();
+							Send_Voice(VOICE_SWEEP_STOP);
+							Init_Cease();
+							break;
+						case DOCKING:
+							stop_rap();
+							Send_Voice(VOICE_DOCK_STOP);
+							Init_Cease();
+							break;
+						default:
+							break;
+					}
 				break;
-			case REMOTE_KEY_SLEEP:
-				////机器处于时间设置模式时，按下休眠键，为取消预约动作
-
-				/////机器处于充电状态，且未进入时间预约设置模式，退出
-				if(mode.mode==CHARGEING)
-					break;
-					
-				////机器处于工作状态，进入休眠
-				if(mode.status)
+			case REMOTE_KEY_FAN:
+				if(sweep_level==SWEEP_LEVEL_STANDARD)
 					{
-						Send_Voice(VOICE_VOLUME_3);
-						Init_Cease();
-						Slam_Data.dipan_req=DIPAN_REQ_STOP;
+						sweep_level=SWEEP_LEVEL_FORCE;
 					}
-				////机器处于待机状态，进入休眠
-				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+				else
 					{
-						Send_Voice(VOICE_VOLUME_3);
-						Init_Sleep();
-						Slam_Data.dipan_req=DIPAN_REQ_SLEEP;
+						sweep_level=SWEEP_LEVEL_STANDARD;
 					}
-				///机器处于休眠状态，唤醒待机
-				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))	
+				switch(mode.mode)
 					{
-						Send_Voice(VOICE_VOLUME_3);
-						Init_Cease();
-						Slam_Data.dipan_req=DIPAN_REQ_STOP;						
-					}
-				break;
-			case REMOTE_KEY_OK:
-				////机器出于时间预约设置中，退出时间预约设置。
-			
-				if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))		//休眠模式，唤醒
-					{
-						Send_Voice(VOICE_VOLUME_3);
-						Init_Cease();
-						break;
-					}
-				if(mode.status)										//工作状态，停止
-					{
-						Slam_Data.dipan_req=DIPAN_REQ_STOP;
-#ifdef REMOTE_DEBUG
-						TRACE("Remote OK key,request stop!\r\n");
-						TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
+						case CEASE:
+							if(mode.sub_mode==CEASE)
+								{
+#ifdef TUYA_WIFI
+									mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+									wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+									DelayMs(1);
+									stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+									DelayMs(1);
+									stream_start(00);// 开始传输
 #endif
-						//qz add 2018028
-						//如果处于老化模式，退出老化的显示状态
-					   		{
-								dc_nobat_run=false;
-					   		}
+									Init_First_Sweep(0);
+								}
+							break;
+						case SWEEP:
+						case YBS:
+						case EXIT:
+						case SHIFT:
+						case PASS2INIT:
+							Sweep_Level_Set(sweep_level);
+							break;
+						case CHARGEING:
+							if(mode.sub_mode==SEAT_CHARGING)
+								{
+									Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+								}
+							else if(mode.sub_mode==DC_CHARGING)
+								{
+									Send_Voice(VOICE_ERROR_DC_EXIST);
+								}
+							break;
+						default:
+							break;
 					}
-				else												//非工作状态，开始自动清扫
-					{
-						Slam_Data.dipan_req_pre=DIPAN_REQ_SWEEP;
-						Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
-#ifdef REMOTE_DEBUG
-						TRACE("Remote OK key,request sweep!\r\n");
-						TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
-#endif
-					}
-				
 				break;
-
-			////////时间预约功能////////
-			////////时间预约功能////////
-			case REMOTE_KEY_TIME:
-				if(mode.status)
-					break;
-				if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
-					break;
-				break;
-			case REMOTE_KEY_PREEEN:
-				if(mode.status)
-					break;
-				if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
-					break;
-				break;
-			case REMOTE_KEY_SET:
-				if(mode.status)
-					break;
-				if(Dis_TimeSet)
-					{
-						if(timeorpreen==1)
-							{
-								temp_data1=Rtc_time/86400;		//当前周几
-								Rtc_time=temp_data1*86400+Dis_Hour_Set*3600+Dis_Min_Set*60;
-								WriteRtcTime();
-								Dis_TimeSet=false;
-								Dis_H_M_Glint=false;
-								timeorpreen=0;
-							}
-						else if(timeorpreen==2)
-							{
-								Slam_Data.preen_hour=Dis_Hour_Set;
-								Slam_Data.preen_min=Dis_Min_Set;
-								Slam_Data.preen_on=true;
-								Slam_Data.preen_off=false;
-								Dis_TimeSet=false;
-								Dis_H_M_Glint=false;
-								timeorpreen=0;
-								
-								for(i=0;i<PREEN_LENGTH;i++)
-									{
-										Preen_Data[i].Preen_Hour=Dis_Hour_Set;	//预约小时
-										Preen_Data[i].Preen_Min=Dis_Min_Set;	//预约分钟
-										Preen_Data[i].Preen_Week_Num=0X00;		//不重复
-										Preen_Data[i].Flag=1;
-										if(Preen_Data[i].Preen_Week_Num)
-											Preen_Data[i].Cycle=1;
-										else
-											Preen_Data[i].Cycle=0;
-									}
-
-								if(!WritePreenData())		//设置预约
-									//Send_Voice(VOICE_PREEN_SET_OK);
-								Send_Voice(VOICE_VOLUME_3);
-							}
-					}
-				
-				//Send_Voice(VOICE_KEY_PRESS);
-			break;
 	}
 }
 
+void Init_Remote_Move(void)
+{
+	mode.last_mode=mode.mode;		//qz add 20180205
+	mode.last_sub_mode=mode.sub_mode;
+	
+	/******初始化设置的值********************/
 
+	/*******初始化输出的控制***************/
+	stop_rap(); //关闭左右轮
+		
+		
+	Disable_earth();				//关闭地检
+	Disable_wall(); 				//关闭墙检
+	Enable_earth();
+	Enable_wall();
+	enable_hwincept();				//打开回充红外接收电源
+	Enable_Speed(); 				//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
+		
+	/****设置机器的工作模式******/   
+	mode.mode = MODE_REMOTE; 
+	mode.sub_mode=SUBMODE_REMOTE_MOVE;			//QZ ADD
+	mode.step=0x00; 				//qz add
+	mode.status=0;					//qz add 20180625
+	mode.time=giv_sys_time; 		//qz add 20180703
+	mode.init_mode_time=giv_sys_time;	//qz add 20180814
+	mode.bump=0;
+	mode.step_bp=0;
+	mode.bump_flag=false;
+		
+	WriteWorkState();
+	Disable_Free_Skid_Check();		//关闭万向轮检测
+	//初始化检测的条件
+	CHECK_STATUS_FLAG=true; 		//使能异常检测
+	Init_Check_Status();//qz add 20180425
+
+
+#ifdef DEBUG_Enter_Mode
+	TRACE("Init REMOTE_MOVE Mode Complete!Prepare enter to Cease!\r\n");
+#endif
+
+	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
+	Open_Led(1,0,0);
+}
+
+u8 Read_Remote_Bump(u8 ir_enable)
+{
+	u32 data1=0;
+#ifdef CLIFF_ENABLE			//ZDK屏蔽
+	data1=Read_Cliff();
+	if(data1)
+		{
+			if((mode.bump>BUMP_ALL_CLIFF)|(mode.bump==0))
+				{
+					stop_rap();
+					mode.bump=data1;
+					mode.step_bp=0;
+					
+#ifdef EARTH_IN_TIM2
+					enable_pwm(L_BACK,1200);
+					enable_pwm(R_BACK,1200);
+					l_rap.ori=BACK;
+					r_rap.ori=BACK;
+#endif
+				}
+			return data1;
+		}
+#endif	 
+
+	data1=Parse_BumpValue();
+	switch (data1)
+	{
+		case BUMP_ONLY_LEFT:						 //左碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {
+					 stop_rap();
+					 mode.bump=BUMP_ONLY_LEFT;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 Slam_Data.l_bump_flag=true;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_ONLY_LEFT;
+		 case BUMP_ONLY_LEFTMID:					 //左中碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {
+					 stop_rap();
+					 mode.bump=BUMP_ONLY_LEFTMID;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_ONLY_LEFTMID;
+		 case BUMP_LEFT_MID:						 //左左中碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {							 
+					 stop_rap();
+					 mode.bump=BUMP_LEFT_MID;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_LEFT_MID;
+		 case BUMP_ONLY_RIGHT:						 //右碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {							 
+					 stop_rap();
+					 mode.bump=BUMP_ONLY_RIGHT;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_ONLY_RIGHT;
+		 case BUMP_ONLY_RIGHTMID:					 //右中碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {							 
+					 stop_rap();
+					 mode.bump=BUMP_ONLY_RIGHTMID;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_ONLY_RIGHTMID;
+		 case BUMP_RIGHT_MID:						 //右右中碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {							 
+					 stop_rap();
+					 mode.bump=BUMP_RIGHT_MID;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_RIGHT_MID;
+		 case BUMP_MID: 							 //中碰撞
+			 if((!mode.bump_flag)&(mode.bump==0))
+				 {							 
+					 stop_rap();
+					 mode.bump=BUMP_MID;
+					 mode.bump_flag=true;
+					 mode.step_bp=0;
+					 mode.bump_time=giv_sys_time;
+				 }
+			 return BUMP_MID;
+	}
+
+	if((w_m.sign == NEAR)&(ir_enable))
+		{
+			if((mode.bump == 0)|(mode.bump==BUMP_SEAT)) 	//中墙检靠近墙
+				{
+					stop_rap();
+					mode.bump=9;//W_M;
+					mode.step_bp=0;
+					mode.bump_time=giv_sys_time;
+				}
+			return 9;//W_M;
+		}
+	
+	if((w_lm.sign == NEAR)&(ir_enable))
+		{
+			if((mode.bump == 0))		 //左中墙检靠近墙
+				{
+					stop_rap();
+					mode.bump=LM_WALL_BUMP;//W_LM;
+					mode.step_bp=0;
+				}
+			return LM_WALL_BUMP;//W_LM;
+		}
+
+	if((w_rm.sign == NEAR)&(ir_enable))
+		{
+			if((mode.bump == 0))		 //左中墙检靠近墙
+				{
+					stop_rap();
+					mode.bump=RM_WALL_BUMP;//W_LM;
+					mode.step_bp=0;
+				}
+			return RM_WALL_BUMP;//W_LM;
+		}
+
+#ifdef FREE_SKID_CHECK
+	if(Check_Free_Sikd())
+		{
+			Slam_Data.skid_flag=1;
+#ifdef SKID_REPORT_TIME
+			Slam_Data.skid_report_time=giv_sys_time;
+#endif
+#ifdef FREE_SKID_ACTION
+			stop_rap();
+			mode.bump=0xff;
+			mode.step_bp=0;
+			mode.Info_Abort=1;
+#endif
+		}
+#endif
+	return 0;		
+}
+void Remote_Bump_Action(void)
+{
+	u8 m;
+	m=Read_Remote_Bump(0);
+
+	if(!mode.bump)
+		return;
+	switch(mode.step_bp)
+		{
+			case 0:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_bp++;
+					}
+				break;
+			case 1:
+				mode.bump=0;
+				mode.step_bp=0;
+				mode.step=0;
+				mode.bump_flag=0;
+				break;
+				
+		}
+}
+void Do_Remote_Move(void)
+{
+	if(giv_sys_time-remote_info.key_time>5000)
+		{
+			stop_rap();
+			Init_Cease();
+		}
+	
+	ACC_DEC_Curve();
+	Remote_Bump_Action();
+
+	if(mode.bump)
+		return;
+
+	if(mode.sub_mode!=SUBMODE_REMOTE_MOVE)
+		return;
+	switch(remote_info.remote_key)
+		{
+			case REMOTE_KEY_FORWORD:
+				switch(mode.step)
+					{
+						case 0:
+							motion1.tgt_yaw=Gyro_Data.yaw;
+							mode.step++;
+						break;
+						case 1:
+							Speed=FAST_MOVE_SPEED;
+							do_action_my(3,FARAWAY*CM_PLUS,motion1.tgt_yaw);
+						break;
+					}
+				break;
+			case REMOTE_KEY_BACK:
+				switch(mode.step)
+					{
+						case 0:
+							motion1.tgt_yaw=Gyro_Data.yaw;
+							mode.step++;
+						break;
+						case 1:
+							Speed=HIGH_MOVE_SPEED;
+							do_action_my(4,FARAWAY*CM_PLUS,motion1.tgt_yaw);
+						break;
+					}
+				break;
+			case REMOTE_KEY_LEFT:
+				switch(mode.step)
+					{
+						case 0:
+							motion1.tgt_yaw=Gyro_Data.yaw;
+							mode.step++;
+						break;
+						case 1:
+							Speed=HIGH_MOVE_SPEED;
+							do_action(1,360*Angle_1);
+						break;
+					}
+				break;
+			case REMOTE_KEY_RIGHT:
+				switch(mode.step)
+					{
+						case 0:
+							motion1.tgt_yaw=Gyro_Data.yaw;
+							mode.step++;
+						break;
+						case 1:
+							Speed=HIGH_MOVE_SPEED;
+							do_action(2,360*Angle_1);
+						break;
+					}
+				break;
+		}
+}

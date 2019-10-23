@@ -124,64 +124,11 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 		return;
 	switch (hw_info->data)
 		{
+#if 0
 			case REMOTE_SLEEP:
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_SLEEP;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_DOCK:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_DOCK;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_GUIHUA:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_GUIHUA;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_FORWOARD:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_FORWORD;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_LEFT:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_LEFT;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_OK:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_OK;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_RIGHT:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_RIGHT;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_BACK:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_BACK;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_YBS:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_YBS;
-				remote_info.rece_ir=hw_info->rece_ir;
-				break;
-			case REMOTE_SPOT:
-				remote_info.effect=true;
-				remote_info.effect_time=giv_sys_time;
-				remote_info.remote_key=REMOTE_KEY_SPOT;
 				remote_info.rece_ir=hw_info->rece_ir;
 				break;
 			case REMOTE_TIME:
@@ -200,6 +147,72 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_PREEEN;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+
+			case REMOTE_SPOT:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_SPOT;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+#endif
+			case REMOTE_DOCK:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_DOCK;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+			case REMOTE_GUIHUA:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_GUIHUA;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+			case REMOTE_FORWOARD:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_FORWORD;
+				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_time=giv_sys_time;
+				break;
+			case REMOTE_LEFT:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_LEFT;
+				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_time=giv_sys_time;
+				break;
+			case REMOTE_START:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_START;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+			case REMOTE_RIGHT:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_RIGHT;
+				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_time=giv_sys_time;
+				break;
+			case REMOTE_BACK:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_BACK;
+				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_time=giv_sys_time;
+				break;
+			case REMOTE_YBS:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_YBS;
+				remote_info.rece_ir=hw_info->rece_ir;
+				break;
+			case REMOTE_FAN:
+				remote_info.effect=true;
+				remote_info.effect_time=giv_sys_time;
+				remote_info.remote_key=REMOTE_KEY_FAN;
 				remote_info.rece_ir=hw_info->rece_ir;
 				break;
 		}

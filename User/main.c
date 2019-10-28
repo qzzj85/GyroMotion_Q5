@@ -90,9 +90,10 @@ void log_out(void)
 //	TRACE("w_m.siag=%d\r\n",w_m.sign);
 	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
 	TRACE("top=%d\r\n",top_time_sec);
-	u32 min=(giv_sys_time-motion1.worktime)/10000/60;
-	u32 sec=(giv_sys_time-motion1.worktime)/10000-min*60;
+	u32 min=(giv_sys_time-motion1.worktime_area)/10000/60;
+	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
+	TRACE("clean_size=%f\r\n",motion1.clean_size);
 #else
 //	TRACE("===========\r\n");
 	TRACE("lsp=%d rsp=%d\r\n",l_rap.rap,r_rap.rap);
@@ -146,7 +147,7 @@ int main(void)
 #endif
 	while(1)
 	{	
-						Uart3_Communication();
+						//Uart3_Communication();
 #ifdef TUYA_WIFI						  
 						Uart1_Comunication();						//串口数据解析函数	 
                         mcu_wifi_proc_key();						

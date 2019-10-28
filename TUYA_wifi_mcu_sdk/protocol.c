@@ -89,6 +89,7 @@
 #include "wifi.h"
 #include "usart.h"
 #include "power.h"
+#include "AAA-include.h"
 
 #ifdef WEATHER_ENABLE
 /******************************************************************************
@@ -212,73 +213,133 @@ extern MODE mode;		 //??????????????
 
 void all_data_update(void)
 {
-		  /* 
-		  //此代码为平台自动生成，请按照实际数据修改每个可下发可上报函数和只上报函数
-		  mcu_dp_bool_update(DPID_POWER,当前电源开�?; //BOOL型数据上�?
-		  mcu_dp_bool_update(DPID_POWER_GO,当前清扫开�?; //BOOL型数据上�?
-		  mcu_dp_enum_update(DPID_MODE,当前清扫模式); //枚举型数据上�?
-		  mcu_dp_enum_update(DPID_DIRECTION_CONTROL,当前方向); //枚举型数据上�?
-		  mcu_dp_enum_update(DPID_STATUS,当前工作状�?; //枚举型数据上�?
-		  mcu_dp_value_update(DPID_ELECTRICITY_LEFT,当前剩余电量); //VALUE型数据上�?
-		  mcu_dp_enum_update(DPID_SUCTION,当前吸力选择); //枚举型数据上�?
-		  mcu_dp_string_update(DPID_CLEAN_RECORD,当前清扫记录指针,当前清扫记录数据长度); //STRING型数据上�?
-		  mcu_dp_value_update(DPID_CLEAN_AREA,当前清扫面积); //VALUE型数据上�?
-		  mcu_dp_value_update(DPID_CLEAN_TIME,当前清扫时间); //VALUE型数据上�?
-		  mcu_dp_fault_update(DPID_FAULT,当前故障告警); //故障型数据上�?
-		  mcu_dp_raw_update(DPID_MAP_CONFIG,当前地图参数指针,当前地图参数数据长度); //RAW型数据上�?
-		 
-		 */
-	 unsigned char   i;
-	 if (mode.sub_mode  != SLEEP) i = 1;
-	 mcu_dp_bool_update(DPID_POWER,i); 
-	 if ((mode.mode==CEASE)||(mode.mode==CHARGEING ))
-		  i = 0;
-	 else i = 1;
-	 mcu_dp_bool_update(DPID_POWER_GO,i); 
+	u8 power_switch=0,sweep_switch=0,work_sta=0,sweep_mode=0,err_code=0,suction=1;
+	u32 clean_time=0;
+	float clean_size=0;
+	/* 
+	//此代码为平台自动生成，请按照实际数据修改每个可下发可上报函数和只上报函数
+	mcu_dp_bool_update(DPID_POWER,当前电源开�?; //BOOL型数据上�?
+	mcu_dp_bool_update(DPID_POWER_GO,当前清扫开�?; //BOOL型数据上�?
+	mcu_dp_enum_update(DPID_MODE,当前清扫模式); //枚举型数据上�?
+	mcu_dp_enum_update(DPID_DIRECTION_CONTROL,当前方向); //枚举型数据上�?
+	mcu_dp_enum_update(DPID_STATUS,当前工作状�?; //枚举型数据上�?
+	mcu_dp_value_update(DPID_ELECTRICITY_LEFT,当前剩余电量); //VALUE型数据上�?
+	mcu_dp_enum_update(DPID_SUCTION,当前吸力选择); //枚举型数据上�?
+	mcu_dp_string_update(DPID_CLEAN_RECORD,当前清扫记录指针,当前清扫记录数据长度); //STRING型数据上�?
+	mcu_dp_value_update(DPID_CLEAN_AREA,当前清扫面积); //VALUE型数据上�?
+	mcu_dp_value_update(DPID_CLEAN_TIME,当前清扫时间); //VALUE型数据上�?
+	mcu_dp_fault_update(DPID_FAULT,当前故障告警); //故障型数据上�?
+	mcu_dp_raw_update(DPID_MAP_CONFIG,当前地图参数指针,当前地图参数数据长度); //RAW型数据上�?
+
+	*/
+	
+	unsigned char   i;
+	if(power.switch_flag)
+		power_switch=1;
+	else
+		power_switch=0;
+
+	switch(mode.mode)
+		{
+			case CEASE:
+				sweep_switch=0;
+				switch(mode.sub_mode)
+					{
+						case CEASE:
+						case QUIT_CHARGING:
+							//sweep_mode=0;
+							work_sta=WIFI_STA_CEASE;
+							break;
+						case SLEEP:
+						case SHUTDOWN:
+						case DEAD:
+							//sweep_mode=0;
+							work_sta=WIFI_STA_SLEEP;
+							break;
+						case ERR:
+							//sweep_mode=0;
+							work_sta=WIFI_STA_ERR;
+							break;
+					}
+				break;
+			case SWEEP:
+			case SHIFT:
+			case EXIT:
+			case PASS2INIT:
+				sweep_switch=1;
+				sweep_mode=WIFI_MOD_SWEEP;
+				work_sta=WIFI_STA_WORKING;
+				clean_size=motion1.clean_size;
+				break;
+			case YBS:
+				sweep_switch=1;
+				sweep_mode=WIFI_MOD_YBS;
+				work_sta=WIFI_STA_WORKING;
+				clean_size=motion1.clean_size;
+				break;
+			case SPOT:
+				sweep_switch=1;
+				sweep_mode=WIFI_MOD_SPOT;
+				work_sta=WIFI_STA_WORKING;
+				clean_size=motion1.clean_size;
+				break;
+			case DOCKING:
+				sweep_switch=1;
+				sweep_mode=WIFI_MOD_DOCK;
+				work_sta=WIFI_STA_DOCK;
+				clean_size=motion1.clean_size;
+				break;
+			case CHARGEING:
+				sweep_switch=0;
+				if(flag_full)
+					work_sta=WIFI_STA_CHGDONE;
+				else if(power.charge_dc)
+					work_sta=WIFI_STA_CHGDC;
+				else
+					work_sta=WIFI_STA_CHGSEAT;
+				break;
+			case MODE_CTRL:
+				sweep_switch=1;
+				sweep_mode=WIFI_MOD_SWEEP;
+				work_sta=WIFI_STA_CEASE;
+				break;
+		}
+
+	mcu_dp_bool_update(DPID_POWER,power_switch); 
+	mcu_dp_bool_update(DPID_POWER_GO,sweep_switch); 
+	mcu_dp_enum_update(DPID_MODE,sweep_mode); 
+	mcu_dp_enum_update(DPID_STATUS,work_sta);
+	mcu_dp_value_update(DPID_CLEAN_AREA,(u32)(clean_size*10));
+#if 0
 	i = 0;
-	if (mode.mode==SWEEP)
-		 i = 0;
-	if (mode.mode==YBS)	
-		  i = 1;
-	if (mode.mode==SPOT)
-		  i = 2;
-	if (mode.mode==DOCKING)	
-		  i = 3;		
-	 mcu_dp_enum_update(DPID_MODE,i); 
+	// unsigned int action;		//????   0:??  1:??????  2?????? 3???   4????   5???1  6?????2  ??????18???14	??19????????
+	if (mode.action == 0) i = 4;
+	if (mode.action == 1) i = 2;	
+	if (mode.action == 2) i = 3;
+	if (mode.action == 3) i = 0;	
+	if (mode.action == 4) i = 1;
+	if (mode.action > 4) i = 2;	
+	mcu_dp_enum_update(DPID_DIRECTION_CONTROL,i); 
+#endif
 
-	 i = 0;
-	 		// unsigned int action;		//????   0:??  1:??????  2?????? 3???   4????   5???1  6?????2  ??????18???14	??19????????
-	 if (mode.action == 0) i = 4;
-	 if (mode.action == 1) i = 2;	
-	 if (mode.action == 2) i = 3;
-	 if (mode.action == 3) i = 0;	
-	 if (mode.action == 4) i = 1;
-	 if (mode.action > 4) i = 2;	
-	 
-	 mcu_dp_enum_update(DPID_DIRECTION_CONTROL,i); 
-    i = 0;
-	if (mode.mode == CEASE)  {
-		 i = 1;	 
-	    if (mode.sub_mode == SLEEP)  i = 0;
-		if (mode.sub_mode == ERR)  i = 7;
-		}	
-	if (mode.mode == SWEEP)  i = 2;	
-	if (mode.mode == SPOT)  i = 2;		
-	if (mode.mode == DOCKING)  i = 3;
-	if (mode.mode == CHARGEING)  {
-		    if(power.charge_dc) i = 6;
-			if (power.charge_seat)i =5;
-			if(Slam_Data.bat == 100)i = 4;
-		}	
-	mcu_dp_enum_update(DPID_STATUS,i);
-	 i=Slam_Data.bat;
-	 mcu_dp_value_update(DPID_ELECTRICITY_LEFT,i);
 
-     i = 0;
-		 mcu_dp_enum_update(DPID_SUCTION,i);
-		 i = 0;
+	i=Slam_Data.bat;
+	mcu_dp_value_update(DPID_ELECTRICITY_LEFT,i);
 
-		 mcu_dp_fault_update(DPID_FAULT,0);
+	if(sweep_level<SWEEP_LEVEL_FORCE)
+		suction=1;
+	else
+		suction=0;
+	mcu_dp_enum_update(DPID_SUCTION,suction);
+
+	i = 0;
+	mcu_dp_fault_update(DPID_FAULT,err_code);
+
+	if(mode.status==0)
+		clean_time=0;
+	else
+		clean_time=motion1.worktime/600000;
+	mcu_dp_value_update(DPID_CLEAN_TIME,clean_time);
 }
 	/******************************************************************************
 									WARNING!!!	  
@@ -410,24 +471,37 @@ static unsigned char dp_download_direction_control_handle(const unsigned char va
   direction_control = mcu_get_dp_download_enum(value,length);
   switch(direction_control)
   {
-    case 0:
-      
+    case 0:				//forward
+      if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+      	{
+      		Init_App_Ctrl(direction_control);
+      	}
       break;
       
-    case 1:
-      
+    case 1:				//back
+		if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+		  {
+			  Init_App_Ctrl(direction_control);
+		  }
       break;
       
-    case 2:
-      
+    case 2:				//left
+		if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+		  {
+			  Init_App_Ctrl(direction_control);
+		  }
       break;
       
-    case 3:
-      
+    case 3:				//right
+		if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+		  {
+			  Init_App_Ctrl(direction_control);
+		  }
       break;
       
-    case 4:
-      
+    case 4:				//stop
+      stop_rap();
+	  Init_Cease();
       break;
       
     default:
@@ -452,25 +526,28 @@ static unsigned char dp_download_direction_control_handle(const unsigned char va
 *****************************************************************************/
 static unsigned char dp_download_suction_handle(const unsigned char value[], unsigned short length)
 {
-  //示例:当前DP类型为ENUM
-  unsigned char ret;
-  unsigned char suction;
-  
-  suction = mcu_get_dp_download_enum(value,length);
-  switch(suction)
-  {
-    case 0:
-      
-      break;
-      
-    case 1:
-      
-      break;
-      
-    default:
-      
-      break;
-  }
+	//示例:当前DP类型为ENUM
+	unsigned char ret;
+	unsigned char suction;
+
+	suction = mcu_get_dp_download_enum(value,length);
+	switch(suction)
+	{
+		case 0:				//force
+			sweep_level=SWEEP_LEVEL_FORCE;
+			if((mode.status)&(mode.mode!=DOCKING))
+				Sweep_Level_Set(sweep_level);	  	
+		break;
+
+		case 1:				//standard
+			sweep_level=SWEEP_LEVEL_STANDARD;
+			if((mode.status)&(mode.mode!=DOCKING))
+				Sweep_Level_Set(sweep_level); 	  
+		break;
+
+		default:
+		break;
+	}
   
   //处理完DP数据后应有反�?
   ret = mcu_dp_enum_update(DPID_SUCTION,suction);

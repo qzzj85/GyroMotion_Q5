@@ -1,6 +1,8 @@
 #ifndef CORDINATE_H
 #define	CORDINATE_H
 
+#define	DEGREE_10			1000
+#define	DEGREE_30			3000
 #define DEGREE_180			18000
 #define DEGREE_300			30000
 #define	DEGREE_360			36000

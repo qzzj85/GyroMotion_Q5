@@ -661,8 +661,8 @@ u8 Analysis_LastYClean(void)
 void Set_AreaWorkTime(u32 min_num)
 {
 	u32 sec_num=min_num*60*10000;
-	motion1.worktime=giv_sys_time;
-	motion1.worktime_max=sec_num;
+	motion1.worktime_area=giv_sys_time;
+	motion1.worktime_area_max=sec_num;
 }
 
 void Work_TimeOut_Handle(void)
@@ -671,7 +671,7 @@ void Work_TimeOut_Handle(void)
 	u8 temp_nextaction=Read_CheckPoint_NextAction();
 	if((mode.mode==SWEEP)|(mode.mode==SHIFT))
 		{
-			if(giv_sys_time-motion1.worktime>motion1.worktime_max)
+			if(giv_sys_time-motion1.worktime_area>motion1.worktime_area_max)
 				{
 					if(mode.mode==SWEEP)
 						{
@@ -770,20 +770,121 @@ u8 Analysis_InSeatArea(s8 now_gridx,s8 now_gridy)
 	return 0;
 }
 
-u8 Is_Close_Angle(short tgt_angle,short now_angle)
+u8 Is_Close_Angle(short tgt_angle,short now_angle,u32 bios)
 {
 	int temp_angle=0;
 	temp_angle=now_angle-tgt_angle;
-	if(abs(temp_angle>18000))
+	if(abs(temp_angle>DEGREE_180))
 		{
 			if(temp_angle>0)
-				temp_angle=36000-temp_angle;
+				temp_angle=DEGREE_360-temp_angle;
 			else
-				temp_angle=36000+temp_angle;
+				temp_angle=DEGREE_360+temp_angle;
 		}
-	if(abs(temp_angle)<3000)
+	if(abs(temp_angle)<bios)
 		{
 			return 1;
 		}
 	return 0;
 }
+
+u8 Analysis_LastYClean_II(void)
+{
+	s8 ydir,now_gridx,now_gridy;
+	s8 check_gridx1,check_gridx2,check_gridx3,check_gridy;
+	u8 check_data1,check_data2,check_data3;
+	s8 xmaxclean_lasty,xminclean_lasty;
+	
+	if((motion1.tgt_yaw!=F_Angle_Const)&(motion1.tgt_yaw!=B_Angle_Const))
+		return 0;
+	
+	ydir=Read_Motion_YDir();
+	now_gridx=grid.x;
+	now_gridy=grid.y;
+	switch(ydir)
+		{
+			case 0:
+				return 0;
+			case 1:											//Y轴正增长方向
+				if(now_gridy-1<grid.y_area_min)
+					return 0;
+				check_gridy=now_gridy-1;
+				xmaxclean_lasty=Return_MaxClean_GridX(check_gridy,1);
+				xminclean_lasty=Return_MinClean_GridX(check_gridy,1);
+				if(motion1.tgt_yaw==F_Angle_Const)			//清扫角度为F_Angle_Const
+					{					
+						if(now_gridx+1>grid.x_area_max)
+							return 0;
+						check_gridx1=now_gridx+1;
+
+						while(check_gridx1<xmaxclean_lasty)
+							{
+								if(!Read_Coordinate_Clean(check_gridx1,now_gridy))
+									{
+										if(Read_Coordinate_CleanNoWall(check_gridx1,check_gridy))
+											return 1;
+									}
+								check_gridx1++;
+							}
+					}
+				else										//清扫角度为B_Angle_Const
+					{
+						if(now_gridx-1<grid.x_area_min)
+							return 0;
+						check_gridx1=now_gridx-1;
+
+						while(check_gridx1>xminclean_lasty)
+							{
+								if(!Read_Coordinate_Clean(check_gridx1,now_gridy))
+									{
+										if(Read_Coordinate_CleanNoWall(check_gridx1,check_gridy))
+											return 1;
+									}
+								check_gridx1--;
+							}
+					}
+				break;
+			case -1:			
+				if(now_gridy+1>grid.y_area_max)
+					return 0;
+				check_gridy=now_gridy+1;
+
+				xmaxclean_lasty=Return_MaxClean_GridX(check_gridy,1);
+				xminclean_lasty=Return_MinClean_GridX(check_gridy,1);
+				if(motion1.tgt_yaw==F_Angle_Const)			//清扫角度为F_Angle_Const
+					{
+						if(now_gridx+1>grid.x_area_max)
+							return 0;
+						check_gridx1=now_gridx+1;
+
+						while(check_gridx1<xmaxclean_lasty)
+							{
+								if(!Read_Coordinate_Clean(check_gridx1,now_gridy))
+									{
+										if(Read_Coordinate_CleanNoWall(check_gridx1,check_gridy))
+											return 1;
+									}
+								check_gridx1++;
+							}
+					}
+				else										//清扫角度为B_Angle_Const
+					{
+						if(now_gridx-1<grid.x_area_min)
+							return 0;
+						check_gridx1=now_gridx-1;
+
+						while(check_gridx1>xminclean_lasty)
+							{
+								if(!Read_Coordinate_Clean(check_gridx1,now_gridy))
+									{
+										if(Read_Coordinate_CleanNoWall(check_gridx1,check_gridy))
+											return 1;
+									}
+								check_gridx1--;
+							}
+					}
+				break;
+		}
+	return 0;
+}
+

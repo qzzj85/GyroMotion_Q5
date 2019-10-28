@@ -1696,6 +1696,9 @@ void Init_Right_YBS(u8 direct_first)
 
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 	motion1.continue_checkstep=0;			//qz add 20190328
+	motion1.worktime=1;	
+	motion1.clean_size=0;
+	Gyro_Data.cal_flag=false;
 	YBS_check_base=false;
 }
 

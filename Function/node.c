@@ -242,6 +242,11 @@ u8 Out_CurrNode_Exit(void)
 	check_point.new_y2=curr_node->exit_gridy2;
 	check_point.next_tgtyaw=curr_node->exit_tgtyaw;	
 //	check_point.go_exit=true;
+	motion1.exit_gridx1=curr_node->exit_gridx1;
+	motion1.exit_gridy1=curr_node->exit_gridy1;
+	motion1.exit_gridx2=curr_node->exit_gridx2;
+	motion1.exit_gridy2=curr_node->exit_gridy2;
+
 	Set_CheckPoint_NextAction(CHECK_GOEXIT);
 	return 1;
 }

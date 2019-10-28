@@ -561,7 +561,7 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 			if(mode.bump==0)
 				{
 					stop_rap();
-					TRACE("Check Already clean!!!\r\n");
+					TRACE("Check Already Xclean!!!\r\n");
 					mode.bump=data1;
 					TRACE("Force mode.bump=%d\r\n",mode.bump);
 					mode.step_bp=0;
@@ -616,6 +616,10 @@ void Init_First_Sweep(u8 start_seat)
 	else
 		motion1.start_seat=false;
 	motion1.pathpoint_ok=true;
+	motion1.first_gyrocal=true;
+	motion1.clean_size=0;
+	motion1.worktime=1;
+	Gyro_Data.cal_flag=false;
 	Set_AreaWorkTime(20);
 }
 
@@ -686,7 +690,7 @@ void Do_FirstInit_Sweep(void)
 				break;
 
 			case 1:
-				if(giv_sys_time-mode.time<5000)
+				if(giv_sys_time-mode.time<30000)
 					return;
 				
 				Init_Coordinate();
@@ -2108,6 +2112,7 @@ void Do_NormalSweep(void)
 {	
 	u8 area_check=0;
 	s8 now_gridx,now_gridy,ydir;
+	short now_angle=Gyro_Data.yaw;
 	static u8 turn_dir=0;
 	
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -2143,6 +2148,12 @@ void Do_NormalSweep(void)
 				if(giv_sys_time-mode.bump_time<200)
 					return;
 				mode.time=giv_sys_time;
+				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+					{
+						mode.step=0xE0;
+						return;
+					}
 				mode.step++;
 			break;
 			case 1:
@@ -2237,6 +2248,17 @@ void Do_NormalSweep(void)
 				TRACE("call this in %d %s\r\n",__LINE__,__func__);
 				Init_Pass2Sweep();
 				break;
+			///////////角度修正//////////////////
+			case 0xE0:
+				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
+				Speed=MID_MOVE_SPEED;
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step=1;
+					}
+				break;
 			//qz add 20190307 X坐标超出4M范围的措施
 		}
 }
@@ -2322,6 +2344,7 @@ void Init_Back_Sweep(short tgt_yaw)
 void Do_BackSweep(void)
 {
 	s8 now_gridx,now_gridy,ydir;
+	short now_angle=Gyro_Data.yaw;
 	static u8 turn_dir;
 	
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -2353,6 +2376,12 @@ void Do_BackSweep(void)
 		{
 			case 0:
 				mode.time=giv_sys_time;
+				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+					{
+						mode.step=0xE0;
+						return;
+					}
 				mode.step++;
 			break;
 			case 1:
@@ -2481,7 +2510,17 @@ void Do_BackSweep(void)
 				Init_Pass2Sweep();
 				break;
 			//qz add end
-				
+			///////////角度修正//////////////////
+			case 0xE0:
+				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
+				Speed=MID_MOVE_SPEED;
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step=1;
+					}
+				break;
 			case 0xff:
 				break;
 					
@@ -2678,7 +2717,7 @@ void Do_Pass2Sweep(void)
 							Init_Leak_BackSweep(tgt_angle);
 					}
 
-				if(motion1.leakon)
+//				if(motion1.leakon)
 					{
 						if((motion1.first_leak_y!=grid.y)&(motion1.first_leak_y))
 							motion1.first_leak_y=0;
@@ -3509,7 +3548,7 @@ u8 YBS_AbortFor_Sweep(void)
 				}
 		}
 
-#if 1
+#if 0
 	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
 		{
 			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))

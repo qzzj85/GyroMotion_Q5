@@ -167,7 +167,12 @@ void Set_Coordinate_Clean(s8 gridx,s8 gridy)
 	area_no=Read_Coordinate_AreaNo(gridx, gridy);
 	if((mode.mode==SHIFT)&(area_no))
 		return;
-	
+
+	if(area_no==0)
+		{
+			if(mode.sub_mode!=SWEEP_FIRST_INIT)
+				motion1.clean_size+=0.04;
+		}
 	coordinate[gridy_real][gridx_real]|=motion1.area_num<<3;
 }
 
@@ -410,8 +415,8 @@ u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw)
 {
  	int data1=0;
 	data1=abs(Gyro_Data.yaw-tgt_yaw);
-	if(data1>180*100)
-		data1=360*100-data1;
+	if(data1>DEGREE_180)
+		data1=DEGREE_360-data1;
 	if(data1<bios_yaw)
 		{
 //			TRACE("yaw_dif=%d\r\n",data1);
@@ -1367,17 +1372,16 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 			if(motion1.xmax_ok)
 				return 0x7f;
 		
-			temp_gridy=grid.y_area_min;
+			temp_gridy=grid.y_area_max;//temp_gridy=grid.y_area_min;			
 			temp_gridx=grid.x_area_max;
-			//TRACE("analysis Xmax next area entry...\r\n");			
-			while(temp_gridy<grid.y_area_max)
+			while(temp_gridy>grid.y_area_min)//while(temp_gridy<grid.y_area_max)
 				{
 #if 1
 					temp_gridmax1=Return_MaxClean_GridX(temp_gridy,1);
-					temp_gridmax2=Return_MaxClean_GridX(temp_gridy+1,1);
+					temp_gridmax2=Return_MaxClean_GridX(temp_gridy-1,1);//temp_gridmax2=Return_MaxClean_GridX(temp_gridy+1,1);
 					if((temp_gridmax1!=grid.x_area_max)|(temp_gridmax2!=grid.x_area_max))
 					//if((temp_data2!=grid.x_area_max))
-						temp_gridy++;
+						temp_gridy--;//temp_gridy++;
 #else
 					temp_data2=Read_Coordinate_CleanNoWall(temp_gridx,temp_gridy);
 					temp_data3=Read_Coordinate_CleanNoWall(temp_gridx,temp_gridy+1);
@@ -1385,27 +1389,27 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 						temp_gridy++;
 #endif
 					else if(Read_Coordinate_Seat(grid.x_area_max,temp_gridy))
-						temp_gridy++;
+						temp_gridy--;//temp_gridy++;
 					else
 						{
 							temp_area1=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy);
-							temp_area2=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy+1);
+							temp_area2=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy-1);//temp_area2=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy+1);
 							temp_area3=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy);
-							temp_area4=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy+1);
+							temp_area4=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy-1);//temp_area4=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy+1);
 							if((temp_area1==0)&(temp_area2==0)&(temp_area3==0)&(temp_area4==0))
 							//if((temp_data2==0)&(temp_data4==0))
 								{
 #if 1
 									temp_gridy1=temp_gridy;
 									temp_check_point.backup_grid=0;
-									while(temp_gridy1<grid.y_area_max)
+									while(temp_gridy1>grid.y_area_min)//while(temp_gridy1<grid.y_area_max)
 										{
 											temp_area1=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy1);
 											temp_area2=Read_Coordinate_AreaNo(grid.x_area_max+2,temp_gridy1);
 											temp_gridmax1=Return_MaxClean_GridX(temp_gridy1,1);
 											if((temp_gridmax1==grid.x_area_max)&(temp_area1==0)&(temp_area2==0))
 												{
-													temp_gridy1++;
+													temp_gridy1--;//temp_gridy1++;
 													temp_check_point.backup_grid++;
 												}
 											else
@@ -1419,7 +1423,7 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 								}
 							else
 								{
-									temp_gridy++;
+									temp_gridy--;//temp_gridy++;
 								}
 						}
 				}
@@ -2329,7 +2333,7 @@ u8 Area_Check(u8 avoid_ybs)
 	if(mode.mode!=SHIFT)
 		{
 			TRACE("mode.mode!=SHIFT!!\r\n");
-			TRACE("set worktime 10!!\r\n");
+			TRACE("set worktime_area 10!!\r\n");
 			Set_AreaWorkTime(10);
 		}
 	if(Find_Leak_Area())
@@ -2354,7 +2358,7 @@ u8 Area_Check(u8 avoid_ybs)
 	if(mode.mode!=SHIFT)
 		{
 			TRACE("mode.mode!=SHIFT!!\r\n");
-			TRACE("set worktime 10!!\r\n");
+			TRACE("set worktime_area 10!!\r\n");
 			Set_AreaWorkTime(10);
 		}
 	
@@ -2432,11 +2436,11 @@ u8 Gyro_Bios_Check(void)
 				gyro_bios.check_angle=now_angle;
 				gyro_bios.acc_angle=0;
 				gyro_bios.check_step++;
+				gyro_bios.island_gridx=grid.x;
+				gyro_bios.island_gridy=grid.y;
 				if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
 					{
 						inybs=true;
-						gyro_bios.island_gridx=grid.x;
-						gyro_bios.island_gridy=grid.y;
 					}
 				else
 					{
@@ -2723,16 +2727,16 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 			for(i=0;i<len;i++)
 				{
 					check[i].gridx=check_point->new_x1;
-					check[i].gridy=check_point->new_y1+i;
+					check[i].gridy=check_point->new_y1-i;//check[i].gridy=check_point->new_y1+i;
 					first_check[i].gridx=check_point->new_x1-1;
-					first_check[i].gridy=check_point->new_y1+i;
+					first_check[i].gridy=check_point->new_y1-i;//first_check[i].gridy=check_point->new_y1+i;
 					second_check[i].gridx=check_point->new_x1-2;
-					second_check[i].gridy=check_point->new_y1+i;
+					second_check[i].gridy=check_point->new_y1-i;//second_check[i].gridy=check_point->new_y1+i;
 				}
 			first_check[first_len-1].gridx=check_point->new_x1;
-			first_check[first_len-1].gridy=first_check[0].gridy-1;
+			first_check[first_len-1].gridy=first_check[0].gridy+1;//first_check[first_len-1].gridy=first_check[0].gridy-1;
 			first_check[first_len-2].gridx=check_point->new_x1;
-			first_check[first_len-2].gridy=first_check[i-1].gridy+1;
+			first_check[first_len-2].gridy=first_check[i-1].gridy-1;//first_check[first_len-2].gridy=first_check[i-1].gridy+1;
 			
 			second_check[second_len-1].gridx=first_check[first_len-1].gridx;
 			second_check[second_len-1].gridy=first_check[first_len-1].gridy;
@@ -2740,9 +2744,9 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 			second_check[second_len-2].gridy=first_check[first_len-2].gridy;
 			
 			second_check[second_len-3].gridx=check_point->new_x1-1;
-			second_check[second_len-3].gridy=second_check[0].gridy-1;
+			second_check[second_len-3].gridy=second_check[0].gridy+1;//second_check[second_len-3].gridy=second_check[0].gridy-1;
 			second_check[second_len-4].gridx=check_point->new_x1-1;
-			second_check[second_len-4].gridy=second_check[i-1].gridy+1;
+			second_check[second_len-4].gridy=second_check[i-1].gridy-1;//second_check[second_len-4].gridy=second_check[i-1].gridy+1;
 		}
 	else if(new_area_dir==DIR_XMIN)
 		{

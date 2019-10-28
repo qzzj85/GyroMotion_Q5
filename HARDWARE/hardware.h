@@ -6,7 +6,6 @@
 #include "soft.h"
 
 extern bool UV_FLAG;
-extern bool pwrswitch_flag;
 /*GPIO 使用情况	
 PA0		电池电压检测			ADC1_CHN_0
 PA1		电池温度检测			ADC1_CHN_1
@@ -220,7 +219,6 @@ PE15	船型开关检测
 #define		PWR5V_ON		{GPIOD->BSRR|=1<<2;}
 #define		PWR5V_OFF		{GPIOD->BRR|=1<<2;}
 ////////////////////////全局变量//////////////////////////////////
-extern 	bool gyro_cal_flag;
 
 void Init_Hardware (void);									   
 void Set_Beep(void);			

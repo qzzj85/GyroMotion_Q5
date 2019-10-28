@@ -798,6 +798,10 @@ void proc_wifi_stop()
 				Send_Voice(VOICE_DOCK_STOP);
 				Init_Cease();
 			break;
+			case MODE_CTRL:
+				stop_rap();
+				Init_Cease();
+			break;
 			default:
 				break;
 		}

@@ -22,9 +22,10 @@
 
 #define 	SWEEP_LEVEL_STOP	  	0
 #define		SWEEP_LEVEL_STANDARD	1
-#define		SWEEP_LEVEL_FORCE		3
 #define		SWEEP_LEVEL_SILENCE		2
-#define		SWEEP_LEVEL_DOCK		4
+#define		SWEEP_LEVEL_DOCK		3
+#define		SWEEP_LEVEL_FORCE		4
+
 
 #define		MB_STD_PWM				200
 #define		FAN_STD_PWM				900

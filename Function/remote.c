@@ -55,6 +55,8 @@ void Remote_Handle(void)
 					return;
 				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
 					Init_Remote_Move();
+				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+					Init_Cease();
 				//remote_info.key_time=giv_sys_time;
 				break;
 			case REMOTE_KEY_LEFT:
@@ -67,6 +69,8 @@ void Remote_Handle(void)
 					return;
 				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
 					Init_Remote_Move();
+				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+					Init_Cease();
 				break;
 			case REMOTE_KEY_RIGHT:
 				//机器处于工作状态，退出
@@ -77,6 +81,8 @@ void Remote_Handle(void)
 					return;
 				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
 					Init_Remote_Move();
+				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+					Init_Cease();
 				break;
 			case REMOTE_KEY_BACK:
 				//机器处于工作状态，退出
@@ -87,6 +93,8 @@ void Remote_Handle(void)
 					return;
 				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
 					Init_Remote_Move();
+				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+					Init_Cease();
 				break;
 
 			////////模式性按键///////
@@ -109,9 +117,8 @@ void Remote_Handle(void)
 #endif
 										Init_Docking();
 									break;
-									case ERR:
 									case SLEEP:
-										Init_Docking();
+										Init_Cease();
 									break;
 									default:
 										break;
@@ -162,6 +169,9 @@ void Remote_Handle(void)
 #endif
 										Init_First_Sweep(0);
 										break;
+									case SLEEP:
+										Init_Cease();
+										break;
 									default:
 										break;
 										
@@ -201,6 +211,9 @@ void Remote_Handle(void)
 #endif
 										Init_Right_YBS(1);
 									break;
+									case SLEEP:
+										Init_Cease();
+										break;
 									default:
 										break;
 								}
@@ -354,8 +367,8 @@ void Init_Remote_Move(void)
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 		
 	/****设置机器的工作模式******/   
-	mode.mode = MODE_REMOTE; 
-	mode.sub_mode=SUBMODE_REMOTE_MOVE;			//QZ ADD
+	mode.mode = MODE_CTRL; 
+	mode.sub_mode=SUBMODE_REMOTE_CTRL;			//QZ ADD
 	mode.step=0x00; 				//qz add
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time; 		//qz add 20180703
@@ -558,7 +571,7 @@ void Remote_Bump_Action(void)
 }
 void Do_Remote_Move(void)
 {
-	if(giv_sys_time-remote_info.key_time>5000)
+	if(giv_sys_time-remote_info.key_time>3000)
 		{
 			stop_rap();
 			Init_Cease();
@@ -570,7 +583,7 @@ void Do_Remote_Move(void)
 	if(mode.bump)
 		return;
 
-	if(mode.sub_mode!=SUBMODE_REMOTE_MOVE)
+	if(mode.sub_mode!=SUBMODE_REMOTE_CTRL)
 		return;
 	switch(remote_info.remote_key)
 		{

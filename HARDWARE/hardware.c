@@ -2,8 +2,6 @@
 #include <stm32f10x.h>
 #include "hardware.h"
 bool UV_FLAG=false;
-bool pwrswitch_flag=false;
-bool gyro_cal_flag=false;
 //=====================头文件====================================
 #include "AAA-Include.h"
 //=====================私有定义====================================
@@ -957,10 +955,10 @@ u8 Read_SlamIsDown(void)
 u8 Read_PwrSwitch_Status(void)
 {
 	if(GPIO_ReadInputDataBit(GPIOE,PWR_SWITCH_PIN))
-		pwrswitch_flag=true;
+		power.switch_flag=true;
 	else
-		pwrswitch_flag=false;
-	return pwrswitch_flag;
+		power.switch_flag=false;
+	return power.switch_flag;
 }
 
 u8 Read_RingPWMCtrl_Status(void)

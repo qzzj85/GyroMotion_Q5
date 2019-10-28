@@ -8,7 +8,7 @@
            // 在tuya的sdk 里面wifi.h 单独也需要定义以上内容 
 
 
-//#define 	USE_HSE					1
+#define 	USE_HSE					1
 #define		USE_LSE					1
 #define 	CPU_FREQ_64MHz 			1
 #define 	FLOAT_PID 				1
@@ -100,11 +100,11 @@
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
 //#define		OUT_8MHZ				1
-#define		YIS055					1
+//#define		YIS055					1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			7
+#define		CORRECT_VERSION			8
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -299,7 +299,7 @@
 //qz add 自有协议
 //////////////////////主模式///////////////////////////////
 #define CEASE 				0x01
-#define	MODE_REMOTE			0X02
+#define	MODE_CTRL			0X02
 #define YBS 				0x03
 #define SPOT 				0x06
 #define LUOXUAN 			0X06
@@ -346,7 +346,8 @@
 
 #define	RUN_TEST			0xC0
 
-#define	SUBMODE_REMOTE_MOVE			0XB0
+#define	SUBMODE_REMOTE_CTRL			0XB0
+#define	SUBMODE_APP_CTRL			0XB1
 //#define     COMMANDER_x10           0X10         //  指令模式
 
 //#define     YBS           0X20    	     //  沿墙模式
@@ -862,18 +863,21 @@ typedef struct
 
 typedef  struct
 {
-bool low2dock;				 //电池电量低的回充请求，发送一次
-bool reinit;				//重新初始化标志,true:需要重新初始化
-unsigned int temp   ;	     //电池温度 
-unsigned int voltage;		 //电池电压   
-unsigned int current;      //充电电流
-unsigned char  charge_dc ;	     //外部DC座输入信号
-unsigned char  charge_seat ;		 //外部充电座输入信号
- short pwm;         //充电PWM脉冲
-unsigned char  err;         //电池错误  0 没有错误，1没有NTC，2 NTC短路，3 没有电池， 4 电池短路
-unsigned char step;         //充电步骤  0 小电流  1 大电流  2维持电流
-unsigned int time;        //充电开始时间
-u32 step_time;			  //qz add
+	bool low2dock;				 //电池电量低的回充请求，发送一次
+	bool reinit;				//重新初始化标志,true:需要重新初始化
+	bool switch_flag;
+	short pwm;         //充电PWM脉冲
+
+	unsigned char  charge_dc ;	     //外部DC座输入信号
+	unsigned char  charge_seat ;		 //外部充电座输入信号
+	unsigned char  err;         //电池错误  0 没有错误，1没有NTC，2 NTC短路，3 没有电池， 4 电池短路
+	unsigned char step;         //充电步骤  0 小电流  1 大电流  2维持电流
+
+	unsigned int temp   ;	     //电池温度 
+	unsigned int voltage;		 //电池电压   
+	unsigned int current;      //充电电流
+	unsigned int time;        //充电开始时间
+	u32 step_time;			  //qz add
 } POWER;
 
 typedef  struct
@@ -1003,6 +1007,7 @@ typedef struct 					//清扫结构体
 	bool 	pathpoint_ok;
 	bool	start_seat;
 	bool	force_dock;
+	bool  	first_gyrocal;
 	
 	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
 	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边
@@ -1014,6 +1019,11 @@ typedef struct 					//清扫结构体
 	u8 		area_num;				//当前区域编号
 	u8 		exit_area_num;			//退出区域编号
 	s8		first_leak_y;
+
+	s8 		exit_gridx1;
+	s8 		exit_gridy1;
+	s8		exit_gridx2;
+	s8		exit_gridy2;
 
 	short 	xpos_ybs_start;		//弓形直线行走切换为沿边时起始点x坐标
 	short 	xpos_start;			//起始点x坐标
@@ -1032,8 +1042,10 @@ typedef struct 					//清扫结构体
 	short 	ypos_max_area;		//区域打扫（4X4）能到达的最大Y坐标
 	short 	ypos_min_area;		//区域打扫（4X4）能到达的最小Y坐标
 	
-	u32 	worktime;			//区域内工作时间
-	u32 	worktime_max;		//区域允许最大工作时间	
+	u32 	worktime_area;			//区域内工作时间
+	u32 	worktime_area_max;		//区域允许最大工作时间	
+	u32 	worktime;
+	float	clean_size;
 }MOTION;
 
 typedef struct					//坐标格坐标结构体
@@ -1108,6 +1120,7 @@ struct PATH_POINT				//用于路径分析的每个行走点信息
 typedef struct
 {
 	bool first_rst;			//qz add 20181101:如果第一次检测到惯导数据异常，尝试复位1次
+	bool cal_flag;
 	u8 check_step;
 
 	u8 roll_check_step;		//qz add 20180927

@@ -960,8 +960,16 @@ void stop_rap(void)
 		{
 			if((e_l.sign==NEAR)|(e_m.sign==NEAR)|(e_r.sign==NEAR))
 				{
-					if(gyro_cal_flag)
+					if(Gyro_Data.cal_flag)
 						{
+							Gyro_Data.cal_flag=false;
+#if 0
+							if(motion1.first_gyrocal)
+								{
+									motion1.first_gyrocal=false;
+									return;
+								}
+#endif
 							delay_ms(700);
 							GYRO_CAL_PIN_0;
 							TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
@@ -969,7 +977,6 @@ void stop_rap(void)
 							delay_ms(1000);
 							TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
 							GYRO_CAL_PIN_1;
-							gyro_cal_flag=false;
 						}
 				}
 		}

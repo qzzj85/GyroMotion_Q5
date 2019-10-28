@@ -80,3 +80,4 @@
 #include "wifi_data.h"
 #include "back.h"
 #include "ACC_DEC.h"
+#include "app_ctrl.h"

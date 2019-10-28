@@ -129,7 +129,7 @@ void Do_Chargeing(void)
 		{
 			case 0:
 				ChargeControl_Volt_My();
-				if((mode.sub_mode==SWITCHOFF)&(pwrswitch_flag))
+				if((mode.sub_mode==SWITCHOFF)&(power.switch_flag))
 					{
 						if(power.charge_dc)
 							{
@@ -143,7 +143,7 @@ void Do_Chargeing(void)
 							}
 					}
 
-				if(((mode.sub_mode==DC_CHARGING)|(mode.sub_mode==SEAT_CHARGING))&(!pwrswitch_flag))
+				if(((mode.sub_mode==DC_CHARGING)|(mode.sub_mode==SEAT_CHARGING))&(!power.switch_flag))
 					{
 						Init_Switchoff();
 						return;

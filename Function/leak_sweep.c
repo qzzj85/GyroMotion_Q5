@@ -173,6 +173,8 @@ void Do_LeakSweep(void)
 	static u8 turn_dir=0;
 	u8 area_check=0;
 	s8 now_gridx,now_gridy,ydir=0;
+	short now_angle=Gyro_Data.yaw;
+	
 	ACC_DEC_Curve();
 	clr_all_hw_effect();
 	//LeakSweep_Bump_Action();
@@ -189,6 +191,12 @@ void Do_LeakSweep(void)
 		{
 			case 0:
 				mode.time=giv_sys_time;
+				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+					{
+						mode.step=0xE0;
+						return;
+					}
 				mode.step++;
 			break;
 			case 1:
@@ -281,6 +289,18 @@ void Do_LeakSweep(void)
 				TRACE("call this in %d %s\r\n",__LINE__,__func__);
 				Init_Pass2Sweep();
 				break;
+			///////////角度修正//////////////////
+			case 0xE0:
+				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
+				Speed=MID_MOVE_SPEED;
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step=1;
+					}
+				break;
+				
 			case 0xF0:
 				Area_Check(0);
 				Init_Shift_Point1(0);
@@ -386,7 +406,8 @@ void Do_Leak_BackSweep(void)
 {
 	s8 now_gridx,now_gridy,ydir;
 	static u8 turn_dir;
-
+	short now_angle=Gyro_Data.yaw;
+	
 	now_gridx=grid.x;now_gridy=grid.y;
 	ydir=Read_Motion_YDir();
 	
@@ -416,6 +437,12 @@ void Do_Leak_BackSweep(void)
 		{
 			case 0:
 				mode.time=giv_sys_time;
+				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+					{
+						mode.step=0xE0;
+						return;
+					}
 				mode.step++;
 			break;
 			case 1:
@@ -532,7 +559,17 @@ void Do_Leak_BackSweep(void)
 				Init_Pass2Sweep();
 				break;
 			//qz add end
-				
+			///////////角度修正//////////////////
+			case 0xE0:
+				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
+				Speed=MID_MOVE_SPEED;
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step=1;
+					}
+				break;
 			case 0xff:
 				break;
 					

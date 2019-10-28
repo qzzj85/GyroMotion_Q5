@@ -189,7 +189,7 @@ u8 Read_Shift_Bump(void)
 
 void Shift_BumpAction(void)
 {
-	u8 static turn_dir,turn_angle,bump_time=0,cliff_time=0,check_result;
+	u8 static turn_dir,turn_angle,bump_time=0,cliff_time=0;
 	u8 m,temp_data=0,nextaction=0;
 	s8 now_gridx,now_gridy,tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
 	now_gridx=grid.x;now_gridy=grid.y;
@@ -574,6 +574,9 @@ void Shift_BumpAction(void)
 									mode.bump_flag=false;
 									bump_time=0;
 									mode.step=0;
+
+									Area_Check(0);
+									Init_Shift_Point1(0);
 								}
 							else if(temp_data==CHECK_BACK)
 								{
@@ -2986,7 +2989,7 @@ void Do_ExitAtion(void)
 		}
 	Area_Check(0);
 	Init_Shift_Point1(0);
-	TRACE("set worktime 10!!\r\n");
+	TRACE("set worktime_area 10!!\r\n");
 	Set_AreaWorkTime(10);
 
 }
@@ -3100,22 +3103,19 @@ u8 Abort2Sweep(void)
 			case CHECK_LEAKSWEEP:
 				if(now_gridy!=tgt_gridy2)
 					return 0;
-
 				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
 					{
 						if(check_point.ydir>0)
 							{
-								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
-								if(Is_Close_Angle(L_Angle_Const,now_angle))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
 									}
-								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
-								else if(Is_Close_Angle(R_Angle_Const,now_angle))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
-										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy+1;
+										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
 									}
 								else
 									{
@@ -3124,17 +3124,15 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
-								if(Is_Close_Angle(L_Angle_Const,now_angle))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
 									}
-								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
-								else if(Is_Close_Angle(R_Angle_Const,now_angle))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
-										temp_gridx2=now_gridx-1;temp_gridy1=now_gridy-1;
+										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
 									}
 								else
 									{
@@ -3146,17 +3144,15 @@ u8 Abort2Sweep(void)
 					{
 						if(check_point.ydir>0)
 							{
-								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
-								if(Is_Close_Angle(L_Angle_Const,now_angle))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
 									}
-								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
-								else if(Is_Close_Angle(R_Angle_Const,now_angle))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
-										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy+1;
+										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
 									}
 								else
 									{
@@ -3165,17 +3161,15 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								//if(abs((abs(now_angle))-(abs(L_Angle_Const)))<3000)				//机器角度朝向左向区域
-								if(Is_Close_Angle(L_Angle_Const,now_angle))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
 									}
-								//else if(abs((abs(now_angle))-(abs(R_Angle_Const)))<3000)			//机器角度朝向右向区域
-								else if(Is_Close_Angle(R_Angle_Const,now_angle))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
-										temp_gridx2=now_gridx+1;temp_gridy1=now_gridy-1;
+										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
 									}
 								else
 									{
@@ -3200,6 +3194,66 @@ u8 Abort2Sweep(void)
 								else
 									check_point.next_tgtyaw=B_Angle_Const;
 								check_point.ydir=check_point.ydir;
+								Init_Shift_Point1(0);
+								return 1;
+							}
+					}
+				break;
+			case CHECK_NEWAREA:
+				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
+					{
+						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+							{
+								temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+								temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
+							}
+						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+							{
+								temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+								temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
+							}
+						else
+							{
+								return 0;
+							}
+					}		
+				else																				//右沿边
+					{
+						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+							{
+								temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
+								temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
+							}
+						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+							{
+								temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
+								temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
+							}
+						else
+							{
+								return 0;
+							}
+					}
+
+				if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
+					{
+						if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
+							{
+								stop_rap();
+								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
+								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx2,temp_gridy2);
+								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
+								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
+								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
+								Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+								if(temp_gridx1>now_gridx)
+									check_point.next_tgtyaw=F_Angle_Const;
+								else
+									check_point.next_tgtyaw=B_Angle_Const;
+								if(temp_gridy1<temp_gridy2)
+									check_point.ydir=1;
+								else
+									check_point.ydir=0;
 								Init_Shift_Point1(0);
 								return 1;
 							}
@@ -3334,11 +3388,22 @@ u8 Abort_ShiftExit_YBS(void)
 
 	temp_areano=Read_Coordinate_AreaNo(now_gridx,now_gridy);
 
+
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
 			TRACE("motion is in start area!!!\r\n");
 			Init_Cease();
+			return 1;
+		}
+
+	if(((now_gridx==motion1.exit_gridx1)&(now_gridy==motion1.exit_gridy1))/
+		|((now_gridx==motion1.exit_gridx2)&(now_gridy==motion1.exit_gridy2)))
+		{
+			stop_rap();
+			Area_Check(0);
+			Init_Shift_Point1(0);
+			return 1;
 		}
 	
 	if(temp_areano==motion1.exit_area_num)
@@ -3348,6 +3413,7 @@ u8 Abort_ShiftExit_YBS(void)
 			TRACE("Abort and recheck!!!\r\n");
 			stop_rap();
 			Do_ExitAtion();
+			return 1;
 		}
 
 	if(mode.bump>BUMP_OUTRANGE)
@@ -3396,6 +3462,18 @@ u8 Abort_ShiftExit_YBS(void)
 			TRACE("now grid is match checkpoint new1!!\r\n");
 			stop_rap();
 			Init_Shift_Point1(0);
+			return 1;
+		}
+
+	if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
+		{
+			stop_rap();
+			TRACE("Find directly Way in %s\r\n",__func__);
+			TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+			TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+			//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
+			//Init_Shift_Point2();
+			Init_Shift_Point1(2);
 			return 1;
 		}
 	return 0;
@@ -4003,7 +4081,8 @@ u8 Force_Dock(void)
 
 
 u8 Analysis_Stop_StartArea(void)
-{
+{
+
 	if(motion1.area_num==1)
 		{
 			if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)

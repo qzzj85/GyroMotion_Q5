@@ -232,6 +232,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 
 	TIM_ClearITPendingBit(TIM2, TIM_IT_Update );
 	giv_sys_time ++;
+	motion1.worktime++;
 	
 #ifdef FREE_SKID_INDEP_CHECK
 	if(Free_Skid_Indep.check_flag)
@@ -301,7 +302,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 			coordinate_show=true;
 			//if((mode.mode==SWEEP)|(mode.mode==DOCKING)|(mode.mode==SHIFT)|(mode.mode==YBS))
 				{
-					Cal_xy();
+//					Cal_xy();
 					Cal_CoordinateXY();
 					Record_Coordinate_Intime();
 				}
@@ -403,12 +404,15 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 		{
 			gbv_minute = true;
 			app_bat_min=true;	//qz add
-			if(mode.status)
-				gyro_cal_flag=true;
-			else
-				gyro_cal_flag=false;
 		}
 
+	if((motion1.worktime%600000)==0)
+		{
+			if(mode.status)
+				Gyro_Data.cal_flag=true;
+			else
+				Gyro_Data.cal_flag=false;
+		}
 	if((giv_sys_time%1200000)==0)
 		{
 		}
@@ -1676,7 +1680,8 @@ void USART3_IRQHandler(void)
 			UART3.RevLength=USART3_RX_SIZE-DMA_GetCurrDataCounter(DMA1_Channel3);
 			DMA_SetCurrDataCounter(DMA1_Channel3,USART3_RX_SIZE);
 
-			DMA_Cmd(DMA1_Channel3, DISABLE);
+			Uart3_Communication_II();
+			Cal_xy();
 			UART3.Rece_Done=true;
 		}
 }

@@ -99,7 +99,7 @@ void Init_Mode(void)
 	lastisdead=Read_Last_Is_Dead();	
 	Read_PwrSwitch_Status();
 #ifdef SWITCHOFF_SUBMODE
-	if(!pwrswitch_flag) 						//船型开关没有打开,进入SIWTCHOFF模式
+	if(!power.switch_flag) 						//船型开关没有打开,进入SIWTCHOFF模式
 		{
 			Init_Switchoff();
 		}
@@ -306,8 +306,16 @@ void Action_Mode(void)
 			case TEST:
 				Do_RunTest();
 				break;
-			case MODE_REMOTE:
-				Do_Remote_Move();
+			case MODE_CTRL:
+				switch(mode.sub_mode)
+					{
+						case SUBMODE_REMOTE_CTRL:
+							Do_Remote_Move();
+							break;
+						case SUBMODE_APP_CTRL:
+							Do_App_Ctrl();
+							break;
+					}
 				break;
 	  /*********************默认状态***********************/
 			default :

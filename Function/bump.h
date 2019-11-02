@@ -24,6 +24,13 @@
 #define	BUMP_LM_CLIFF		4
 #define	BUMP_RM_CLIFF		5
 #define	BUMP_ALL_CLIFF		6
+
+#define BUMP_WALL_LEFT              7
+#define BUMP_WALL_LEFT_MID          8
+#define BUMP_WALL_MID               9
+#define BUMP_WALL_RIGHT_MID         15
+#define BUMP_WALL_RIGHT             14
+
 #define BUMP_ONLY_LEFT      50
 #define BUMP_ONLY_LEFTMID   51
 #define BUMP_LEFT_MID       52

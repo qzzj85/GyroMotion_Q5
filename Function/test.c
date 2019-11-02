@@ -983,7 +983,7 @@ void ChargeControl_Test(void)
 					return ;
 				}
 			#endif
-				jt_chargecurrent = (u32)(CEASE_CUR*2.5);		//1/CHG_CUR_CNT=2.5
+				jt_chargecurrent = (u32)(CEASE_CUR*2.5);		//1/CURR_CHG_CNT=2.5
 				power.step = 2;
 				power.temp = battery_temp;//Get_BatteryTemp();
 				power.time = giv_sys_time;
@@ -1088,8 +1088,8 @@ void ChargeControl_Test(void)
 			{
 				gbv_minute = false;
 
-				//TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CHG_CUR_CNT));
-				//TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CHG_CUR_CNT));
+				//TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
+				//TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
 
 				if((((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
 				&& ((giv_sys_time - power.time) > 100000)//10s	防止第1步直接到第4步时，刚开始因为充电PWM没开，充电电流为0，小于52mA 
@@ -1215,7 +1215,7 @@ void Charge_Test(void)
 					}
 				else
 					{
-						mode.test_dis_data=(u32)(battery_chargecurrent_1s*CHG_CUR_CNT);		//显示电流，单位mA
+						mode.test_dis_data=(u32)(battery_chargecurrent_1s*CURR_CHG_CNT);		//显示电流，单位mA
 					}
 				if(Read_Button_Key(&key2)==1)
 					{
@@ -1234,7 +1234,7 @@ void Charge_Test(void)
 					}
 				else
 					{
-						mode.test_dis_data=(u32)(battery_voltage_1s*CHG_VOL_CNT*100);		//显示电流，单位V
+						mode.test_dis_data=(u32)(battery_voltage_1s*VOLT_CHG_CNT*100);		//显示电流，单位V
 					}
 				if((!power.charge_dc)&(!power.charge_seat))
 					{

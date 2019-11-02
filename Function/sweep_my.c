@@ -157,7 +157,7 @@ u8 Check_OutofRange(void)
 u8 Check_Already_YClean(void)
 {
 	s8 now_gridx,now_gridy,ydir;
-	s8 check_gridy,check_gridx;
+	s8 check_gridy;
 	u8 area_no;
 	now_gridx=grid.x;now_gridy=grid.y;
 	ydir=Read_Motion_YDir();
@@ -350,7 +350,7 @@ u8 Read_Cliff(void)
 u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 {
 	u32 data1=0;
-	static u32 find_seat_time=0;
+//	static u32 find_seat_time=0;
 	static bool find_seat_first=false;
 #ifdef CLIFF_ENABLE			//ZDK屏蔽
 	data1=Read_Cliff();
@@ -575,7 +575,7 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 		{
 			if(!find_seat_first)
 				{
-					find_seat_time=giv_sys_time;
+					//find_seat_time=giv_sys_time;
 					find_seat_first=true;
 				}
 			//if((find_seat_first)&(giv_sys_time-find_seat_time>10000))
@@ -604,7 +604,7 @@ void Init_First_Sweep(u8 start_seat)
 	Enable_wall();
 	Enable_earth();
 	Enable_Speed();
-
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	mode.mode=SWEEP;
 	mode.sub_mode=SWEEP_FIRST_INIT;
 	mode.step=0;
@@ -655,6 +655,7 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 		{
 			stop_rap();
 			error_code=SEND_ERROR_NODEMALLOC;
+			mode.err_code|=WIFI_ERR_OTHER;
 			Init_Err();
 			return;
 		}
@@ -683,6 +684,7 @@ void Do_FirstInit_Sweep(void)
 		{
 			case 0:
 				Send_Voice(VOICE_SWEEP_START);
+				delay_ms(300);
 				Reset_XY();
 				mode.time=giv_sys_time;
 				Open_Led(1,0,1);
@@ -699,6 +701,7 @@ void Do_FirstInit_Sweep(void)
 					{
 						stop_rap();
 						error_code=SEND_ERROR_PATHMALLOC;
+						mode.err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
@@ -707,6 +710,7 @@ void Do_FirstInit_Sweep(void)
 					{
 						stop_rap();
 						error_code=SEND_ERROR_NODEMALLOC;
+						mode.err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
@@ -714,6 +718,7 @@ void Do_FirstInit_Sweep(void)
 					{
 						stop_rap();
 						error_code=SEND_ERROR_BACKMALLOC;
+						mode.err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
@@ -751,7 +756,7 @@ void Do_FirstInit_Sweep(void)
 
 void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 {
-	u8 m=0,area_check=0;
+	u8 m=0;
 	static u8 turn_dir=0,turn_angle=0,cliff_time=0;
 	static short tgt_angle=0;
 	s8 now_gridx,now_gridy,last_gridy,next_gridy,ydir;
@@ -801,6 +806,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										{
 											error_code=ERROR_LIFT;
 											Send_Voice(VOICE_ERROR_DANGER);
+											mode.err_code|=WIFI_ERR_EARTH;
 											Init_Err();
 										}
 								}
@@ -2048,7 +2054,6 @@ void Init_NormalSweep(short tgt_yaw)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -2110,7 +2115,6 @@ void Init_NormalSweep(short tgt_yaw)
 
 void Do_NormalSweep(void)
 {	
-	u8 area_check=0;
 	s8 now_gridx,now_gridy,ydir;
 	short now_angle=Gyro_Data.yaw;
 	static u8 turn_dir=0;
@@ -2273,7 +2277,6 @@ void Init_Back_Sweep(short tgt_yaw)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -2573,7 +2576,6 @@ void Init_Pass2Sweep(void)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -2619,7 +2621,6 @@ void Init_Pass2Sweep(void)
 
 void Do_Pass2Sweep(void)
 {
-	u8 turn_dir=0;
 	short tgt_angle=0;
 //	YBS_Comm_Rap_My();
 	ACC_DEC_Curve();
@@ -2769,7 +2770,6 @@ void Init_Stop_BackSweep(void)
 	/******初始化设置的值********************/
 	clr_ram();
 	//	ReInitAd();
-	
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -3141,7 +3141,6 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -3355,8 +3354,7 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 
 u8 YBS_AbortFor_Sweep(void)
 {
-	u8 area_check=0;
-	s8 temp_data1,now_gridx,now_gridy;
+	s8 now_gridx,now_gridy;
 	short xpos,ypos;
 	s8 ydir=Read_Motion_YDir();
 	xpos=Gyro_Data.x_pos;ypos=Gyro_Data.y_pos;
@@ -4128,5 +4126,129 @@ void Sweep_YBS(void)
 		}	//	end of      switch (mode.step)	//step路径执行的步骤
 }
 
+void Init_PauseSweep(void)
+{
+	mode.last_mode=mode.mode;		//qz add 20180205
+	mode.last_sub_mode=mode.sub_mode;
+	/******初始化显示***********/
+		
+	/******初始化设置的值********************/
+	clr_ram();
+//	ReInitAd();
+	Enable_earth();
+	Disable_wall();
+	enable_hwincept();				//允许红外接收电源
+	Disable_Speed(); 				//允许速度发送
+	Init_Action();
+	
+	mode.mode = CEASE;			
+	mode.sub_mode = SUBMODE_PAUSESWEEP;
+	mode.step=0;
+	mode.time=giv_sys_time;
+	mode.bump = 0;
+	mode.step_bp = 0;
+	mode.bump_flag=0;
+	mode.Info_Abort=0;				//qz add 20180919
+	mode.All_Info_Abort=0;			//qz add 20180919
 
+	mode.status=0;
+
+	w_l.on=0;
+	w_r.on=0;
+	w_rm.on=0;
+	w_lm.on=0;
+#ifdef DEBUG_Enter_Mode
+	TRACE("Init PAUSE SWEEP Mode Complete!\r\n");
+#endif
+	//初始化检测的条件
+	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
+//	Init_Check_Status();//qz add 20180425
+#ifdef FREE_SKID_CHECK
+	Enable_Free_Skid_Check();		//打开万向轮检测
+#endif
+	
+
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
+	
+	delay_ms(500);
+}
+
+void Save_Pause_Data(void)
+{
+	motion1.pause_gridx=grid.x;
+	motion1.pause_gridy=grid.y;
+	motion1.pause_mode=mode.mode;
+	motion1.pause_submode=mode.sub_mode;
+	
+}
+
+void Get_Pause_Data(void)
+{
+	mode.mode=motion1.pause_mode;
+	mode.sub_mode=motion1.pause_submode;
+}
+
+void Do_PauseSweep(void)
+{
+	
+	if(mode.sub_mode!=SUBMODE_PAUSESWEEP)
+		return;
+
+	if(giv_sys_time-mode.time>3000000)
+		{
+			Init_Sleep();
+			return;
+		}
+
+	if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
+		Init_Cease();
+
+	switch(mode.step)
+	{
+		case 0:
+			break;
+		case 1:
+			Get_Pause_Data();
+			Sweep_Level_Set(sweep_level);
+			Send_Voice(VOICE_SWEEP_START);
+			if((grid.x==motion1.pause_gridx)&(grid.y==motion1.pause_gridy))
+				{
+					mode.step=0;
+					mode.step_mk=0;
+					mode.bump=0;
+					mode.bump_flag=false;
+					mode.step_bp=0;
+					mode.abnormity=0;
+					mode.step_abn=0;
+					mode.time=giv_sys_time;
+					return;
+				}
+			else
+				{
+					if((mode.mode!=YBS)&(mode.mode!=DOCKING))
+						{
+							Area_Check(0);
+							Init_Shift_Point1(0);
+							return;
+						}
+					else
+						{
+							mode.step=0;
+							mode.bump=0;
+							mode.step_mk=0;
+							mode.bump_flag=false;
+							mode.step_bp=0;
+							mode.abnormity=0;
+							mode.step_abn=0;
+							mode.time=giv_sys_time;
+						}
+				}
+		
+			break;
+			}
+}
+
+void Sweep_Nothing(void)
+{
+}
 

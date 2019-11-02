@@ -152,7 +152,7 @@ static uint8_t	delay_counter;
 //////								else
 //////									ec = -100;
 					
-		////////////			dqcurrent = account_current( R_CURRENT);   	//采样轮子的电流
+		////////////			dqcurrent = account_current( ADC_RRING_CURR);   	//采样轮子的电流
 		////////////			if(dqcurrent > (466 + jt_r_current))			//电流大于800ma
 		////////////			{
 		////////////				if(ec > 0)
@@ -282,7 +282,7 @@ static uint8_t	delay_counter;
 
 
 							
-		////////////			dqcurrent = account_current( L_CURRENT);
+		////////////			dqcurrent = account_current( ADC_LRING_CURR);
 		////////////			if(dqcurrent > (466 + jt_l_current))
 		////////////			{
 		////////////				if(ec > 0)
@@ -1100,7 +1100,7 @@ u8 Test_DriveOfWheel(void)
 ////////////	GPIO_ResetBits(GPIOE,L_FRONTONOFF);
 ////////////	GPIO_ResetBits(GPIOE,R_FRONTONOFF);
 ////////////	DelayMs(50);
-////////////	dqcurrent = account_current(L_CURRENT);
+////////////	dqcurrent = account_current(ADC_LRING_CURR);
 ////////////	if((dqcurrent > jt_l_current) && ((dqcurrent - jt_l_current) > 500))  //左轮P沟道管有漏电流大于40ma
 ////////////	{	     /********关闭驱动,测量左右轮AD转换的误差电流********/
 ////////////        stop();
@@ -1110,7 +1110,7 @@ u8 Test_DriveOfWheel(void)
 ////////////	    GPIO_ResetBits(GPIOE,L_FRONTONOFF);
 ////////////	    GPIO_ResetBits(GPIOE,R_FRONTONOFF);
 ////////////	    DelayMs(200);
-////////////	    dqcurrent = account_current(L_CURRENT);
+////////////	    dqcurrent = account_current(ADC_LRING_CURR);
 ////////////		if((dqcurrent > jt_l_current) && ((dqcurrent - jt_l_current) > 500))
 ////////////		{
 ////////////		    giv_sys_err = 27;
@@ -1118,7 +1118,7 @@ u8 Test_DriveOfWheel(void)
 ////////////		    return 1;
 ////////////		}
 ////////////	}
-////////////	dqcurrent = account_current(R_CURRENT);
+////////////	dqcurrent = account_current(ADC_RRING_CURR);
 ////////////	if((dqcurrent > jt_r_current) && ((dqcurrent - jt_r_current) > 500))  //右轮P沟道管有漏电流大于40ma
 ////////////	{			
 ////////////        stop();
@@ -1128,7 +1128,7 @@ u8 Test_DriveOfWheel(void)
 ////////////	    GPIO_ResetBits(GPIOE,L_FRONTONOFF);
 ////////////	    GPIO_ResetBits(GPIOE,R_FRONTONOFF);
 ////////////	    DelayMs(200);
-////////////		dqcurrent = account_current(R_CURRENT);
+////////////		dqcurrent = account_current(ADC_RRING_CURR);
 ////////////		if((dqcurrent > jt_r_current) && ((dqcurrent - jt_r_current) > 500))
 ////////////		{
 ////////////		    giv_sys_err = 28;
@@ -1144,7 +1144,7 @@ u8 Test_DriveOfWheel(void)
 ////////////    Set_Pwm(R_FRONT,1000);
 ////////////    Set_Pwm(R_BACK,1000);
 ////////////	DelayMs(50);
-////////////	dqcurrent = account_current(L_CURRENT);
+////////////	dqcurrent = account_current(ADC_LRING_CURR);
 ////////////	if((dqcurrent > jt_l_current) && ((dqcurrent - jt_l_current) > 500))  //左轮n沟道管有漏电流大于40ma
 ////////////	{			
 ////////////        stop();
@@ -1154,7 +1154,7 @@ u8 Test_DriveOfWheel(void)
 ////////////        Set_Pwm(R_FRONT,1000);
 ////////////        Set_Pwm(R_BACK,1000);
 ////////////	    DelayMs(200);
-////////////	    dqcurrent = account_current(L_CURRENT);
+////////////	    dqcurrent = account_current(ADC_LRING_CURR);
 ////////////		if((dqcurrent > jt_l_current) && ((dqcurrent - jt_l_current) > 500))
 ////////////		{
 ////////////		    giv_sys_err = 29;
@@ -1162,7 +1162,7 @@ u8 Test_DriveOfWheel(void)
 ////////////		    return 1;
 ////////////		}
 ////////////	}
-////////////	dqcurrent = account_current(R_CURRENT);
+////////////	dqcurrent = account_current(ADC_RRING_CURR);
 ////////////	if((dqcurrent > jt_r_current) && ((dqcurrent - jt_r_current) > 500))  //右轮n沟道管有漏电流大于40ma
 ////////////	{			  
 ////////////        stop();
@@ -1172,7 +1172,7 @@ u8 Test_DriveOfWheel(void)
 ////////////        Set_Pwm(R_FRONT,1000);
 ////////////        Set_Pwm(R_BACK,1000);
 ////////////	    DelayMs(200);
-////////////		dqcurrent = account_current(R_CURRENT);
+////////////		dqcurrent = account_current(ADC_RRING_CURR);
 ////////////		if((dqcurrent > jt_r_current) && ((dqcurrent - jt_r_current) > 500))
 ////////////		{
 ////////////		    giv_sys_err = 30;
@@ -1208,11 +1208,11 @@ u8 Test_DriveOfBrush(void)
 ////////////    Set_M_FPMOS();
 ////////////    Set_M_ZPMOS();
 ////////////	DelayMs(50);
-////////////	dqcurrent = account_current(M_CURRENT);
+////////////	dqcurrent = account_current(ADC_MB_CURR);
 ////////////	if((dqcurrent > 500))  //左轮P沟道管有漏电流大于40ma
 ////////////	{
 ////////////	    DelayMs(200);
-////////////	    dqcurrent = account_current(M_CURRENT);
+////////////	    dqcurrent = account_current(ADC_MB_CURR);
 ////////////		if((dqcurrent  > 500))
 ////////////		{
 ////////////            Reset_M_FPMOS();
@@ -1232,11 +1232,11 @@ u8 Test_DriveOfBrush(void)
 ////////////	Reset_M_ZNMOS();
 
 ////////////	DelayMs(50);
-////////////	dqcurrent = account_current(M_CURRENT);
+////////////	dqcurrent = account_current(ADC_MB_CURR);
 ////////////	if((dqcurrent  > 500))  //左轮n沟道管有漏电流大于40ma
 ////////////	{
 ////////////	    DelayMs(200);
-////////////	    dqcurrent = account_current(M_CURRENT);
+////////////	    dqcurrent = account_current(ADC_MB_CURR);
 ////////////		if((dqcurrent  > 500))
 ////////////		{
 ////////////		    giv_sys_err = 29;
@@ -1315,8 +1315,8 @@ void Init_Ring(void)
 	r_rap.sign				= 0;
 	r_ring.real_speed=0x00; 	//qz add
 //		delay(500000);
-//		jt_r_current = account_current( R_CURRENT);
-//		jt_l_current = account_current( L_CURRENT);
+//		jt_r_current = account_current( ADC_RRING_CURR);
+//		jt_l_current = account_current( ADC_LRING_CURR);
 //	delay(10000);
 	Speed				= 0;//1500;   // 1/1000秒
 	//qz add

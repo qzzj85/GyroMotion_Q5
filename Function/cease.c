@@ -86,11 +86,12 @@ void Do_Cease(void)
 			}
 #ifdef SLEEP_SUBMODE
     /**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
-	if(((giv_sys_time-mode.time)>10000*600)&(!mode.factory))			//qz mask 20181110
+	if(((giv_sys_time-mode.time)>10000*60)&(!mode.factory))			//qz mask 20181110
 	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
 		{
-			Init_Sleep();
+			//Init_Sleep();
 			//Init_ShutDown();
+			Init_VirtualSleep();
 			return;
 		}
 #endif
@@ -153,15 +154,14 @@ void Init_Cease(void)
 
 	/*******初始化输出的控制***************/
 	stop_rap(); //关闭左右轮
-		
-		
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	Disable_earth();				//关闭地检
 	Disable_wall();					//关闭墙检
-	Enable_earth();
-	Enable_wall();
+	//Enable_earth();
+	//Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed();					//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
-	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 		
 	/****设置机器的工作模式******/   
 	mode.mode = CEASE; 
@@ -757,4 +757,112 @@ void Cease_Subb_Time(void)
 			  {
 			      piv_dis_week = (piv_dis_week+6)%7;
 			  }	*/
+}
+
+void Init_VirtualSleep(void)
+{
+	mode.last_mode=mode.mode;		//qz add 20180205
+	mode.last_sub_mode=mode.sub_mode;
+	
+	/******初始化设置的值********************/
+	piv_set_content = 0;			//开始设置为没有设置
+	piv_yaokongstate = 0;
+
+	/*******初始化输出的控制***************/
+	stop_rap(); //关闭左右轮
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);
+	Disable_earth();				//关闭地检
+	Disable_wall();					//关闭墙检
+	//Enable_earth();
+	//Enable_wall();
+	enable_hwincept();				//打开回充红外接收电源
+	Enable_Speed(); 				//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
+		
+	/****设置机器的工作模式******/   
+	mode.mode = CEASE; 
+	mode.Info_Abort=0;				//打开SLAM通信，qz add 20180418
+	mode.All_Info_Abort=0;			//qz add 20180919
+	mode.sub_mode=SUBMODE_VIRTUAL_SLEEP;			//QZ ADD
+	mode.step=0x00; 				//qz add
+	mode.status=0;					//qz add 20180625
+	mode.time=giv_sys_time; 		//qz add 20180703
+	mode.init_mode_time=giv_sys_time;	//qz add 20180814
+		
+	WriteWorkState();
+	Disable_Free_Skid_Check();		//关闭万向轮检测
+	//初始化检测的条件
+	CHECK_STATUS_FLAG=true; 		//使能异常检测
+	Init_Check_Status();//qz add 20180425
+
+	Slam_Data.dipan_req_pre=1;		//qz mask 20180522：默认为规划清扫
+
+#ifdef DEBUG_Enter_Mode
+	TRACE("Init Cease Mode Complete!Prepare enter to Cease!\r\n");
+#endif
+	SLAM_DOCK=false;
+	DOCK_SWEEP=false;				//qz add 20180803
+
+#ifdef UV
+	Reset_UV(); 					//关闭UV
+#endif 
+	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
+	Close_Led();
+}
+
+void Do_VirtualSleep(void)
+{
+	/**************如果有遥控器按键*/
+#ifdef DC_NOBAT_RUN
+	if(((power.charge_dc)|(power.charge_seat))&(!dc_nobat_run))
+#else
+	if(power.charge_dc|power.charge_seat)
+#endif
+		{
+			 //mode.last_mode=mode.mode;			//qz add 20180201
+			 //Init_Chargeing(CHARGEING);
+
+			 //qz add 20180901
+			 if(power.charge_seat)
+				Init_Chargeing(SEAT_CHARGING);
+			 if(power.charge_dc)
+				Init_Chargeing(DC_CHARGING);
+			 //qz add end
+			 
+			 return;
+		}
+	/////////机器的预约时间到，机器进入扫地模式/////////////////////
+
+	//计划是在charge和sleep下进行预约时间检查，输出一个flag，然后在charge和cease下检查这个flag
+#if 0
+	if(Check_PreengageTime())
+			{
+	//				 if(Slam_Data.tick_flag)			//判断导航板是否有心跳处于工作状态	//qz mask 20180420
+					{
+						//qz add 20180420
+						Slam_Data.dipan_req_pre=DIPAN_REQ_PREEN;
+						//qz add end
+						Slam_Data.dipan_req=Slam_Data.dipan_req_pre;
+					}
+				 return;
+			}
+#endif
+	//系统有错误
+	if(giv_sys_err != 0)
+			{
+				Init_Err();
+				return ;
+			}
+#ifdef SLEEP_SUBMODE
+	/**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
+	if(((giv_sys_time-mode.time)>10000*600)&(!mode.factory))			//qz mask 20181110
+	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
+		{
+			Init_Sleep();
+			//Init_ShutDown();
+			return;
+		}
+#endif
+	clr_all_hw_effect();				//qz mask 20181215
+	//	find_home=ReadHwSign_My();			//qz mask 20181215
 }

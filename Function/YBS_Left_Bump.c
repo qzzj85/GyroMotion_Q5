@@ -128,6 +128,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 							error_code=SEND_ERROR_DANGER;
 							dis_err_code=DIS_ERROR_DANGER;
 							Send_Voice(VOICE_ERROR_DANGER);
+							mode.err_code|=WIFI_ERR_EARTH;
 							Init_Err();
 						}
 					break;
@@ -259,6 +260,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
 								Send_Voice(VOICE_ERROR_DANGER);
+								mode.err_code|=WIFI_ERR_EARTH;
 								Init_Err();
 							}
 						break;
@@ -390,6 +392,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
 								Send_Voice(VOICE_ERROR_DANGER);
+								mode.err_code|=WIFI_ERR_EARTH;
 								Init_Err();
 							}
 						break;
@@ -423,10 +426,9 @@ void LYBS_Cliff_Action(u8 bump_temp)
 void YBS_Left_Bump(u8 out_enable)
 { 
 #ifdef YBS_AVOID_SEAT
-	u32 l_speed,r_speed,temp_data1;
+	u32 l_speed,r_speed;
 	float radius;
 	static u32 start_length,end_length;
-	static bool no_enter=false;
 #endif
 	u32 m;
 	static u8 turn_dir=0,turn_angle=0;
@@ -857,7 +859,6 @@ void YBS_Left_Bump(u8 out_enable)
 						end_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH/2);	//准备右偏转180度
 						start_length=r_ring.all_length;
 						mode.step_bp++;
-						no_enter=false;
 						break;
 					case 2:
 						l_speed=550;
@@ -883,7 +884,6 @@ void YBS_Left_Bump(u8 out_enable)
 								{
 									stop_rap();
 									enable_hwincept();
-									no_enter=true;
 									Init_Docking();
 								}
 							}

@@ -10,11 +10,19 @@
 #define		ABNORMAL_GYROBIOS_R	2
 #define		ABNORMAL_LSB		14
 #define		ABNORMAL_RSB		15
+#define		ABNORMAL_SB			16
 #define		ABNORMAL_LIFT		24
 #define		ABNORMAL_BUMP		29
 #define		ABNORMAL_RING		30
 #define		ABNORMAL_PITCH_RISE	40
 #define		ABNORMAL_PITCH_DOWN	41
+
+////////////////////////私有定义//////////////////////////////////
+#define M_PROTECTCURRENT 		600//292;//中扫保护电流 600mA 
+#define DUST_PROTECTCURRENT 	100 //灰尘风机电流 100mA		
+#define WHEEL_PROTECTCURRENT 	800//左右轮电流 800mA 
+#define	SB_PROTECTCURRENT		60
+
 ////////////////////////全局变量//////////////////////////////////	 
 extern MODE mode;		 //当前机器所在的状态 
 extern WORK_MODE gsv_work_mode;	 //当前机器所在的工作状态，其取值范围为SWEEP、

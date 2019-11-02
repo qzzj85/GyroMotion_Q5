@@ -40,7 +40,7 @@ u8 Creat_AreaNodeList(void)
 		{
 			TRACE("head_node is exist!!\r\n");
 			if(head_node->last_node!=NULL)
-				head_node->last_node==NULL;
+				head_node->last_node=NULL;
 			if(head_node->next_node!=NULL)
 				{
 					if(Del_All_AreaNode())
@@ -312,4 +312,5 @@ u8 Set_Curr_AllNewAreaOK(void)
 	curr_node->ymin_ok=motion1.ymin_ok;
 	curr_node->xmax_ok=motion1.xmax_ok;
 	curr_node->xmin_ok=motion1.xmin_ok;
+	return 0;
 }

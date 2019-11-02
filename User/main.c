@@ -32,10 +32,10 @@ void log_out(void)
 			TRACE("m.abn=%d\r\n",mode.abnormity);
 			TRACE("m.abn_stp=%d\r\n",mode.step_abn);
 		}
-	TRACE("b_v=%.2f\r\n",battery_voltage_1s*CHG_VOL_CNT);
-//	TRACE("batcap=%d\r\n",Battery.BatteryCapability);
-//	TRACE("batfd=%d\r\n",Battery.BatteryFDCap);
-//	TRACE("batper=%d\r\n",Slam_Data.bat);
+	TRACE("b_v=%.2f\r\n",battery_voltage_1s*VOLT_CHG_CNT);
+	TRACE("batcap=%d\r\n",Battery.BatteryCapability);
+	TRACE("batfd=%d\r\n",Battery.BatteryFDCap);
+	TRACE("batper=%d\r\n",Battery.bat_per);
 //	TRACE("w_ring.leth=%d\r\n",w_ring.length);
   	if(mode.mode==CEASE)
 		{
@@ -45,7 +45,10 @@ void log_out(void)
 	//		TRACE("batcap=%d\r\n",Battery.BatteryCapability);
 	//		TRACE("batfd=%d\r\n",Battery.BatteryFDCap);
 			if(mode.sub_mode==ERR)
-				TRACE("errcode=0x%x\r\n",error_code);
+				{
+					TRACE("errcode=0x%x\r\n",error_code);
+					TRACE("m.err_code=%d\r\n",mode.err_code);
+				}
 		}
 	else if(mode.mode==DOCKING)
 		{
@@ -62,17 +65,13 @@ void log_out(void)
 			TRACE("p.step=%d\r\n",power.step);
 			TRACE("p.pwm=%d\r\n",power.pwm);
 			TRACE("c.cur=%d\r\n",(u32)(charge_data.real_current));
-			TRACE("c.vol=%f\r\n",charge_data.real_voltage*CHG_VOL_CNT);
+			TRACE("c.vol=%f\r\n",charge_data.real_voltage*VOLT_CHG_CNT);
 			TRACE("slam_tick=%d\r\n",Slam_Data.tick_flag);
 		}
 	else if(mode.mode==SWEEP)
 		{
 			//TRACE("m.bump=%d\r\n",mode.bump);
 			//TRACE("m.st_bp=%d\r\n",mode.step_bp);
-		}
-	else if(mode.sub_mode==ERR)
-		{	
-			TRACE("error_code=%d\r\n",error_code);
 		}
 #if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
@@ -89,18 +88,22 @@ void log_out(void)
 //	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
 //	TRACE("w_m.siag=%d\r\n",w_m.sign);
 	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
-	TRACE("top=%d\r\n",top_time_sec);
 	u32 min=(giv_sys_time-motion1.worktime_area)/10000/60;
 	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("clean_size=%f\r\n",motion1.clean_size);
+	TRACE("top=%d\r\n",top_time_sec);
 #else
-//	TRACE("===========\r\n");
-	TRACE("lsp=%d rsp=%d\r\n",l_rap.rap,r_rap.rap);
-	TRACE("rm_hw.top=%d l=%d r=%d m=%d\r\n",rm_hw.effectTop,rm_hw.effectLeft,rm_hw.effectRight,rm_hw.effectMid);
-	TRACE("lm_hw.top=%d l=%d r=%d m=%d\r\n",lm_hw.effectTop,lm_hw.effectLeft,lm_hw.effectRight,lm_hw.effectMid);
-	TRACE("r_hw.top=%d l=%d r=%d m=%d\r\n",r_hw.effectTop,r_hw.effectLeft,r_hw.effectRight,r_hw.effectMid);
-	TRACE("l_hw.top=%d l=%d r=%d m=%d\r\n",l_hw.effectTop,l_hw.effectLeft,l_hw.effectRight,l_hw.effectMid);
+	TRACE("fan_curr_1s=%.2fmA\r\n",dust_current_1s*CURR_FAN_CNT_mA);
+	TRACE("mb_curr_1s=%.2fmA\r\n",m_current_1s*CURR_MB_CNT_mA);
+	TRACE("sb_curr_1s=%.2fmA\r\n",sb_current_1s*CURR_SB_CNT_mA);
+	TRACE("lring_curr_1s=%.2fmA\r\n",l_current_1s*CURR_RING_CNT_mA);
+	TRACE("rring_curr_1s=%.2fmA\r\n",r_current_1s*CURR_RING_CNT_mA);
+	TRACE("fan_curr=%.2fmA\r\n",account_current(ADC_FAN_CURR)*CURR_FAN_CNT_mA);
+	TRACE("mb_curr=%.2fmA\r\n",account_current(ADC_MB_CURR)*CURR_MB_CNT_mA);
+	TRACE("sb_curr=%.2fmA\r\n",account_current(ADC_SB_CURRENT)*CURR_SB_CNT_mA);
+	TRACE("lring_curr=%.2fmA\r\n",account_current(ADC_LRING_CURR)*CURR_RING_CNT_mA);
+	TRACE("rring_curr=%.2fmA\r\n",account_current(ADC_RRING_CURR)*CURR_RING_CNT_mA);
 #endif
 }
 
@@ -198,7 +201,7 @@ int main(void)
 #endif
 
 						LED_Handle();
-						WifiData_Handle();
+						MapData_Handle();
 						Work_TimeOut_Handle();
 	}	
 

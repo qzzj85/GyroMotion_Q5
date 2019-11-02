@@ -30,7 +30,7 @@ u8 read_bump_comm(void)
 		  if((mode.bump > 4) || (mode.bump == 0))		//×óµØ¼ìÐü¿Õ
 		   { 
 			 			stop_rap();
-						mode.bump = 1;// E_L;
+						mode.bump = 1;// ADC_EARTH_L;
 						mode.step_bp=0;
 						mode.Info_Abort=1;
 			}
@@ -319,7 +319,8 @@ void Cliff_Bump_Action(u8 bump_temp)
 							{
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
-								//Send_Voice(VOICE_ERROR_DANGER);
+								mode.err_code|=WIFI_ERR_EARTH;
+								Send_Voice(VOICE_ERROR_DANGER);
 								l_cliff_time=0;			//qz add 20180927
 							}
 						break;
@@ -449,7 +450,8 @@ void Cliff_Bump_Action(u8 bump_temp)
 							{
 								error_code=SEND_ERROR_DANGER;
 								dis_err_code=DIS_ERROR_DANGER;
-								//Send_Voice(VOICE_ERROR_DANGER);
+								mode.err_code|=WIFI_ERR_EARTH;
+								Send_Voice(VOICE_ERROR_DANGER);
 							}
 						break;
 					case 0XF0:
@@ -577,8 +579,9 @@ void Cliff_Bump_Action(u8 bump_temp)
 						{
 							error_code=SEND_ERROR_DANGER;
 							dis_err_code=DIS_ERROR_DANGER;
+							mode.err_code|=WIFI_ERR_EARTH;
 							r_cliff_time=0;						//qz add 20180927
-							//Send_Voice(VOICE_ERROR_DANGER);
+							Send_Voice(VOICE_ERROR_DANGER);
 						}
 					break;
 				case 0XF0:

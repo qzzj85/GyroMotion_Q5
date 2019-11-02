@@ -1,5 +1,10 @@
 #include  "ad.h"
 
+//风机电流采样电阻0.1欧
+//中扫电流采样电阻0.1欧
+//轮子电流采样电阻0.47欧
+//边扫电流采样电阻4.7欧
+//充电电流采样电阻0.1欧
 //qz add
 #define W_LM_ADPIN		GPIO_Pin_4	//PC4		ADC1_CHN_14		//左墙检检测
 #define W_L_ADPIN		GPIO_Pin_7	//PA7		ADC1_CHN_7		//左中墙检检测

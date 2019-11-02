@@ -80,7 +80,7 @@ void Del_All_VoiceNode(void)
 					p=p->next;
 				}
 			free(p);
-			q->next==NULL;
+			q->next=NULL;
 		}
 	TRACE("Del all voicenode success!!!\r\n");	
 }
@@ -375,7 +375,7 @@ void voice_usart(u8 data)
 					}
 			}
 #endif
-	if((addr==VOICE_DOCK_START)&(Slam_Data.bat<20))
+	if((addr==VOICE_DOCK_START)&(Battery.bat_per<20))
 		{
 			Send_Voice(VOICE_POWER_LOW);
 		}

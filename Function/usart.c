@@ -426,7 +426,7 @@ void Mile_Gyro_Report(void)
 			USART3_TX_BUF[count++]=temp_u8; 			//28
 
 			/*-------电量上报-----------*/
-			temp_u8=Slam_Data.bat;
+			temp_u8=Battery.bat_per;
 			USART3_TX_BUF[count++]=temp_u8;
 						
 			/*--------打滑状况----------*/

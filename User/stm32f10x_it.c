@@ -162,12 +162,14 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_DOCK;
 				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_flag&=REMOTE_KEYFLAG_DOCK;
 				break;
 			case REMOTE_GUIHUA:
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_GUIHUA;
 				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_flag&=REMOTE_KEYFLAG_AUTO;
 				break;
 			case REMOTE_FORWOARD:
 				remote_info.effect=true;
@@ -175,6 +177,7 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.remote_key=REMOTE_KEY_FORWORD;
 				remote_info.rece_ir=hw_info->rece_ir;
 				remote_info.key_time=giv_sys_time;
+				remote_info.key_flag&=REMOTE_KEYFLAG_FORWORD;
 				break;
 			case REMOTE_LEFT:
 				remote_info.effect=true;
@@ -182,12 +185,14 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.remote_key=REMOTE_KEY_LEFT;
 				remote_info.rece_ir=hw_info->rece_ir;
 				remote_info.key_time=giv_sys_time;
+				remote_info.key_flag&=REMOTE_KEYFLAG_LEFT;
 				break;
 			case REMOTE_START:
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_START;
 				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_flag&=REMOTE_KEYFLAG_START;
 				break;
 			case REMOTE_RIGHT:
 				remote_info.effect=true;
@@ -195,6 +200,7 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.remote_key=REMOTE_KEY_RIGHT;
 				remote_info.rece_ir=hw_info->rece_ir;
 				remote_info.key_time=giv_sys_time;
+				remote_info.key_flag&=REMOTE_KEYFLAG_RIGHT;
 				break;
 			case REMOTE_BACK:
 				remote_info.effect=true;
@@ -202,18 +208,21 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 				remote_info.remote_key=REMOTE_KEY_BACK;
 				remote_info.rece_ir=hw_info->rece_ir;
 				remote_info.key_time=giv_sys_time;
+				remote_info.key_flag&=REMOTE_KEYFLAG_BACK;
 				break;
 			case REMOTE_YBS:
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_YBS;
 				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_flag&=REMOTE_KEYFLAG_YBS;
 				break;
 			case REMOTE_FAN:
 				remote_info.effect=true;
 				remote_info.effect_time=giv_sys_time;
 				remote_info.remote_key=REMOTE_KEY_FAN;
 				remote_info.rece_ir=hw_info->rece_ir;
+				remote_info.key_flag&=REMOTE_KEYFLAG_FAN;
 				break;
 		}
 }
@@ -221,18 +230,13 @@ void Parse_Remote_Signa(INFR_DATA *hw_info)
 
 
 
-static u8 w_step = 0;
 //======================================================================================
 void TIM2_IRQHandler(void)	//	10K 中断
 { 
-	static u8 earth_step=0;
-	u8 temp_data1=0;
-//	if((mode.mode==DOCKING)||(BS_NO_TIME_FLAG))			//如果在小回充模式，降低边扫频率
-//		GPIOA->ODR^=GPIO_Pin_2;
-
 	TIM_ClearITPendingBit(TIM2, TIM_IT_Update );
 	giv_sys_time ++;
-	motion1.worktime++;
+	if(mode.status)
+		motion1.worktime++;
 	
 #ifdef FREE_SKID_INDEP_CHECK
 	if(Free_Skid_Indep.check_flag)
@@ -253,34 +257,34 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		}
 
 	if((giv_sys_time %10) == 0)			//	1mS  1000HZ   实际500赫兹
-			{   
-				// if(ADC_ready	==false)
-				//	 {
-				//			 ReInitAd();     
-				//	 }
-//				 ADC_ready = false;
-//				rap_time=true;
-
-			}
+		{   
+			action_earth_time=true;
+		}
 	if((giv_sys_time%20)==0)			//2ms
 		{
 			dock_rap_time=true;
 			check_earth_time=true;
 			//YBS_rap_time=true;
-			check_wall_time=true;
 		}
 
 	if((giv_sys_time%30)==0)
 		{
+			earth_time=true;
 //			YBS_rap_time=true;
 		}
+
 			
 	if((giv_sys_time%50)==0)			//5ms
 		{
+#ifdef FAST_WALL_DET
+			action_wall_time=true;
+#endif
 //			YBS_rap_time=true;
 //			rap_time=true;
 //			YBS_Check_Flag  		= true;	
-			wall_earth_time = true; 	
+#ifndef  FAST_WALL_DET
+			wall_time = true; 	
+#endif
 			gyro_bios.check_flag=true;
 		}
 				
@@ -288,6 +292,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //	if((giv_sys_time % 100) == 0)
 	if((giv_sys_time % 100) == 0)		//	10mS
 		{
+#ifdef  FAST_WALL_DET
+			wall_time =true;
+#endif			
 			YBS_Check_Flag=true;
 			key_time = true;          //按键时间	  
 			rap_time = true;          //左右轮速度调节时间
@@ -344,7 +351,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		{
 //			log_show = true;				//显示更新时间		
 			CHECK_STATUS_TIME=true; 		//qz add 20180417
+#ifndef  FAST_WALL_DET
 			action_wall_time=true;
+#endif
 			spd_acc_flag=true;
 		}
 
@@ -748,6 +757,9 @@ void EXTI4_IRQHandler(void)
 *******************************************************************************/
 void EXTI15_10_IRQHandler(void)
 {
+#ifdef IR_CORRECT
+	static u32 r_high_time,l_high_time,rm_high_time,rb_high_time,lm_high_time,lb_high_time;
+#endif
 	static u32 l_hw_time=0,lm_hw_time=0,lb_hw_time=0,r_hw_time=0,rm_hw_time=0,rb_hw_time=0;
 	u32 sample_time;
 	 /////////////右红外中断///////////////
@@ -857,10 +869,17 @@ void EXTI15_10_IRQHandler(void)
 									r_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					r_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
-					r_hw_time=giv_sys_time;
+#ifdef IR_CORRECT
+					if(giv_sys_time-r_high_time>2)
+#endif
+						r_hw_time=giv_sys_time;
+					
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_RHW);
 		}
@@ -971,9 +990,15 @@ void EXTI15_10_IRQHandler(void)
 									rm_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					rm_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
+#ifdef IR_CORRECT
+					if(giv_sys_time-rm_high_time>2)
+#endif
 					rm_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_RMHW);
@@ -1084,9 +1109,15 @@ void EXTI15_10_IRQHandler(void)
 									rb_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					rb_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
+#ifdef IR_CORRECT
+					if(giv_sys_time-rb_high_time>2)
+#endif
 					rb_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_RBHW);
@@ -1198,9 +1229,15 @@ void EXTI15_10_IRQHandler(void)
 									l_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					l_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
+#ifdef IR_CORRECT
+					if(giv_sys_time-l_high_time>2)
+#endif
 					l_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_LHW);
@@ -1312,9 +1349,15 @@ void EXTI15_10_IRQHandler(void)
 									lm_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					lm_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
+#ifdef IR_CORRECT
+					if(giv_sys_time-lm_high_time>2)
+#endif
 					lm_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_LMHW);
@@ -1425,9 +1468,15 @@ void EXTI15_10_IRQHandler(void)
 									lb_hw.tempdata=0;
 								}
 						}
+#ifdef IR_CORRECT
+					lb_high_time=giv_sys_time;
+#endif
 				}
 			else										 //下降沿
 				{
+#ifdef IR_CORRECT
+					if(giv_sys_time-lb_high_time>2)
+#endif
 					lb_hw_time=giv_sys_time;
 				}
 			EXTI_ClearITPendingBit(EXTI_Line_LBHW);

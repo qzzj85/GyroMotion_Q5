@@ -37,6 +37,11 @@ void StopBack_Bump_Action(void);
 u8 YBS_AbortFor_Sweep(void);
 u8 Read_Cliff(void);
 void Do_FirstInit_Sweep(void);
+void Save_Pause_Data(void);
+void Init_PauseSweep(void);
+void Do_PauseSweep(void);
+void Set_Seat_Grid(void);
+
 
 #endif
 

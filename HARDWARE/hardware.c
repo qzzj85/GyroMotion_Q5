@@ -60,7 +60,9 @@ void  Init_System(void)
 	Init_WatchDog();					//初始化看门狗
 	init_rtc();							//初始化RTC,BKP数据读取,建立闹钟中断
 	Battery_Data_Init();
-	Init_PWM();							//初始化PWM，PWM用于电机驱动、风扇驱动、充电驱动
+//	Init_PWM();							//初始化PWM，PWM用于电机驱动、风扇驱动、充电驱动
+	Init_Ring_Pwm(PWM_RING_MAX,PWM_RING_PRESCALER);
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	init_hwincept();					//初始化红外接收程序
 //	Init_Remote_Info();					//qz add 20189817初始化遥控信息
 	init_power();
@@ -743,6 +745,8 @@ u8 Read_Dust_Box(void)
 u8 Read_SB_Status(void)
 {
 	u8 result=0;
+	if(sb_current_1s*CURR_SB_CNT_mA>SB_PROTECTCURRENT)
+		result=1;
 	return result;
 }
 

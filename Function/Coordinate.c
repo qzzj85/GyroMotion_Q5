@@ -76,7 +76,6 @@ void Cal_xy(void)
   	float x_add, y_add;
   	float m_dis;//,m_angle ;
   	float r_length_temp,l_length_temp;
-	float temp_angle;
 
 	//r_length = R_all_length - last_r_all_length;
 	//l_length = L_all_length - last_l_all_length;	
@@ -92,6 +91,7 @@ void Cal_xy(void)
 	m_dis = r1 *(PPDIS);
 
 #if 0
+	float temp_angle;
 	 new_angle =(float) (Gyro_Data.yaw)/100;
 	 temp_angle= (new_angle + old_angle)/2 ;		
 	 if (abs(new_angle-old_angle ) >180)	   
@@ -291,10 +291,8 @@ u8 Read_Coordinate_AreaNo(s8 xgrid,s8 ygrid)
 
 void Record_Coordinate_Intime(void)
 {
-	u8 nextaction=0;
 	s8 gridx,gridy;
 	gridx=grid.x;gridy=grid.y;
-	nextaction=Read_CheckPoint_NextAction();
 
 	switch(mode.mode)
 		{
@@ -318,6 +316,16 @@ void Record_Coordinate_Intime(void)
 						if((mode.bump<BUMP_OUTRANGE)&(mode.step<0x88))
 							Set_Coordinate_Wall(gridx,gridy);
 					}
+				break;
+			case MODE_CTRL:
+				Set_Coordinate_Clean(gridx,gridy);
+				if(mode.bump)
+					Set_Coordinate_Wall(gridx,gridy);
+				break;
+			case SPOT:
+				Set_Coordinate_Clean(gridx,gridy);
+				if(mode.bump)
+					Set_Coordinate_Wall(gridx,gridy);
 				break;
 		}
 }
@@ -531,9 +539,7 @@ u8 Judge_GridYPOS_Reach(s8 gridy,short ydir)
 	else if((ydir==L_Angle_Const)&(Gyro_Data.y_pos<tgt_ypos))		//方向角R_Angle_Const,从右接近，y_pos逐渐减小
 		return 1;
 	else
-		return 0;
-	return 0;
-	
+		return 0;	
 }
 
 /*---------------------------------------------
@@ -972,7 +978,7 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 //	s8 temp_data2=0,temp_data3=0,temp_data4=0,temp_data5=0,result=0;
 	s8 temp_gridmax1,temp_gridmax2,temp_gridmin1,temp_gridmin2;
 	u8 temp_area1,temp_area2,temp_area3,temp_area4,result=0;
-	s8 temp_gridx,temp_gridx1,temp_gridy;
+	s8 temp_gridx,temp_gridx1;
 	CHECK_POINT temp_check_point;
 	
 	if(minormax)					//minormax为1，YMAX边界，起点为x_area_min,y_area_max
@@ -982,7 +988,6 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 					return 0x7f;
 				}
 			temp_gridx=grid.x_area_min;
-			temp_gridy=grid.y_area_max;
 			//TRACE("analysis Ymax next area entry...\r\n");
 			while(temp_gridx<grid.x_area_max)
 				{
@@ -1047,6 +1052,7 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 							return 0x7f;
 						}
 					temp_gridx=(temp_gridx1+temp_gridx)/2;
+					check_point.backup_grid=temp_check_point.backup_grid;
 					return temp_gridx;
 				}
 			else
@@ -1064,7 +1070,6 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				return 0x7f;
 			
 			temp_gridx=grid.x_area_max;
-			temp_gridy=grid.y_area_min;
 			//TRACE("analysis Ymin next area entry...\r\n");
 			while(temp_gridx>grid.x_area_min)
 				{
@@ -1131,6 +1136,7 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 						}
 					temp_gridx=(temp_gridx1+temp_gridx)/2;
 					//temp_gridx=(temp_gridx1+temp_gridx-1)/2;
+					check_point.backup_grid=temp_check_point.backup_grid;
 					return temp_gridx;
 				}
 			else
@@ -1362,9 +1368,9 @@ u8 Analysis_Boundary_X(u8 minormax)
 u8 Analysis_Boundary_X_II(u8 minormax)
 {
 //	s8 temp_data2=0,temp_data3=0,temp_data4=0,temp_data5=0,result=0;
-	s8 temp_gridmax1,temp_gridmax2,temp_gridmin1,temp_gridmin2;
+	s8 temp_gridmax1,temp_gridmax2;
 	u8 temp_area1,temp_area2,temp_area3,temp_area4,result=0;
-	s8 temp_gridy,temp_gridx,temp_gridy1;
+	s8 temp_gridy,temp_gridy1;
 	CHECK_POINT temp_check_point;
 	
 	if(minormax)					//minormax为1，XMAX边界，起点为x_area_max,y_area_max
@@ -1373,7 +1379,6 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 				return 0x7f;
 		
 			temp_gridy=grid.y_area_max;//temp_gridy=grid.y_area_min;			
-			temp_gridx=grid.x_area_max;
 			while(temp_gridy>grid.y_area_min)//while(temp_gridy<grid.y_area_max)
 				{
 #if 1
@@ -1441,6 +1446,7 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 							return 0x7f;
 						}
 					temp_gridy=(temp_gridy+temp_gridy1)/2;
+					check_point.backup_grid=temp_check_point.backup_grid;
 					//temp_gridy=temp_gridy+1;
 					return temp_gridy;
 				}
@@ -1458,7 +1464,6 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 			if(motion1.xmin_ok)
 				return 0x7f;
 		
-			temp_gridx=grid.x_area_min;
 			temp_gridy=grid.y_area_min;
 			//TRACE("analysis Xmin next area entry...\r\n");			
 			while(temp_gridy<grid.y_area_max)
@@ -1528,6 +1533,7 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 						}
 					//temp_gridy=temp_gridy+1;
 					temp_gridy=(temp_gridy+temp_gridy1)/2;
+					check_point.backup_grid=temp_check_point.backup_grid;
 					return temp_gridy;
 				}
 			else
@@ -1598,7 +1604,9 @@ u8 Analysis_Leak_Point(void)
 	max_cleanx1=check_point.max_cleanx1;min_cleanx1=check_point.min_cleanx1;check_gridy1=check_point.y1;
 	max_cleanx2=check_point.max_cleanx2;min_cleanx2=check_point.min_cleanx2;check_gridy2=check_point.y2;
 	s8 start_checky=grid.y;
+	u8 check_result=0;
 
+	check_point.backup_grid=0;
 	///////////先进行max min检查///////////////////
 	///////////先进行max min检查///////////////////
 	if((Read_Coordinate_Seat(max_cleanx1,check_gridy1))|(Read_Coordinate_Seat(max_cleanx2,check_gridy2)))
@@ -1631,6 +1639,14 @@ u8 Analysis_Leak_Point(void)
 											temp1_gridx=temp_gridx;
 											while(temp1_gridx<max_cleanx1)
 												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy2))
+														{
+															check_result=0;
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy2);
+															break;
+														}
+													
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
 														{
 															check_point.backup_grid++;
@@ -1638,17 +1654,22 @@ u8 Analysis_Leak_Point(void)
 														}
 													else
 														{
+															check_result=1;
 															break;
 														}
 												}
-		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point.new_x1=temp_gridx;
-											check_point.new_y1=check_gridy1;
-											check_point.new_x2=temp_gridx;
-											check_point.new_y2=check_gridy2;
-											check_point.next_tgtyaw=F_Angle_Const;
-											if(Can_Entry_Point())
-												return 1;
+
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy1;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy2;
+													check_point.next_tgtyaw=F_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
 										}
 								}
 						}
@@ -1676,6 +1697,13 @@ u8 Analysis_Leak_Point(void)
 											temp1_gridx=temp_gridx;
 											while(temp1_gridx<max_cleanx2)
 												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy1))
+														{
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy1);
+															check_result=0;
+															break;
+														}
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
 														{
 															temp1_gridx++;
@@ -1683,22 +1711,28 @@ u8 Analysis_Leak_Point(void)
 														}
 													else
 														{
+															check_result=1;
 															break;
 														}
 												}
-		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point.new_x1=temp_gridx;
-											check_point.new_y1=check_gridy2;
-											check_point.new_x2=temp_gridx;
-											check_point.new_y2=check_gridy1;
-											check_point.next_tgtyaw=F_Angle_Const;
-											if(Can_Entry_Point())
-												return 1;
+											
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy2;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy1;
+													check_point.next_tgtyaw=F_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
 										}
 								}
 						}
 				}
 		}
+	
 LEAK_POINT_MIN_CHECK:
 	if((Read_Coordinate_Seat(min_cleanx1,check_gridy1))|(Read_Coordinate_Seat(min_cleanx2,check_gridy2)))
 		{
@@ -1730,6 +1764,14 @@ LEAK_POINT_MIN_CHECK:
 											temp1_gridx=temp_gridx;
 											while(temp1_gridx>min_cleanx2)
 												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy1))
+														{
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy1);
+															check_result=0;
+															break;
+														}
+												
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
 														{
 															temp1_gridx--;
@@ -1737,17 +1779,21 @@ LEAK_POINT_MIN_CHECK:
 														}
 													else
 														{
+															check_result=1;
 															break;
 														}
 												}
-		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point.new_x1=temp_gridx;
-											check_point.new_y1=check_gridy2;
-											check_point.new_x2=temp_gridx;
-											check_point.new_y2=check_gridy1;
-											check_point.next_tgtyaw=B_Angle_Const;
-											if(Can_Entry_Point())
-												return 1;
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy2;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy1;
+													check_point.next_tgtyaw=B_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
 										}
 								}
 						}
@@ -1775,6 +1821,14 @@ LEAK_POINT_MIN_CHECK:
 											temp1_gridx=temp_gridx;
 											while(temp1_gridx>min_cleanx1)
 												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy2))
+														{
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy2);
+															check_result=0;
+															break;
+														}
+												
 													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
 														{
 															temp1_gridx--;
@@ -1782,17 +1836,21 @@ LEAK_POINT_MIN_CHECK:
 														}
 													else
 														{
+															check_result=1;
 															break;
 														}
 												}
-		//									temp_gridx=(temp_gridx+temp1_gridx)/2;
-											check_point.new_x1=temp_gridx;
-											check_point.new_y1=check_gridy1;
-											check_point.new_x2=temp_gridx;
-											check_point.new_y2=check_gridy2;
-											check_point.next_tgtyaw=B_Angle_Const;
-											if(Can_Entry_Point())
-												return 1;
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy1;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy2;
+													check_point.next_tgtyaw=B_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
 										}
 								}
 						}

@@ -6,6 +6,141 @@
 输入：无
 输出：无
 **************************************************************/
+void Init_Ring_Pwm(u16 period,u16 prescaler)
+{
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	TIM_OCInitTypeDef  TIM_OCInitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO , ENABLE);	
+	TIM_Cmd(TIM4, DISABLE);
+	//===================================================================================
+///////////////////////下面驱动四个左右轮的控制信号//////////////
+	
+#ifdef CPU_FREQ_36MHz//主频为36MHZ时，PWM频率为18KHZ，
+	TIM_TimeBaseStructure.TIM_Period				= period-1;   //PWM重装值 ，就是ARR参数   //1199	
+	TIM_TimeBaseStructure.TIM_Prescaler 			= prescaler;  //时钟分频系数 ,就是PSC参数
+#else
+#ifdef CPU_FREQ_64MHz//主频为64MHZ时，PWM频率为16KHZ
+	TIM_TimeBaseStructure.TIM_Period				= period-1;   //PWM重装值 ，就是ARR参数   //1199	
+	TIM_TimeBaseStructure.TIM_Prescaler 			= prescaler;  //时钟分频系数 ,就是PSC参数
+#endif
+#endif
+	TIM_TimeBaseStructure.TIM_ClockDivision 		= 0;   //时钟分频因子，在CR1寄存器中
+	TIM_TimeBaseStructure.TIM_CounterMode			= TIM_CounterMode_Up; //计数方式，在CR1寄存器中 
+  
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+	//QZ: 定时器4，36MHz, 分频为1+1，周期为999+1，得到频率为36MHz/(1+1)/(999+1)=18KHz
+	
+  /* PWM1 Mode configuration: Channel1 */
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;		 //通道的工作模式  
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
+	TIM_OCInitStructure.TIM_Pulse = 0;						 //脉冲有效宽度
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //有效电平
+	TIM_OC1Init(TIM4, &TIM_OCInitStructure);
+
+	TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Disable);	//qz add
+  //TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Enable);	//qz mask
+  
+  /* PWM1 Mode configuration: Channel2 */
+	TIM_OC2Init(TIM4, &TIM_OCInitStructure); 
+  
+//	TIM_OC2PreloadConfig(TIM4, TIM_OCPreload_Enable);	//qz mask
+	TIM_OC2PreloadConfig(TIM4, TIM_OCPreload_Disable);	//qz add
+
+  /* PWM1 Mode configuration: Channel3 */
+	TIM_OC3Init(TIM4, &TIM_OCInitStructure);
+  
+//	TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Enable);	//qz mask
+	TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Disable);	//qz add
+  
+  /* PWM1 Mode configuration: Channel4 */
+	TIM_OC4Init(TIM4, &TIM_OCInitStructure);
+  
+	TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Disable);	//qz add
+//	TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);	//qz mask
+
+
+
+	TIM_ARRPreloadConfig(TIM4, ENABLE);
+  /* TIM4 enable counter */
+	TIM_Cmd(TIM4, ENABLE);
+	GPIO_InitStructure.GPIO_Pin = DR_RIN | DR_FIN |DL_FIN | DL_RIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+#ifdef DEBUG_INIT
+	TRACE("Ring PWM init OK!\r\n");
+#endif
+}
+
+void Init_Sweep_Pwm(u16 period,u16 prescaler)
+{
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	TIM_OCInitTypeDef  TIM_OCInitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO , ENABLE);
+  	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	TIM_Cmd(TIM3, DISABLE);
+
+	////////////////下面定义定时器3，驱动风机中扫频率36kHz///////////////	hzh 20171218 TIM3  CH4
+	///////////////20180320 qz add，根据风机datasheet，风机频率修正为25KHz//////////
+	  /* Time base configuration */
+#ifdef CPU_FREQ_36MHz//主频为36MHZ时，PWM频率为36KHZ
+	TIM_TimeBaseStructure.TIM_Period					= period-1;  //PWM重装值 ，就是ARR参数
+	TIM_TimeBaseStructure.TIM_Prescaler 				= prescaler;	 //时钟分频系数 ,就是PSC参数
+#endif
+#ifdef CPU_FREQ_64MHz//???64MHZ?,PWM???32KHZ
+	TIM_TimeBaseStructure.TIM_Period					= period-1; 		//PWM??? ,??ARR??
+	TIM_TimeBaseStructure.TIM_Prescaler 				= prescaler;		//?????? ,??PSC??
+#endif
+#ifdef CPU_FREQ_72MHz//???64MHZ?,PWM???36KHZ
+	TIM_TimeBaseStructure.TIM_Period					= period-1; 		//PWM??? ,??ARR??
+	TIM_TimeBaseStructure.TIM_Prescaler 				= prescaler;		//?????? ,??PSC??
+#endif
+	TIM_TimeBaseStructure.TIM_ClockDivision 			= 0;						//??????,?CR1????
+	TIM_TimeBaseStructure.TIM_CounterMode				= TIM_CounterMode_Up;		//????,?CR1???? 
+  
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+  
+   /* PWM1 Mode configuration: Channel1 */
+	TIM_OCInitStructure.TIM_OCMode						= TIM_OCMode_PWM1;			//通道的工作模式  
+	TIM_OCInitStructure.TIM_OutputState 				= TIM_OutputState_Enable;				//比较输出使能
+	TIM_OCInitStructure.TIM_Pulse						= 0;						//脉冲有效宽度
+	TIM_OCInitStructure.TIM_OCPolarity					= TIM_OCPolarity_High;			//有效电平
+	
+	TIM_OC1Init(TIM3, &TIM_OCInitStructure);						//充电PWM控制
+	TIM_OC1PreloadConfig(TIM3,TIM_OCPreload_Disable);
+
+	TIM_OC2Init(TIM3,&TIM_OCInitStructure); 						//FAN PWM控制
+	TIM_OC2PreloadConfig(TIM3,TIM_OCPreload_Disable);
+
+	TIM_OC3Init(TIM3,&TIM_OCInitStructure); 						//边扫PWM控制
+	TIM_OC3PreloadConfig(TIM3,TIM_OCPreload_Disable);
+
+	TIM_OC4Init(TIM3,&TIM_OCInitStructure); 						//中扫PWM控制
+	TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Disable);
+  
+	TIM_ARRPreloadConfig(TIM3, ENABLE);
+  
+	TIM_SetCompare1(TIM3,0);											//关闭充电
+	TIM_SetCompare2(TIM3,0);											//关闭FAN
+	TIM_SetCompare3(TIM3,0);											//关闭边扫
+	TIM_SetCompare4(TIM3,0);											//关闭中扫
+	
+  /* TIM3 enable counter */
+	TIM_Cmd(TIM3, ENABLE);
+	GPIO_InitStructure.GPIO_Pin =	SIDEBRUSH_PWM|CHG_PWM|FAN_PWM|MIDBRUSH_PWM;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);		 
+	GPIO_PinRemapConfig(GPIO_FullRemap_TIM3, ENABLE);
+#ifdef DEBUG_INIT
+		TRACE("Sweep PWM init OK!\r\n");
+#endif
+}
 
 void  Init_PWM(void)
 {

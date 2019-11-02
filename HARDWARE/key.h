@@ -18,12 +18,6 @@ extern KEY key1,key2,key3,l_lidi,r_lidi,l_bump,r_bump,m_bump,charge_dc,charge_se
 extern KEY lm_bump,rm_bump;	//qz add 20181120
 extern bool key_time;
 extern bool boxfullone;
-#ifdef TUYA_WIFI
-extern bool wifi_time;
-extern bool wifi_update_time;
-void mcu_wifi_proc_key(void);
-void proc_wifi_dock(void);
-#endif
 
 #endif
 

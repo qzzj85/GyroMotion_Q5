@@ -81,3 +81,4 @@
 #include "back.h"
 #include "ACC_DEC.h"
 #include "app_ctrl.h"
+#include "spot.h"

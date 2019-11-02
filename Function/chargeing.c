@@ -20,9 +20,9 @@ void Init_Switchoff(void)
 	/******初始化显示***********/
 	/******初始化设置的值********************/
 	clr_ram();
-
-	stop_rap(); 					//停止轮子
+	Init_Sweep_Pwm(PWM_CHARGE_MAX,PWM_CHARGE_PRESCALER);
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
+	stop_rap(); 					//停止轮子
 	Disable_earth();
 	Disable_wall();
 	disable_hwincept();				//禁止红外接收电源
@@ -69,7 +69,8 @@ void Init_Chargeing(u8 temp_sub_mode)
 	mode.status=0;						//qz add 20180522
 	WriteWorkState();
 	clr_ram();
-
+	Init_Sweep_Pwm(PWM_CHARGE_MAX,PWM_CHARGE_PRESCALER);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
 	//qz add 20180615:充电期间关闭墙检\地检\回充红外\速度检测
 	Disable_earth();
 	Disable_wall();

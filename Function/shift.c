@@ -235,6 +235,7 @@ void Shift_BumpAction(void)
 										{
 											error_code=ERROR_LIFT;
 											Send_Voice(VOICE_ERROR_DANGER);
+											mode.err_code|=WIFI_ERR_EARTH;
 											Init_Err();
 										}
 								}
@@ -627,7 +628,6 @@ void Init_Shift_Point1(u8 pre_action)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -1721,7 +1721,6 @@ void Init_Shift_Point2(void)
 	/******初始化设置的值********************/
 	clr_ram();
 //	ReInitAd();
-
 	Enable_earth();
 	Enable_wall();
 	enable_hwincept();				//允许红外接收电源
@@ -2155,10 +2154,10 @@ u8 CheckOutRange_Clean_inShift(u16 data)
 
 u8 Abort_ShiftYBS(void)
 {
-	u8 temp_data=0,temp_nextaction=0,area_check=0;
-	s8 now_gridx,now_gridy;
+	u8 temp_nextaction=0,area_check=0;
+	s8 now_gridx;//now_gridy;
 	s8 tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
-	now_gridx=grid.x;now_gridy=grid.y;
+	now_gridx=grid.x;//now_gridy=grid.y;
 	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
 	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
 	temp_nextaction=Read_CheckPoint_NextAction();
@@ -2297,6 +2296,19 @@ u8 Abort_ShiftYBS(void)
 				}
 			else
 				{
+					if(temp_nextaction==CHECK_NEWAREA)
+						{
+							if(!Can_Entry_NewArea(&check_point))
+								{
+									stop_rap();
+									TRACE("The New Area Entry has Closed!!\r\n");
+									TRACE("Find Next New Area!!\r\n");
+									Area_Check(1);
+									Init_Shift_Point1(1);
+									return 1;
+								}
+						}
+					
 					if(mode.last_sub_mode==SHIFTPOINT1)
 						{
 							if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
@@ -2936,9 +2948,7 @@ void Do_ShiftYBS(void)
 
 //function:此函数被调用时，已经退出之前清扫的区域，返回到开始进入之前区域的上一个区域，然后直行一些处理动作
 void Do_ExitAtion(void)
-{	
-	u8 area_check=0;
-	
+{		
 	TRACE("Enter in %s..\r\n");
 	Del_AreaNode_End();							//删除上一清扫区域的节点
 	if(Read_CurrNode_AreaNO()==0)
@@ -2996,104 +3006,14 @@ void Do_ExitAtion(void)
 
 u8 Abort2Sweep(void)
 {
-	s8 now_gridy,now_gridx,tgt_gridx1,tgt_gridx2,tgt_gridy1,tgt_gridy2;
-	u8 nextaction=0;
+	s8 now_gridy,now_gridx,tgt_gridy2;//,tgt_gridx1,tgt_gridx2,tgt_gridy1
+	u8 nextaction=0,check_result=0;
 	now_gridx=grid.x;now_gridy=grid.y;
-	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
-	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
+//	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
+	tgt_gridy2=check_point.new_y2;//tgt_gridx2=check_point.new_x2;
 	nextaction=Read_CheckPoint_NextAction();
 
-#if 0
-	if((check_point.next_action==CHECK_LEAKSWEEP)&(now_gridy==tgt_gridy))
-	
-		{
- 			if(check_point.ydir)
-				{
-					if(now_gridy+1<=grid.y_area_max)
-						{
-							if(!Read_Coordinate_Clean(now_gridx,now_gridy+1))
-								{
-									stop_rap();
-									TRACE("now_gridx=%d now_gridy=%d not clean\r\n",now_gridx,now_gridy+1);
-									TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
-									check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
-									check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
-									Init_Shift_Point1(0);
-								}
-						}
-				}
-			else
-				{
-					if(now_gridy-1>=grid.y_area_min)
-						{
-							if(!Read_Coordinate_Clean(now_gridx,now_gridy-1))
-								{
-									stop_rap();
-									TRACE("now_gridx=%d now_gridy=%d not clean\r\n",now_gridx,now_gridy-1);
-									TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
-									check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
-									check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
-									Init_Shift_Point1(0);
-								}
-						}
-				}
-		}	
-#endif
-
-#if 0
-		u8 data1,data2,data3,data4;
-		if((now_gridx+2<grid.x_area_max)&(now_gridx-2>grid.x_area_min))
-			{
-				if((now_gridy+1<grid.y_area_max)&(now_gridy-1>grid.y_area_min))
-					{
-						if((!Read_Coordinate_Clean(now_gridx+1,now_gridy))&(!Read_Coordinate_Clean(now_gridx+2,now_gridy)))
-							{
-								data1=Read_Coordinate_Wall(now_gridx+1,now_gridy-1);data2=Read_Coordinate_Wall(now_gridx+1,now_gridy+1);
-								data3=Read_Coordinate_Wall(now_gridx+2,now_gridy-1);data4=Read_Coordinate_Wall(now_gridx+2,now_gridy+1);
-								data1=data1+data2+data3+data4;
-								if(data1>=4)							//未扫区域被障碍包围
-									return 0;
-								stop_rap();
-								TRACE("now_gridx+1=%d now_gridx+2=%d not clean\r\n",now_gridx+1,now_gridx+2);
-								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
-								//check_point.new_x2=now_gridx,check_point.new_y2=now_gridy;
-								//TRACE("now grid to check_point new2!!!\r\n");
-								//Init_Shift_Point2();
-								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
-								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
-								Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
-								check_point.next_tgtyaw=F_Angle_Const;
-								check_point.ydir=check_point.ydir;
-								Init_Shift_Point1(0);
-								return 1;
-							}
-						if((!Read_Coordinate_Clean(now_gridx-1,now_gridy))&(!Read_Coordinate_Clean(now_gridx-2,now_gridy)))
-							{
-								data1=Read_Coordinate_Wall(now_gridx-1,now_gridy-1);data2=Read_Coordinate_Wall(now_gridx-1,now_gridy+1);
-								data3=Read_Coordinate_Wall(now_gridx-2,now_gridy-1);data4=Read_Coordinate_Wall(now_gridx-2,now_gridy+1);
-								data1=data1+data2+data3+data4;
-								if(data1>=4)							//未扫区域被障碍包围
-									return 0;
-								stop_rap();
-								TRACE("now_gridx+1=%d now_gridx+2=%d not clean\r\n",now_gridx-1,now_gridx-2);
-								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
-		//						check_point.new_x2=now_gridx,check_point.new_y2=now_gridy;
-		//						TRACE("now grid to check_point new2!!!\r\n");
-		//						Init_Shift_Point2();
-								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
-								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
-								Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
-								check_point.next_tgtyaw=F_Angle_Const;
-								check_point.ydir=check_point.ydir;
-								Init_Shift_Point1(0);
-								return 1;
-							}
-					}
-			}
-		return 0;
-#endif
-
-	s8 temp_gridx1,temp_gridy1,temp_gridx2,temp_gridy2;	
+	s8 temp_gridx1,temp_gridy1,temp_gridx2,temp_gridy2,temp_gridx3,temp_gridx4;	
 	short now_angle=Gyro_Data.yaw;
 	switch(nextaction)
 		{
@@ -3199,7 +3119,9 @@ u8 Abort2Sweep(void)
 							}
 					}
 				break;
+#if 1
 			case CHECK_NEWAREA:
+			case CHECK_GOEXIT:
 				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
 					{
 						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
@@ -3235,9 +3157,50 @@ u8 Abort2Sweep(void)
 							}
 					}
 
-				if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
+				check_result=0;
+				temp_gridx3=temp_gridx1;temp_gridx4=temp_gridx2;
+				if(temp_gridx3>now_gridx)
 					{
-						if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
+						while(temp_gridx3<grid.x_area_max)
+							{
+								if((!Read_Coordinate_Clean(temp_gridx3,temp_gridy1))&(!Read_Coordinate_Clean(temp_gridx4,temp_gridy2)))
+									{
+										temp_gridx3++;
+										temp_gridx4++;
+										check_result++;
+									}
+								else
+									{
+										return 0;
+										//break;
+									}
+							}
+						if(check_result<4)
+							return 0;
+					}
+				else
+					{
+						while(temp_gridx3>grid.x_area_min)
+							{
+								if((!Read_Coordinate_Clean(temp_gridx3,temp_gridy1))&(!Read_Coordinate_Clean(temp_gridx4,temp_gridy2)))
+									{
+										temp_gridx3--;
+										temp_gridx4--;
+										check_result++;
+									}
+								else
+									{	
+										return 0;
+										//break;
+									}
+							}
+						if(check_result<4)
+							return 0;
+					}
+
+				//if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
+					{
+						//if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
 							{
 								stop_rap();
 								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
@@ -3258,7 +3221,8 @@ u8 Abort2Sweep(void)
 								return 1;
 							}
 					}
-				break;
+//				break;
+#endif
 		}
 	return 0;	
 }
@@ -3397,7 +3361,7 @@ u8 Abort_ShiftExit_YBS(void)
 			return 1;
 		}
 
-	if(((now_gridx==motion1.exit_gridx1)&(now_gridy==motion1.exit_gridy1))/
+	if(((now_gridx==motion1.exit_gridx1)&(now_gridy==motion1.exit_gridy1))\
 		|((now_gridx==motion1.exit_gridx2)&(now_gridy==motion1.exit_gridy2)))
 		{
 			stop_rap();
@@ -3486,7 +3450,6 @@ void Do_ShiftExit_YBS(void)
 	u8 temp_data1=0;
 	u8 abnormal;
 	u32 uin32;
-	static u8 turn_dir=0;
 
 #if 1		
 #ifdef DC_NOBAT_RUN

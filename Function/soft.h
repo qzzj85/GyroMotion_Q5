@@ -34,7 +34,7 @@
 #define		DEBUG_POWER				1
 #endif
 
-#if 0
+#if 1
 //#define	FREE_SKID_CHECK			1					//万向轮径向打滑检测，用于上报导航板
 //#define	FREE_SKID_INDEP_CHECK	1					//独立万向轮检测，用于卡住
 //#define 	ROTATE_SKID_CHECK		1					//旋转打滑检测
@@ -43,14 +43,14 @@
 //#define 	SLAM_CHECK				1					//SLAMTICK检查
 #define		BUMP_FIX_CHECK			1					//碰撞锁定检测
 #define		RING_FIX_CHECK			1					//驱动轮锁定检查
-//#define 	RING_OC_CHECK			1					//驱动轮过流检查
+#define 	RING_OC_CHECK			1					//驱动轮过流检查
 #define		MB_OC_CHECK				1					//中扫过电流检查
-#define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
-#define		SB_FIX_CHECK			1					//边扫缠绕检查
+//#define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
+//#define		SB_FIX_CHECK			1					//边扫缠绕检查
 #define		GYRO_TICK_CHECK			1					//惯导数据检查,5s内未接到收据,判定错误
 //#define	WALL_EARTH_ERROR_CHECK	1					//墙地检异常检测(比如没插)
-#endif
 #define		GYRO_BIOS_CHECK			1
+#endif
 #define		CLIFF_ENABLE			1					//地检悬崖检查
 
 #define 	SLAM_CTL_FAN			1
@@ -101,10 +101,12 @@
 #define		EARTH_IN_TIM2			1
 //#define		OUT_8MHZ				1
 //#define		YIS055					1
+//#define	FAST_WALL_DET			1
+#define		IR_CORRECT				1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			8
+#define		CORRECT_VERSION			9
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -187,6 +189,7 @@
 
 #define		SWEEP_METHOD_GUIHUA		0
 #define		SWEEP_METHOD_YBS		1
+#define		SWEEP_METHOD_SPOT		2
 
 //QZ:dm=0,return; dm=1,左转; dm=2,右转; dm=3,前进; dm=4,后退; dm=5,左轮不动向左转; dm=6,右轮不动向右转;
 //	 dm=7,右轮不动向左转; dm=8,左轮不动向右转 18:顺时针走螺旋形; 19:逆时针走螺旋形; 21 走螺旋线
@@ -202,12 +205,6 @@
 
 #define  HELIX_CLK_WISE           18//螺旋线顺时针
 #define  HELIX_ANTI_CLK_WISE      19//螺旋线逆时针
-
-#define  BUMP_WALL_LEFT              7
-#define  BUMP_WALL_LEFT_MID          8
-#define  BUMP_WALL_MID               9
-#define  BUMP_WALL_RIGHT_MID         15
-#define  BUMP_WALL_RIGHT             14
 
 ////////////下面是PWM驱动脚使用的软定义/////////////////////////
 #define   L_FRONT     0x1   //左轮向前
@@ -334,6 +331,7 @@
 #define	BACK_SWEEP			0XF0
 #define	STOP_BACKSWEEP 		0XEF
 #define	SWEEP_FIRST_INIT	0XED
+#define SUBMODE_PAUSESWEEP	0XEC
 
 #define SHIFTPOINT1			0XD0
 #define	SHIFTPOINT2			0XD1
@@ -348,6 +346,8 @@
 
 #define	SUBMODE_REMOTE_CTRL			0XB0
 #define	SUBMODE_APP_CTRL			0XB1
+#define	SUBMODE_VIRTUAL_SLEEP		0XB2
+#define	SUBMODE_SPOT				0XB3
 //#define     COMMANDER_x10           0X10         //  指令模式
 
 //#define     YBS           0X20    	     //  沿墙模式
@@ -436,7 +436,7 @@
 
 
 #define     SPEED           1000        // 定义为车轮的最大速度   
-#define     FARAWAY         0XFFFFFFFF   //定义为无穷远
+#define     FARAWAY         10000//0XFFFFFFFF   //定义为无穷远
 #define     LENGTH		    243			 //车轮的宽度  单位是毫米
 
 ////////////#define     METE            4615         //1米的脉冲数
@@ -948,6 +948,8 @@ typedef struct		//机器系统的工作状态
 
                          5:预约打扫
                          6:回充*/
+
+	u16 		err_code;
 	u32 		action;		//动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线	
 	u32 		time;       //动作的起始时间
 	u32 		init_mode_time;	//qz add 20180814
@@ -958,7 +960,7 @@ typedef struct		//机器系统的工作状态
 	u32 		last_outbump;
 	u32 		bump_time;
 	u32 		abn_time;			//qz add 20181011
-
+	
 }MODE;
 
 typedef struct
@@ -1024,6 +1026,12 @@ typedef struct 					//清扫结构体
 	s8 		exit_gridy1;
 	s8		exit_gridx2;
 	s8		exit_gridy2;
+	u8 		app_key;
+
+	u8 		pause_mode;
+	u8 		pause_submode;
+	s8 		pause_gridx;
+	s8		pause_gridy;
 
 	short 	xpos_ybs_start;		//弓形直线行走切换为沿边时起始点x坐标
 	short 	xpos_start;			//起始点x坐标
@@ -1190,7 +1198,7 @@ typedef struct
 	u8 gridx;
 	u8 gridy;
 	u8 data;
-}WIFI_DATA;
+}MAP_DATA;
 
 
 typedef struct
@@ -1308,6 +1316,8 @@ typedef struct
 	bool 	reinit;
 	bool 	BatteryChargeForbid;
 	u8 		bat_recal;
+	u8 		bat_per;
+	
 	u32		BatteryCapability;
 	u32 	BatteryFDCap;
 	u32		UsePowerTime;

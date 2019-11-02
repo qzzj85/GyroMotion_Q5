@@ -18,6 +18,16 @@
 #define		REMOTE_START			0X85
 #define		REMOTE_FAN				0XB5
 
+#define		REMOTE_KEYFLAG_DOCK		0X0100
+#define		REMOTE_KEYFLAG_FORWORD	0X0080
+#define		REMOTE_KEYFLAG_BACK		0X0040
+#define		REMOTE_KEYFLAG_LEFT		0X0020
+#define		REMOTE_KEYFLAG_RIGHT	0X0010
+#define		REMOTE_KEYFLAG_START	0X0008
+#define		REMOTE_KEYFLAG_YBS		0X0004
+#define		REMOTE_KEYFLAG_FAN		0X0002
+#define		REMOTE_KEYFLAG_AUTO		0X0001
+
 typedef enum
 {
 	REMOTE_KEY_NONE=0,
@@ -42,6 +52,8 @@ typedef enum
 typedef struct
 {
 	bool effect;
+
+	u16 key_flag;
 	u32 effect_time;
 	u32 key_time;				//收到遥控按键时的时间
 	REMOTE_KEY remote_key;		//表示收到的哪个遥控按键
@@ -56,6 +68,8 @@ void Clr_Remote_Info(void);
 void Remote_Handle(void);
 void Init_Remote_Move(void);
 void Do_Remote_Move(void);
+void Remote_Bump_Action(void);
+u8 Read_Remote_Bump(u8 ir_enable);
 
 #endif
 

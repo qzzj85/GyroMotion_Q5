@@ -23,8 +23,6 @@ void Clr_Remote_Info(void)
 
 void Remote_Handle(void)
 {
-	static u8 timeorpreen=false;	//用于区分时间设置还是预约设置。1为时间设置,2为预约设置
-	u8 temp_data1,i;
 	//机器处于CEASE的其他模式,退出
 
 	//Clr_Remote_Info();
@@ -34,8 +32,8 @@ void Remote_Handle(void)
 
 	remote_info.effect=false;
 	
-	if(((mode.mode==CEASE)&(mode.sub_mode!=CEASE)&(mode.sub_mode!=SLEEP)&(mode.sub_mode!=SELF_TEST)))	
-		return;
+//	if(((mode.mode==CEASE)&(mode.sub_mode!=CEASE)&(mode.sub_mode!=SLEEP)&(mode.sub_mode!=SELF_TEST)))	
+	//	return;
 	
 	//机器处于船型开关未打开,退出
 	if((mode.mode==CHARGEING)&(mode.sub_mode==SWITCHOFF))
@@ -53,7 +51,7 @@ void Remote_Handle(void)
 				/////机器处于充电状态且未进入时间预约设置模式，退出
 				if((mode.mode==CHARGEING))
 					return;
-				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
 				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
 					Init_Cease();
@@ -67,7 +65,7 @@ void Remote_Handle(void)
 				/////机器处于充电状态且未进入时间预约设置模式，退出
 				if((mode.mode==CHARGEING))
 					return;
-				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
 				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
 					Init_Cease();
@@ -79,7 +77,7 @@ void Remote_Handle(void)
 				/////机器处于充电状态且未进入时间预约设置模式，退出
 				if((mode.mode==CHARGEING))
 					return;
-				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
 				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
 					Init_Cease();
@@ -91,7 +89,7 @@ void Remote_Handle(void)
 				/////机器处于充电状态且未进入时间预约设置模式，退出
 				if((mode.mode==CHARGEING))
 					return;
-				if((mode.mode==CEASE)&(mode.sub_mode==CEASE))
+				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
 				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
 					Init_Cease();
@@ -107,6 +105,8 @@ void Remote_Handle(void)
 							switch(mode.sub_mode)
 								{
 									case CEASE:
+									case SUBMODE_PAUSESWEEP:
+										
 #ifdef TUYA_WIFI
 										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
 										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
@@ -128,17 +128,21 @@ void Remote_Handle(void)
 						case SHIFT:
 						case PASS2INIT:
 						case EXIT:
-						case YBS:
 							stop_rap();
 							Send_Voice(VOICE_DOCK_START);
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 							Force_Dock();
 							break;
+						case YBS:
+						case SPOT:
+							stop_rap();
+							Send_Voice(VOICE_DOCK_START);
+							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
+							Init_Docking();
+							break;
 						default:
 							break;
-					}
-				break;
-				
+					}				
 				
 #ifdef REMOTE_DEBUG
 				TRACE("Remote Dock key,request dock!\r\n");
@@ -159,6 +163,7 @@ void Remote_Handle(void)
 							switch(mode.sub_mode)
 								{
 									case CEASE:
+									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
 										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
 										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
@@ -201,6 +206,7 @@ void Remote_Handle(void)
 							switch(mode.sub_mode)
 								{
 									case CEASE:
+									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
 										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
 										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
@@ -262,6 +268,14 @@ void Remote_Handle(void)
 									case ERR:
 										Init_Cease();
 										break;
+									case SUBMODE_PAUSESWEEP:
+										if(mode.step<1)
+											mode.step=1;
+										break;
+									case SUBMODE_VIRTUAL_SLEEP:
+										Send_Voice(VOICE_VOLUME_4);
+										Init_Cease();
+										break;
 									default:
 										break;
 										
@@ -286,13 +300,17 @@ void Remote_Handle(void)
 						case EXIT:
 						case YBS:
 							stop_rap();
-							Send_Voice(VOICE_SWEEP_STOP);
-							Init_Cease();
+							Save_Pause_Data();
+							Send_Voice(VOICE_PAUSE_SWEEP);
+							Send_Voice(VOICE_VOLUME_2);
+							Init_PauseSweep();
 							break;
 						case DOCKING:
 							stop_rap();
-							Send_Voice(VOICE_DOCK_STOP);
-							Init_Cease();
+							Save_Pause_Data();							
+							Send_Voice(VOICE_PAUSE_SWEEP);
+							Send_Voice(VOICE_VOLUME_2);
+							Init_PauseSweep();
 							break;
 						default:
 							break;
@@ -351,7 +369,7 @@ void Init_Remote_Move(void)
 {
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
-	
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	/******初始化设置的值********************/
 
 	/*******初始化输出的控制***************/
@@ -364,7 +382,7 @@ void Init_Remote_Move(void)
 	Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed(); 				//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
-	Sweep_Level_Set(SWEEP_LEVEL_STOP);
+	Sweep_Level_Set(sweep_level);
 		
 	/****设置机器的工作模式******/   
 	mode.mode = MODE_CTRL; 
@@ -545,8 +563,8 @@ u8 Read_Remote_Bump(u8 ir_enable)
 }
 void Remote_Bump_Action(void)
 {
-	u8 m;
-	m=Read_Remote_Bump(0);
+	//u8 m;
+	Read_Remote_Bump(0);
 
 	if(!mode.bump)
 		return;
@@ -574,7 +592,10 @@ void Do_Remote_Move(void)
 	if(giv_sys_time-remote_info.key_time>3000)
 		{
 			stop_rap();
-			Init_Cease();
+			if(mode.last_sub_mode==SUBMODE_PAUSESWEEP)
+				Init_PauseSweep();
+			else
+				Init_Cease();
 		}
 	
 	ACC_DEC_Curve();

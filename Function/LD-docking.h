@@ -31,7 +31,6 @@
 ///////////////////ÕÒ»Ø³äÊ±µÄcase hzh////////////////////////////
 #define  DOCKMODE_STEP_FINDSEAT   0Xff
 
-extern 	bool 	DOCK_PREPARE;
 extern 	u8 		dock_fail_count;
 extern 	bool 	findseat_skid_check_flag;
 extern 	u8 		findseat_skid_check_step;

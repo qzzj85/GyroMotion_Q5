@@ -2,6 +2,8 @@
 
 void Init_Quit_Charging(u8 sweep_method)
 {
+
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
 	mode.mode=CEASE;
@@ -99,13 +101,17 @@ void Do_Quit_Chargeing(void)
 				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
+						motion1.start_seat=true;
 						switch(mode.sweep_method)
 							{
-								case 0:									
+								case SWEEP_METHOD_GUIHUA:									
 									Init_First_Sweep(1);
 									break;
-								case 1:
+								case SWEEP_METHOD_YBS:
 									Init_Right_YBS(1);
+									break;
+								case SWEEP_METHOD_SPOT:
+									Init_Spot(SPOT_FROM_CHARGE);
 									break;
 							}
 					}

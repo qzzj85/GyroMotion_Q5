@@ -44,11 +44,23 @@ FAN PWM					FAN CUR
 #define	SB_FORCE_CUR		40
 #define	RING_MB_CUR_CAL		0.171418	//3.3/4096/0.47*100
 
+#define	CURR_CEASE_NOWIFI	35		//35mA,待机,墙地检关闭,WIFI关闭
+#define	CURR_CEASE			50		//35mA,待机,墙地检关闭,WIFI关闭
+#define	CURR_WORK			120		//120mA,工作,墙地检打开,WIFI打开
+
 ////////下面是电池电压定义///////////////////////
 #define 	CHARGE_PWM_MASK		0
-#define 	CHG_CUR_CNT			0.402832	//piv_current/4096*3.3/20/0.1R*1000=real_current(unit:mA)
-#define		CHG_VOL_CNT			0.008862	//piv_voltgage/4096*3.3*11=real_voltage(unit:V)
-#define		RING_CUR_CNT		0.001714	//ring_current/4096*3.3/0.47
+#define 	CURR_CHG_CNT		0.402832	//piv_current/4096*3.3/20/0.1R*1000=real_current(unit:mA)
+#define		VOLT_CHG_CNT		0.008862	//piv_voltgage/4096*3.3*11=real_voltage(unit:V)
+#define		CURR_RING_CNT		0.001714	//ring_current/4096*3.3/0.47R
+#define		CURR_FAN_CNT		0.008057	//fan_current/4096*3.3/0.1R
+#define		CURR_MB_CNT			0.008057	//mb_current/4096*3.3/0.1R
+#define		CURR_SB_CNT			0.000171	//sb_current/4096*3.3/4.7R
+
+#define		CURR_RING_CNT_mA	1.714179
+#define		CURR_FAN_CNT_mA		8.056641
+#define		CURR_MB_CNT_mA		8.056641
+#define		CURR_SB_CNT_mA		0.171419
 /////// //17.1V~1929   17.5V~1974	16.9V~1909	17.3~1952
 //16.8~1896  17~1919
 #define		NUMBer_4_LI_BATTERY_0_Point_1_V		451.4285			//(1896/16.8)*4
@@ -126,7 +138,7 @@ extern u16  l_current;          //左轮电流
 extern u16  r_current;          //右轮电流
 extern u16  dust_current;       //灰尘风机电流
 extern u16  m_current;          //中扫电流
-
+extern u16 	sb_current;
 
 extern u16  battery_chargecurrent_1s;//电池1秒内的平均电流
 extern u16  battery_voltage_1s;    //电池1秒的电压
@@ -135,6 +147,7 @@ extern u16  l_current_1s;          //左轮电流
 extern u16  r_current_1s;          //右轮电流
 extern u16  dust_current_1s;       //灰尘风机电流
 extern u16  m_current_1s;          //中扫电流
+extern u16  sb_current_1s;
 
 extern u16 l_current_50ms;
 extern u16 r_current_50ms;

@@ -18,15 +18,6 @@ bool CHECK_STATUS_FLAG=false;
 bool CHECK_STATUS_TIME=false;
 bool GET_DISPLAY_TIME=true;			//qz modify 20180902:fail-->true
 
-////////////////////////私有定义//////////////////////////////////
-#define M_PROTECTCURRENT 800//292;//中扫保护电流 500MA,计算公式  1A*0.47R*4096/3.3  
-const uint16 M_STOPCURRENT =   788;//中扫停止电流 1350MA,计算公式  1A*0.47R*4096/3.3
-//const uint16 DUST_PROTECTCURRENT =   292; //灰尘风机电流 500MA				
-
-const uint16 DUST_PROTECTCURRENT =   1500; //灰尘风机电流 500MA		
-
-//const uint16 WHEEL_PROTECTCURRENT =  292;//234; //左右轮电流 400MA
-#define WHEEL_PROTECTCURRENT 467//左右轮电流 800mA  0.8A*0.47R*4096/3.3
 
 const uint16 BATTERY_PREOTECTTEMP = 815;  //电池保护温度  60度
 ////////////////////////全局变量//////////////////////////////////
@@ -212,6 +203,12 @@ void Action_Mode(void)
 						case SLEEP:
 							Do_Sleep_My();
 							break;
+						case SUBMODE_PAUSESWEEP:
+							Do_PauseSweep();
+							break;
+						case SUBMODE_VIRTUAL_SLEEP:
+							Do_VirtualSleep();
+							break;
 					}
 			break;
 	  
@@ -316,6 +313,10 @@ void Action_Mode(void)
 							Do_App_Ctrl();
 							break;
 					}
+				break;
+			case SPOT:
+				//Do_Spot();
+				Do_Spot_My();
 				break;
 	  /*********************默认状态***********************/
 			default :
@@ -637,6 +638,7 @@ u8 Read_Protect(void)
 	#endif
 	/////////////边刷检查//////////////////
 #ifdef 	SB_FIX_CHECK
+#if 0
 	data1=SB_FIX_Check();
 	if(data1)
 		{
@@ -670,6 +672,31 @@ u8 Read_Protect(void)
 						return_data=ABNORMAL_RSB;
 				}
 		}
+#else
+	if(SB_OC_Check())
+		{
+			if(mode.abnormity==0)
+				{
+					stop_rap();
+					SideBrush.flag=false;
+					mode.abnormity=ABNORMAL_SB;
+					mode.step_abn=0;
+					if(giv_sys_time-SideBrush.done_time<300000) 	//如果30s内再次进入边刷缠绕
+						{
+							SideBrush.disc_error_time++;			//不连续错误次数自加
+						}
+					else
+						SideBrush.disc_error_time=0;
+					if(SideBrush.disc_error_time>=5)				//不连续错误次数超过5次，即150s之内连续进入5次边刷缠绕
+						{
+							SideBrush.fail=0x01;						//直接报错，不再保护
+							return 0;
+						}
+				}
+			else
+				return_data=ABNORMAL_SB;
+		}
+#endif
 #endif
 
 #ifdef	LIFT_CHECK
@@ -783,19 +810,27 @@ u8 Read_Protect(void)
 		{
 			if(data1==1)
 				{
-					if(mode.abnormity==0)
+					if((mode.abnormity==0)&(mode.mode!=SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_L;
 							mode.step_abn=0;
+						}
+					if((mode.mode==SPOT)&(mode.step<9))
+						{
+							spot_gyrobios_cnt--;
 						}
 					return_data=ABNORMAL_GYROBIOS_L;
 				}
 			else
 				{
-					if(mode.abnormity==0)
+					if((mode.abnormity==0)&(mode.mode!=SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_R;
 							mode.step_abn=0;
+						}
+					if((mode.mode==SPOT)&(mode.step<9))
+						{
+							spot_gyrobios_cnt++;
 						}
 					return_data=ABNORMAL_GYROBIOS_R;
 				}
@@ -1135,6 +1170,145 @@ u8 Action_Protect_My(u8 abnoraml)
 					}
 				break;
 
+			case ABNORMAL_SB:
+				switch(mode.step_abn)
+					{
+						case 0:
+							Set_SideBrush_Pwm(0);				//先关掉边扫
+							mode.abn_time=giv_sys_time; 		//qz add 20181011
+							mode.step_abn++;
+							break;
+						case 1:
+							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
+								return 0;
+							Set_SideBrush_Pwm(0);				//先关掉边扫
+							Speed=FAST_MOVE_SPEED;							//速度约270mm/s
+							if(do_action(4,10*CM_PLUS)) 		//行走完成100mm,大约耗时370ms
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							if(giv_sys_time-action.time>20000)	//时间大于1s
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							break;
+						case 2:
+							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
+								return 0;
+							Speed=HIGH_MOVE_SPEED;							//速度约135mm/s
+							if(do_action(1,180*Angle_1)) 		
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							if(giv_sys_time-action.time>10000)	//时间大于2s
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							break;
+						case 3:
+							Set_SideBrush_Pwm(STANDARD_PWM);		//开启边刷
+							mode.abn_time=giv_sys_time; //qz add 20181011
+							mode.step_abn++;
+							break;	
+						case 4:
+							if(giv_sys_time-mode.abn_time>SB_CHECK_TIME)	//观察1s qz modify 20181201 1s--->3s
+							{
+								data1=Read_SB_Status();
+#ifdef EFFICENT_DEBUG
+								TRACE("SB_data=%d\r\n",data1);
+#endif
+								if(data1)
+									{
+										SideBrush.error_time++;
+										if(SideBrush.error_time>=2)
+											{
+												SideBrush.fail=0x02;	//确认发生"边刷被缠绕"异常，将由Check_Status()函数检测,并进入ERR模式
+												mode.Info_Abort=0;
+												mode.abnormity=0;
+												mode.step_abn=0;
+											}
+										else if(data1==1)				//如果右边刷已OK,左边刷缠绕,切换动作至左边刷
+											mode.abnormity=ABNORMAL_LSB;
+										mode.step_abn=0;				//从第0步开始
+									}
+								else
+									{
+										SideBrush.error_time=0; 	//重新开始检测条件初始化
+										SideBrush.fail=0x00;
+										SideBrush.flag=true;		//重新开启检测
+										SideBrush.check_step=0; 	//重新开始检测条件初始化
+										SideBrush.done_time=giv_sys_time;	//记录保护动作完成时间
+										mode.Info_Abort=0;
+										mode.abnormity=0;
+										mode.step_abn=0;
+										mode.step=0;				//恢复模式步骤qz add 20180801
+										mode.step_mk=0; 			//qz add 20180919
+										Sweep_Level_Set(sweep_level);	//重新打开清扫等级
+									}
+							}
+							break;
+						case 7:
+							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
+								return 0;
+							Speed=HIGH_MOVE_SPEED;
+//							Set_BS_Level(0);
+							if(do_action(4,4*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							if(n==0)
+								{
+									stop_rap();
+									mode.bump=0;
+									mode.step_abn=1;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							break;
+						case 8:
+							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
+								return 0;
+							Speed=HIGH_MOVE_SPEED;						//速度约135mm/s
+							if(do_action(1,360*Angle_1))	//全程需要5.4s	
+								{
+									stop_rap();
+									SideBrush.fail=0x02;	//确认发生"边刷被缠绕"异常，将由Check_Status()函数检测,并进入ERR模式
+									mode.Info_Abort=0;
+									mode.abnormity=0;
+									mode.step_abn=0;
+									mode.step=0;			//恢复模式步骤qz add 20180801
+									mode.step_mk=0; 		//qz add 20180919
+								}
+							if(n==0)
+								{
+									stop_rap();
+									mode.bump=0;
+									mode.step_abn=1;
+									mode.abn_time=giv_sys_time; //qz add 20181011
+								}
+							if(giv_sys_time-action.time>65000)	//6.5s
+								{
+									stop_rap();
+									SideBrush.fail=0x02;	//确认发生"边刷被缠绕"异常，将由Check_Status()函数检测,并进入ERR模式
+									mode.Info_Abort=0;
+									mode.abnormity=0;
+									mode.step_abn=0;
+									mode.step=0;			//恢复模式步骤qz add 20180801
+									mode.step_mk=0; 		//qz add 20180919
+								}
+							break;
+								
+					}
+				break;
 
 				////////////旋转打滑////////////
 #ifdef ROTATE_SKID_CHECK
@@ -1482,6 +1656,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 5:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(2,90*Angle_1))
 								{
 									stop_rap();
@@ -2481,19 +2656,18 @@ void  forward(u32 longth)
 *************************************************/
 void clr_ram(void)
 {
- mode.bump=0;
- mode.step=0;
- mode.step_bp=0;
- mode.abnormity=0;
- mode.step_abn=0;
- mode.step_mk=0;
-
- mode.time = giv_sys_time;
- mode.bump_flag=false;
- action.sign=0;
- stop_rap();
- disable_pwm(CHARGE_PWM);
- power.pwm = 0;
+	mode.bump=0;
+	mode.step=0;
+	mode.step_bp=0;
+	mode.abnormity=0;
+	mode.step_abn=0;
+	mode.step_mk=0;
+	mode.time = giv_sys_time;
+	mode.bump_flag=false;
+	action.sign=0;
+	stop_rap();
+	disable_pwm(CHARGE_PWM);
+	power.pwm = 0;
 }
 
 
@@ -3103,7 +3277,7 @@ u8 CheckMDustMotor(void)
 //u16 piv_dust,piv_m;
 //u16 v;
 //    piv_dust = account_current(DUST_CURRENT);
-//	piv_m = account_current(M_CURRENT);
+//	piv_m = account_current(ADC_MB_CURR);
 //	Set_Dust_Motor();
 //    pbv_state_dust_motor = true;
 //	DelayMs(10);
@@ -3124,11 +3298,11 @@ u8 CheckMDustMotor(void)
 //	pbv_state_m_motor = true;
 //	gbv_action_m_fangxiang = false;
 //	DelayMs(10);
-//	v = account_current(M_CURRENT) ;
+//	v = account_current(ADC_MB_CURR) ;
 //	if((v < piv_m)||(( v - piv_m) < 10))
 //	{
 //	     DelayMs(10);
-//	     v = account_current(M_CURRENT) ;
+//	     v = account_current(ADC_MB_CURR) ;
 //		 if((v < piv_m)||(( v - piv_m) < 10))
 //		 {
 //	         giv_sys_err = 34;
@@ -4067,8 +4241,8 @@ void Sweep_Level_Set(u16 sweep_level)
 			break;
 			case SWEEP_LEVEL_FORCE:
 				Set_BS_Level(FORCE_PWM);
-				Set_ZS_Level(FORCE_PWM);
-				Set_FJ_Level(FORCE_PWM);
+				Set_ZS_Level(MB_FORCE_PWM);
+				Set_FJ_Level(FAN_FORCE_PWM);
 			break;
 
 			//qz add 20180515
@@ -4111,29 +4285,96 @@ u8 Ring_Fix_Check(void)
 	return result;
 }
 
+u8 SB_OC_Check(void)
+{
+#if 0
+	if((sb_current_1s*CURR_SB_CNT_mA)>SB_PROTECTCURRENT)
+		return 1;
+	else
+		return 0;
+#else
+	if((sb_current_1s*CURR_SB_CNT_mA)>SB_PROTECTCURRENT)
+		{
+			switch(SideBrush.check_step)
+				{
+					case 0:
+						SideBrush.check_time=giv_sys_time;
+						SideBrush.check_step++;
+					break;
+					case 1:
+						if(giv_sys_time-SideBrush.check_time>SB_CHECK_TIME)
+							{
+								SideBrush.check_step=0;
+#ifdef EFFICENT_DEBUG
+								TRACE("SB OC Ocurr!\r\n");
+#endif
+								return 1;
+							}
+					break;
+				}
+		}
+	else
+
+		{
+			LSideBrush.check_step=0;
+		}
+#endif
+	return 0;
+}
+
 u8 MB_OC_Check(void)
 {
-	if(m_current_1s>M_PROTECTCURRENT)
+	if((m_current_1s*CURR_MB_CNT_mA)>M_PROTECTCURRENT)
 		return 1;
 	else
 		return 0;		//qz add 20180515
 }
+
 u8 Ring_OC_Check(void)
 {
 	u8 result=0;
-	if((l_current_1s>WHEEL_PROTECTCURRENT))
+	if((l_current_1s*CURR_RING_CNT_mA)>WHEEL_PROTECTCURRENT)
 		result|=0x01;
-	if(r_current_1s>WHEEL_PROTECTCURRENT)
+	if((r_current_1s*CURR_RING_CNT_mA)>WHEEL_PROTECTCURRENT)
 		result|=0x02;
 	return result;
 }
 
 u8 Fan_OC_Check(void)
 {
-	if(dust_current_1s>DUST_PROTECTCURRENT)
-		return 1;
-	else
+#if 1
+		if(Fan.flag)
+			{
+				switch(Fan.check_step)
+					{
+						case 0:
+							if((dust_current_1s*CURR_FAN_CNT_mA)<=DUST_PROTECTCURRENT)
+								{
+									Fan.check_time=giv_sys_time;
+									Fan.check_step++;
+								}
+							break;
+						case 1:
+							if((dust_current_1s*CURR_FAN_CNT_mA)>DUST_PROTECTCURRENT)
+								{
+									Fan.check_step=0;
+									return 0;
+								}
+							if(giv_sys_time-Fan.check_time>100000)		//10s
+								{
+									Fan.check_step=0;
+									return 1;
+								}
+							break;
+					}
+			}
 		return 0;
+#else
+		if(dust_current_1s>DUST_PROTECTCURRENT)
+			return 1;
+		else
+			return 0;
+#endif
 }
 
 u8 Bump_Fix_Check(void)
@@ -4218,6 +4459,7 @@ u8 SB_FIX_Check(void)
 	if(SideBrush.flag)
 		{
 		}
+	return data1;
 }
 
 u8 Check_All_Cliff(void)
@@ -4305,7 +4547,7 @@ u8 Wall_Earth_Check(void)
 
 void Check_Status(void)
 {
-	u8 voice_addr=0;
+	u8 voice_addr=0,data1=0;
 	if(CHECK_STATUS_FLAG&CHECK_STATUS_TIME)		//
 		{
 			CHECK_STATUS_TIME=false;
@@ -4325,6 +4567,7 @@ void Check_Status(void)
 							error_code=SEND_ERROR_FANFIX;
 							dis_err_code=DIS_ERROR_FAN_OC;
 							voice_addr=VOICE_ERROR_FAN_OC;			//无需发送语音
+							mode.err_code|=WIFI_ERR_FAN;
 						}
 				}
 			
@@ -4380,18 +4623,22 @@ void Check_Status(void)
 					error_code=SEND_ERROR_RINGFIX;
 					dis_err_code=DIS_ERROR_LEFTRING_OC;
 					voice_addr=VOICE_ERROR_L_RING;
+					mode.err_code|=WIFI_ERR_LRING_OC;
 				}
 			else if((!l_rap.fail)&(r_rap.fail))
 				{
 					error_code=SEND_ERROR_RINGFIX;
 					dis_err_code=DIS_ERROR_RIGHTRING_OC;
 					voice_addr=VOICE_ERROR_R_RING;
+					mode.err_code|=WIFI_ERR_RRING_OC;
 				}
 			if(l_rap.fail&r_rap.fail)
 				{
 					error_code=SEND_ERROR_RINGFIX;
 					dis_err_code=DIS_ERROR_RIGHTRING_OC;
 					voice_addr=VOICE_ERROR_R_RING;
+					mode.err_code|=WIFI_ERR_LRING_OC;
+					mode.err_code|=WIFI_ERR_RRING_OC;
 				}
 #endif
 
@@ -4407,12 +4654,20 @@ void Check_Status(void)
 								error_code=SEND_ERROR_LEFTRINGOC;		//qz add 20180913
 								dis_err_code=DIS_ERROR_LEFTRING_OC;
 								voice_addr=VOICE_ERROR_L_RING;
+								mode.err_code|=WIFI_ERR_LRING_OC;
 								break;
 							case 2:
+								error_code=SEND_ERROR_RIGHTRINGOC;		//qz add 20180913
+								dis_err_code=DIS_ERROR_RIGHTRING_OC;
+								voice_addr=VOICE_ERROR_R_RING;
+								mode.err_code|=WIFI_ERR_RRING_OC;
+								break;
 							case 3:
 								error_code=SEND_ERROR_RIGHTRINGOC;		//qz add 20180913
 								dis_err_code=DIS_ERROR_RIGHTRING_OC;
 								voice_addr=VOICE_ERROR_R_RING;
+								mode.err_code|=WIFI_ERR_LRING_OC;
+								mode.err_code|=WIFI_ERR_RRING_OC;
 								break;							
 						}
 				}
@@ -4425,8 +4680,17 @@ void Check_Status(void)
 					error_code=SEND_ERROR_MBOC;
 					dis_err_code=DIS_ERROR_MB_OC;
 					voice_addr=VOICE_ERROR_ZS_OC;
+					mode.err_code|=WIFI_ERR_MB;
 				}
 #endif
+
+			if(SB_OC_Check())
+				{
+					error_code=SEND_ERROR_SBOC;
+					dis_err_code=DIS_ERROR_MB_OC;
+					voice_addr=VOICE_ERROR_L_SB;
+					mode.err_code|=WIFI_ERR_SB_OC;
+				}
 
 #ifdef 		BUMP_FIX_CHECK
 			//////碰撞开关卡住异常检测//////////
@@ -4436,6 +4700,7 @@ void Check_Status(void)
 					error_code=SEND_ERROR_BUMPFIX;
 					dis_err_code=DIS_ERROR_BUMP_FIX;
 					voice_addr=VOICE_ERROR_BUMP_FIX;
+					mode.err_code|=WIFI_ERR_BUMP;
 				}
 #endif
 
@@ -4492,6 +4757,7 @@ void Check_Status(void)
 					error_code=SEND_ERROR_GYRO;
 					dis_err_code=DIS_ERROR_GYRO;
 					voice_addr=VOICE_ERROR_GYRO;
+					mode.err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 
@@ -4640,6 +4906,7 @@ void Init_Check_Status(void)
 
 	error_code=0;	//qz add 20180522
 	dis_err_code=0;
+	mode.err_code=0;
 
 #ifdef DEBUG_INIT
 	TRACE("Check Status init OK!\r\n");

@@ -191,9 +191,9 @@ void Do_Tele(void)
   
   
   //////显示显示屏的内容
-  Display_Real();
+  //Display_Real();
   Io_Driver();	 
-  Dis_Power = Get_Dispower();
+  //Dis_Power = Get_Dispower();
 
 
 

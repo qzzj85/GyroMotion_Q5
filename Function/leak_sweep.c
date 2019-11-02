@@ -171,7 +171,6 @@ void Init_LeakSweep(short tgt_yaw)
 void Do_LeakSweep(void)
 {
 	static u8 turn_dir=0;
-	u8 area_check=0;
 	s8 now_gridx,now_gridy,ydir=0;
 	short now_angle=Gyro_Data.yaw;
 	

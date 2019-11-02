@@ -11,37 +11,12 @@
 
 ///////////////////////私有变量////////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
-bool wifi_clean=false;
 //KEY key1,key2,key3,lidi,last_lidi,l_bump,r_bump,l_last_bump,r_last_bump,charge_dc,charge_seat,s_current;
 //KEY key1,key2,key3,lidi,l_bump,r_bump,l_last_bump,r_last_bump,charge_dc,charge_seat,s_current;	//QZ:原来的变量
 KEY key1,key2,key3,l_lidi,r_lidi,l_bump,r_bump,m_bump,lm_bump,rm_bump,charge_dc,charge_seat,s_current,dust_box,dust_sta;	//QZ:增加左右离地
                                                //hzh  李工新样机增加中碰撞，key1:模式,key2:启停,key3:回充
 bool key_time;
 											   
-#ifdef TUYA_WIFI
-bool wifi_time;
-bool wifi_update_time;
-unsigned char   wifi_key ;
-unsigned char  wifi_reset_begin = 0;
-unsigned char    wifi_led_begin = 0;
-unsigned long  wifi_begin_time = 0;
-unsigned long  wifi_stop_time = 0;
-
-unsigned char    wifi_state = 0;
-unsigned long  wifi_led_time = 0;
-unsigned char    led_flag = 0;
-unsigned char wifi_led_poweron= 0;
-/*
-#define         SMART_CONFIG_STATE              0x00
-#define         AP_STATE                        0x01
-#define         WIFI_NOT_CONNECTED              0x02
-#define         WIFI_CONNECTED                  0x03
-#define			WIFI_CONN_CLOUD					0x04
-#define			WIFI_LOW_POWER					0x05
-#define         WIFI_SATE_UNKNOW                0xff
-*/
-
-#endif
 ////////////////////////私有定义//////////////////////////////////
 #define HIGH_KEY_NUM 	4
 #define	LOW_KEY_NUM		11	
@@ -132,7 +107,6 @@ KEY3(回充)
     单独长按3s，进入厂测。
 
 ------------------------------------------*/
-	extern void wifi_uart_write_stream_init(unsigned char  id, unsigned short map_len);
 
 void AutoReadKey(void)
 {  
@@ -203,6 +177,8 @@ void AutoReadKey(void)
 									case YBS:
 									case SHIFT:
 									case PASS2INIT:
+									case EXIT:
+									case SPOT:
 										Init_Cease();
 										Send_Voice(VOICE_SWEEP_STOP);
 #ifdef TUYA_WIFI  
@@ -240,7 +216,7 @@ void AutoReadKey(void)
 					key2.long_long_press=false;
 					//qz add 20181026
 					//清空DS1307的数据
-					if(key3.long_long_press)
+					//if(key3.long_long_press)
 						{
 							WriteBatInitFlash();
 							NVIC_GenerateSystemReset();
@@ -431,6 +407,12 @@ u8 Read_Button_Key(KEY *key)
 									Send_Voice(VOICE_VOLUME_4);
 								}
 						}
+
+						if(remote_info.remote_key==REMOTE_KEY_START)
+							{	
+								WriteBatInitFlash();
+								NVIC_GenerateSystemReset();
+							}
 					}
 				if(key->key)
 					key->check_step++;
@@ -460,359 +442,6 @@ u8 Read_Button_Key(KEY *key)
 
 
 
-#ifdef TUYA_WIFI
-u8 map_data[WIFIDATA_LEN*3];
-
-void mcu_wifi_proc_key(void)
-{
-	u8 i; 
-      
-	if(wifi_update_time == 1)
-        {	
-		    all_data_update();
-			wifi_update_time = 0;
-		}
-	else  
-		{
-			if ((Read_WifiData_Status() == 1)&&(UART1.Trans_Busy==0))
-				{
-					for (i=0;i< WIFIDATA_LEN;i++)
-						{
-							map_data[i*3] =  wifidata[i].gridx;
-							map_data[i*3+1] =  wifidata[i].gridy;
-							map_data[i*3+2 ]=  wifidata[i].data;
-						}
-					stream_file_trans(0x00, map_data, WIFIDATA_LEN *3); // 60 = 20*3 
-					Set_WifiData_Empty();
-				}
-		}
-	
-    if(wifi_time == 0)		
-        return;
-    wifi_time = 0;
-	
-#if 1
-	if(wifi_clean==1) 
-		{
-			wifi_key = 1;
-			wifi_clean=0;
-		}
-#else
-	if(Slam_Data.dipan_req==DIPAN_REQ_WIFI) 
-		{
-			wifi_key = 1;
-			Slam_Data.dipan_req=DIPAN_REQ_NONE;
-		}
-#endif		  
-	if (wifi_reset_begin == 0) 
-		{
-			if (wifi_key == 1)	
-				{
-					mcu_reset_wifi();
-					//while (UART1.Trans_Busy == 1) ;
-					
-					mcu_set_wifi_mode(SMART_CONFIG);
-					wifi_reset_begin = 1;
-					wifi_led_begin = 1;
-					wifi_begin_time =wifi_stop_time= giv_sys_time;
-				 }
-			if (wifi_key == 2)	
-				{
-					mcu_reset_wifi();
-					//while (UART1.Trans_Busy == true) ;
-					mcu_set_wifi_mode(AP_CONFIG);
-					wifi_reset_begin = 1;
-					wifi_led_begin = 1;
-					wifi_begin_time =wifi_stop_time= giv_sys_time;
-				 }		
-		}	
-	if(wifi_reset_begin == 1) 
-		{
-			// mcu_get_reset_wifi_flag();
-			if ((reset_wifi_flag ==1)&&(set_wifimode_flag == 1))
-				{  //回复已经接收到复位信号 
-					wifi_key = 0;
-					wifi_reset_begin = 0;
-				}
-			if ((giv_sys_time-wifi_begin_time)>30000) 
-				{ //  超过3 s没有回应成功则再次发复位信号过去 
-					wifi_begin_time = giv_sys_time; //新修改 
-					if (wifi_key == 1) 
-						{
-							mcu_reset_wifi();
-							mcu_set_wifi_mode(SMART_CONFIG);}
-					if (wifi_key == 2) 
-						{
-							mcu_reset_wifi();
-							mcu_set_wifi_mode(AP_CONFIG);
-						}				 
-				}	 
-		}
-	if (wifi_led_begin == 1) 
-		{
-		//  HaltTime = 0;  // 配网时候不要马上待机 
-			if ((giv_sys_time-wifi_stop_time)>300000)
-				{ // 超过30秒结束
-					wifi_led_begin = 0;
-					Open_Led(0,1,0); // 红灯灭
-					Open_Led(1,0,0);// 绿灯常亮 
-					wifi_reset_begin = 0;   //新修改 退出后设置程序也同时退出,  实际wifi模块还可以配网
-					wifi_key = 0;
-					return;
-			 	}
-			switch (wifi_work_state) 
-				{
-					case SMART_CONFIG_STATE :
-					if ((giv_sys_time - wifi_led_time) >2500) 
-						{
-							led_flag ^=1;
-							if (led_flag ==0)
-								{
-									LED_RED_OFF;
-									LED_GREEN_OFF; 
-								}
-							else 
-								{
-									LED_RED_ON;
-									LED_GREEN_ON; 						
-								}
-							wifi_led_time = giv_sys_time ;
-						}
-					break;
-					case AP_STATE :
-						if ((giv_sys_time - wifi_led_time) >10000)
-							{
-								led_flag ^=1;
-								if (led_flag ==0)
-									{
-										LED_RED_OFF;
-										LED_GREEN_OFF;  
-									}
-								else 
-									{
-										LED_RED_ON;
-										LED_GREEN_ON; 						
-									} 
-								wifi_led_time = giv_sys_time ;
-							}			   
-					break;
-					case WIFI_NOT_CONNECTED  :
-						LED_RED_ON;
-						LED_GREEN_OFF; 
-						led_flag = 0;
-					break;
-					case WIFI_CONNECTED  :
-						if (led_flag ==0) 
-							Send_Voice(VOICE_WIFI_OK);					  
-						led_flag = 1;
-						LED_RED_OFF;
-						LED_GREEN_ON;  
-						wifi_stop_time = giv_sys_time-wifi_stop_time + 20000 ;// 2秒后就退出LED状态   新修改 
-					break;  
-					default :
-						//wifi_led_begin = 0;
-						LED_RED_OFF;
-						LED_GREEN_ON;  
-					break;
-				}
-
-
-		}
-	else 
-		{
-		// 开机或者工作时候连接wifi成功显示状态 3秒 
-#if 1
-	 //   if ((wifi_led_poweron < 2)&&(robot_status.system_status == ROBOTHALTING)) {
-			if (wifi_led_poweron < 2)   
-				{			
-				    if (((wifi_work_state == WIFI_CONNECTED)||(wifi_work_state == 0x04))&&(wifi_led_poweron < 1)) 
-						{
-					        wifi_led_poweron = 1;
-							wifi_begin_time = giv_sys_time;
-							LED_RED_ON;
-							LED_GREEN_ON; 			
-							Send_Voice(VOICE_WIFI_OK);	
-						}
-					if (((giv_sys_time-wifi_begin_time)>30000)&&(wifi_led_poweron ==1))
-						{ // 超过3秒结束
-							wifi_led_poweron  = 2;
-							LED_RED_OFF;
-							LED_GREEN_ON; 
-						}
-				}
-			else 
-				{
-					if (wifi_work_state < 0x03)  wifi_led_poweron = 0; //断往后重新连接网络    新修改 
-				}
-#endif
-		}
-}
-
-void proc_wifi_ybs(void)
-{
-	switch(mode.mode)
-		{
-			case CEASE:
-				switch(mode.sub_mode)
-					{
-						case CEASE:
-#ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
-#endif
-							Init_Right_YBS(1);
-						break;
-						case ERR:
-						case SLEEP:
-							Init_Cease();
-						break;
-						default:
-							break;
-					}
-				break;
-			case CHARGEING:
-				switch(mode.sub_mode)
-					{
-						case SWITCHOFF:
-							break;
-						case DC_CHARGING:
-							Send_Voice(VOICE_ERROR_DC_EXIST);
-							break;
-						case SEAT_CHARGING:
-							Init_Quit_Charging(SWEEP_METHOD_YBS);
-							break;
-						default:
-							break;
-					}
-				break;
-			default:
-				break;
-		}
-}
-
-void proc_wifi_dock(void)
-{
-	motion1.force_dock=true;
-	switch(mode.mode)
-		{
-			case CEASE:
-				switch(mode.sub_mode)
-					{
-						case CEASE:
-#ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
-#endif
-							Init_Docking();
-						break;
-						case ERR:
-						case SLEEP:
-							Init_Docking();
-						break;
-						default:
-							break;
-					}
-				break;
-			case SWEEP:
-			case SHIFT:
-			case PASS2INIT:
-			case EXIT:
-			case YBS:
-				stop_rap();
-				Send_Voice(VOICE_DOCK_START);
-				Sweep_Level_Set(SWEEP_LEVEL_DOCK);
-				Force_Dock();
-				break;
-			default:
-				break;
-		}
-}
-
-void proc_wifi_play()
-{
-	switch(mode.mode)
-		{
-			case CEASE:
-				switch(mode.sub_mode)
-					{
-						case CEASE:
-#ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数   地图  0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
-#endif
-							Init_First_Sweep(0);
-						break;
-						case ERR:
-						case SLEEP:
-							Init_Cease();
-						break;
-						default:
-							break;
-					}
-				break;
-			case CHARGEING:
-				switch(mode.sub_mode)
-					{
-						case SWITCHOFF:
-							break;
-						case DC_CHARGING:
-							Send_Voice(VOICE_ERROR_DC_EXIST);
-							break;
-						case SEAT_CHARGING:
-							Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
-							break;
-						default:
-							break;
-					}
-				break;
-			default:
-				break;
-		}
-
-}
-void proc_wifi_stop()
-{
-	switch(mode.mode)
-		{
-			case SWEEP:
-			case SHIFT:
-			case YBS:
-			case EXIT:
-			case PASS2INIT:
-				Send_Voice(VOICE_SWEEP_STOP);
-				Init_Cease();
-			break;
-			case DOCKING:
-				Send_Voice(VOICE_DOCK_STOP);
-				Init_Cease();
-			break;
-			case MODE_CTRL:
-				stop_rap();
-				Init_Cease();
-			break;
-			default:
-				break;
-		}
-#ifdef TUYA_WIFI  
-       stream_stop(0,256);// 停止地图    WIFI_STREAM_ENABLE
-#endif	
-}
-
-
-
-#endif
 
 
 

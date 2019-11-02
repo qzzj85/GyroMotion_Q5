@@ -321,7 +321,6 @@ output:	0:无法到达，1:可以到达
 u8 IS_Can_ReachPoint_X(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 {
 	s8 temp_gridx,temp_gridy;
-	s8 temp_xmin,temp_xmax;
 	temp_gridx=now_gridx;temp_gridy=now_gridy;
 
 //	TRACE("enter in %s\r\n",__func__);
@@ -339,15 +338,6 @@ u8 IS_Can_ReachPoint_X(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 				}
 			else															//当前点没有被清扫过
 				{
-					temp_xmax=Return_MaxClean_GridX(temp_gridy,0);			//当前Y坐标下最大X清扫点
-					temp_xmin=Return_MinClean_GridX(temp_gridy,0);			//当前Y坐标小最小X清扫点
-#if 0
-					TRACE("girdy=%d Xmax Clean=%d Xmin Clean=%d\r\n",temp_gridy,temp_xmax,temp_xmin);
-					for(temp_gridx=temp_xmin;temp_gridx<=temp_xmax;temp_gridx++)
-						{
-							TRACE("grid[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Clean(temp_gridx,temp_gridy));
-						}
-#endif
 					break;
 				}
 		}
@@ -1229,7 +1219,6 @@ u8 Locate_AreaDir(s8 gridx,s8 gridy)
 {
 	s8 xmax_clean,xmin_clean,ymax_clean,ymin_clean;
 	s8 x_median,y_median;
-	u8 x_dif,y_dif;
 
 	if(gridy<grid.y_area_min)
 		gridy=grid.y_area_min;
@@ -1282,7 +1271,6 @@ u8 Locate_BoundaryDir(s8 gridx,s8 gridy)
 {
 	s8 xmax_clean,xmin_clean,ymax_clean,ymin_clean;
 	s8 x_median,y_median;
-	u8 x_dif,y_dif;
 	xmax_clean=Return_MaxClean_GridX(gridy,0);
 	xmin_clean=Return_MinClean_GridX(gridy,0);
 	ymax_clean=Return_MaxClean_GridY(gridx,0);
@@ -1337,7 +1325,6 @@ u8 Locate_BoundaryDir(s8 gridx,s8 gridy)
 }
 
 u8 Judge_YBSDir_Area(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
-
 {
 	u8 now_area_dir,tgt_area_dir;
 	s8 now_gridx,now_gridy,tgt_gridx,tgt_gridy;
@@ -1504,10 +1491,9 @@ u8 Judge_YBSDir_Area(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							return 0;
 						case AREA_UPRIGHT:
 							return 1;
-							break;
 					}
-				break;
 		}
+		return 0;
 }
 
 u8 Judge_YBS_Dir(void)
@@ -1748,7 +1734,6 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 {
 	s8 temp_gridx,temp_gridy;
-	s8 temp_xmin,temp_xmax;
 	temp_gridx=now_gridx;temp_gridy=now_gridy;
 
 //	TRACE("enter in %s\r\n",__func__);
@@ -1766,15 +1751,6 @@ u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 				}
 			else															//当前点没有被清扫过
 				{
-					temp_xmax=Return_MaxClean_GridXAll(temp_gridy,0);			//当前Y坐标下最大X清扫点
-					temp_xmin=Return_MinClean_GridXAll(temp_gridy,0);			//当前Y坐标小最小X清扫点
-#if 0
-					TRACE("girdy=%d Xmax Clean=%d Xmin Clean=%d\r\n",temp_gridy,temp_xmax,temp_xmin);
-					for(temp_gridx=temp_xmin;temp_gridx<=temp_xmax;temp_gridx++)
-						{
-							TRACE("grid[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Clean(temp_gridx,temp_gridy));
-						}
-#endif
 					break;
 				}
 		}

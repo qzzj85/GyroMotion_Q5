@@ -21,8 +21,9 @@
 
 ///////////////////////////////////变量定义//////////////////
 extern WALL_DATA  e_l,e_r,e_m,w_l,w_lm,w_r,w_rm,w_m;  //地检和墙检的数据结构e_lm,e_rm
-extern bool wall_earth_time;  //地检和墙检的
-extern bool action_wall_time;	
+extern bool wall_time,earth_time;  //地检和墙检的
+extern bool action_wall_time;
+extern bool action_earth_time;
 extern bool check_earth_time;
 extern bool check_wall_time;
 //QZ ADD

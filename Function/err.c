@@ -18,7 +18,7 @@ void Init_Err(void)
     /******初始化显示***********/
 	/******初始化设置的值********************/
 	clr_ram();
-
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	stop_rap();						//停止轮子
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
 	Disable_earth();				//关闭地检
@@ -96,7 +96,8 @@ void Do_Err(void)
   //但是报警进入异常后，一旦又着地，则马上进入待机状态，让人无法知道刚才发生了什么，机器就不动了
   //所以把单轮悬空的状态从这里屏蔽，不能自动回复
   //if((error_code==SEND_ERROR_DIPANLIFT)|(error_code==SEND_ERROR_LEFTLIFT)|(error_code==SEND_ERROR_RIGHTLIFT))
-  if((error_code==SEND_ERROR_DIPANLIFT))	//qz add 20180913
+  //if((error_code==SEND_ERROR_DIPANLIFT))	//qz add 20180913
+  if(error_code==SEND_ERROR_DANGER)
   	{
   		//if((l_lidi.key)&(r_lidi.key)&((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN)))
   		if((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN))

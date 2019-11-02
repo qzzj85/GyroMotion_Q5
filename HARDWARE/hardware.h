@@ -308,6 +308,9 @@ u8 Read_LSB_Status(void);
 u8 Read_RSB_Status(void); 	
 u8 Read_RM_HW(void);
 u8 Read_LM_HW(void);
+u8 Read_RB_HW(void);
+u8 Read_LB_HW(void);
+
 
 void  Init_System(void);
 void RCC_Configuration(void);

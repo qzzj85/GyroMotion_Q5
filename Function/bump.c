@@ -50,7 +50,8 @@ void Close_Bump_Exit(void)
 }
 
 void Open_Bump_Exit(void)
-{
+{
+
 	if((bump_exiton)&(!GPIO_ReadInputDataBit(GPIOB,RING_PWM_CTL_PIN)))
 		return;
 	EXTI->IMR|=0x00000240;			//¿ª·ÅÅö×²ÖĞ¶Ï
@@ -148,7 +149,7 @@ u8 Parse_BumpValue(void)
 			default:
 				return 0;			
 		}
-	return 0;
+//	return 0;
 }
 
 void Open_Ring_Cnt(void)

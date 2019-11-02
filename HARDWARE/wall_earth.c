@@ -9,8 +9,9 @@ WALL_DATA  e_l,e_r,e_m,w_l,w_lm,w_r,w_rm,w_m;//e_lm,e_rm,
 WALL_DATA w_mm;
 #endif
 
-bool wall_earth_time;
+bool wall_time,earth_time;
 bool action_wall_time;	//qz add 20180717
+bool action_earth_time;
 bool WallSensitivity;   //墙检信号灵敏度，为false时灵敏度低，为ture时灵敏度高
 ///////////////////////私有变量////////////////////////////////////	  
 bool action_wall;     //允许检测墙检标志
@@ -107,218 +108,6 @@ void init_wallearth(void)
 #ifdef DEBUG_INIT
 	TRACE("Wall Earth init OK!\r\n");
 #endif
-}
-/*****************************************
-功能: 定时读取地检和墙检的数据,1ms读一次
-输入: 无
-输出：无
-*****************************************/
-void read_wallearth(void)
-{
-/*****************************************
-
-定时处理
-	
-*****************************************/	 
-	static bool ligth = false;
-	if( wall_earth_time == false)
-	{
-		return;
-	}
-	wall_earth_time = false;
-//-----------------------------
-/*****************************************
-
-读取暗信号
-	
-*****************************************/	
-	if(ligth == false)		  //熄灯的信号
-			{
-				if(action_earth != false)							//	如果要求地检测
-						{
-							e_l.darkness	= Grand_Sensor_AD(E_L);
-							e_m.darkness = Grand_Sensor_AD(E_M);
-							e_r.darkness	= Grand_Sensor_AD(E_R);
-							Set_Earth_Send();
-						}
-						
-				if(action_wall != false)						//	如果要求强检测
-						{
-
-							w_l.darkness	= Wall_account_current(W_L);   
-							w_lm.darkness = Wall_account_current(W_LM);  
-							w_m.darkness	= Wall_account_current(W_M);  
-							w_rm.darkness = Wall_account_current(W_RM);  
-							w_r.darkness	= Wall_account_current(W_R);
-							Set_Wall_Send();
-						} 
-				ligth = true;
-			}
-	else
-/*****************************************
-
-读取亮信号
-	
-*****************************************/	   
-			{
-				ligth = false;			   
-				if(action_earth != false)													//	如果要求地检测
-						{
-							e_l.brightness	= Grand_Sensor_AD(E_L);
-							e_m.brightness = Grand_Sensor_AD(E_M);
-							e_r.brightness	= Grand_Sensor_AD(E_R);
-							check_earth( &e_l,		e_l.difference);   
-							check_earth( &e_m,		e_m.difference); 
-							check_earth( &e_r,		e_r.difference); 
-						}
-						
-		//		uint16 Wall_account_current (u8 channel)
-				if(action_wall != false)													//	如果要求强检测
-						{
-										
-							w_l.brightness	= Wall_account_current(W_L);
-//							w_l.brightness	+= e_r.difference / 30; 		//	因为AD转换	//qz mask 20180202
-							
-							w_lm.brightness = Wall_account_current(W_LM);  
-							w_m.brightness	= Wall_account_current(W_M);  
-							w_rm.brightness = Wall_account_current(W_RM);  
-							w_r.brightness	= Wall_account_current(W_R);
-							
-							
-							check_Wall	(&w_l,		w_l.difference);	
-							check_Wall	(&w_lm, 	w_lm.difference); 
-							check_Wall	(&w_m,		w_m.difference); 
-							check_Wall	(&w_rm, 	w_rm.difference); 
-							check_Wall	(&w_r,		w_r.difference);	
-							
-							check_near	(&w_l); 
-							check_near	(&w_rm); 
-							check_near	(&w_r); 
-							check_near	(&w_lm);
-							check_near	(&w_m); 
-
-							
-							w_r.dis=Return_Distance((w_r.difference>w_r.bias)?(w_r.difference-w_r.bias):0);
-							if(w_r.dis>=w_r.max_dis)
-								w_r.max_dis=w_r.dis;
-							w_rm.dis=Return_Distance((w_rm.difference>w_rm.bias)?(w_rm.difference-w_rm.bias):0);
-							if(w_rm.dis>=w_rm.max_dis)
-								w_rm.max_dis=w_rm.dis;
-							w_m.dis=Return_Distance((w_m.difference>w_m.bias)?(w_m.difference-w_m.bias):0);
-							if(w_m.dis>=w_m.max_dis)
-								w_m.max_dis=w_m.dis;
-							w_lm.dis=Return_Distance((w_lm.difference>w_lm.bias)?(w_lm.difference-w_lm.bias):0);
-							if(w_lm.dis>=w_lm.max_dis)
-								w_lm.max_dis=w_lm.dis;
-							w_l.dis=Return_Distance((w_l.difference>w_l.bias)?(w_l.difference-w_l.bias):0);
-							if(w_l.dis>=w_l.max_dis)
-								w_l.max_dis=w_l.dis;
-
-
-							
-						}
-				Reset_Wall_Send();				//关闭发射
-				Reset_Earth_Send(); 			//关闭发射
-			}			
-}
-
-
-
-void read_wallearth_my(void)
-{
-/*****************************************
-
-定时处理
-  
-*****************************************/   
-	static bool light_earth = false;
-	static bool light_wall=false;
-	if( wall_earth_time == false)
-    {
-      return;
-    }
-  	wall_earth_time = false;
-//-----------------------------
-	if(action_earth)
-		{
-			if(!light_earth)
-			{
-				e_l.darkness 	= Grand_Sensor_AD(E_L);
-				e_m.darkness = Grand_Sensor_AD(E_M);
-				e_r.darkness 	= Grand_Sensor_AD(E_R);
-				Set_Earth_Send();
-				light_earth=true;
-			}
-			else
-			{
-				e_l.brightness 	= Grand_Sensor_AD(E_L);
-				e_m.brightness = Grand_Sensor_AD(E_M);
-				e_r.brightness 	= Grand_Sensor_AD(E_R);
-				check_earth( &e_l,		e_l.difference);   
-				check_earth( &e_m,		e_m.difference); 
-				check_earth( &e_r,		e_r.difference); 
-				light_earth=false;
-				Reset_Earth_Send();
-			}
-		}
-
-	if(action_wall)
-		{
-			if(!light_wall)
-				{
-					w_l.darkness 	= Wall_account_current(W_L);   
-					w_lm.darkness = Wall_account_current(W_LM);  
-					w_m.darkness 	= Wall_account_current(W_M);  
-					w_rm.darkness = Wall_account_current(W_RM);  
-					w_r.darkness 	= Wall_account_current(W_R);
-					Set_Wall_Send();
-					light_wall=true;
-				}
-			else
-				{
-					w_l.brightness	= Wall_account_current(W_L);
-					w_lm.brightness = Wall_account_current(W_LM);  
-					w_m.brightness	= Wall_account_current(W_M);  
-					w_rm.brightness = Wall_account_current(W_RM);  
-					w_r.brightness	= Wall_account_current(W_R);
-					
-					check_Wall	(&w_l,		w_l.difference);	
-					check_Wall	(&w_lm, 	w_lm.difference); 
-					check_Wall	(&w_m,		w_m.difference); 
-					check_Wall	(&w_rm, 	w_rm.difference); 
-					check_Wall	(&w_r,		w_r.difference);	
-					
-					check_near	(&w_l); 
-					check_near	(&w_rm); 
-					check_near	(&w_r); 
-					check_near	(&w_lm);
-					check_near	(&w_m); 	
-					
-					w_r.dis=Return_Distance((w_r.difference>w_r.bias)?(w_r.difference-w_r.bias):0);
-					if(w_r.dis>=w_r.max_dis)
-						w_r.max_dis=w_r.dis;
-					w_rm.dis=Return_Distance((w_rm.difference>w_rm.bias)?(w_rm.difference-w_rm.bias):0);
-					if(w_rm.dis>=w_rm.max_dis)
-						w_rm.max_dis=w_rm.dis;
-					w_m.dis=Return_Distance((w_m.difference>w_m.bias)?(w_m.difference-w_m.bias):0);
-					if(w_m.dis>=w_m.max_dis)
-						w_m.max_dis=w_m.dis;
-					w_lm.dis=Return_Distance((w_lm.difference>w_lm.bias)?(w_lm.difference-w_lm.bias):0);
-					if(w_lm.dis>=w_lm.max_dis)
-						w_lm.max_dis=w_lm.dis;
-					w_l.dis=Return_Distance((w_l.difference>w_l.bias)?(w_l.difference-w_l.bias):0);
-					if(w_l.dis>=w_l.max_dis)
-						w_l.max_dis=w_l.dis;
-
-					if(action_wall_time)
-						{
-							light_wall=false;
-							action_wall_time=false;
-							Reset_Wall_Send();
-						}
-					}
-							
-		} 
 }
 /****************************************************
 函数名： check_earth
@@ -677,31 +466,59 @@ void Wall_SensitivityHigh(void)	//SWEEP使用
 void Read_Earth_My(void)
 {
 	static bool light_earth=false;
+
+	if(!action_earth)
+		return;
+#if 0
+	if((action_earth_time) &&(light_earth)&&(!earth_time))
+		{
+			action_earth_time=false;
+			light_earth=false;
+			e_l.brightness	= Grand_Sensor_AD(ADC_EARTH_L);
+			e_m.brightness = Grand_Sensor_AD(ADC_EARTH_M);
+			e_r.brightness	= Grand_Sensor_AD(ADC_EARTH_R);
+			check_earth( &e_l,		e_l.difference);   
+			check_earth( &e_m,		e_m.difference); 
+			check_earth( &e_r,		e_r.difference); 
+			light_earth=false;
+			Reset_Earth_Send();
+		}
+	if(!earth_time)
+		return;
+	earth_time=false;
+	action_earth_time=false;
+	if(!light_earth)
+		{
+			e_l.darkness 	= Grand_Sensor_AD(ADC_EARTH_L);
+			e_m.darkness = Grand_Sensor_AD(ADC_EARTH_M);
+			e_r.darkness 	= Grand_Sensor_AD(ADC_EARTH_R);
+			Set_Earth_Send();
+			light_earth=true;
+		}
+#else
 	if(!check_earth_time)
 		return;
 	check_earth_time=false;
-	if(action_earth)
-		{
-			if(!light_earth)
-			{
-				e_l.darkness 	= Grand_Sensor_AD(E_L);
-				e_m.darkness = Grand_Sensor_AD(E_M);
-				e_r.darkness 	= Grand_Sensor_AD(E_R);
-				Set_Earth_Send();
-				light_earth=true;
-			}
-			else
-			{
-				e_l.brightness 	= Grand_Sensor_AD(E_L);
-				e_m.brightness = Grand_Sensor_AD(E_M);
-				e_r.brightness 	= Grand_Sensor_AD(E_R);
-				check_earth( &e_l,		e_l.difference);   
-				check_earth( &e_m,		e_m.difference); 
-				check_earth( &e_r,		e_r.difference); 
-				light_earth=false;
-				Reset_Earth_Send();
-			}
-		}
+	if(!light_earth)
+	{
+		e_l.darkness 	= Grand_Sensor_AD(ADC_EARTH_L);
+		e_m.darkness = Grand_Sensor_AD(ADC_EARTH_M);
+		e_r.darkness 	= Grand_Sensor_AD(ADC_EARTH_R);
+		Set_Earth_Send();
+		light_earth=true;
+	}
+	else
+	{
+		e_l.brightness 	= Grand_Sensor_AD(ADC_EARTH_L);
+		e_m.brightness = Grand_Sensor_AD(ADC_EARTH_M);
+		e_r.brightness 	= Grand_Sensor_AD(ADC_EARTH_R);
+		check_earth( &e_l,		e_l.difference);   
+		check_earth( &e_m,		e_m.difference); 
+		check_earth( &e_r,		e_r.difference); 
+		light_earth=false;
+		Reset_Earth_Send();
+	}
+#endif
 }
 
 //qz add 20180814
@@ -711,29 +528,88 @@ void Read_Wall_My(void)
 {
 	static bool ligth_wall=false;
 
-	if(!wall_earth_time)
+#ifdef  FAST_WALL_DET
+	if(!action_wall) 
+		return ;
+//-  action_wall_time = 1ms , 占空比  = 10% 
+	if((action_wall_time) &&(ligth_wall)&&(!wall_time))
+		{
+			 action_wall_time=false;	
+			 w_l.brightness  = Wall_account_current(ADC_WALL_L);
+			 w_lm.brightness = Wall_account_current(ADC_WALL_LM);	
+			 w_m.brightness  = Wall_account_current(ADC_WALL_M);  
+			 w_rm.brightness = Wall_account_current(ADC_WALL_RM);	
+			 w_r.brightness  = Wall_account_current(ADC_WALL_R);
+			ligth_wall=false;
+			
+			 check_Wall  (&w_l, 	 w_l.difference);	 
+			 check_Wall  (&w_lm,	 w_lm.difference); 
+			 check_Wall  (&w_m, 	 w_m.difference); 
+			 check_Wall  (&w_rm,	 w_rm.difference); 
+			 check_Wall  (&w_r, 	 w_r.difference);	 
+						 
+			 check_near  (&w_l); 
+			 check_near  (&w_rm); 
+			 check_near  (&w_r); 
+			 check_near  (&w_lm);
+			 check_near  (&w_m);	 
+						 
+			 w_r.dis=Return_Distance((w_r.difference>w_r.bias)?(w_r.difference-w_r.bias):0);
+			 if(w_r.dis>=w_r.max_dis)
+				 w_r.max_dis=w_r.dis;
+			 w_rm.dis=Return_Distance((w_rm.difference>w_rm.bias)?(w_rm.difference-w_rm.bias):0);
+			 if(w_rm.dis>=w_rm.max_dis)
+				 w_rm.max_dis=w_rm.dis;
+			 w_m.dis=Return_Distance((w_m.difference>w_m.bias)?(w_m.difference-w_m.bias):0);
+			 if(w_m.dis>=w_m.max_dis)
+				 w_m.max_dis=w_m.dis;
+			 w_lm.dis=Return_Distance((w_lm.difference>w_lm.bias)?(w_lm.difference-w_lm.bias):0);
+			 if(w_lm.dis>=w_lm.max_dis)
+				 w_lm.max_dis=w_lm.dis;
+			 w_l.dis=Return_Distance((w_l.difference>w_l.bias)?(w_l.difference-w_l.bias):0);
+			 if(w_l.dis>=w_l.max_dis)
+				 w_l.max_dis=w_l.dis;
+
+			 Reset_Wall_Send();
+		}
+		//---wall_earth_time = 10ms , 100HZ 周期	
+	if(!wall_time)
 		return;
-	wall_earth_time=false;
+	wall_time=false;
+	action_wall_time=false;   
+	if(!ligth_wall)
+		{
+			w_l.darkness	= Wall_account_current(ADC_WALL_L);   
+			w_lm.darkness = Wall_account_current(ADC_WALL_LM);  
+			w_m.darkness	= Wall_account_current(ADC_WALL_M);  
+			w_rm.darkness = Wall_account_current(ADC_WALL_RM);  
+			w_r.darkness	= Wall_account_current(ADC_WALL_R);
+			Set_Wall_Send();
+			ligth_wall=true;
+		}
+#else
+	if(!wall_time)
+		return;
+	wall_time=false;
 	if(action_wall)
 		{
 			if(!ligth_wall)
 				{
-					w_l.darkness 	= Wall_account_current(W_L);   
-					w_lm.darkness = Wall_account_current(W_LM);  
-					w_m.darkness 	= Wall_account_current(W_M);  
-					w_rm.darkness = Wall_account_current(W_RM);  
-					w_r.darkness 	= Wall_account_current(W_R);
+					w_l.darkness	= Wall_account_current(ADC_WALL_L);   
+					w_lm.darkness = Wall_account_current(ADC_WALL_LM);  
+					w_m.darkness	= Wall_account_current(ADC_WALL_M);  
+					w_rm.darkness = Wall_account_current(ADC_WALL_RM);  
+					w_r.darkness	= Wall_account_current(ADC_WALL_R);
 					Set_Wall_Send();
 					ligth_wall=true;
 				}
 			else
 				{
-					w_l.brightness	= Wall_account_current(W_L);
-					w_lm.brightness = Wall_account_current(W_LM);  
-					w_m.brightness	= Wall_account_current(W_M);  
-					w_rm.brightness = Wall_account_current(W_RM);  
-					w_r.brightness	= Wall_account_current(W_R);
-					
+					w_l.brightness	= Wall_account_current(ADC_WALL_L);
+					w_lm.brightness = Wall_account_current(ADC_WALL_LM);  
+					w_m.brightness	= Wall_account_current(ADC_WALL_M);  
+					w_rm.brightness = Wall_account_current(ADC_WALL_RM);  
+					w_r.brightness	= Wall_account_current(ADC_WALL_R);			
 					check_Wall	(&w_l,		w_l.difference);	
 					check_Wall	(&w_lm, 	w_lm.difference); 
 					check_Wall	(&w_m,		w_m.difference); 
@@ -761,7 +637,6 @@ void Read_Wall_My(void)
 					w_l.dis=Return_Distance((w_l.difference>w_l.bias)?(w_l.difference-w_l.bias):0);
 					if(w_l.dis>=w_l.max_dis)
 						w_l.max_dis=w_l.dis;
-
 					if(action_wall_time)
 						{
 							ligth_wall=false;
@@ -771,4 +646,5 @@ void Read_Wall_My(void)
 					}
 							
 		} 
+#endif	
 }

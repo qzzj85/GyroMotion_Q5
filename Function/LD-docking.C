@@ -10,7 +10,6 @@ u8 		MID_TURN			=1;
 u8		BUMP_TURN_DIR		=1;
 u8 		DOCK_IN_SIGHT		=0;
 bool	TOP_FLAG			=false;
-bool 	DOCK_PREPARE		=false;
 bool 	FIND_SEAT_FAIL;
 bool 	TOP_DIR				=false;		//false向右偏转,true向左偏转
 u32 	top_l_length,top_r_length,find_home,seat_time;
@@ -53,7 +52,8 @@ void Init_Docking(void)
 			Init_Cease();
 			return;
 		}
-
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
+	Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 	motion1.force_dock=false;
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -80,9 +80,6 @@ void Init_Docking(void)
 	WriteWorkState();
 //	ReInitAd();
 
-	Sweep_Level_Set(SWEEP_LEVEL_DOCK);
-//	mode.Info_Abort=1;		//qz add:根据张云鹏要求，小回充模式下可以仅限停止指令
-	mode.All_Info_Abort=0;			//qz add 20180919
 	SLAM_DOCK=false;
 	DOCK_SWEEP=false;		//qz add 20180803
 	FIND_SEAT_FAIL=false;
@@ -651,7 +648,6 @@ void Do_Docking_My(void)
 		   			break;
 
 					case DOCKMODE_STEP_TOP_SPOT:
-						DOCK_PREPARE=true;
 						top_piv_left=1;
 						top_piv_done=0;
 						top_piv_out=1;
@@ -660,7 +656,6 @@ void Do_Docking_My(void)
 
 					//后红外接收头，只接收到TOP信号
 					case DOCKMODE_STEP_TOP:
-						DOCK_PREPARE=true;
 						top_piv_left=1;
 						top_piv_done=0;
 						top_piv_out=1;
@@ -2096,7 +2091,7 @@ void Start_Mid(void)
 void Start_Top_Spot_My(void)
 {
 	static u32 stop_l_length,last_l_length,stop_r_length,last_r_length;
-	u32 l_sp_const=800,r_sp_const=800,data1;
+	u32 l_sp_const=800,r_sp_const=800;
 	//u32 r_sp_turn[6]={500,1000,1500,2000,2500,2800};
 	u32 r_sp_turn[6]={100,200,300,400,500,600};
 	//u32 l_sp_turn[6]={500,1000,1500,2000,2500,2800};
@@ -4811,7 +4806,6 @@ void Do_Docking_YBS(void)
 	u8 temp_data1=0;
 	u8 abnormal;
 	u32 uin32;
-	static u8 turn_dir=0;
 
 #if 1		
 #ifdef DC_NOBAT_RUN

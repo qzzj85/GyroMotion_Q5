@@ -10,8 +10,12 @@
 #define	PWM_RING_MAX	2000
 #define	PWM_RING_PRESCALER	1
 #endif
+
+#define PWM_SWEEP_MAX	2000
+#define PWM_SWEEP_PRESCALER	9
+
 #define PWM_CHARGE_MAX 	2000
-#define	PWM_SWEEP_PRESCALER	0
+#define	PWM_CHARGE_PRESCALER	0
 
 //hzh  风机等级
 #define 	SILENCE_PWM   			PWM_CHARGE_MAX/5
@@ -27,8 +31,14 @@
 #define		SWEEP_LEVEL_FORCE		4
 
 
-#define		MB_STD_PWM				200
-#define		FAN_STD_PWM				900
+#define		MB_STD_PWM				800			//40%
+#define		FAN_STD_PWM				1200		//60%
+
+#define		MB_FORCE_PWM			800			//40%
+#define		FAN_FORCE_PWM			1600		//80%
+
+void Init_Ring_Pwm(u16 period,u16 prescaler);
+void Init_Sweep_Pwm(u16 period,u16 prescaler);
 
 void  Init_PWM(void);
 void  enable_pwm(u16 channel,u16  pwm);

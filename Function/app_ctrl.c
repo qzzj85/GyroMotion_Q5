@@ -7,6 +7,7 @@ void Init_App_Ctrl(u8 move_dir)
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
 	
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	/******初始化设置的值********************/
 
 	/*******初始化输出的控制***************/
@@ -19,7 +20,7 @@ void Init_App_Ctrl(u8 move_dir)
 	Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed(); 				//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
-	Sweep_Level_Set(SWEEP_LEVEL_STOP);
+	Sweep_Level_Set(sweep_level);
 		
 	/****设置机器的工作模式******/   
 	mode.mode = MODE_CTRL; 
@@ -45,13 +46,12 @@ void Init_App_Ctrl(u8 move_dir)
 
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 	Open_Led(1,0,0);
-	app_key=move_dir;
+	motion1.app_key=move_dir;
 }
 
 void AppCtrl_Bump_Action(void)
 {
-	u8 m;
-	m=Read_Remote_Bump(0);
+	Read_Remote_Bump(0);
 
 	if(!mode.bump)
 		return;
@@ -85,7 +85,7 @@ void Do_App_Ctrl(void)
 
 	if(mode.sub_mode!=SUBMODE_APP_CTRL)
 		return;
-	switch(app_key)
+	switch(motion1.app_key)
 		{
 			case APP_KEY_FORWORD:
 				switch(mode.step)
@@ -141,7 +141,10 @@ void Do_App_Ctrl(void)
 				break;
 			case APP_KEY_STOP:
 				stop_rap();
-				Init_Cease();
+				if(mode.last_sub_mode==SUBMODE_PAUSESWEEP)
+					Init_PauseSweep();
+				else
+					Init_Cease();
 			break;
 		}
 }

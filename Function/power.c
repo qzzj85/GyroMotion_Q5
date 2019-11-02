@@ -40,6 +40,7 @@ u16  l_current;          //左轮电流
 u16  r_current;          //右轮电流
 u16  dust_current;       //灰尘风机电流
 u16  m_current;          //中扫电流	
+u16  sb_current;
 
 u16  battery_chargecurrent_1s;//电池1秒内的平均电流
 u16  battery_voltage_1s;    //电池1秒的电压
@@ -48,6 +49,7 @@ u16  l_current_1s;          //左轮电流
 u16  r_current_1s;          //右轮电流
 u16  dust_current_1s;       //灰尘风机电流
 u16  m_current_1s;          //中扫电流
+u16  sb_current_1s;
 bool dc_nobat_run=false;	//不用电池,DC直插跑机标志位
 
 u16  l_current_50ms=0;
@@ -247,8 +249,8 @@ void chargeing(void)
 		
 		piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
 		piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
-		real_chg_current= (u32)(piv_current*CHG_CUR_CNT);
-		real_bat_voltage= (u32)(piv_voltage*CHG_VOL_CNT);
+		real_chg_current= (u32)(piv_current*CURR_CHG_CNT);
+		real_bat_voltage= (u32)(piv_voltage*VOLT_CHG_CNT);
 		
 		switch(power.step)
 		{
@@ -541,7 +543,7 @@ void ChargeControl_My(void)
 			#endif
 				jt_chargecurrent = battery_chargecurrent;
 #ifdef DEBUG_CHARGE
-				TRACE("jt_cur=%dmA\r\n",(u32)(jt_chargecurrent*CHG_CUR_CNT));
+				TRACE("jt_cur=%dmA\r\n",(u32)(jt_chargecurrent*CURR_CHG_CNT));
 #endif
 				power.step = 2;
 				power.temp = battery_temp;//Get_BatteryTemp();
@@ -646,8 +648,8 @@ void ChargeControl_My(void)
 			{
 				gbv_minute = false;
 #ifdef DEBUG_CHARGE
-				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CHG_CUR_CNT));
-				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CHG_CUR_CNT));
+				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
+				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
 #endif
 
 				if((((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
@@ -796,7 +798,7 @@ void ChargeControl_Volt_My(void)
 				Init_Charge_Data();
 				jt_chargecurrent=battery_chargecurrent;
 #ifdef DEBUG_CHARGE
-				TRACE("jt_curr=%d\r\n",(u32)(jt_chargecurrent*CHG_CUR_CNT));
+				TRACE("jt_curr=%d\r\n",(u32)(jt_chargecurrent*CURR_CHG_CNT));
 #endif
 				flag_full = false;					//电池未充满
 				power.time=giv_sys_time;
@@ -877,8 +879,8 @@ void ChargeControl_Volt_My(void)
 			{
 				gbv_minute = false;			
 #ifdef DEBUG_CHARGE
-				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CHG_CUR_CNT));
-				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CHG_CUR_CNT));
+				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
+				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
 #endif
 				//充电电流小于静态电流+100mA,则转入恒压充电
 				if((((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
@@ -945,8 +947,8 @@ void ChargeControl_Volt_My(void)
 			{
 				gbv_minute = false;
 #ifdef DEBUG_CHARGE
-				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CHG_CUR_CNT));
-				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CHG_CUR_CNT));
+				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
+				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
 #endif
 
 #if 1
@@ -1105,6 +1107,7 @@ static u32	l_linshi_current = 0,               //左轮的临时电流
             r_linshi_current = 0,               //右轮的临时电流
 			m_linshi_current = 0,               //中扫的临时电流
 			dust_linshi_current = 0,            //灰尘风机的临时电流
+			sb_temp_current=0,
             battery_linshi_voltage = 0,         //电池的临时电压          
 			battery_linshi_temp = 0,            //电池的临时温度
             battery_linshi_chargecurrent = 0;//电池5秒内的平均电流
@@ -1115,6 +1118,7 @@ static u32	l_linshi_current_1s = 0,               //左轮的临时电流
             r_linshi_current_1s = 0,               //右轮的临时电流
 			m_linshi_current_1s = 0,               //中扫的临时电流
 			dust_linshi_current_1s = 0,            //灰尘风机的临时电流
+			sb_temp_current_1s=0,
             battery_linshi_voltage_1s = 0,         //电池的临时电压          
 			battery_linshi_temp_1s = 0,            //电池的临时温度
             battery_linshi_chargecurrent_1s = 0;//电池1秒内的平均电流
@@ -1131,21 +1135,29 @@ u32 t;
 			 
 			 
    sampling_number ++;
-   t =	account_current(L_CURRENT)/4;		//qz modify 20181120,冠唯采样电阻为0.47欧,贝莱恩为2欧, 2/0.47=4.25
+   t =	account_current(ADC_LRING_CURR);		//qz modify 20181120,冠唯采样电阻为0.47欧,贝莱恩为2欧, 2/0.47=4.25
    l_linshi_current += t;
 	l_linshi_current_1s += t ;
 	l_temp_curr_50ms+=t;
-   t = 	account_current(R_CURRENT)/4;
+	
+   t = 	account_current(ADC_RRING_CURR);
    r_linshi_current += t;
    r_linshi_current_1s += t;
    r_temp_curr_50ms+=t;
    sample_number_50ms++;
-   t = 	account_current(M_CURRENT)/4 ;
+   
+   t = 	account_current(ADC_MB_CURR) ;
    m_linshi_current += t;
    m_linshi_current_1s += t;
-   t =	account_current(FAN_CURRNET)/4;
+   
+   t =	account_current(ADC_FAN_CURR);
    dust_linshi_current += t;
    dust_linshi_current_1s += t;
+
+   t=account_current(ADC_SB_CURRENT);
+   sb_temp_current+=t;
+   sb_temp_current_1s+=t;
+   
    t =	account_current(BATTERY_VOLTAGE);
    battery_linshi_voltage += t;
    battery_linshi_voltage_1s += t;
@@ -1168,6 +1180,7 @@ u32 t;
 					dust_current = (u16) (dust_linshi_current/25000);       //灰尘风机电流
 					m_current = (u16) (m_linshi_current/25000);          //中扫电流
 					battery_chargecurrent = (u16)(battery_linshi_chargecurrent/25000);//充电平均电流
+					sb_current=(u16)(sb_temp_current/25000);
 					sampling_number = 0;
 					battery_linshi_voltage = 0;
 					battery_linshi_temp = 0;
@@ -1176,6 +1189,7 @@ u32 t;
 					dust_linshi_current = 0;
 					m_linshi_current = 0;
 					battery_linshi_chargecurrent = 0;
+					sb_temp_current=0;
 			 }		 
     			
    sampling_number_1s ++;
@@ -1188,6 +1202,7 @@ u32 t;
 					dust_current_1s = (u16) (dust_linshi_current_1s/5000);       //灰尘风机电流
 					m_current_1s = (u16) (m_linshi_current_1s/5000);          //中扫电流
 					battery_chargecurrent_1s = (u16)(battery_linshi_chargecurrent_1s/5000);//充电平均电流
+					sb_current_1s=(u16)(sb_temp_current_1s/5000);
 					sampling_number_1s = 0;
 					battery_linshi_voltage_1s = 0;
 					battery_linshi_temp_1s = 0;
@@ -1196,6 +1211,7 @@ u32 t;
 					dust_linshi_current_1s = 0;
 					m_linshi_current_1s = 0;
 					battery_linshi_chargecurrent_1s = 0;
+					sb_temp_current_1s=0;
 			 }
    if(sample_number_50ms== 100)		//50ms
    	{
@@ -1208,130 +1224,6 @@ u32 t;
 
    	}
    
-}
-
-//因为一个ADC转换通道需要1.75us,转换16个通道且存贮256个数据共需要1.75*256=448us
-//所以进入此函数条件VOL_TEMP_READY_MY为500us进入一次
-void  sampling_temp_voltage_my(void)
-{
-static u32 		l_linshi_current = 0,               //左轮的临时电流
-              	r_linshi_current = 0,               //右轮的临时电流
-				m_linshi_current = 0,               //中扫的临时电流
-				dust_linshi_current = 0,            //灰尘风机的临时电流
-              	battery_linshi_voltage = 0,         //电池的临时电压          
-				battery_linshi_temp = 0,            //电池的临时温度
-              	battery_linshi_chargecurrent = 0;//电池5秒内的平均电流
-			  
-static u16 		sampling_number = 0;                //采样次数 
-
-static u32 		l_linshi_current_1s = 0,               //左轮的临时电流
-              	r_linshi_current_1s = 0,               //右轮的临时电流
-				m_linshi_current_1s = 0,               //中扫的临时电流
-				dust_linshi_current_1s = 0,            //灰尘风机的临时电流
-              	battery_linshi_voltage_1s = 0,         //电池的临时电压          
-				battery_linshi_temp_1s = 0,            //电池的临时温度
-              	battery_linshi_chargecurrent_1s = 0;//电池1秒内的平均电流
-			  
-static u16 		sampling_number_1s = 0;                //采样次数
-
-u32 t;
-   if(VOL_TEMP_READY_MY == true)
-			 {VOL_TEMP_READY_MY = false;}
-   else
-			 {return;}
-			 
-			 
-			 
-			 
-   	sampling_number ++;
-   	t =	account_current(L_CURRENT);
-	l_linshi_current += t;
-   	l_linshi_current_1s += t ;
-	l_temp_curr_50ms+=t;
-   	t = account_current(R_CURRENT);
-   	r_linshi_current += t;
-   	r_linshi_current_1s += t;
-   	r_temp_curr_50ms+=t;
-   	sample_number_50ms++;
-#if 1 //shftemp 
-   	t = account_current(M_CURRENT) ;
-#else
-	  t = 0;
-#endif
-   m_linshi_current += t;
-   m_linshi_current_1s += t;
-#if 0 //shftemp      
-   t =	account_current(DUST_CURRENT);
-#else
-t = 0;
-#endif   
-   dust_linshi_current += t;
-   dust_linshi_current_1s += t;
-   t =	account_current(BATTERY_VOLTAGE);
-   battery_linshi_voltage += t;
-   battery_linshi_voltage_1s += t;
-#if 0 //shftemp  
-   t =	account_current(BATTERY_TEMP);
- #else
- t =	0;
- #endif   
-   battery_linshi_temp += t;
-   battery_linshi_temp_1s += t;	
-#if 1 //shftemp 
-   t =	 account_current(CHARGE_CURRENT);
-  #else
-  t =	 0;
- #endif  
-   battery_linshi_chargecurrent += t;
-   battery_linshi_chargecurrent_1s += t;
-   if(sampling_number == 10000)		//5s内
-			 {
-					battery_voltage = (u16) (battery_linshi_voltage/10000);    //电池1秒的电压
-					battery_temp = (u16) (battery_linshi_temp/10000);       //电池1秒的温度
-					l_current = (u16) (l_linshi_current/10000);          //左轮电流
-					r_current = (u16) (r_linshi_current/10000);          //右轮电流
-					dust_current = (u16) (dust_linshi_current/10000);       //灰尘风机电流
-					m_current = (u16) (m_linshi_current/10000);          //中扫电流
-					battery_chargecurrent = (u16)(battery_linshi_chargecurrent/10000);//充电平均电流
-					sampling_number = 0;
-					battery_linshi_voltage = 0;
-					battery_linshi_temp = 0;
-					l_linshi_current = 0;
-					r_linshi_current = 0;
-					dust_linshi_current = 0;
-					m_linshi_current = 0;
-					battery_linshi_chargecurrent = 0;
-			 }		 
-    			
-   sampling_number_1s ++;
-   if(sampling_number_1s == 2000)		//1s内
-			 {
-					battery_voltage_1s = (u16) (battery_linshi_voltage_1s/2000);    //电池1秒的电压
-					battery_temp_1s = (u16) (battery_linshi_temp_1s/2000);       //电池1秒的温度
-					l_current_1s = (u16) (l_linshi_current_1s/2000);          //左轮电流
-					r_current_1s = (u16) (r_linshi_current_1s/2000);          //右轮电流
-					dust_current_1s = (u16) (dust_linshi_current_1s/2000);       //灰尘风机电流
-					m_current_1s = (u16) (m_linshi_current_1s/2000);          //中扫电流
-					battery_chargecurrent_1s = (u16)(battery_linshi_chargecurrent_1s/2000);//充电平均电流
-					sampling_number_1s = 0;
-					battery_linshi_voltage_1s = 0;
-					battery_linshi_temp_1s = 0;	
-					l_linshi_current_1s = 0;
-					r_linshi_current_1s = 0;
-					dust_linshi_current_1s = 0;
-					m_linshi_current_1s = 0;
-					battery_linshi_chargecurrent_1s = 0;
-			 }
-   if(sample_number_50ms== 100)		//50ms
-   	{
-   		l_current_50ms=(u16)(l_temp_curr_50ms/100);
-		r_current_50ms=(u16)(r_temp_curr_50ms/100);
-		l_temp_curr_50ms=0;
-		r_temp_curr_50ms=0;
-		sample_number_50ms=0;
-		ms_curr_flag=true;
-   	}
-   	
 }
 
 /*************************************************************************
@@ -1364,6 +1256,7 @@ u8 i;
 	return 0;
 }
 //===============================================================================================
+#if 0
 /****************************************************
 功能：根据电池电压判断显示电压
 输入：无
@@ -1500,19 +1393,19 @@ void Get_Dispower(void)
 						display=0;
 				}
 		#endif
-		if(Slam_Data.bat<=25)
+		if(Battery.bat_per<=25)
 			display=1;
-		else if(Slam_Data.bat<=50)
+		else if(Battery.bat_per<=50)
 			display=2;
-		else if(Slam_Data.bat<=75)
+		else if(Battery.bat_per<=75)
 			display=3;
-		else if(Slam_Data.bat<100)
+		else if(Battery.bat_per<100)
 			display=4;
 		else 
 			display=5;
 }
 //===============================================================================================
-
+#endif
 
 s8 Get_APPBat(void)
 {
@@ -1568,7 +1461,7 @@ void APP_BAT_Handle(void)
 #ifdef DC_NOBAT_RUN
 	if(dc_nobat_run)
 		{
-			Slam_Data.bat=100;
+			Battery.bat_per=100;
 			return;
 		}
 #endif
@@ -1577,9 +1470,9 @@ void APP_BAT_Handle(void)
 	if((Battery.BatteryCapability==0))
 		{
 			if((Read_Charge_Dc())|(Read_Charge_Seat()))
-				Slam_Data.bat=0;			//如果现在在充电,上报伪百分比0%
+				Battery.bat_per=0;			//如果现在在充电,上报伪百分比0%
 			else
-				Slam_Data.bat=100;			//如果不在充电,上报伪百分比100%
+				Battery.bat_per=100;			//如果不在充电,上报伪百分比100%
 			return; 						//qz add 20180801,直接退出等容量及放电量计算完毕后再进行下面的操作
 		}
 	
@@ -1611,7 +1504,7 @@ void APP_BAT_Handle(void)
 	if((battery_voltage!=0)&(battery_voltage<NOPOWER)&(!Read_Charge_Dc())&(!Read_Charge_Seat()))
 		{
 			stop_rap();
-			Slam_Data.bat=0;
+			Battery.bat_per=0;
 			Battery.BatteryChargeForbid = 0;		//qz add 20180703
 			//如果电池电压小于NOPOWER时，电池放电量小于电池电量，则将放电量复制给电量，用于动态调整
 			if((Battery.BatteryFDCap>MAH1000)&(Battery.BatteryFDCap<=MAH2600))
@@ -1628,7 +1521,7 @@ void APP_BAT_Handle(void)
 	//且将新的电池放电量赋值给电池电量（放电量要小于2600mAh），保存新电池放电量和新电池电量
 	if((Battery.BatteryFDCap>Battery.BatteryCapability)&&(Battery.BatteryFDCap<MAH2600))		
 		{											
-			Slam_Data.bat=1;
+			Battery.bat_per=1;
 			Battery.BatteryCapability=Battery.BatteryFDCap;	//同时新的电池放电电量数据必须保存，且新电池电量=新电池放电电量
 			WriteFDCap();
 			WriteBatteryCapability();
@@ -1638,7 +1531,7 @@ void APP_BAT_Handle(void)
 		{
 			Battery.BatteryFDCap=MAH2600;
 			Battery.BatteryCapability=MAH2600;
-			Slam_Data.bat=1;
+			Battery.bat_per=1;
 			WriteFDCap();
 			WriteBatteryCapability();
 		}
@@ -1670,7 +1563,7 @@ void APP_BAT_Handle(void)
 #endif
 				}
 				
-			Slam_Data.bat=(s8)(temp_per);
+			Battery.bat_per=(s8)(temp_per);
 		}
 
 	if((Battery.bat_recal)&(battery_voltage>VOL_14_6V))
@@ -1845,100 +1738,76 @@ u32 curr;//耗电电流
 			}
 	t = (Rtc_time + t) - Battery.UsePowerTime;
 	Battery.UsePowerTime = Rtc_time;
+	#if 1
 	switch(mode.mode)
 		{
-				case CEASE: 
-					switch(mode.sub_mode)
-						{
-							case SLEEP:
-								curr=(SLEEP_CUR);
-								break;
-							case CEASE:
-							case ERR:
-								curr=(CEASE_CUR);
-								break;
-							case QUIT_CHARGING:
-							case SELF_TEST:
-								if(MidBrush.flag)
-									{
-									switch(sweep_level)
-										{
-											case SWEEP_LEVEL_STOP:
-												curr=(MAIN_CUR);
-												break;
-											case SWEEP_LEVEL_SILENCE:
-												curr=((MAIN_CUR+SB_SILENCE_CUR));	//qz modify 20181120:因为风机电流可测，所以取消风机电流
-												break;
-											case SWEEP_LEVEL_STANDARD:								
-												curr=((MAIN_CUR+SB_STANDARD_CUR));
-												break;
-											case SWEEP_LEVEL_FORCE:
-												curr=((MAIN_CUR+SB_FORCE_CUR));
-												break;
-										}
-									}
-								else
-									curr=MAIN_CUR;
-									break ;
-						}
-					break;
-				case YBS:
-					if(MidBrush.flag)
-						{
-						switch(sweep_level)
-							{
-								case SWEEP_LEVEL_STOP:
-									curr=(MAIN_CUR);
-									break;
-								case SWEEP_LEVEL_SILENCE:
-									curr=((MAIN_CUR+SB_SILENCE_CUR));
-									break;
-								case SWEEP_LEVEL_STANDARD:
-
-									curr=((MAIN_CUR+SB_STANDARD_CUR));
-									break;
-								case SWEEP_LEVEL_FORCE:
-									curr=((MAIN_CUR+SB_FORCE_CUR));
-									break;
-							}
-						}
-					else
-						curr=MAIN_CUR;
-						//curr = 1200 + MAIN_PCB_CURRENT;
-						break ;
-				
-				case DOCKING:
-						//curr = 400 + MAIN_PCB_CURRENT;
-						curr=(u32)((MAIN_CUR+SB_DOCK_CUR));
+			case CEASE: 
+				switch(mode.sub_mode)
+					{
+						case SLEEP:
+							curr=(CURR_CEASE);
+							break;
+						case CEASE:
+						case ERR:
+							curr=(CURR_CEASE);
+							break;
+						case QUIT_CHARGING:
+						case SELF_TEST:
+							curr=CURR_WORK;
 						break;
-				
-				case CHARGEING:
-						switch(power.step)
-								{
-									case 0:
-										curr=0;
-										break;
-									case 1:
-									case 2:
-									case 4:
-									case 5: //qz add 20180615
-											curr = 100;//150;		//起始及涓流充电时，虽然固定电流为360mA,但是导航板占去210mA电流
-											break;
-									case 3:
-											curr = 400;//600;		//大电流充电时，虽然固定电流为800mA,但是导航板占去210mA电流
-										break;
-									case 6:
-											curr = battery_chargecurrent_1s;
-										break;
-								}
-						break;
+					}
+				break;
+			case YBS:				
+			case DOCKING:
+			case SHIFT:
+			case SWEEP:
+			case EXIT:
+			case PASS2INIT:	
+			case MODE_CTRL:
+			case SPOT:
+				curr=CURR_WORK;
+					break ;
+			case CHARGEING:
+				switch(power.step)
+						{
+							case 0:
+								curr=0;
+								break;
+							case 1:
+							case 2:
+							case 4:
+							case 5: //qz add 20180615
+									curr = 100;//150;		//起始及涓流充电时，虽然固定电流为360mA,但是导航板占去210mA电流
+									break;
+							case 3:
+									curr = 400;//600;		//大电流充电时，虽然固定电流为800mA,但是导航板占去210mA电流
+								break;
+							case 6:
+									curr = battery_chargecurrent_1s;
+								break;
+						}
+				break;
+			default:
+				curr=CURR_CEASE;
+				break;
 		}
+	#else
+	if(mode.mode!=CHARGEING)
+		{
+			curr+=MAIN_CUR;
+		}
+	#endif
 	//------------------------------------
-	//加上左右轮、中扫电流
-	curr=curr+(u32)(l_current_1s*RING_MB_CUR_CAL)+(u32)(r_current_1s*RING_MB_CUR_CAL)+(u32)(m_current_1s*RING_MB_CUR_CAL)+(u32)(dust_current_1s*RING_MB_CUR_CAL);	//qz modify 20181120:加入风机电流
-
+	//加上左右轮、中扫、风机电流
+	
+	//curr=curr+(u32)(l_current_1s*RING_MB_CUR_CAL)+(u32)(r_current_1s*RING_MB_CUR_CAL)+(u32)(m_current_1s*RING_MB_CUR_CAL)+(u32)(dust_current_1s*RING_MB_CUR_CAL);	//qz modify 20181120:加入风机电流
+	curr=curr+(u32)(l_current_1s*CURR_RING_CNT_mA)+(u32)(r_current_1s*CURR_RING_CNT_mA);
+	curr=curr+(u32)(m_current_1s*CURR_MB_CNT_mA)+(u32)(dust_current_1s*CURR_FAN_CNT_mA);
+	curr=curr+(u32)(sb_current_1s*CURR_SB_CNT_mA);
+	
 	//if(UV_FLAG)				//qz add 20180902:加入UV电流
 		//curr=curr+140;		
+
 
 	t = t*curr;
 	if(t > 2600)
@@ -2042,7 +1911,7 @@ void Charge_PID_Ctr(u32 tgt_current)
 		return;
 	CHARGE_READY=false;
 
-	charge_data.real_current=(charge_data.piv_current_sum)/charge_data.piv_current_count*CHG_CUR_CNT;
+	charge_data.real_current=(charge_data.piv_current_sum)/charge_data.piv_current_count*CURR_CHG_CNT;
 	charge_data.piv_current_sum=0;
 	charge_data.piv_current_count=0;
 
@@ -2143,7 +2012,7 @@ u8 Check_Left_Ring_Cur(void)
 	static u8 step=0;
 	static u32 step1_time=0,step2_time=0;
 	u32 l_curr;
-	//l_curr=account_current(L_CURRENT);
+	//l_curr=account_current(ADC_LRING_CURR);
 	switch (step)
 		{
 			case 0:
@@ -2214,7 +2083,7 @@ u8 Check_Right_Ring_Cur(void)
 	static u8 step=0;
 	static u32 step1_time=0,step2_time=0;
 	u32 r_curr;
-	//l_curr=account_current(L_CURRENT);
+	//l_curr=account_current(ADC_LRING_CURR);
 	switch (step)
 		{
 			case 0:

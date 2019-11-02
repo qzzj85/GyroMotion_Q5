@@ -85,7 +85,13 @@ void Reset_XY(void);
 s8 Return_MaxClean_GridXAll(s8 gridy,u8 nowall);
 s8 Return_MinClean_GridXAll(s8 gridy,u8 nowall);
 u8 Can_Entry_NewArea(CHECK_POINT *check_point);
+u8 Read_Coordinate_Seat(s8 xgrid,s8 ygrid);
+void Remote_Bump_Action(void);
 
+s8 Return_MaxClean_GridY(s8 gridx,u8 nowall);
+s8 Return_MinClean_GridY(s8 gridx, u8 nowall);
+void Set_Coordinate_Clean(s8 gridx,s8 gridy);
+void Set_Coordinate_Seat(s8 xgrid,s8 ygrid);
 
 
 #endif

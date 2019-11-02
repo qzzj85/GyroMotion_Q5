@@ -115,6 +115,8 @@ void USART3_DMA_RX_Init(u16 BufferSize);
 void USART3_Putc(u8 c);
 void DMA_USART3_TX_Length(u32 length);
 void Uart3_Communication(void);
+void Uart3_Communication_II(void);
+
 
 void USART1_Putc(unsigned char c);
 void USART1_Init(void);

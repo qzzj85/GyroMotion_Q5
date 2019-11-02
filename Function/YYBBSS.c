@@ -895,7 +895,7 @@ u32 Check_OutofRange_YBS(u8 out_enable)
 u32  YBS_read_bump1(u8 out_enable)
 {
 	u32 data1=0;
-	static u32 find_seat_time=0;
+//	static u32 find_seat_time=0;
 	static bool find_seat_first=false;
 //-------------------------------------------------------------	 
 //-------------------------------------------------------------	 
@@ -1121,7 +1121,7 @@ u32  YBS_read_bump1(u8 out_enable)
 		{
 			if(!find_seat_first)
 				{
-					find_seat_time=giv_sys_time;
+					//find_seat_time=giv_sys_time;
 					find_seat_first=true;
 				}
 			//if((find_seat_first)&(giv_sys_time-find_seat_time>10000))
@@ -1645,6 +1645,7 @@ void Init_Right_YBS(u8 direct_first)
     /******初始化显示***********/
 	
 	clr_ram();
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Enable_earth();						//打开地检
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
@@ -1709,6 +1710,7 @@ void Init_Left_YBS(u8 direct_first)
 	/******初始化显示***********/
 	
 	clr_ram();
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Enable_earth(); 					//打开地检
 	Enable_wall();						//打开墙检
 	enable_hwincept();					//允许红外接收电源
@@ -1879,9 +1881,9 @@ u8 Parse_ContinueInYBS(s8 now_gridx,s8 now_gridy)
 
 u8 Analysis_NeedBack_YBS(s8 ygrid_abort)
 {
-	s8 ygrid_analysis,now_gridx,now_gridy;
+	s8 ygrid_analysis,now_gridx;//,now_gridy;
 	s8 ydir=Read_Motion_YDir();
-	now_gridx=grid.x;now_gridy=grid.y;
+	now_gridx=grid.x;//now_gridy=grid.y;
 	
 	TRACE("Analysis NeedBack in YBS...\r\n");
 

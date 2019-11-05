@@ -127,9 +127,6 @@ void Init_LeakSweep(short tgt_yaw)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init LEAK SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -345,9 +342,6 @@ void Init_Leak_BackSweep(short tgt_yaw)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init BACK SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif

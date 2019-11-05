@@ -666,9 +666,6 @@ void Init_Shift_Point1(u8 pre_action)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init SHIFTPOINT1 Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -1748,9 +1745,6 @@ void Init_Shift_Point2(void)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init SHIFTPOINT2 Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -1998,11 +1992,9 @@ void Init_Shift_RightYBS(u8 temp_data)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -2052,14 +2044,14 @@ void Init_Shift_LeftYBS(u8 temp_data)
 		mode.step = 0x88;//QZ:原来为0x88;
 	else
 		mode.step=0x40;
-	Enable_Free_Skid_Check();			//打开万向轮检测 
-
-#ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+#ifdef FREE_SKID_CHECK
+		Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
+#ifdef ROTATE_SKID_CHECK	
+	//Enable_Rotate_Skid_Check(0);
+#endif
+
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -2404,7 +2396,6 @@ void Do_ShiftYBS(void)
 	u8 abnormal;
 	u32 uin32;
 
-#if 1		
 #ifdef DC_NOBAT_RUN
 	if((power.charge_dc)&(!dc_nobat_run))
 #else
@@ -2429,7 +2420,6 @@ void Do_ShiftYBS(void)
 					 return;
 				}					
 		}
-#endif
 
 #ifdef PITCH_SPEEDUP
 	if(Gyro_Pitch_Speedup())
@@ -2504,9 +2494,6 @@ void Do_ShiftYBS(void)
 							mode.step=0x40;
 					}
 
-#ifdef ROTATE_SKID_CHECK
-			Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
@@ -2532,22 +2519,6 @@ void Do_ShiftYBS(void)
 #endif
 		}
 #endif
-
-#if 0
-#ifdef ROTATE_SKID_CHECK
-	if(Check_Rotate_Skid())
-		{
-			Slam_Data.skid_flag=1;
-#ifdef ROTATE_SKID_ACTION
-			stop_rap();
-			Disable_Rotate_Skid_Check();
-			
-			mode.step=0xC0;
-#endif
-			
-		}
-#endif
-#endif
 	//qz add end
 	
 	//----------------------------------------------------------------------------------
@@ -2568,9 +2539,6 @@ void Do_ShiftYBS(void)
 						stop_rap();
 						mode.step++;
 					}
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 			//qz add 20180801
 			case 0x89:
@@ -2599,9 +2567,6 @@ void Do_ShiftYBS(void)
 						mode.step=0x88;
 					}
 #endif					
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 					
 			case 0:
@@ -2616,9 +2581,6 @@ void Do_ShiftYBS(void)
 				forward(0xFF812345);
 				mode.step = 1;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -2721,9 +2683,6 @@ void Do_ShiftYBS(void)
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 				lost_turn_time=giv_sys_time;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
@@ -2776,9 +2735,6 @@ void Do_ShiftYBS(void)
 				forward(0xFF812345);
 				mode.step = 0x41;				
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 			
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -2877,11 +2833,6 @@ void Do_ShiftYBS(void)
 				mode.step	= 0x51;
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 
-				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
 #endif
@@ -2959,38 +2910,6 @@ void Do_ExitAtion(void)
 		}
 	Get_CurrNode_Info();						//获取当前区域的节点信息
 	Cal_PosArea_Max();							//获取当前区域的坐标信息
-#if 0
-	if(Find_Leak_Area())						//寻找当前区域漏扫
-		{
-			Init_Shift_Point1(0);
-		}
-	else if(Find_NextArea_Entry())				//无漏扫，寻找当前区域是否可以进入下一个新区域
-		{
-			Init_Shift_Point1(0);
-		}
-	else										//无新区域
-		{
-			if(Read_CurrNode_AreaNO()<=1)		//是否是第一打扫区域,是则打扫完成
-				{
-					TRACE("This area is first sweep area!!");
-					TRACE("Prepare to YBS!!\r\n");
-					Send_Voice(VOICE_SWEEP_DONE);
-					//while(1);
-					if(motion1.start_seat)
-						Init_Docking();
-					else
-						Init_Cease();
-				}
-			else								//不是，则进入下一区域
-				{
-					TRACE("This area isnot first sweep area!!\r\n");
-					Find_ExitArea_Entry();					
-					TRACE("Go to Exit!!!\r\n");
-					Init_Shift_Point1(0);
-				}
-		}
-	
-#endif
 	if(motion1.force_dock)
 		{
 			TRACE("Force Dock!!!\r\n");
@@ -3264,11 +3183,9 @@ void Init_ShiftExit_RightYBS(u8 temp_data)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -3322,11 +3239,9 @@ void Init_ShiftExit_LeftYBS(u8 temp_data)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -3451,7 +3366,6 @@ void Do_ShiftExit_YBS(void)
 	u8 abnormal;
 	u32 uin32;
 
-#if 1		
 #ifdef DC_NOBAT_RUN
 	if((power.charge_dc)&(!dc_nobat_run))
 #else
@@ -3476,7 +3390,6 @@ void Do_ShiftExit_YBS(void)
 					 return;
 				}					
 		}
-#endif
 
 #ifdef PITCH_SPEEDUP
 	if(Gyro_Pitch_Speedup())
@@ -3548,10 +3461,6 @@ void Do_ShiftExit_YBS(void)
 							mode.step=0x40;
 					}
 
-#ifdef ROTATE_SKID_CHECK
-			Disable_Rotate_Skid_Check();
-#endif
-
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
@@ -3576,23 +3485,6 @@ void Do_ShiftExit_YBS(void)
 #endif
 		}
 #endif
-
-#if 0
-#ifdef ROTATE_SKID_CHECK
-	if(Check_Rotate_Skid())
-		{
-			Slam_Data.skid_flag=1;
-#ifdef ROTATE_SKID_ACTION
-			stop_rap();
-			Disable_Rotate_Skid_Check();
-			
-			mode.step=0xC0;
-#endif
-			
-		}
-#endif
-#endif
-	//qz add end
 	
 	//----------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------
@@ -3612,9 +3504,6 @@ void Do_ShiftExit_YBS(void)
 						stop_rap();
 						mode.step++;
 					}
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 			//qz add 20180801
 			case 0x89:
@@ -3643,9 +3532,6 @@ void Do_ShiftExit_YBS(void)
 						mode.step=0x88;
 					}
 #endif					
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 					
 			case 0:
@@ -3660,9 +3546,6 @@ void Do_ShiftExit_YBS(void)
 				forward(0xFF812345);
 				mode.step = 1;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -3765,10 +3648,6 @@ void Do_ShiftExit_YBS(void)
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 				lost_turn_time=giv_sys_time;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
 #endif
@@ -3820,9 +3699,6 @@ void Do_ShiftExit_YBS(void)
 				forward(0xFF812345);
 				mode.step = 0x41;				
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 			
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -3920,11 +3796,6 @@ void Do_ShiftExit_YBS(void)
 				r_rap.ori	=FRONT;
 				mode.step	= 0x51;
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
-
-				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;

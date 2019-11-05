@@ -37,7 +37,7 @@
 #if 1
 //#define	FREE_SKID_CHECK			1					//万向轮径向打滑检测，用于上报导航板
 //#define	FREE_SKID_INDEP_CHECK	1					//独立万向轮检测，用于卡住
-//#define 	ROTATE_SKID_CHECK		1					//旋转打滑检测
+#define 	ROTATE_SKID_CHECK		1					//旋转打滑检测
 #define		FAN_CHECK				1					//风机检查
 //#define	LIFT_CHECK				1					//离地检查
 //#define 	SLAM_CHECK				1					//SLAMTICK检查
@@ -46,7 +46,7 @@
 #define 	RING_OC_CHECK			1					//驱动轮过流检查
 #define		MB_OC_CHECK				1					//中扫过电流检查
 //#define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
-//#define		SB_FIX_CHECK			1					//边扫缠绕检查
+#define		SB_FIX_CHECK			1					//边扫缠绕检查
 #define		GYRO_TICK_CHECK			1					//惯导数据检查,5s内未接到收据,判定错误
 //#define	WALL_EARTH_ERROR_CHECK	1					//墙地检异常检测(比如没插)
 #define		GYRO_BIOS_CHECK			1
@@ -62,7 +62,7 @@
 #define		YBS_DIS_RESTORE			1					//沿边固定距离增大以后自动回复
 //define	COMMANDER_SEAT_REPORT	1					//命令模式下发现充电座上报标志
 #define		SWITCHOFF_SUBMODE		1					//船型开关未打开模式
-//#define		SLEEP_SUBMODE			1				//底盘休眠模式
+#define		SLEEP_SUBMODE			1				//底盘休眠模式
 //#define		DOCK_NEAR				1				//充电座近信号
 //#define		WALL_DARK_FIX			1				//墙检暗数据固定
 #define		WALL_DARK_CAL			1					//墙检暗数据校正,500ms打开一次
@@ -82,7 +82,7 @@
 #define		DUMMY_WALL				1					//虚拟墙，沿边模式下能够接受非00速度指令，进入速度模式
 //#define		NARROW_PASS				1				//沿边窄通道处理,主要是与左碰撞相关。
 #define		GYRO_ROLL_CHECK			1					//惯导俯仰角检测（阈值5度）
-#define		FREE_FIRST_BAD_CHECK	1					//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
+//#define		FREE_FIRST_BAD_CHECK	1					//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
 //#define 	DS1307					1					//使用DS1307 RTC及后备寄存器
 #define  	USE_VOICE_BUSY			1					//使用语音芯片BUSY引脚
 #define		USE_BITBAND				1					//GPIO读写使用BITBAND操作
@@ -102,11 +102,12 @@
 //#define		OUT_8MHZ				1
 //#define		YIS055					1
 //#define	FAST_WALL_DET			1
-#define		IR_CORRECT				1
+//#define		IR_CORRECT				1
+#define		NEW_VOICE_IC			1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			9
+#define		CORRECT_VERSION			10
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

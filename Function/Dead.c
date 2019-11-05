@@ -35,6 +35,8 @@ void Init_Dead(void)
 	WriteWorkState();
 
 	CHECK_STATUS_FLAG=false;		//禁止异常检测
+	Init_Check_Status();
+	
 	Slam_Data.tick_check_step=0;	//重启SLAM_TICK检测
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 #ifdef UV
@@ -75,6 +77,7 @@ void Init_ShutDown(void)
 		WriteWorkState();
 	
 		CHECK_STATUS_FLAG=false;		//禁止异常检测
+		Init_Check_Status();
 		Slam_Data.tick_check_step=0;	//重启SLAM_TICK检测
 
 #ifdef UV
@@ -157,7 +160,9 @@ void Do_Dead(void)
 					  
 						 PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI); 
 				
-						 RCC_EXITSTOP();
+#ifndef USE_HSE				
+						  RCC_EXITSTOP();
+#endif
 						 IWDG_ReloadCounter();
 						 //读取实时时钟值////////////
 						 Rtc_time = RTC_GetCounter();

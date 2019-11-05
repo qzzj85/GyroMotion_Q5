@@ -142,9 +142,6 @@ void YBS_YBS(void)
 							mode.step=0x40;
 					}
 
-#ifdef ROTATE_SKID_CHECK
-			Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
@@ -171,21 +168,6 @@ void YBS_YBS(void)
 		}
 #endif
 
-#if 0
-#ifdef ROTATE_SKID_CHECK
-	if(Check_Rotate_Skid())
-		{
-			Slam_Data.skid_flag=1;
-#ifdef ROTATE_SKID_ACTION
-			stop_rap();
-			Disable_Rotate_Skid_Check();
-			
-			mode.step=0xC0;
-#endif
-			
-		}
-#endif
-#endif
 	//qz add end
 	
 	//----------------------------------------------------------------------------------
@@ -206,9 +188,6 @@ void YBS_YBS(void)
 						stop_rap();
 						mode.step++;
 					}
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 			//qz add 20180801
 			case 0x89:
@@ -237,9 +216,6 @@ void YBS_YBS(void)
 						mode.step=0x88;
 					}
 #endif					
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 					
 			case 0:
@@ -255,9 +231,6 @@ void YBS_YBS(void)
 				forward(0xFF812345);
 				mode.step = 1;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -359,9 +332,6 @@ void YBS_YBS(void)
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 				lost_turn_time=giv_sys_time;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
@@ -414,9 +384,6 @@ void YBS_YBS(void)
 				forward(0xFF812345);
 				mode.step = 0x41;				
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 			
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -514,10 +481,6 @@ void YBS_YBS(void)
 				mode.step	= 0x51;
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 
-				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
@@ -1676,7 +1639,7 @@ void Init_Right_YBS(u8 direct_first)
 	Enable_Free_Skid_Check();			//打开万向轮检测	
 #endif
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
 	while(giv_sys_time-mode.time<1000);
@@ -1688,9 +1651,6 @@ void Init_Right_YBS(u8 direct_first)
 	TRACE("Init Right YBS Mode Complete!\r\n");
 #endif
 
-	//初始化检测的条件
-	Init_Check_Status();//qz add 20180425
-//	mode.fun=YBS_read_bump1;
 
 	Sweep_Level_Set(sweep_level);
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
@@ -1700,7 +1660,8 @@ void Init_Right_YBS(u8 direct_first)
 	motion1.worktime=1;	
 	motion1.clean_size=0;
 	Gyro_Data.cal_flag=false;
-	YBS_check_base=false;
+	YBS_check_base=false;	
+	Init_Check_Status();
 }
 
 void Init_Left_YBS(u8 direct_first)
@@ -1737,7 +1698,7 @@ void Init_Left_YBS(u8 direct_first)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
 	while(giv_sys_time-mode.time<1000);
@@ -1749,12 +1710,11 @@ void Init_Left_YBS(u8 direct_first)
 	TRACE("Init Left YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
-//	mode.fun=YBS_read_bump1;
 	Sweep_Level_Set(sweep_level);
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
+	CHECK_STATUS_FLAG=true;			//使能异常检测
+	Init_Check_Status();
 }
 
 //在沿边状态下，切换为另一沿边
@@ -1794,7 +1754,7 @@ u8 Init_YBS_Exchange(u8 next_ybs_mode)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
 	while(giv_sys_time-mode.time<1000);
@@ -1804,9 +1764,6 @@ u8 Init_YBS_Exchange(u8 next_ybs_mode)
 	TRACE("Init EXCHANGE YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
-//	mode.fun=YBS_read_bump1;
 	return 1;
 }
 

@@ -39,10 +39,12 @@ u8 Init_Voice_Head(void)
 
 void Send_Voice(u8 data)
 {
-#if 0
-	if((Dis_Hour>22)|(Dis_Hour<6))
+#ifdef NEW_VOICE_IC
+	if(data>13)
 		return;
 #endif
+
+#if 1
 	if(!voice_ok)
 		return;
 
@@ -54,6 +56,7 @@ void Send_Voice(u8 data)
 	q->next=p;
 	p->data=data;
 	p->next=NULL;
+#endif
 }
 
 void Del_Node(void)
@@ -120,7 +123,23 @@ u8 Voice_Driver(u8 data)
 u8 Voice_Driver(u8 data)
 {
 	u8 temp_addr=data;
-//	V_CLK_1;
+#ifdef  NEW_VOICE_IC
+	if (temp_addr >	13)  
+		return  1;
+		// temp_addr = 9; //测试用 
+		V_CLK_1;					//拉低时钟
+		if(giv_sys_time-voice_time<50)
+			return 0;
+		V_CLK_0;			
+		for(int i=0;i<temp_addr;i++)
+			{
+				delay_100us(1);
+				V_DAT_1;
+				delay_100us(1);
+				V_DAT_0;	
+			}
+	return 1;							 
+#else
 	V_DAT_1;
 	V_CLK_0;					//拉低时钟
 	if(giv_sys_time-voice_time<50)
@@ -146,6 +165,7 @@ u8 Voice_Driver(u8 data)
 	V_CLK_1;
 	V_DAT_1;
 	return 1;
+#endif	
 }
 
 void Voice_Handle(void)

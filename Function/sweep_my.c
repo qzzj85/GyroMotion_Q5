@@ -747,9 +747,10 @@ void Do_FirstInit_Sweep(void)
 				TRACE("grid.x_start=%d\r\n",grid.x_start);
 				TRACE("grid.y_start=%d\r\n",grid.y_start);
 				Cal_Grid_Pos();
-				Init_Check_Status();
 				Sweep_Level_Set(sweep_level);
 				Init_Init_Sweep(F_Angle_Const,2,1); 		//第一次清扫,X轴双方向,Y轴正向
+				CHECK_STATUS_FLAG=true; 		//使能异常检测
+				Init_Check_Status();
 			//	Del_All_Sweep_Bump_Node();
 		}
 }
@@ -2080,9 +2081,6 @@ void Init_NormalSweep(short tgt_yaw)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init NORMAL SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -2303,9 +2301,6 @@ void Init_Back_Sweep(short tgt_yaw)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init BACK SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -2602,9 +2597,6 @@ void Init_Pass2Sweep(void)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init PASS2SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -3167,9 +3159,6 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init PASS2INIT Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
@@ -3271,7 +3260,7 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	Enable_Free_Skid_Check();			//打开万向轮检测	
 #endif
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
 	while(giv_sys_time-mode.time<1000);
@@ -3283,15 +3272,6 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	TRACE("Init Sweep Right YBS Mode Complete!\r\n");
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
-//	mode.fun=YBS_read_bump1;
-#ifdef UV
-	//if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
-	//	Set_UV();
-	//else									//qz add 20180910,经过调查发现,沿边时UV灯打开以后,会对右红外发现充电座信号产生严重影响,导致不能发现回充座，所以先关掉UV
-		Reset_UV();
-#endif
 
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
@@ -3333,7 +3313,7 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
 	while(giv_sys_time-mode.time<1000);
@@ -3345,9 +3325,6 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	TRACE("Init Sweep Left YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
-//	mode.fun=YBS_read_bump1;
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
 }
@@ -3671,9 +3648,6 @@ void Sweep_YBS(void)
 				}
 #endif
 
-#ifdef ROTATE_SKID_CHECK
-			Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
@@ -3700,22 +3674,6 @@ void Sweep_YBS(void)
 		}
 #endif
 
-#if 0
-	#ifdef ROTATE_SKID_CHECK
-	if(Check_Rotate_Skid())
-		{
-			Slam_Data.skid_flag=1;
-#ifdef ROTATE_SKID_ACTION
-			stop_rap();
-			Disable_Rotate_Skid_Check();
-			
-			mode.step=0xC0;
-#endif
-			
-		}
-	#endif
-#endif
-	//qz add end
 	
 	//----------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------
@@ -3735,9 +3693,6 @@ void Sweep_YBS(void)
 						stop_rap();
 						mode.step++;
 					}
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 			//qz add 20180801
 			case 0x89:
@@ -3766,9 +3721,6 @@ void Sweep_YBS(void)
 						mode.step=0x88;
 					}
 #endif					
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 					
 			case 0:
@@ -3783,9 +3735,6 @@ void Sweep_YBS(void)
 				forward(0xFF812345);
 				mode.step = 1;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -3887,9 +3836,6 @@ void Sweep_YBS(void)
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 				lost_turn_time=giv_sys_time;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
@@ -3942,9 +3888,6 @@ void Sweep_YBS(void)
 				forward(0xFF812345);
 				mode.step = 0x41;				
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 			
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -4042,12 +3985,6 @@ void Sweep_YBS(void)
 				r_rap.ori	=FRONT;
 				mode.step 	= 0x51;
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
-
-				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
 #endif
@@ -4160,9 +4097,6 @@ void Init_PauseSweep(void)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init PAUSE SWEEP Mode Complete!\r\n");
 #endif
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 	//qz add 20180725:如果机器处于休眠时,接到控制命令会直接进入此状态,因此需要打开检测开关
-//	Init_Check_Status();//qz add 20180425
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif

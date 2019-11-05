@@ -41,9 +41,8 @@ void Init_Switchoff(void)
 	power.step=0;
 	disable_pwm(CHARGE_PWM);
 	Init_Charge_Data(); 				//qz add 20180522
-
-	Init_Check_Status();
 	CHECK_STATUS_FLAG=false;			//禁止异常检测
+	Init_Check_Status();
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init switchoff submode Complete!\r\n");
 #endif
@@ -88,9 +87,9 @@ void Init_Chargeing(u8 temp_sub_mode)
 	Slam_Data.no_msg=false;
 	SLAM_DOCK=false;					//qz add 20180522
 	DOCK_SWEEP=false;				//qz add 20180803	
-
-	Init_Check_Status();				//qz add 20180522
+	
 	CHECK_STATUS_FLAG=false;			//禁止异常检测		//qz add 20180913
+	Init_Check_Status();				//qz add 20180522
 	USART_Cmd(USART1, ENABLE);			//qz add 20180625,因为如果之前给导航板发送了关机,会关掉串口,现在充电后重新打开
 	USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE); 	  //qz add 20180625 
 

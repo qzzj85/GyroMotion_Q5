@@ -25,6 +25,9 @@ void Init_Quit_Charging(u8 sweep_method)
 	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.Info_Abort=0;
 
+	CHECK_STATUS_FLAG=true;
+	Init_Check_Status();
+
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Quit_Charge Complete!\r\n");
 #endif

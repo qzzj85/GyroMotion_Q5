@@ -35,9 +35,6 @@ void Init_App_Ctrl(u8 move_dir)
 		
 	WriteWorkState();
 	Disable_Free_Skid_Check();		//关闭万向轮检测
-	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 		//使能异常检测
-	Init_Check_Status();//qz add 20180425
 
 
 #ifdef DEBUG_Enter_Mode

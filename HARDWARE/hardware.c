@@ -182,8 +182,13 @@ void Init_Hardware (void)
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
 	PWR3V3_ON
 	PWR5V_ON
+#ifdef  NEW_VOICE_IC
+	V_CLK_1;				//拉高VOICE_CLK
+	V_DAT_0;				//拉高VOICE_DATA
+#else
 	V_CLK_1;				//拉高VOICE_CLK
 	V_DAT_1;				//拉高VOICE_DATA
+#endif
 	GYRO_CAL_PIN_1;			//拉高惯导校准
 	BAT_CHECK_1;			//拉高电池电压检测
 	Enable_RingPWMCtrl();

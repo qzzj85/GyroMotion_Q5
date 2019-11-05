@@ -9,16 +9,10 @@
 ////////////const u16 BATTERY_PREOTECTTEMP = 815;  //电池保护温度  60度
 ////////////////////////////////////全局变量//////////////////////////////////
 #define RING_FIX_OFFSET	500
-#define	ROTATE_OFFSET	15
-
+#define	ROTATE_OFFSET	25
 u8 sweep_level=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
-u8 sweep_suction_last=0x99;
-bool BS_NO_TIME_FLAG=false;			//qz add:边扫时间标志，在低速状态下，再TIM2定时器中通过此标志翻转边扫引脚，达到降速的目的
 bool CHECK_STATUS_FLAG=false;
 bool CHECK_STATUS_TIME=false;
-bool GET_DISPLAY_TIME=true;			//qz modify 20180902:fail-->true
-
-
 const uint16 BATTERY_PREOTECTTEMP = 815;  //电池保护温度  60度
 ////////////////////////全局变量//////////////////////////////////
 
@@ -38,9 +32,10 @@ ROTATE_ANGLE rotate_angle;
 
 MODE mode;
 WORK_MODE gsv_work_mode;	
+u8 giv_sys_err;         //系统的错误代码
+int abnormal_gyrobios_cnt=0;
 
 u8 read_sideearth(void);	
-u8 giv_sys_err;         //系统的错误代码
 //动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线
 /***********************************************************
 在正常工作时的主路径：
@@ -692,6 +687,7 @@ u8 Read_Protect(void)
 							SideBrush.fail=0x01;						//直接报错，不再保护
 							return 0;
 						}
+					Send_Voice(VOICE_ERROR_WARNING);
 				}
 			else
 				return_data=ABNORMAL_SB;
@@ -730,6 +726,7 @@ u8 Read_Protect(void)
 					mode.abnormity=17;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+					Send_Voice(VOICE_ERROR_WARNING);
 				}
 			return_data =17;
 		}
@@ -747,6 +744,7 @@ u8 Read_Protect(void)
 					mode.abnormity=ABNORMAL_BUMP;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+					Send_Voice(VOICE_ERROR_WARNING);
 				}
 			return_data= ABNORMAL_BUMP;
 		}
@@ -762,6 +760,7 @@ u8 Read_Protect(void)
 					mode.abnormity=ABNORMAL_RING;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+					Send_Voice(VOICE_ERROR_WARNING);
 				}
 			return_data= ABNORMAL_RING;
 		}
@@ -810,23 +809,31 @@ u8 Read_Protect(void)
 		{
 			if(data1==1)
 				{
+					if((mode.abnormity)&(mode.abnormity!=ABNORMAL_GYROBIOS_L)&(mode.abnormity!=ABNORMAL_GYROBIOS_R))
+						abnormal_gyrobios_cnt--;
+				
 					if((mode.abnormity==0)&(mode.mode!=SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_L;
 							mode.step_abn=0;
+							abnormal_gyrobios_cnt=0;
 						}
 					if((mode.mode==SPOT)&(mode.step<9))
 						{
 							spot_gyrobios_cnt--;
-						}
+						}						
 					return_data=ABNORMAL_GYROBIOS_L;
 				}
 			else
 				{
+					if((mode.abnormity)&(mode.abnormity!=ABNORMAL_GYROBIOS_L)&(mode.abnormity!=ABNORMAL_GYROBIOS_R))
+						abnormal_gyrobios_cnt++;
+					
 					if((mode.abnormity==0)&(mode.mode!=SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_R;
 							mode.step_abn=0;
+							abnormal_gyrobios_cnt=0;
 						}
 					if((mode.mode==SPOT)&(mode.step<9))
 						{
@@ -848,6 +855,8 @@ u8 Action_Protect_My(u8 abnoraml)
 	static short resume_anlge;
 	static u8 turn_dir;
 	static u32 l_state,r_state,l_ori,r_ori,l_length,r_length;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
 	n=Dock_read_bump();		//只要碰撞,不要红外
 	if((n!=0)&(mode.step_abn<7)&(mode.abnormity!=ABNORMAL_BUMP)&(mode.abnormity!=ABNORMAL_PITCH_RISE)&(mode.abnormity!=ABNORMAL_PITCH_DOWN))
 		{
@@ -1174,6 +1183,7 @@ u8 Action_Protect_My(u8 abnoraml)
 				switch(mode.step_abn)
 					{
 						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
 							Set_SideBrush_Pwm(0);				//先关掉边扫
 							mode.abn_time=giv_sys_time; 		//qz add 20181011
 							mode.step_abn++;
@@ -1241,6 +1251,8 @@ u8 Action_Protect_My(u8 abnoraml)
 									}
 								else
 									{
+										mode.step_abn=0xf0;
+#if 0
 										SideBrush.error_time=0; 	//重新开始检测条件初始化
 										SideBrush.fail=0x00;
 										SideBrush.flag=true;		//重新开启检测
@@ -1252,12 +1264,14 @@ u8 Action_Protect_My(u8 abnoraml)
 										mode.step=0;				//恢复模式步骤qz add 20180801
 										mode.step_mk=0; 			//qz add 20180919
 										Sweep_Level_Set(sweep_level);	//重新打开清扫等级
+#endif
 									}
 							}
 							break;
 						case 7:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
+							Set_Coordinate_Wall(now_gridx,now_gridy);
 							Speed=HIGH_MOVE_SPEED;
 //							Set_BS_Level(0);
 							if(do_action(4,4*CM_PLUS))
@@ -1306,72 +1320,101 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_mk=0; 		//qz add 20180919
 								}
 							break;
+
+						case 0xf0:
+							SideBrush.error_time=0; 	//重新开始检测条件初始化
+							SideBrush.fail=0x00;
+							SideBrush.flag=true;		//重新开启检测
+							SideBrush.check_step=0; 	//重新开始检测条件初始化
+							SideBrush.done_time=giv_sys_time;	//记录保护动作完成时间
+							mode.Info_Abort=0;
+							mode.abnormity=0;
+							mode.step_abn=0;
+							mode.step=0;				//恢复模式步骤qz add 20180801
+							mode.step_mk=0; 			//qz add 20180919
+							Sweep_Level_Set(sweep_level);	//重新打开清扫等级
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}
 								
 					}
 				break;
 
 				////////////旋转打滑////////////
 #ifdef ROTATE_SKID_CHECK
-			case 17:
+			case ABNORMAL_ROTATE_SKID:
 				switch (mode.step_abn)
 					{
 						case 0:
-							Speed=4000;
-							if(do_action(3,15*CM_PLUS))
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
-									delay_time=giv_sys_time;
+									mode.abn_time=giv_sys_time;
 								}
 							break;
 						case 1:
-							Speed=2000;
-							if(giv_sys_time-delay_time<10000)
+							Speed=TURN_SPEED;
+							if(giv_sys_time-mode.abn_time<10000)
 								return 0;
 							if(do_action(2,360*Angle_1))
 								{
 									stop_rap();
-									mode.step_abn=12;
+									mode.step_abn=0xf0;
 								}
-							if(m==17)
+							if(abnoraml==ABNORMAL_ROTATE_SKID)
 								{
 									stop_rap();
 									mode.step_abn++;
 								}
 							break;
 						case 2:
-							Speed=4000;
-							if(do_action(4,15*CM_PLUS))
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
-									delay_time=giv_sys_time;
+									mode.abn_time=giv_sys_time;
 								}
 							break;
 						case 3:
-							Speed=2000;
-							if(giv_sys_time-delay_time<10000)
+							Speed=TURN_SPEED;
+							if(giv_sys_time-mode.abn_time<10000)
 								return 0;
 							if(do_action(2,360*Angle_1))
 								{
 									stop_rap();
-									mode.step_abn=12;
+									mode.step_abn=0xf0;
 								}
-							if(m==17)
+							if(abnoraml==ABNORMAL_ROTATE_SKID)
 								{
 									stop_rap();
 									mode.step_abn++;
 								}
 							break;
 						case 4:
-							Speed=3000;
+							Rotate_Skid.fail=true;
+							break;
+#if 0
+						case 4:
+							Speed=TURN_SPEED;
 							if(do_action(1,180*Angle_1))
 								{
 									stop_rap();
 									mode.step_abn++;
 								}
 						case 5:
-							Speed=3000;
+							Speed=TURN_SPEED;
 							if(do_action(2,180*Angle_1))
 								{
 									stop_rap();
@@ -1380,9 +1423,9 @@ u8 Action_Protect_My(u8 abnoraml)
 									if(Rotate_Skid.resuce_time>=3)
 										{
 											Rotate_Skid.resuce_time=0;
-											if((m>0)&&(m!=17))
+											if((n>0)&&(n!=ABNORMAL_ROTATE_SKID))
 												{
-													mode.abnormity=m;
+													mode.abnormity=n;
 													mode.step_abn=0;
 													return 0;
 												}
@@ -1394,8 +1437,9 @@ u8 Action_Protect_My(u8 abnoraml)
 										}
 								}
 							break;
+#endif
 						case 7:
-							Speed=2000;
+							Speed=BUMP_BACK_SPEED;
 							if(do_action(4,4*CM_PLUS))
 								{
 									stop_rap();
@@ -1406,14 +1450,39 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 8:
-							Speed=2000;
+							Speed=TURN_SPEED;
 							if(do_action(1,90*Angle_1))
 								{
 									stop_rap();
 									mode.step_abn=0;
 								}
 							break;
-						case 12:
+						case 0xf0:
+							Speed=TURN_SPEED;
+							if(abnormal_gyrobios_cnt==0)
+								{
+									mode.step_abn++;
+									return 0;
+								}
+							if(abnormal_gyrobios_cnt>0)
+								{
+									if(do_action(1,abnormal_gyrobios_cnt*360*Angle_1))
+										{
+											stop_rap();
+											mode.step_abn++;
+										}
+								}
+							else
+								{
+									if(do_action(2,abnormal_gyrobios_cnt*360*Angle_1))
+										{
+											stop_rap();
+											mode.step_abn++;
+										}
+								}
+							break;
+						case 0xf1:
+							abnormal_gyrobios_cnt=0;
 							Rotate_Skid.fail=false;
 							Rotate_Skid.resuce_time=0;
 							mode.abnormity=0;
@@ -1421,6 +1490,18 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.Info_Abort=0;
 							mode.step=0;		//恢复模式步骤qz add 20180801
 							mode.step_mk=0; 		//qz add 20180919
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}
 							break;
 					}
 				break;
@@ -1700,6 +1781,9 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 8:
+							mode.step_abn=0xf0;
+							break;
+						case 0xf0:
 							mode.abnormity=0;
 							mode.step_abn=0;
 							mode.Info_Abort=0;
@@ -1708,6 +1792,18 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.bump=0;			//qz add 20181210
 							mode.step_bp=0;			//qz add 20181210
 							mode.bump_flag=false;	//qz add 20181210
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}
 							break;
 					}
 				break;
@@ -1889,6 +1985,9 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 8:
+							mode.step_abn=0xf0;
+							break;
+						case 0xf0:
 							l_rap.fail=false;
 							l_ring.state=GOOD;
 							l_ring.odds=0;
@@ -1900,9 +1999,22 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.Info_Abort=0;
 							mode.step=0;
 							mode.step_mk=0;			//qz add 20180919
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}
 							break;
 					}
 				break;
+				
 			case ABNORMAL_PITCH_RISE:
 				switch(mode.step_abn)
 					{
@@ -4480,7 +4592,7 @@ u8 Check_All_Cliff(void)
 					{
 						step=0;
 					}
-				else if(giv_sys_time-check_time>100000)		//qz modify 20181110 2s--->10s
+				else if(giv_sys_time-check_time>30000)		//qz modify 20181110 2s--->10s
 					{
 						step=0;
 						return 1;
@@ -4594,16 +4706,18 @@ void Check_Status(void)
 					dis_err_code=DIS_ERROR_SWEEPER_LIFT;
 					voice_addr=VOICE_ERROR_LIFT;
 				}
+#endif
+
 
 #ifdef CLIFF_ENABLE
-			else if(Check_All_Cliff())
+			if(Check_All_Cliff())
 				{
 					error_code=SEND_ERROR_DANGER;
 					dis_err_code=DIS_ERROR_DANGER;
 					voice_addr=VOICE_ERROR_DANGER;
 				}
 #endif
-#endif
+
 
 #ifdef 		SLAM_CHECK
 			////////SLAM_TICK异常检测/////////
@@ -4684,14 +4798,6 @@ void Check_Status(void)
 				}
 #endif
 
-			if(SB_OC_Check())
-				{
-					error_code=SEND_ERROR_SBOC;
-					dis_err_code=DIS_ERROR_MB_OC;
-					voice_addr=VOICE_ERROR_L_SB;
-					mode.err_code|=WIFI_ERR_SB_OC;
-				}
-
 #ifdef 		BUMP_FIX_CHECK
 			//////碰撞开关卡住异常检测//////////
 			//if(Bump_Fix_Check())
@@ -4747,7 +4853,8 @@ void Check_Status(void)
 			if(Rotate_Skid.fail)
 				{
 					error_code=ERROR_RATATE_SKID;
-					voice_addr=VOICE_ERROR_011;
+					voice_addr=VOICE_ERROR_SWEEP_FIX;
+					mode.err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 			/////惯导数据检测////////////////
@@ -4878,6 +4985,7 @@ void Init_Check_Status(void)
 #ifdef ROTATE_SKID_CHECK
 	Rotate_Skid.fail=false;
 	Rotate_Skid.resuce_time=0;
+	Enable_Rotate_Skid_Check(0);
 #endif
 
 	//惯导数据检测初始化

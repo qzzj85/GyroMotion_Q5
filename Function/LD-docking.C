@@ -86,8 +86,6 @@ void Init_Docking(void)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Little Docking Mode Complete!\r\n");
 #endif
-//初始化检测的条件	
-	Init_Check_Status();	//qz add 20180425
 	
 	findseat_skid_check_flag=false;		//qz add 20180901
 	findseat_skid_check_step=0;			//qz add 20180901
@@ -96,6 +94,8 @@ void Init_Docking(void)
 	Reset_UV();
 #endif
 	Send_Voice(VOICE_DOCK_START);
+	CHECK_STATUS_FLAG=true;			//使能异常检测
+	Init_Check_Status();
 }
 
 
@@ -4720,11 +4720,9 @@ void Init_Dock_RightYBS(u8 direct_first)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -4777,11 +4775,9 @@ void Init_Dock_LeftYBS(u8 temp_data)
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	
-	Enable_Rotate_Skid_Check(0);
+	//Enable_Rotate_Skid_Check(0);
 #endif
 
-	//初始化检测的条件
-//	Init_Check_Status();//qz add 20180425
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 
@@ -4807,7 +4803,6 @@ void Do_Docking_YBS(void)
 	u8 abnormal;
 	u32 uin32;
 
-#if 1		
 #ifdef DC_NOBAT_RUN
 	if((power.charge_dc)&(!dc_nobat_run))
 #else
@@ -4832,7 +4827,6 @@ void Do_Docking_YBS(void)
 					 return;
 				}					
 		}
-#endif
 
 #ifdef PITCH_SPEEDUP
 	if(Gyro_Pitch_Speedup())
@@ -4901,9 +4895,6 @@ void Do_Docking_YBS(void)
 							mode.step=0x40;
 					}
 
-#ifdef ROTATE_SKID_CHECK
-			Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
@@ -4930,21 +4921,6 @@ void Do_Docking_YBS(void)
 		}
 #endif
 
-#if 0
-#ifdef ROTATE_SKID_CHECK
-	if(Check_Rotate_Skid())
-		{
-			Slam_Data.skid_flag=1;
-#ifdef ROTATE_SKID_ACTION
-			stop_rap();
-			Disable_Rotate_Skid_Check();
-			
-			mode.step=0xC0;
-#endif
-			
-		}
-#endif
-#endif
 	//qz add end
 	
 	//----------------------------------------------------------------------------------
@@ -4965,9 +4941,6 @@ void Do_Docking_YBS(void)
 						stop_rap();
 						mode.step++;
 					}
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 			//qz add 20180801
 			case 0x89:
@@ -4996,9 +4969,6 @@ void Do_Docking_YBS(void)
 						mode.step=0x88;
 					}
 #endif					
-#ifdef	ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 				break;
 					
 			case 0:
@@ -5013,9 +4983,6 @@ void Do_Docking_YBS(void)
 				forward(0xFF812345);
 				mode.step = 1;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -5118,9 +5085,6 @@ void Do_Docking_YBS(void)
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
 				lost_turn_time=giv_sys_time;
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;
@@ -5173,9 +5137,6 @@ void Do_Docking_YBS(void)
 				forward(0xFF812345);
 				mode.step = 0x41;				
 				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Disable_Rotate_Skid_Check();
-#endif
 			
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
@@ -5273,11 +5234,6 @@ void Do_Docking_YBS(void)
 				r_rap.ori	=FRONT;
 				mode.step	= 0x51;
 				YBS_DISTANCE=YBS_DISTANCE_CONST;		//qz add 20810803
-
-				//qz add 20180316
-#ifdef ROTATE_SKID_CHECK
-				Enable_Rotate_Skid_Check(1);
-#endif
 
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=false;

@@ -6,16 +6,17 @@
 
 #define		SB_CHECK_TIME	30000
 
-#define		ABNORMAL_GYROBIOS_L	1
-#define		ABNORMAL_GYROBIOS_R	2
-#define		ABNORMAL_LSB		14
-#define		ABNORMAL_RSB		15
-#define		ABNORMAL_SB			16
-#define		ABNORMAL_LIFT		24
-#define		ABNORMAL_BUMP		29
-#define		ABNORMAL_RING		30
-#define		ABNORMAL_PITCH_RISE	40
-#define		ABNORMAL_PITCH_DOWN	41
+#define		ABNORMAL_GYROBIOS_L		1
+#define		ABNORMAL_GYROBIOS_R		2
+#define		ABNORMAL_LSB			14
+#define		ABNORMAL_RSB			15
+#define		ABNORMAL_SB				16
+#define		ABNORMAL_ROTATE_SKID	17
+#define		ABNORMAL_LIFT			24
+#define		ABNORMAL_BUMP			29
+#define		ABNORMAL_RING			30
+#define		ABNORMAL_PITCH_RISE		40
+#define		ABNORMAL_PITCH_DOWN		41
 
 ////////////////////////私有定义//////////////////////////////////
 #define M_PROTECTCURRENT 		600//292;//中扫保护电流 600mA 
@@ -139,4 +140,7 @@ u8 Gyro_Pitch_Check(void);
 u8 Gyro_Pitch_Speedup(void);
 u8 do_action_my(u8 dm,u32 length,short tgt_yaw);
 void  enable_rap_yaw(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r,short tgt_yaw);
+
+u8 SB_OC_Check(void);
+
 #endif

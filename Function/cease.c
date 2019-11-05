@@ -792,7 +792,7 @@ void Init_VirtualSleep(void)
 	WriteWorkState();
 	Disable_Free_Skid_Check();		//关闭万向轮检测
 	//初始化检测的条件
-	CHECK_STATUS_FLAG=true; 		//使能异常检测
+	CHECK_STATUS_FLAG=false; 		//使能异常检测
 	Init_Check_Status();//qz add 20180425
 
 	Slam_Data.dipan_req_pre=1;		//qz mask 20180522：默认为规划清扫

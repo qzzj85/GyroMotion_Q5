@@ -50,6 +50,8 @@ void Init_Spot(u8 start_from)
 			motion1.clean_size=0;
 			motion1.worktime=1;
 		}
+	CHECK_STATUS_FLAG=true;			// πƒ‹“Ï≥£ºÏ≤‚
+	Init_Check_Status();
 }
 
 u8 Read_Spot_Bump(u8 ir_enable)

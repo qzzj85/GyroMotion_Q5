@@ -134,8 +134,10 @@ void Do_Sleep_My(void)
 						 PWR_BackupAccessCmd(DISABLE);
 					  
 						 PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI); 
-				
+
+#ifndef USE_HSE				
 						 RCC_EXITSTOP();
+#endif
 						 IWDG_ReloadCounter();
 						 //读取实时时钟值////////////
 						 Rtc_time = RTC_GetCounter();

@@ -55,6 +55,7 @@ void Init_Docking(void)
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 	motion1.force_dock=false;
+	motion1.start_seat=false;
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化设置的值********************/
@@ -4828,15 +4829,6 @@ void Do_Docking_YBS(void)
 				}					
 		}
 
-#ifdef PITCH_SPEEDUP
-	if(Gyro_Pitch_Speedup())
-		{
-			mode.speed_up=true;
-		}
-	else
-		mode.speed_up=false;
-#endif
-
 	ACC_DEC_Curve();
 
 	clr_all_hw_effect();			//qz add 20181210
@@ -4859,7 +4851,7 @@ void Do_Docking_YBS(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}

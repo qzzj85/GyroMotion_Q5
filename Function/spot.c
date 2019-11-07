@@ -21,7 +21,15 @@ static u8 startfrom=0;
 void Init_Spot(u8 start_from)
 {					 
     /******初始化显示***********/
-	/******初始化设置的值********************/
+	/******初始化设置的值********************/	
+	if(mode.low_power)
+		{
+			Send_Voice(VOICE_POWER_LOW);
+			Init_Cease();
+			return;
+		}
+
+	
 	mode.mode = SPOT;	 //工作模式为清扫
 	mode.sub_mode = SUBMODE_SPOT;
 	clr_ram();
@@ -52,7 +60,46 @@ void Init_Spot(u8 start_from)
 		}
 	CHECK_STATUS_FLAG=true;			//使能异常检测
 	Init_Check_Status();
+	Send_Voice(VOICE_SWEEP_START);
 }
+
+void Init_Sweep_Spot(u8 start_from)
+{					 
+    /******初始化显示***********/
+	/******初始化设置的值********************/
+	
+	mode.mode = SWEEP;	 //工作模式为清扫
+	mode.sub_mode = SUBMODE_SPOT;
+	clr_ram();
+	
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
+	Sweep_Level_Set(sweep_level);
+	Enable_earth();
+	Enable_wall();
+	Enable_Speed();
+	enable_hwincept();
+	Speed=OUTSIDE_SPEED;
+
+	
+	
+	Init_Action();
+//	ReInitAd();
+
+	WriteWorkState();
+
+	piv_left=1;
+	piv_done=0;
+	piv_out=1;
+	startfrom=start_from;
+	if((startfrom==SPOT_FROM_CHARGE)|(startfrom==SPOT_FROM_CEASE))
+		{
+			motion1.clean_size=0;
+			motion1.worktime=1;
+		}
+	CHECK_STATUS_FLAG=true;			//使能异常检测
+	Init_Check_Status();
+}
+
 
 u8 Read_Spot_Bump(u8 ir_enable)
 {

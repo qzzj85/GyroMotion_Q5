@@ -21,8 +21,8 @@ void Init_Err(void)
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	stop_rap();						//停止轮子
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
-	Disable_earth();				//关闭地检
-//	Enable_earth();
+	//Disable_earth();				//关闭地检
+	Enable_earth();
 	Disable_wall();					//关闭墙检
 //	Enable_wall();
 	disable_hwincept();				//禁止红外接收电源
@@ -54,7 +54,9 @@ void Init_Err(void)
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 	Open_Led(0,30000,2);			//qz add 20181120,红灯快闪3s
 	Open_Led(0,0,0);
+#ifdef NEW_VOICE_IC
 	Send_Voice(VOICE_ERROR_WARNING);
+#endif
 }
 /******************************************************************
 功能：执行充电

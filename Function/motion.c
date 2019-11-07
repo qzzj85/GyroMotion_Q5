@@ -754,3 +754,80 @@ u8 Is_Close_Angle(short tgt_angle,short now_angle,u32 bios)
 	return 0;
 }
 
+u8 Analysis_Check_Dock(void)
+{
+#if 1
+	u32 find_home=ReadHwSign_My();
+	u8 next_action=Read_CheckPoint_NextAction();
+
+	if(next_action!=CHECK_DOCK)
+		return 0;
+
+	if(top_time_sec>=6)
+		{
+			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
+				{
+					stop_rap();
+					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+					Init_Docking();
+					return 1;
+				}
+		}
+
+	if(Analysis_InSeatArea(grid.x, grid.y))
+		{
+			stop_rap();
+			TRACE("Motion in seat area!!!\r\n");
+			Init_Docking();
+			return 1;
+		}
+	return 0;
+#else
+	return 0;
+#endif
+}
+
+u8 Analysis_Stop_StartArea(void)
+{
+
+	if(motion1.area_num==1)
+		{
+			if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
+				{
+					if((abs(grid.x-grid.x_start)<2)&(abs(grid.y-grid.y_start)<2))
+						return 1;
+				}
+		}
+	return 0;
+}
+
+
+u8 Force_Dock(void)
+{
+	u8 temp_data1=0,temp_data2=0;
+	TRACE("Enter in %s...\r\n",__func__);
+	temp_data1=Find_Directly_Way(grid.x_start,grid.y_start);
+	temp_data2=Find_PathPoint_WayAll(grid.x_start,grid.y_start);
+	
+	//motion1.area_ok=true;
+	//Set_CurrNode_LeakInfo(motion1.area_ok);
+	//Set_Curr_AllNewAreaOK();	
+	if(temp_data1|temp_data2)
+		{
+			check_point.new_x1=grid.x_start;
+			check_point.new_y1=grid.y_start;
+			check_point.new_x2=grid.x_start;
+			check_point.new_y2=grid.y_start;
+			Set_CheckPoint_NextAction(CHECK_DOCK);
+			Init_Shift_Point1(0);
+		}
+	else
+		{
+			TRACE("Can't Directly to 00!!\r\n");
+			Area_Check(0);						
+			//Set_CheckPoint_NextAction(CHECK_DOCK);
+			Init_Shift_Point1(0);
+		}
+	TRACE("Out %s!!\r\n",__func__);
+	return 0;
+}

@@ -10,6 +10,14 @@
 ////////////////////////////////////全局变量//////////////////////////////////
 #define RING_FIX_OFFSET	500
 #define	ROTATE_OFFSET	25
+
+#define	PITCH_ANGLE_BIOS		550		//5.5度
+#define	SPEEDUP_ANGLE_BIOS		200		//2度
+#define	PITCHROLL_ANGLE_BIOS	500		//5度
+#define	ROLL_ANGLE_BIOS			500		//5堵
+#define	PITCH_TIME				5000	//500ms
+#define	SPEEDUP_TIME			2000	//200ms
+
 u8 sweep_level=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
 bool CHECK_STATUS_FLAG=false;
 bool CHECK_STATUS_TIME=false;
@@ -271,6 +279,9 @@ void Action_Mode(void)
 						case YBS_SUB_RIGHT:
 						case YBS_SUB_LEFT:
 							Sweep_YBS();
+							break;
+						case SUBMODE_SPOT:
+							Do_Spot_My();
 							break;
 					}
 			break;
@@ -535,102 +546,14 @@ u32  read_bump(void)
 u8 Read_Protect(void)
 {
 	u8 data1,return_data=0;
-#if 0 //shftemp	
 
-////////////////////////////各种异常信号////////////////////
+#ifdef PITCH_SPEEDUP
+	if(Gyro_Pitch_Speedup())
+		mode.speed_up=true;
+	else
+		mode.speed_up=false;
+#endif
 
-    if(m_current > M_PROTECTCURRENT)			//中扫电流过大
-    {   		  
-		if(mode.abnormity != 16)
-	    {
-		    mode.abnormity = 16;
-		    mode.step_abn = 0;		 
-		    stop_rap();
-		}
-		return mode.abnormity;   
-    }	
-		 					 
-	if(r_current > WHEEL_PROTECTCURRENT)
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 31;
-		    mode.step_abn = 0; 
-		    stop_rap();
-		}
-		return mode.abnormity;   
-	}
-	if(l_current > WHEEL_PROTECTCURRENT)
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 32;
-		    mode.step_abn = 0; 
-		    stop_rap();
-		}
-		return mode.abnormity;  	  
-	}
-
-	if((l_ring.state == BAD))	   //左轮不转的情况
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 19;
-		    mode.step_abn = 0;
-		    stop_rap();
-		}
-		return mode.abnormity;
-	}
-
-	if((r_ring.state))	   //右轮不转的情况
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 20;
-		    mode.step_abn = 0;
-		    stop_rap();
-		}					
-		return mode.abnormity;
-	}
-  	
-////////////	if((w_ring.state)&&( frontwheelon != 0))	   //万向轮不转的情况
-////////////	{
-////////////		if(mode.abnormity == 0)
-////////////	    {
-////////////		    mode.abnormity = 21;
-////////////		    mode.step_abn = 0;
-////////////		    stop_rap();
-////////////		}					
-////////////		return mode.abnormity;
-////////////	}			
-	       	  
-//	if (lidi.key == 0) 				  //左轮离地	//QZ MASK
-	if(l_lidi.key==0)		//QZ:MASK
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 22;
-		    mode.step_abn = 0;
-		    stop_rap();	
-//		    Disable_Sweep();	    //关闭风机马达等
-		}			   
-		return mode.abnormity;
-	}
-
-//	if (lidi.key == 0)				  //右轮离地		//QZ MASK
-	if(r_lidi.key==0)		//QZ:add
-	{
-		if(mode.abnormity == 0)
-	    {
-		    mode.abnormity = 23;
-		    mode.step_abn = 0;
-		    stop_rap();	  
-//		    Disable_Sweep();	    //关闭风机马达等
-		}		
-		return mode.abnormity;
-    }	  
-	return 0;
-	#endif
 	/////////////边刷检查//////////////////
 #ifdef 	SB_FIX_CHECK
 #if 0
@@ -687,7 +610,9 @@ u8 Read_Protect(void)
 							SideBrush.fail=0x01;						//直接报错，不再保护
 							return 0;
 						}
+#ifdef NEW_VOICE_IC
 					Send_Voice(VOICE_ERROR_WARNING);
+#endif
 				}
 			else
 				return_data=ABNORMAL_SB;
@@ -723,15 +648,17 @@ u8 Read_Protect(void)
 			if(mode.abnormity==0)
 				{
 					stop_rap();
-					mode.abnormity=17;
+					mode.abnormity=ABNORMAL_ROTATE_SKID;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+#ifdef NEW_VOICE_IC
 					Send_Voice(VOICE_ERROR_WARNING);
+#endif
 				}
-			return_data =17;
+			return_data =ABNORMAL_ROTATE_SKID;
 		}
-	else 
-		return_data=data1;
+	//else 
+		//return_data=data1;
 #endif
 
 	///////////碰撞检查///////////
@@ -744,7 +671,9 @@ u8 Read_Protect(void)
 					mode.abnormity=ABNORMAL_BUMP;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+#ifdef NEW_VOICE_IC
 					Send_Voice(VOICE_ERROR_WARNING);
+#endif
 				}
 			return_data= ABNORMAL_BUMP;
 		}
@@ -760,7 +689,9 @@ u8 Read_Protect(void)
 					mode.abnormity=ABNORMAL_RING;
 					mode.step_abn=0;
 					mode.Info_Abort=1;
+#ifdef NEW_VOICE_IC
 					Send_Voice(VOICE_ERROR_WARNING);
+#endif
 				}
 			return_data= ABNORMAL_RING;
 		}
@@ -775,21 +706,20 @@ u8 Read_Protect(void)
 					stop_rap();
 					if(data1==1)
 						{
-							mode.abnormity=ABNORMAL_PITCH_RISE;
+							mode.abnormity=ABNORMAL_PITCH_RISE;							
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch rise up!\r\n");
 #endif
 						}
 					else
 						{
-							mode.abnormity=ABNORMAL_PITCH_DOWN;
+							mode.abnormity=ABNORMAL_PITCH_DOWN;							
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch down!\r\n");
 #endif
 						}
 					mode.step_abn=0;
-					mode.Info_Abort=1;
-					Slam_Data.l_bump_flag=true;
+					Gyro_Data.pitch_fail_cnt=0;
 				}
 			else
 				{
@@ -798,6 +728,23 @@ u8 Read_Protect(void)
 					if(data1==2)
 						return_data=ABNORMAL_PITCH_DOWN;
 				}
+		}
+#endif
+
+#ifdef GYRO_PITCHROLL_CHECK
+	if(Gyro_PitchRoll_Check())
+		{
+			if(mode.abnormity==0)
+				{
+					stop_rap();
+					mode.abnormity=ABNORMAL_PITCHROLL;
+					mode.step_abn=0;
+					Gyro_Data.pitchroll_fail_cnt=0;
+#ifdef EFFICENT_DEBUG
+					TRACE("Gyro PitchRoll!\r\n");
+#endif
+				}
+			return_data=ABNORMAL_PITCHROLL;
 		}
 #endif
 
@@ -812,13 +759,14 @@ u8 Read_Protect(void)
 					if((mode.abnormity)&(mode.abnormity!=ABNORMAL_GYROBIOS_L)&(mode.abnormity!=ABNORMAL_GYROBIOS_R))
 						abnormal_gyrobios_cnt--;
 				
-					if((mode.abnormity==0)&(mode.mode!=SPOT))
+					if((mode.abnormity==0)&(mode.sub_mode!=SUBMODE_SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_L;
 							mode.step_abn=0;
 							abnormal_gyrobios_cnt=0;
 						}
-					if((mode.mode==SPOT)&(mode.step<9))
+					
+					if((mode.sub_mode==SUBMODE_SPOT)&(mode.step<9)&(mode.abnormity==0))
 						{
 							spot_gyrobios_cnt--;
 						}						
@@ -829,13 +777,13 @@ u8 Read_Protect(void)
 					if((mode.abnormity)&(mode.abnormity!=ABNORMAL_GYROBIOS_L)&(mode.abnormity!=ABNORMAL_GYROBIOS_R))
 						abnormal_gyrobios_cnt++;
 					
-					if((mode.abnormity==0)&(mode.mode!=SPOT))
+					if((mode.abnormity==0)&(mode.sub_mode!=SUBMODE_SPOT))
 						{
 							mode.abnormity=ABNORMAL_GYROBIOS_R;
 							mode.step_abn=0;
 							abnormal_gyrobios_cnt=0;
 						}
-					if((mode.mode==SPOT)&(mode.step<9))
+					if((mode.sub_mode==SUBMODE_SPOT)&(mode.step<9)&(mode.abnormity==0))
 						{
 							spot_gyrobios_cnt++;
 						}
@@ -843,6 +791,8 @@ u8 Read_Protect(void)
 				}
 		}
 #endif
+	if(return_data)
+		TRACE("return_data=%d\r\n",return_data);
 	return return_data;
 	
 }
@@ -858,7 +808,7 @@ u8 Action_Protect_My(u8 abnoraml)
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
 	n=Dock_read_bump();		//只要碰撞,不要红外
-	if((n!=0)&(mode.step_abn<7)&(mode.abnormity!=ABNORMAL_BUMP)&(mode.abnormity!=ABNORMAL_PITCH_RISE)&(mode.abnormity!=ABNORMAL_PITCH_DOWN))
+	if((n!=0)&(mode.step_abn<7)&(mode.abnormity!=ABNORMAL_BUMP)&(mode.abnormity!=ABNORMAL_PITCH_RISE)&(mode.abnormity!=ABNORMAL_PITCH_DOWN)&(mode.abnormity!=ABNORMAL_PITCHROLL))
 		{
 			stop_rap();
 			mode.step_abn=7;
@@ -1705,6 +1655,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(n)									//再次发生碰撞
 								{
 									stop_rap();
+									Set_Coordinate_Wall(now_gridx,now_gridy);
 									mode.step_abn++;
 									mode.abn_time=giv_sys_time; //qz add 20181011
 								}
@@ -1757,6 +1708,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(n)														//再次发生碰撞
 								{
 									stop_rap();
+									Set_Coordinate_Wall(now_gridx,now_gridy);
 									mode.step_abn++;
 									mode.abn_time=giv_sys_time; //qz add 20181011
 								}
@@ -2020,6 +1972,12 @@ u8 Action_Protect_My(u8 abnoraml)
 					{
 						case 0:
 							stop_rap();
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							if(Gyro_Data.pitch_fail_cnt>3)
+								{
+									Gyro_Data.pitch_fail=true;
+									return 0;
+								}
 							mode.abn_time=giv_sys_time;
 							mode.step_abn++;
 							break;
@@ -2027,7 +1985,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
 								return 0;
 							Speed=HIGH_MOVE_SPEED;
-							if(do_action(4,10*CM_PLUS))
+							if(do_action(4,15*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
@@ -2039,19 +1997,22 @@ u8 Action_Protect_My(u8 abnoraml)
 								return 0;
 							if(abs(Gyro_Data.pitch-Gyro_Data.first_pitch)>600)
 								{
-									if(Gyro_Data.pitch>Gyro_Data.first_pitch)
+									if(Gyro_Data.pitch<Gyro_Data.first_pitch)
 										{
 											mode.abnormity=ABNORMAL_PITCH_DOWN;
 										}
 									mode.step_abn=0;
+									Gyro_Data.pitch_fail_cnt++;
 								}
 							else
 								{
-									mode.step_abn++;
+									//mode.step_abn++;
+									mode.step_abn=0xf0;
 								}
 							break;
+#if 0
 						case 3:
-							Speed=MID_MOVE_SPEED;
+							Speed=TURN_SPEED;
 							if(do_action(1,80*Angle_1))
 								{
 									stop_rap();
@@ -2079,7 +2040,8 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn=20;
 								}
 							break;
-						case 20:
+#endif
+						case 0xf0:
 							mode.abnormity=0;
 							mode.step_abn=0;
 							mode.step=0;
@@ -2089,11 +2051,23 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.bump=0;
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
+							Gyro_Data.pitch_fail_cnt=0;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
-							break;
-							
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}							
+							break;							
 					}
 				break;
 			case ABNORMAL_PITCH_DOWN:
@@ -2101,8 +2075,15 @@ u8 Action_Protect_My(u8 abnoraml)
 					{
 						case 0:
 							stop_rap();
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							if(Gyro_Data.pitch_fail_cnt>3)
+								{
+									Gyro_Data.pitch_fail=true;
+									return 0;
+								}
 							mode.abn_time=giv_sys_time;
 							mode.step_abn++;
+							
 							break;
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
@@ -2120,17 +2101,20 @@ u8 Action_Protect_My(u8 abnoraml)
 								return 0;
 							if(abs(Gyro_Data.pitch-Gyro_Data.first_pitch)>600)
 								{
-									if(Gyro_Data.pitch<Gyro_Data.first_pitch)
+									if(Gyro_Data.pitch>Gyro_Data.first_pitch)
 										{
 											mode.abnormity=ABNORMAL_PITCH_RISE;
 										}
 									mode.step_abn=0;
+									Gyro_Data.pitch_fail_cnt++;
 								}
 							else
 								{
-									mode.step_abn++;
+									//mode.step_abn++;
+									mode.step_abn=0xf0;
 								}
 							break;
+#if 0
 						case 3:
 							Speed=HIGH_MOVE_SPEED;
 							if(do_action(3,15*CM_PLUS))
@@ -2152,7 +2136,8 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn=20;
 								}
 							break;
-						case 20:
+#endif
+						case 0xf0:
 							mode.abnormity=0;
 							mode.step_abn=0;
 							mode.step=0;
@@ -2162,11 +2147,195 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.bump=0;
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
+							Gyro_Data.pitch_fail_cnt=0;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
-							break;
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}							
+							break;							
 						
+					}
+				break;
+
+			case ABNORMAL_PITCHROLL:
+				switch(mode.step_abn)
+					{
+						case 0:
+							stop_rap();
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.abn_time=giv_sys_time;
+							mode.step_abn++;
+							break;
+						case 1:
+							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
+								return 0;
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(4,15*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							break;
+						case 2:
+							if(giv_sys_time-mode.abn_time>8000) 		//延时800ms
+								return 0;
+							if((abs(Gyro_Data.roll-Gyro_Data.first_roll))+\
+								(abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+								{
+									mode.step_abn++;
+									Gyro_Data.pitchroll_fail_cnt++;
+								}
+							else
+								{
+									mode.step_abn=0xf0;
+								}
+							break;
+						case 3:
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(3,15*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							if(n)
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							break;
+						case 4:
+							if(giv_sys_time-mode.abn_time>8000) 		//延时800ms
+								return 0;
+							if((abs(Gyro_Data.roll-Gyro_Data.first_roll))+\
+								(abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+								{
+									mode.step_abn++;
+									Gyro_Data.pitchroll_fail_cnt++;
+								}
+							else
+								{
+									mode.step_abn=0xf0;
+								}
+							break;
+						case 5:
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(2,90*Angle_1))
+								{
+									stop_rap();
+									mode.step_abn++;
+								}
+							break;
+						case 6:
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(3,15*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							if(n)
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							break;
+						case 7:
+							if(giv_sys_time-mode.abn_time>8000) 		//延时800ms
+								return 0;
+							if((abs(Gyro_Data.roll-Gyro_Data.first_roll))+\
+								(abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+								{
+									mode.step_abn++;
+									Gyro_Data.pitchroll_fail_cnt++;
+								}
+							else
+								{
+									mode.step_abn=0xf0;
+								}
+							break;
+						case 8:
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(1,180*Angle_1))
+								{
+									stop_rap();
+									mode.step_abn++;
+								}
+							break;
+						case 9:
+							Speed=FAST_MOVE_SPEED;
+							if(do_action(3,15*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							if(n)
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							break;
+						case 10:
+							if(giv_sys_time-mode.abn_time>8000) 		//延时800ms
+								return 0;
+							if((abs(Gyro_Data.roll-Gyro_Data.first_roll))+\
+								(abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+								{
+									mode.step_abn++;
+									Gyro_Data.pitchroll_fail=true;
+								}
+							else
+								{
+									//mode.step_abn++;
+									mode.step_abn=0xf0;
+								}
+							break;
+						case 0xf0:
+							mode.abnormity=0;
+							mode.step_abn=0;
+							mode.step=0;
+							mode.Info_Abort=0;
+							mode.step=0;
+							mode.step_mk=0; 		//qz add 20180919
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;	//qz add 20181210
+							Gyro_Data.pitch_fail_cnt=0;
+#ifdef EFFICENT_DEBUG
+							TRACE("Gyro Pitch bump complete!\r\n");
+#endif
+							switch(mode.mode)
+								{
+									case SWEEP:
+									case PASS2INIT:
+									case EXIT:
+									case SHIFT:
+										Area_Check(0);
+										Init_Shift_Point1(0);
+									break;
+									default:
+										break;
+								}							
+							break;							
 					}
 				break;
 
@@ -2215,7 +2384,7 @@ u8 Action_Protect_My(u8 abnoraml)
 									stop_rap();
 									mode.step_abn++;
 								}
-							if(abnoraml)
+							if((abnoraml==ABNORMAL_GYROBIOS_L)|(abnoraml==ABNORMAL_GYROBIOS_R))
 								{
 									stop_rap();
 									mode.step_abn=0;
@@ -3757,7 +3926,7 @@ u8 Gyro_Pitch_Check(void)
 	switch(Gyro_Data.pitch_check_step)
 		{
 			case 0:
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>PITCH_ANGLE_BIOS)
 					{
 						Gyro_Data.pitch_check_step++;
 						Gyro_Data.pitch_check_time=giv_sys_time;
@@ -3765,12 +3934,12 @@ u8 Gyro_Pitch_Check(void)
 					}
 				break;
 			case 1:
-				if(giv_sys_time-Gyro_Data.pitch_check_time>8000)
+				if(giv_sys_time-Gyro_Data.pitch_check_time>PITCH_TIME)
 					{
 						Gyro_Data.pitch_check_step++;
 						return 0;
 					}
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>PITCH_ANGLE_BIOS)
 					fail_cnt++;
 				else
 					ok_cnt++;
@@ -3779,7 +3948,7 @@ u8 Gyro_Pitch_Check(void)
 				if(fail_cnt+10>=ok_cnt)
 					{
 						Gyro_Data.pitch_check_step=0;
-						if(Gyro_Data.pitch<Gyro_Data.first_pitch)			//抬头
+						if(Gyro_Data.pitch>Gyro_Data.first_pitch)			//抬头
 							return 1;
 						else												//抬尾
 							return 2;
@@ -3804,51 +3973,26 @@ u8 Gyro_Pitch_Speedup(void)
 	if(mode.status==0)
 		return 0;
 
-//	if(mode.bump)
-//		return 0;
-#if 0
-	switch (check_step)
-		{
-			case 0:
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>300)
-					{
-						check_step++;
-						check_time=giv_sys_time;
-					}
-				break;
-			case 1:
-				if(giv_sys_time-check_time>1000)			//500ms
-					{
-						check_step=0;
-						return 1;
-					}
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<300)
-					{
-						check_step=0;
-						return 0;
-					}
-				break;
-		}
-	return 0;
-#else
 	if(!mode.speed_up)
 		{
 			switch(check_step)
 				{
 					case 0:
-						if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=300)
+						if(((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=SPEEDUP_ANGLE_BIOS)\
+							|((abs(Gyro_Data.roll-Gyro_Data.first_roll))>=SPEEDUP_ANGLE_BIOS))		//3度
 							{
 								check_step++;
 								check_time=giv_sys_time;
 							}
 						return 0;
 					case 1:
-						if(giv_sys_time-check_time>1000)			//500ms
+						if(giv_sys_time-check_time>SPEEDUP_TIME)							//100ms
 							{
 								check_step=0;
 								return 1;
 							}
-						if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<300)
+						if(((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<SPEEDUP_ANGLE_BIOS)\
+							&((abs(Gyro_Data.roll-Gyro_Data.first_roll))<SPEEDUP_ANGLE_BIOS))
 							{
 								check_step=0;
 								return 0;
@@ -3861,19 +4005,21 @@ u8 Gyro_Pitch_Speedup(void)
 			switch(check_step)
 				{
 					case 0:
-						if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<300)
+						if(((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<SPEEDUP_ANGLE_BIOS)\
+							&((abs(Gyro_Data.roll-Gyro_Data.first_roll))<SPEEDUP_ANGLE_BIOS))		//3度
 							{
 								check_step++;
 								check_time=giv_sys_time;
 							}
 						return 1;
 					case 1:
-						if(giv_sys_time-check_time>1000)			//500ms
-							{
+						if(giv_sys_time-check_time>SPEEDUP_TIME)							//100ms
+							{	
 								check_step=0;
 								return 0;
 							}
-						if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=300)
+						if(((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=SPEEDUP_ANGLE_BIOS)\
+							|((abs(Gyro_Data.roll-Gyro_Data.first_roll))>=SPEEDUP_ANGLE_BIOS))
 							{
 								check_step=0;
 								return 1;
@@ -3881,8 +4027,7 @@ u8 Gyro_Pitch_Speedup(void)
 						return 1;
 				}
 		}
-#endif
-		return 0;
+	return 0;
 }
 
 u8 Gyro_Roll_Check(void)
@@ -3893,7 +4038,7 @@ u8 Gyro_Roll_Check(void)
 	switch (Gyro_Data.roll_check_step)
 		{
 			case 0:
-				if((abs(Gyro_Data.roll-Gyro_Data.first_roll))>500)
+				if((abs(Gyro_Data.roll-Gyro_Data.first_roll))>ROLL_ANGLE_BIOS)
 					{
 						Gyro_Data.roll_check_step++;
 						Gyro_Data.roll_check_time=giv_sys_time;
@@ -3905,7 +4050,7 @@ u8 Gyro_Roll_Check(void)
 						Gyro_Data.roll_check_step=0;
 						return 1;
 					}
-				if((abs(Gyro_Data.roll-Gyro_Data.first_roll))<500)
+				if((abs(Gyro_Data.roll-Gyro_Data.first_roll))<ROLL_ANGLE_BIOS)
 					{
 						Gyro_Data.roll_check_step=0;
 						return 0;
@@ -3917,7 +4062,7 @@ u8 Gyro_Roll_Check(void)
 
 u8 Gyro_PitchRoll_Check(void)
 {
-	u8 pitch_dif,roll_dif;
+	u32 pitch_dif,roll_dif;
 	if(mode.status==0)
 		return 0;
 	switch (Gyro_Data.pitchroll_check_step)
@@ -3925,7 +4070,7 @@ u8 Gyro_PitchRoll_Check(void)
 			case 0:
 				pitch_dif=abs(Gyro_Data.first_pitch-Gyro_Data.pitch);
 				roll_dif=abs(Gyro_Data.first_roll-Gyro_Data.roll);
-				if(pitch_dif+roll_dif>600)
+				if(pitch_dif+roll_dif>PITCHROLL_ANGLE_BIOS)								//6度
 					{
 						Gyro_Data.pitchroll_check_step++;
 						Gyro_Data.pitchroll_check_time=giv_sys_time;
@@ -3934,12 +4079,12 @@ u8 Gyro_PitchRoll_Check(void)
 			case 1:
 				pitch_dif=abs(Gyro_Data.first_pitch-Gyro_Data.pitch);
 				roll_dif=abs(Gyro_Data.first_roll-Gyro_Data.roll);
-				if(giv_sys_time-Gyro_Data.pitchroll_check_time>8000)
+				if(giv_sys_time-Gyro_Data.pitchroll_check_time>PITCH_TIME)	//500ms
 					{
 						Gyro_Data.pitchroll_check_step=0;
 						return 1;
 					}
-				if(pitch_dif+roll_dif<600)
+				if(pitch_dif+roll_dif<PITCHROLL_ANGLE_BIOS)								//6度
 					{
 						Gyro_Data.pitchroll_check_step=0;
 					}
@@ -4008,8 +4153,8 @@ u8 Check_Rotate_Skid(void)
 #endif
 								return 1;
 							}
-						else
-							return 2;
+						//else
+							//return 2;
 					#endif
 				}
 		}
@@ -4868,6 +5013,16 @@ void Check_Status(void)
 				}
 #endif
 
+#ifdef 		GYRO_PITCH_CHECK
+			if(Gyro_Data.pitch_fail)
+				{
+					error_code=SEND_ERROR_GYRO;
+					dis_err_code=DIS_ERROR_GYRO;
+					voice_addr=VOICE_ERROR_GYRO;
+					mode.err_code|=WIFI_ERR_OTHER;
+				}
+#endif
+
 #ifdef 		GYRO_ROLL_CHECK
 			if(Gyro_Roll_Check())
 				{
@@ -4876,6 +5031,16 @@ void Check_Status(void)
 #ifdef EFFICENT_DEBUG
 					TRACE("Gyro_Roll_Check Fail!\r\n");
 #endif
+				}
+#endif
+
+#ifdef 		GYRO_PITCHROLL_CHECK
+			if(Gyro_Data.pitchroll_fail)
+				{
+					error_code=SEND_ERROR_GYRO;
+					dis_err_code=DIS_ERROR_GYRO;
+					voice_addr=VOICE_ERROR_GYRO;
+					mode.err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 
@@ -5006,9 +5171,18 @@ void Init_Check_Status(void)
 
 #ifdef GYRO_ROLL_CHECK
 	Gyro_Data.roll_check_step=0;
+	Gyro_Data.first_roll=Gyro_Data.roll;		//qz add 20180927
+
 #endif
 #ifdef GYRO_PITCH_CHECK
+	Gyro_Data.first_pitch=Gyro_Data.pitch;
+	Gyro_Data.pitch_fail=false;
+	Gyro_Data.pitch_fail_cnt=0;
 	Gyro_Data.pitch_check_step=0;
+#endif
+#ifdef GYRO_PITCHROLL_CHECK
+	Gyro_Data.pitchroll_check_step=0;
+	Gyro_Data.pitchroll_fail=false;
 #endif
 	Init_Gyro_Bios();
 

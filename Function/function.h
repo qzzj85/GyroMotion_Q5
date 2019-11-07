@@ -17,6 +17,7 @@
 #define		ABNORMAL_RING			30
 #define		ABNORMAL_PITCH_RISE		40
 #define		ABNORMAL_PITCH_DOWN		41
+#define		ABNORMAL_PITCHROLL		42
 
 ////////////////////////私有定义//////////////////////////////////
 #define M_PROTECTCURRENT 		600//292;//中扫保护电流 600mA 
@@ -142,5 +143,7 @@ u8 do_action_my(u8 dm,u32 length,short tgt_yaw);
 void  enable_rap_yaw(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r,short tgt_yaw);
 
 u8 SB_OC_Check(void);
+u8 Gyro_PitchRoll_Check(void);
+
 
 #endif

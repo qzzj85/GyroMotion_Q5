@@ -80,14 +80,6 @@ void YBS_YBS(void)
 		}
 #endif
 
-#ifdef PITCH_SPEEDUP
-	if(Gyro_Pitch_Speedup())
-		{
-			mode.speed_up=true;
-		}
-	else
-		mode.speed_up=false;
-#endif
 
 //	YBS_comm_rap(); 
 //	if(Gyro_Data.straight)
@@ -115,7 +107,7 @@ void YBS_YBS(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -1603,6 +1595,14 @@ static int32_t xxxx_2;
 *****************************************************************/
 void Init_Right_YBS(u8 direct_first)
 {
+
+	if(mode.low_power)
+		{
+			Send_Voice(VOICE_POWER_LOW);
+			Init_Cease();
+			return;
+		}
+
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
     /******≥ı ºªØœ‘ æ***********/
@@ -1661,7 +1661,8 @@ void Init_Right_YBS(u8 direct_first)
 	motion1.clean_size=0;
 	Gyro_Data.cal_flag=false;
 	YBS_check_base=false;	
-	Init_Check_Status();
+	Init_Check_Status();	
+	Send_Voice(VOICE_SWEEP_START);
 }
 
 void Init_Left_YBS(u8 direct_first)

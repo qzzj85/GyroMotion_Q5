@@ -123,81 +123,77 @@ void AutoReadKey(void)
 				case 1:
 					key2.press=false;
 
-					if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
-						break;
-					
-					if(((mode.mode==CEASE)&(mode.sub_mode==ERR)))	 //判断是否处于异常状态 qz modify:add test 20180605
+					//if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
+					//	break;
+					switch(mode.mode)
 						{
-							Init_Cease();
-						}
-					else if(mode.sub_mode!=SELF_TEST)
-						{
-							switch(mode.mode)
-								{
-									case CHARGEING:
-										if(mode.sub_mode==SWITCHOFF)
-											break;
-										else if(power.charge_dc)
-											{
-												Send_Voice(VOICE_ERROR_DC_EXIST);
-												error_code=SEND_ERROR_DCEXIST;
-												dis_err_code=DIS_ERROR_DC_EXSIT;
-												dis_err_time=giv_sys_time;
-											}
-										else	//充电座充电
-											{
-												//需要补充退出充电座代码
-												Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
-											}
-										break;
-									case CEASE:
-										if(mode.sub_mode==CEASE)
-											{
+							case CHARGEING:
+								if(mode.sub_mode==SWITCHOFF)
+									break;
+								else if(power.charge_dc)
+									{
+										Send_Voice(VOICE_ERROR_DC_EXIST);
+										error_code=SEND_ERROR_DCEXIST;
+										dis_err_code=DIS_ERROR_DC_EXSIT;
+										dis_err_time=giv_sys_time;
+									}
+								else	//充电座充电
+									{
+										//需要补充退出充电座代码
+										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+									}
+								break;
+							case CEASE:
+								switch(mode.sub_mode)
+									{
+										case CEASE:
 #ifdef TUYA_WIFI
-												mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-												wifi_uart_write_stream_init(0,0);// 初始化地图参数   地图  0  
-												DelayMs(1);
-												stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-												DelayMs(1);
-												stream_start(00);// 开始传输
+											mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+											wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+											DelayMs(1);
+											stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+											DelayMs(1);
+											stream_start(00);// 开始传输
 #endif	
-												Init_First_Sweep(0);
-												//Init_Right_YBS(1);	
-												//Init_Left_YBS(1);
-												//Init_RunTest();
-												//Init_SweepTest();
-												//Init_Docking();
-											}
-										else if(mode.sub_mode==ERR)
-											{
-												Init_Cease();
-											}
-										break;
-									case SWEEP:
-									case YBS:
-									case SHIFT:
-									case PASS2INIT:
-									case EXIT:
-									case SPOT:
-										Init_Cease();
-										Send_Voice(VOICE_SWEEP_STOP);
+											Init_First_Sweep(0);
+											//Init_Right_YBS(1);	
+											//Init_Left_YBS(1);
+											//Init_RunTest();
+											//Init_SweepTest();
+											//Init_Docking();
+											break;
+										case ERR:
+										case SUBMODE_VIRTUAL_SLEEP:
+										case SLEEP:
+											Init_Cease();
+											break;
+										default:
+											break;
+									}
+								break;
+							case SWEEP:
+							case YBS:
+							case SHIFT:
+							case PASS2INIT:
+							case EXIT:
+							case SPOT:
+								Init_Cease();
+								Send_Voice(VOICE_SWEEP_STOP);
 #ifdef TUYA_WIFI  
-	stream_stop(0,256);// 停止地图    WIFI_STREAM_ENABLE
+								stream_stop(0,256);// 停止地图    WIFI_STREAM_ENABLE
 #endif	
-										break;
-									case DOCKING:
-										Send_Voice(VOICE_DOCK_STOP);
-										Init_Cease();
-										break;
-									case TEST:
-										if((mode.sub_mode==RUN_TEST))
-											{
-												mode.step=0;
-												mode.test_step++;
-											}
-										break;
-										
-								}
+								break;
+							case DOCKING:
+								Send_Voice(VOICE_DOCK_STOP);
+								Init_Cease();
+								break;
+							case TEST:
+								if((mode.sub_mode==RUN_TEST))
+									{
+										mode.step=0;
+										mode.test_step++;
+									}
+								break;
 						}
 					 break;
 				case 2:

@@ -13,4 +13,18 @@ void Cease_YaoKong_Manage(void);
 void Init_VirtualSleep(void);
 void Do_VirtualSleep(void);
 
+///////////////////////全局函数////////////////////////////////////
+///////////////////////私有函数////////////////////////////////////	
+void Cease_display_set(void);
+void Cease_SetTime(void);
+void Cease_Timing(void);
+void Cease_Lode_Time(void);
+void Cease_Save_Time(void);
+void Cease_Save_Preengage(void);
+void Cease_Lode_Preengage(void);
+void Cease_Big_Subb_Time(void);
+void Cease_Subb_Time(void);
+void Cease_Big_Add_Time(void);
+void Cease_Add_Time(void);
+
 #endif

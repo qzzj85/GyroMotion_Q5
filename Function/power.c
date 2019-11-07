@@ -1499,6 +1499,7 @@ void APP_BAT_Handle(void)
 			WriteBatteryCapability();
 			Battery.bat_recal=1;
 			WriteBatRecalFlash(Battery.bat_recal);
+
 		}
 	//电池电压低于NOPOWER,进入Dead模式,qz add 20180625
 	if((battery_voltage!=0)&(battery_voltage<NOPOWER)&(!Read_Charge_Dc())&(!Read_Charge_Seat()))
@@ -1536,10 +1537,11 @@ void APP_BAT_Handle(void)
 			WriteBatteryCapability();
 		}
 	//qz add end
-	else 
+	//else 
 		{
 			temp_per=(Battery.BatteryCapability-Battery.BatteryFDCap)*100/Battery.BatteryCapability;	//剩余电量计算	
-			if((temp_per<1.0)&&(temp_per>0.0))
+			//if((temp_per<1.0)&&(temp_per>0.0))
+			if(temp_per<1.0)
 				temp_per=1.0;
 
 			//qz add 20180801如果百分比小于等于20%,但是电压大于需要回充电压,则先等待上报21%
@@ -2188,5 +2190,57 @@ u8 Check_Return_Pwr(void)
 	return 0;
 #endif
 	
+}
+
+void Parse_LowPower2Dock(void)
+{
+
+	if(giv_sys_time-Battery.start_time<100000)
+		return;
+
+
+	if((Battery.bat_per<=20)&(!mode.low_power))
+		{
+			Send_Voice(VOICE_POWER_LOW);
+			mode.low_power=true;
+			switch(mode.mode)
+				{
+					case SWEEP:
+					case PASS2INIT:
+					case EXIT:
+					case SHIFT:
+						if(motion1.start_seat)
+							{
+								Send_Voice(VOICE_DOCK_START);
+								motion1.force_dock=true;
+								stop_rap();
+								Force_Dock();
+							}
+						else
+							{
+								stop_rap();
+								Init_Cease();
+							}
+						break;
+					case YBS:
+					case SPOT:
+						if(motion1.start_seat)
+							{
+								stop_rap();
+								Init_Docking();
+							}
+						else
+							{
+								stop_rap();
+								Init_Cease();
+							}
+						break;
+					default:
+						break;
+				}
+		}
+
+	if((mode.low_power)&(Battery.bat_per>=40))
+		mode.low_power=false;
 }
 

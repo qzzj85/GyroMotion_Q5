@@ -89,9 +89,9 @@
 #define		STOP_WEEKUP				1					//可以从STOP模式中唤醒
 #define		SPEED_EXTI				1					//速度使用外部中断来计数
 //#define		MHW_CAPTURE				1
-//#define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
-//#define		GYRO_PITCHROLL_CHECK	1
-//#define		PITCH_SPEEDUP			1			
+#define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
+#define		GYRO_PITCHROLL_CHECK	1
+#define		PITCH_SPEEDUP			1			
 #define		RING_PWM_CTL			1					//轮子PWM切断控制
 #define		GYRO_CAL				1				//惯导校准代码
 //#define		GYRO_COMPENSATION		1					//惯导角度补偿
@@ -103,11 +103,11 @@
 //#define		YIS055					1
 //#define	FAST_WALL_DET			1
 //#define		IR_CORRECT				1
-#define		NEW_VOICE_IC			1
+//#define		NEW_VOICE_IC			1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			10
+#define		CORRECT_VERSION			11
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -923,6 +923,7 @@ typedef struct		//机器系统的工作状态
 	bool 		factory;				//厂测状态qz add 20181024
 	bool 		factory_burnning;		//厂测跑机状态qz add 20181024
 	bool 		bump_flag; 				   //qz add for bleamn
+	bool        low_power;
 
 	u8 			factory_tst_item;		//qz add 20181107
 	u8 		 	mode ;	   //机器的运行模式  0：静止模式；1：扫地模式；2：自动回充模式；3；遥控模式	4:出错模式
@@ -1010,7 +1011,6 @@ typedef struct 					//清扫结构体
 	bool 	pathpoint_ok;
 	bool	start_seat;
 	bool	force_dock;
-	bool  	first_gyrocal;
 	
 	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
 	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边
@@ -1130,7 +1130,11 @@ typedef struct
 {
 	bool first_rst;			//qz add 20181101:如果第一次检测到惯导数据异常，尝试复位1次
 	bool cal_flag;
+	bool pitch_fail;
+	bool pitchroll_fail;
 	u8 check_step;
+	u8 pitch_fail_cnt;
+	u8 pitchroll_fail_cnt;
 
 	u8 roll_check_step;		//qz add 20180927
 	u32 roll_check_time;	//qz add 20180927
@@ -1339,6 +1343,7 @@ typedef struct sweep_node
 }SWEEP_BUMP_NODE;
 
 #endif
+
 
 
 

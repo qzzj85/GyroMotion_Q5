@@ -30,5 +30,8 @@ u8 Analysis_InSeatArea(s8 now_gridx,s8 now_gridy);
 u8 Is_Close_Angle(short tgt_angle,short now_angle,u32 bios);
 u8 Analysis_LastYClean_II(void);
 
+u8 Analysis_Check_Dock(void);
+u8 Force_Dock(void);
+u8 Analysis_Stop_StartArea(void);
 
 #endif

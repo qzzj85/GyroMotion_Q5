@@ -93,21 +93,16 @@ void log_out(void)
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("clean_size=%f\r\n",motion1.clean_size);
 	TRACE("top=%d\r\n",top_time_sec);
+	TRACE("speed_up=%d\r\n",mode.speed_up);
 #else
-	TRACE("fan_curr_1s=%.2fmA\r\n",dust_current_1s*CURR_FAN_CNT_mA);
-	TRACE("mb_curr_1s=%.2fmA\r\n",m_current_1s*CURR_MB_CNT_mA);
-	TRACE("sb_curr_1s=%.2fmA\r\n",sb_current_1s*CURR_SB_CNT_mA);
-	TRACE("lring_curr_1s=%.2fmA\r\n",l_current_1s*CURR_RING_CNT_mA);
-	TRACE("rring_curr_1s=%.2fmA\r\n",r_current_1s*CURR_RING_CNT_mA);
-	TRACE("fan_curr=%.2fmA\r\n",account_current(ADC_FAN_CURR)*CURR_FAN_CNT_mA);
-	TRACE("mb_curr=%.2fmA\r\n",account_current(ADC_MB_CURR)*CURR_MB_CNT_mA);
-	TRACE("sb_curr=%.2fmA\r\n",account_current(ADC_SB_CURRENT)*CURR_SB_CNT_mA);
-	TRACE("lring_curr=%.2fmA\r\n",account_current(ADC_LRING_CURR)*CURR_RING_CNT_mA);
-	TRACE("rring_curr=%.2fmA\r\n",account_current(ADC_RRING_CURR)*CURR_RING_CNT_mA);
+	TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
+	TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);
+	TRACE("gyro.first_roll=%d\r\n",Gyro_Data.first_roll);
+	TRACE("gyro.roll=%d\r\n",Gyro_Data.roll);
 #endif
 }
 
-//===============================================================================================================
+//====================================	===========================================================================
 //===============================================================================================================
 
 //===============================================================================================================
@@ -202,7 +197,8 @@ int main(void)
 
 						LED_Handle();
 						MapData_Handle();
-						Work_TimeOut_Handle();
+						Work_TimeOut_Handle();						
+						Parse_LowPower2Dock();
 	}	
 
 }

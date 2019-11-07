@@ -32,7 +32,7 @@
 
 
 #define		MB_STD_PWM				800			//40%
-#define		FAN_STD_PWM				1200		//60%
+#define		FAN_STD_PWM				1000		//50%
 
 #define		MB_FORCE_PWM			800			//40%
 #define		FAN_FORCE_PWM			1600		//80%

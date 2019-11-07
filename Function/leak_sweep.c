@@ -227,6 +227,28 @@ void Do_LeakSweep(void)
 								TRACE("Motion in seat area!!!\r\n");
 							}
 					}
+
+#if 0
+				if((motion1.tgt_yaw==F_Angle_Const))
+					{
+						if(Read_Coordinate_Clean(now_gridx+1,now_gridy))
+							{
+								stop_rap();
+								mode.step++;
+								TRACE("The next point has clean!!\r\n");
+							}
+					}
+
+				if(motion1.tgt_yaw==B_Angle_Const)
+					{
+						if(Read_Coordinate_Clean(now_gridx-1,now_gridy))
+							{
+								stop_rap();
+								mode.step++;
+								TRACE("The next point has clean!!\r\n");
+							}
+					}
+#endif
 				break;
 			case 2:
 				if(ydir>0)
@@ -417,7 +439,7 @@ void Do_Leak_BackSweep(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -477,6 +499,8 @@ void Do_Leak_BackSweep(void)
 						if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=grid.x_area_min))
 							{
 								stop_rap();
+								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
+								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx-1);
 								mode.step++;
 							}
 					}

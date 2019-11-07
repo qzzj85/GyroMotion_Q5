@@ -2,7 +2,6 @@
 
 void Init_Quit_Charging(u8 sweep_method)
 {
-
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -36,6 +35,14 @@ void Init_Quit_Charging(u8 sweep_method)
 	Reset_UV();
 #endif
 	Close_Led();
+	if(mode.low_power)
+		{
+			Send_Voice(VOICE_POWER_LOW);
+			mode.step=0xf0;
+			mode.time=giv_sys_time;
+		}
+
+
 }
 
 void Do_Quit_Chargeing(void)
@@ -74,16 +81,16 @@ void Do_Quit_Chargeing(void)
 				mode.step++;
 			case 0x01:
 				Speed=HIGH_MOVE_SPEED;
-				if(do_action(4,40*CM_PLUS))
+				if(do_action(4,20*CM_PLUS))
 					{
 						stop_rap();
 						mode.step++;
 					}
 				break;
 			case 0x02:
-#if 0
 				Speed=TURN_SPEED;
-				if(do_action(1,90*Angle_1))
+				do_action(2,360*Angle_1);
+				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
 						mode.step++;
@@ -91,33 +98,31 @@ void Do_Quit_Chargeing(void)
 				break;
 			case 3:
 				Speed=HIGH_MOVE_SPEED;
-				if(do_action(3,50*CM_PLUS))
+				if(do_action_my(3,10*CM_PLUS,anti_tgt_angle))
 					{
 						stop_rap();
 						mode.step++;
 					}
 				break;
 			case 4:
-#endif
-				Speed=TURN_SPEED;
-				do_action(2,360*Angle_1);
-				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
+				motion1.start_seat=true;
+				switch(mode.sweep_method)
 					{
-						stop_rap();
-						motion1.start_seat=true;
-						switch(mode.sweep_method)
-							{
-								case SWEEP_METHOD_GUIHUA:									
-									Init_First_Sweep(1);
-									break;
-								case SWEEP_METHOD_YBS:
-									Init_Right_YBS(1);
-									break;
-								case SWEEP_METHOD_SPOT:
-									Init_Spot(SPOT_FROM_CHARGE);
-									break;
-							}
+						case SWEEP_METHOD_GUIHUA:									
+							Init_First_Sweep(1);
+							break;
+						case SWEEP_METHOD_YBS:
+							Init_Right_YBS(1);
+							break;
+						case SWEEP_METHOD_SPOT:
+							Init_Sweep_Spot(SPOT_FROM_CHARGE);
+							break;
 					}
+				break;
+			case 0xf0:
+				if(giv_sys_time-mode.time<30000)
+					return;
+				Init_Cease();
 				break;
 				
 		}

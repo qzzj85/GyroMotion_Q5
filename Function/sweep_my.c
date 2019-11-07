@@ -599,6 +599,13 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 
 void Init_First_Sweep(u8 start_seat)
 {
+	if(mode.low_power)
+		{
+			Send_Voice(VOICE_POWER_LOW);
+			Init_Cease();
+			return;
+		}
+
 	init_wallearth();
 	enable_hwincept();
 	Enable_wall();
@@ -616,7 +623,6 @@ void Init_First_Sweep(u8 start_seat)
 	else
 		motion1.start_seat=false;
 	motion1.pathpoint_ok=true;
-	motion1.first_gyrocal=true;
 	motion1.clean_size=0;
 	motion1.worktime=1;
 	Gyro_Data.cal_flag=false;
@@ -2132,7 +2138,7 @@ void Do_NormalSweep(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -2361,7 +2367,7 @@ void Do_BackSweep(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -2628,7 +2634,7 @@ void Do_Pass2Sweep(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -3004,7 +3010,7 @@ void Do_Stop_BackSweep(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -3193,7 +3199,7 @@ void Do_Pass2Init(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -3578,14 +3584,6 @@ void Sweep_YBS(void)
 		}
 #endif
 
-#ifdef PITCH_SPEEDUP
-  	if(Gyro_Pitch_Speedup())
-  		{
-			mode.speed_up=true;
-  		}
-	else
-		mode.speed_up=false;
-#endif
 
 //	YBS_comm_rap();	
 //	if(Gyro_Data.straight)
@@ -3613,7 +3611,7 @@ void Sweep_YBS(void)
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
 #endif
-			mode.speed_up=false;		//qz add 20181225
+			//mode.speed_up=false;		//qz add 20181225
 
 			return;
 		}
@@ -4134,8 +4132,17 @@ void Do_PauseSweep(void)
 			return;
 		}
 
-	if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
-		Init_Cease();
+#if 1
+	//if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
+	if(e_m.sign==FARN)
+		{
+			error_code=SEND_ERROR_DANGER;
+			mode.err_code|=WIFI_ERR_EARTH;
+			Send_Voice(VOICE_ERROR_DANGER);
+			Init_Err();
+			return;
+		}
+#endif
 
 	switch(mode.step)
 	{
@@ -4159,7 +4166,7 @@ void Do_PauseSweep(void)
 				}
 			else
 				{
-					if((mode.mode!=YBS)&(mode.mode!=DOCKING))
+					if((mode.mode!=YBS)&(mode.mode!=DOCKING)&(mode.mode!=SPOT))
 						{
 							Area_Check(0);
 							Init_Shift_Point1(0);

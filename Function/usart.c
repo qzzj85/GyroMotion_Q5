@@ -790,9 +790,9 @@ void Uart3_Communication_II(void)
 				
 #endif
 //				Gyro_Data.yaw=((int)(Gyro_Data.yaw))*(36000-385)/36000;
-				#if 0
-				Gyro_Data.pitch=(COMBUF3[6]<<8)+COMBUF3[5];
-				Gyro_Data.roll=(COMBUF3[8]<<8)+COMBUF3[7];
+				#if 1
+				Gyro_Data.roll=(COMBUF3[6]<<8)+COMBUF3[5];
+				Gyro_Data.pitch=(COMBUF3[8]<<8)+COMBUF3[7];
 				#else
 //				temp_x=(COMBUF3[6]<<8)+COMBUF3[5];
 //				temp_y=(COMBUF3[8]<<8)+COMBUF3[7];

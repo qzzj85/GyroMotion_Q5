@@ -19,28 +19,79 @@ u8 piv_dis_preengage;	   //显示的预约天数
 u8 piv_set_content;         //设置的内容	0为没有设置，1为设置天数、2为设置小时、3为设置分钟
                                //4为设置星期
 
-///////////////////////全局函数////////////////////////////////////
-void Do_Cease(void);    //执行在待机状态的程序
-void Init_Cease(void);
-void Cease_No_Key(void);
-void Cease_YaoKong_Manage(void);
-///////////////////////私有函数////////////////////////////////////	
-void Cease_display_set(void);
-void Cease_SetTime(void);
-void Cease_Timing(void);
-void Cease_Lode_Time(void);
-void Cease_Save_Time(void);
-void Cease_Save_Preengage(void);
-void Cease_Lode_Preengage(void);
-void Cease_Big_Subb_Time(void);
-void Cease_Subb_Time(void);
-void Cease_Big_Add_Time(void);
-void Cease_Add_Time(void);
 
 ///////////////////////函数实体////////////////////////////////////
 /*****************************************************************
 功能：在待机时的动作
 *****************************************************************/
+
+void Cease_Bump_Action(void)
+                               	{
+     u8 m=Read_Only_Collide();
+	 switch(mode.bump)
+	 	{
+	 		case BUMP_ONLY_LEFT:
+		 		switch(mode.step_bp)
+		 			{
+		 				case 0:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 1:
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							mode.step=0;
+		 			}
+				break;
+			case BUMP_ONLY_RIGHT:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 1:
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							mode.step=0;
+					}
+				break;
+			case BUMP_MID:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 1:
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							mode.step=0;
+					}
+				break;
+			default:
+				mode.bump=0;
+				mode.step_bp=0;
+				mode.bump_flag=false;
+				break;
+	 	}
+}
+
 void Do_Cease(void)
 {
     /**************如果有遥控器按键*/
@@ -95,7 +146,9 @@ void Do_Cease(void)
 			return;
 		}
 #endif
-	clr_all_hw_effect();				//qz mask 20181215
+	clr_all_hw_effect();
+	ACC_DEC_Curve();
+//qz mask 20181215
 //	find_home=ReadHwSign_My();			//qz mask 20181215
 #ifdef REPEAT_DOCK	//qz add 20180901
 	if((giv_sys_time-mode.time>40000)&(mode.last_mode==CHARGEING)&(mode.last_sub_mode==SEAT_CHARGING)&(!dc_nobat_run)&(mode.step==0))
@@ -106,12 +159,22 @@ void Do_Cease(void)
 			mode.Info_Abort=1;
 		}
 
+#if 0
+	u8 abnormal=Read_Protect();
+	Action_Protect_My(abnormal);
+	if(mode.abnormity)
+		return;
+
+	Cease_Bump_Action();		
+	if(mode.bump)
+		return;
+#endif
+
 	switch(mode.step)
 		{
 			case 0:
 				break;
 			case 1:
-				ACC_DEC_Curve();
 				Speed=2000;
 				if(do_action(4,15*CM_PLUS))
 					{
@@ -156,9 +219,9 @@ void Init_Cease(void)
 	stop_rap(); //关闭左右轮
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
-	Disable_earth();				//关闭地检
+	//Disable_earth();				//关闭地检
 	Disable_wall();					//关闭墙检
-	//Enable_earth();
+	Enable_earth();
 	//Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed();					//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
@@ -172,6 +235,8 @@ void Init_Cease(void)
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time;			//qz add 20180703
 	mode.init_mode_time=giv_sys_time;	//qz add 20180814
+	motion1.start_seat=false;
+	motion1.force_dock=false;
 		
 	WriteWorkState();
 	Disable_Free_Skid_Check();		//关闭万向轮检测
@@ -192,6 +257,7 @@ void Init_Cease(void)
 #endif 
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 	Open_Led(1,0,0);
+	
 }
 
 /*****************************************************************

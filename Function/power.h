@@ -170,4 +170,6 @@ void  AccountCapabilityReal_My(void);
 u8 Check_Left_Ring_Cur(void);
 void Charge_PID_CtrPwr(u32 tgt_voltage);
 void ChargeControl_Volt_My(void);
+void Parse_LowPower2Dock(void);
+
 #endif

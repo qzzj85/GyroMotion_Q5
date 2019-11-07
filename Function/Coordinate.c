@@ -1008,6 +1008,14 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				{
 					return 0x7f;
 				}
+
+			if(grid.y_area_max+2>=GRID_MAX)
+				{
+					motion1.ymax_ok=true;
+					TRACE("ymax is near GRID_MAX,ymax area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+					return 0x7f;
+				}
 			temp_gridx=grid.x_area_min;
 			//TRACE("analysis Ymax next area entry...\r\n");
 			while(temp_gridx<grid.x_area_max)
@@ -1089,6 +1097,13 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 		{
 			if(motion1.ymin_ok)
 				return 0x7f;
+			if(grid.y_area_min-2<=GRID_MIN)
+				{
+					motion1.ymin_ok=true;
+					TRACE("ymin is near GRID_MIN,ymin area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+					return 0x7f;
+				}
 			
 			temp_gridx=grid.x_area_max;
 			//TRACE("analysis Ymin next area entry...\r\n");
@@ -1398,7 +1413,14 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 		{
 			if(motion1.xmax_ok)
 				return 0x7f;
-		
+
+			if(grid.x_area_max+2>=GRID_MAX)
+				{
+					motion1.xmax_ok=true;
+					TRACE("xmax is near GRID_MAX,xmax area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+					return 0x7f;
+				}
 			temp_gridy=grid.y_area_max;//temp_gridy=grid.y_area_min;			
 			while(temp_gridy>grid.y_area_min)//while(temp_gridy<grid.y_area_max)
 				{
@@ -1484,7 +1506,14 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 		{
 			if(motion1.xmin_ok)
 				return 0x7f;
-		
+
+			if(grid.x_area_min-2<=GRID_MIN)
+				{
+					motion1.xmin_ok=true;
+					TRACE("xmin is near GRID_MIN,xmin area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+					return 0x7f;
+				}
 			temp_gridy=grid.y_area_min;
 			//TRACE("analysis Xmin next area entry...\r\n");			
 			while(temp_gridy<grid.y_area_max)
@@ -2415,14 +2444,14 @@ u8 Area_Check(u8 avoid_ybs)
 			Set_AreaWorkTime(10);
 		}
 	
-	if(Find_Leak_Area())						//寻找当前区域漏扫
+	if((!motion1.force_dock)&(Find_Leak_Area())	)					//寻找当前区域漏扫
 		{
 			TRACE("Go to LeakArea!!!\r\n");
 			motion1.first_leak_y=check_point.new_y2;
 			//Init_Shift_Point1(avoid_ybs);
 			return_data=1;
 		}
-	else if(Find_NextArea_Entry())				//无漏扫，寻找当前区域是否可以进入下一个新区域
+	else if((!motion1.force_dock)&(Find_NextArea_Entry()))			//无漏扫，寻找当前区域是否可以进入下一个新区域
 		{
 			TRACE("Go to NewArea!!!\r\n");
 			//Init_Shift_Point1(avoid_ybs);
@@ -2436,8 +2465,11 @@ u8 Area_Check(u8 avoid_ybs)
 				{
 					TRACE("This area is first sweep area!!");
 					TRACE("Goto original point and prepare to Dock!!\r\n");
-					Send_Voice(VOICE_VOLUME_3);
-					Send_Voice(VOICE_SWEEP_DONE);
+					if(!motion1.force_dock)
+						{
+							Send_Voice(VOICE_VOLUME_3);
+							Send_Voice(VOICE_SWEEP_DONE);
+						}
 					//while(1);
 					if(motion1.start_seat)
 						{

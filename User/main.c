@@ -73,7 +73,7 @@ void log_out(void)
 			//TRACE("m.bump=%d\r\n",mode.bump);
 			//TRACE("m.st_bp=%d\r\n",mode.step_bp);
 		}
-#if 1
+#if 0
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
 	TRACE("Gyro.x=%f\r\n",X_pos);
 	TRACE("Gyro.y=%f\r\n",Y_pos);
@@ -95,10 +95,15 @@ void log_out(void)
 	TRACE("top=%d\r\n",top_time_sec);
 	TRACE("speed_up=%d\r\n",mode.speed_up);
 #else
-	TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
-	TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);
-	TRACE("gyro.first_roll=%d\r\n",Gyro_Data.first_roll);
-	TRACE("gyro.roll=%d\r\n",Gyro_Data.roll);
+	//TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
+	//TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);
+	//TRACE("gyro.first_roll=%d\r\n",Gyro_Data.first_roll);
+	//TRACE("gyro.roll=%d\r\n",Gyro_Data.roll);
+	//TRACE("mode.speed_up=%d\r\n",mode.speed_up);
+	TRACE("l_hw.t=%d l=%d r=%d m=%d\r\n",l_hw.effectTop,l_hw.effectLeft,l_hw.effectRight,l_hw.effectMid);
+	TRACE("lm_hw.t=%d l=%d r=%d m=%d\r\n",lm_hw.effectTop,lm_hw.effectLeft,lm_hw.effectRight,lm_hw.effectMid);
+	TRACE("rm_hw.t=%d l=%d r=%d m=%d\r\n",rm_hw.effectTop,rm_hw.effectLeft,rm_hw.effectRight,rm_hw.effectMid);
+	TRACE("r_hw.t=%d l=%d r=%d m=%d\r\n",r_hw.effectTop,r_hw.effectLeft,r_hw.effectRight,r_hw.effectMid);
 #endif
 }
 
@@ -145,60 +150,68 @@ int main(void)
 #endif
 	while(1)
 	{	
-						//Uart3_Communication();
+		//Uart3_Communication();
 #ifdef TUYA_WIFI						  
-						Uart1_Comunication();						//串口数据解析函数	 
-                        mcu_wifi_proc_key();						
+		Uart1_Comunication();						//串口数据解析函数	 
+        mcu_wifi_proc_key();						
 #endif						
 //						Uart1_Comunication();						//串口数据解析函数	
 //					  	Uart2_Comunication();
 //						Sensor_status_report();
 //						Mile_Gyro_Report();
-						Action_Mode();								//	工作的模式
+		Action_Mode();								//	工作的模式
 #ifdef PWRCAP_CAL
-						AccountCapability();						//	每相隔1秒计算电池剩余容量
+		AccountCapability();						//	每相隔1秒计算电池剩余容量
 #endif							
-						ReadRealTime();
-						AutoReadKey(); 								//	自动读取按键	
-//						AutoDisplay(); 								//	自动显示				
-						judge_charge(); 							//	自动判断是否有充电信号
-						sampling_temp_voltage();					//	AD采样数据处理  
-						//read_wallearth();		 					//	自动采样墙检和地检数据
-						//read_wallearth_my();						//	读取墙检地检
+		ReadRealTime();
+		AutoReadKey(); 								//	自动读取按键	
+//		AutoDisplay(); 								//	自动显示				
+		judge_charge(); 							//	自动判断是否有充电信号
+		sampling_temp_voltage();					//	AD采样数据处理  
+		//read_wallearth();		 					//	自动采样墙检和地检数据
+		//read_wallearth_my();						//	读取墙检地检
 #ifndef EARTH_IN_TIM2
-						Read_Earth_My();							//	读取地检
+		Read_Earth_My();							//	读取地检
 #endif
-						Read_Wall_My();								//	读取墙检
-						APP_BAT_Handle();
-						Check_Status();
-						//Get_Dispower(); 
-						Voice_Handle();
-						YBS_Find_Seat();
-						if(Check_PreengageTime())
-							{
-								Slam_Data.dipan_req=DIPAN_REQ_PREEN;
-								//if(!mode.status)
-									//Slam_Data.dipan_req_pre=DIPAN_REQ_PREEN;
-							}
-#ifdef DEBUG
-						if(log_show)
-							{
-								log_show=false;
-								log_out();
-							}
+		Read_Wall_My();								//	读取墙检
+		APP_BAT_Handle();
+		Check_Status();
+		//Get_Dispower(); 
+
+#ifdef VOICE_LIST		//使用语音LIST发出语音
+		Voice_Handle();
 #endif
+
+#if 0
+		YBS_Find_Seat();
+		if(Check_PreengageTime())
+			{
+				Slam_Data.dipan_req=DIPAN_REQ_PREEN;
+				//if(!mode.status)
+					//Slam_Data.dipan_req_pre=DIPAN_REQ_PREEN;
+			}
+#endif
+
 #ifdef PWRCAP_CAL
-						Battery_Reinit();
+		Battery_Reinit();
 #endif
 
 #ifdef REMOTE
-						Remote_Handle();
+		Remote_Handle();
 #endif
 
-						LED_Handle();
-						MapData_Handle();
-						Work_TimeOut_Handle();						
-						Parse_LowPower2Dock();
+		LED_Handle();
+		MapData_Handle();
+		Work_TimeOut_Handle();						
+		Parse_LowPower2Dock();
+
+#ifdef DEBUG
+		if(log_show)
+			{
+				log_show=false;
+				log_out();
+			}
+#endif
 	}	
 
 }

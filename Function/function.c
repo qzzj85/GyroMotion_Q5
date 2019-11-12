@@ -13,9 +13,9 @@
 
 #define	PITCH_ANGLE_BIOS		550		//5.5度
 #define	SPEEDUP_ANGLE_BIOS		200		//2度
-#define	PITCHROLL_ANGLE_BIOS	500		//5度
+#define	PITCHROLL_ANGLE_BIOS	500		//6度
 #define	ROLL_ANGLE_BIOS			500		//5堵
-#define	PITCH_TIME				5000	//500ms
+#define	PITCH_TIME				10000	//500ms
 #define	SPEEDUP_TIME			2000	//200ms
 
 u8 sweep_level=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
@@ -1142,7 +1142,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
 							Set_SideBrush_Pwm(0);				//先关掉边扫
-							Speed=FAST_MOVE_SPEED;							//速度约270mm/s
+							Speed=HIGH_MOVE_SPEED;							//速度约270mm/s
 							if(do_action(4,10*CM_PLUS)) 		//行走完成100mm,大约耗时370ms
 								{
 									stop_rap();
@@ -1305,7 +1305,7 @@ u8 Action_Protect_My(u8 abnoraml)
 				switch (mode.step_abn)
 					{
 						case 0:
-							Speed=FAST_MOVE_SPEED;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
@@ -1329,7 +1329,7 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 2:
-							Speed=FAST_MOVE_SPEED;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
@@ -1476,7 +1476,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=FAST_MOVE_SPEED;								//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(1,360*Angle_1))			//左轮不动向左转
 								{
 									stop_rap();
@@ -1501,7 +1501,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 2:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=FAST_MOVE_SPEED;								//速度约135mm/s
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(2,360*Angle_1))			//左轮不动向右转
 								{
 									stop_rap();
@@ -1518,7 +1518,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 3:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
 								return 0;
-							Speed=FAST_MOVE_SPEED;								//速度约203mm/s
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,10*CM_PLUS))				//10cm耗时约500ms
 								{
 									stop_rap();
@@ -2175,13 +2175,17 @@ u8 Action_Protect_My(u8 abnoraml)
 							stop_rap();
 							Set_Coordinate_Wall(now_gridx,now_gridy);
 							mode.abn_time=giv_sys_time;
-							mode.step_abn++;
+							mode.step_abn++;							
+							if(Gyro_Data.pitch>Gyro_Data.first_pitch)
+								turn_dir=4;
+							else
+								turn_dir=3;
 							break;
 						case 1:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)
 								return 0;
-							Speed=FAST_MOVE_SPEED;
-							if(do_action(4,15*CM_PLUS))
+							Speed=HIGH_MOVE_SPEED;
+							if(do_action(turn_dir,15*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
@@ -2196,6 +2200,10 @@ u8 Action_Protect_My(u8 abnoraml)
 								{
 									mode.step_abn++;
 									Gyro_Data.pitchroll_fail_cnt++;
+									if(Gyro_Data.pitch>Gyro_Data.first_pitch)
+										turn_dir=4;
+									else
+										turn_dir=3;
 								}
 							else
 								{
@@ -2203,8 +2211,8 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 3:
-							Speed=FAST_MOVE_SPEED;
-							if(do_action(3,15*CM_PLUS))
+							Speed=HIGH_MOVE_SPEED;
+							if(do_action(turn_dir,15*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
@@ -2233,16 +2241,21 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 5:
-							Speed=FAST_MOVE_SPEED;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(2,90*Angle_1))
 								{
 									stop_rap();
 									mode.step_abn++;
+									
+									if(Gyro_Data.pitch>Gyro_Data.first_pitch)
+										turn_dir=4;
+									else
+										turn_dir=3;
 								}
 							break;
 						case 6:
-							Speed=FAST_MOVE_SPEED;
-							if(do_action(3,15*CM_PLUS))
+							Speed=HIGH_MOVE_SPEED;
+							if(do_action(turn_dir,15*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
@@ -2271,16 +2284,21 @@ u8 Action_Protect_My(u8 abnoraml)
 								}
 							break;
 						case 8:
-							Speed=FAST_MOVE_SPEED;
+							Speed=HIGH_MOVE_SPEED;
 							if(do_action(1,180*Angle_1))
 								{
 									stop_rap();
 									mode.step_abn++;
+									
+									if(Gyro_Data.pitch>Gyro_Data.first_pitch)
+										turn_dir=4;
+									else
+										turn_dir=3;
 								}
 							break;
 						case 9:
-							Speed=FAST_MOVE_SPEED;
-							if(do_action(3,15*CM_PLUS))
+							Speed=HIGH_MOVE_SPEED;
+							if(do_action(turn_dir,15*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
@@ -3889,26 +3907,26 @@ u8 Gyro_Pitch_Check(void)
 {
 	if(mode.status==0)
 		return 0;
-	#if 0
+#if 0
 	switch (Gyro_Data.pitch_check_step)
 		{
 			case 0:
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>600)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=PITCH_ANGLE_BIOS)
 					{
 						Gyro_Data.pitch_check_step++;
 						Gyro_Data.pitch_check_time=giv_sys_time;
 					}
 				break;
 			case 1:
-				if(giv_sys_time-Gyro_Data.pitch_check_time>8000)			//500ms
+				if(giv_sys_time-Gyro_Data.pitch_check_time>PITCH_TIME)			//500ms
 					{
 						Gyro_Data.pitch_check_step=0;
-						if(Gyro_Data.pitch<Gyro_Data.first_pitch)			//抬头
+						if(Gyro_Data.pitch>Gyro_Data.first_pitch)			//抬头
 							return 1;
 						else												//抬尾
 							return 2;
 					}
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<600)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))<PITCH_ANGLE_BIOS)
 					{
 						Gyro_Data.pitch_check_step=0;
 						return 0;
@@ -3916,9 +3934,7 @@ u8 Gyro_Pitch_Check(void)
 				break;
 		}
 	return 0;
-	#endif
-
-	#if 1
+#else
 	static u32 ok_cnt=0,fail_cnt=0;
 	if(!gyro_check_time)
 		return 0;
@@ -3926,7 +3942,7 @@ u8 Gyro_Pitch_Check(void)
 	switch(Gyro_Data.pitch_check_step)
 		{
 			case 0:
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>PITCH_ANGLE_BIOS)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=PITCH_ANGLE_BIOS)
 					{
 						Gyro_Data.pitch_check_step++;
 						Gyro_Data.pitch_check_time=giv_sys_time;
@@ -3939,26 +3955,24 @@ u8 Gyro_Pitch_Check(void)
 						Gyro_Data.pitch_check_step++;
 						return 0;
 					}
-				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>PITCH_ANGLE_BIOS)
+				if((abs(Gyro_Data.pitch-Gyro_Data.first_pitch))>=PITCH_ANGLE_BIOS)
 					fail_cnt++;
 				else
 					ok_cnt++;
 				break;
 			case 2:
+				Gyro_Data.pitch_check_step=0;
 				if(fail_cnt+10>=ok_cnt)
 					{
-						Gyro_Data.pitch_check_step=0;
 						if(Gyro_Data.pitch>Gyro_Data.first_pitch)			//抬头
 							return 1;
 						else												//抬尾
 							return 2;
 					}
-				else
-					Gyro_Data.pitch_check_step=0;
 				break;
 		}
-		#endif
 	return 0;
+#endif
 }
 
 
@@ -3986,7 +4000,7 @@ u8 Gyro_Pitch_Speedup(void)
 							}
 						return 0;
 					case 1:
-						if(giv_sys_time-check_time>SPEEDUP_TIME)							//100ms
+						if(giv_sys_time-check_time>SPEEDUP_TIME)//SPEEDUP_TIME)							//100ms
 							{
 								check_step=0;
 								return 1;
@@ -4062,15 +4076,16 @@ u8 Gyro_Roll_Check(void)
 
 u8 Gyro_PitchRoll_Check(void)
 {
-	u32 pitch_dif,roll_dif;
+	int pitch_dif,roll_dif;
 	if(mode.status==0)
 		return 0;
+#if 0
 	switch (Gyro_Data.pitchroll_check_step)
 		{
 			case 0:
 				pitch_dif=abs(Gyro_Data.first_pitch-Gyro_Data.pitch);
 				roll_dif=abs(Gyro_Data.first_roll-Gyro_Data.roll);
-				if(pitch_dif+roll_dif>PITCHROLL_ANGLE_BIOS)								//6度
+				if(pitch_dif+roll_dif>=PITCHROLL_ANGLE_BIOS)								//6度
 					{
 						Gyro_Data.pitchroll_check_step++;
 						Gyro_Data.pitchroll_check_time=giv_sys_time;
@@ -4090,6 +4105,39 @@ u8 Gyro_PitchRoll_Check(void)
 					}
 				break;
 		}
+#else
+	static u32 fail_cnt=0,ok_cnt=0;
+	switch (Gyro_Data.pitchroll_check_step)
+		{
+			case 0:
+				pitch_dif=abs(Gyro_Data.first_pitch-Gyro_Data.pitch);
+				roll_dif=abs(Gyro_Data.first_roll-Gyro_Data.roll);
+				if(pitch_dif+roll_dif>=PITCHROLL_ANGLE_BIOS)								//6度
+					{
+						Gyro_Data.pitchroll_check_step++;
+						Gyro_Data.pitchroll_check_time=giv_sys_time;
+						fail_cnt=0;ok_cnt=0;
+					}
+				break;
+			case 1:
+				if(giv_sys_time-Gyro_Data.pitchroll_check_time>PITCH_TIME)
+					{
+						Gyro_Data.pitchroll_check_step++;
+						return 0;
+					}
+				pitch_dif=abs(Gyro_Data.first_pitch-Gyro_Data.pitch);
+				roll_dif=abs(Gyro_Data.first_roll-Gyro_Data.roll);
+				if(pitch_dif+roll_dif>=PITCHROLL_ANGLE_BIOS)
+					fail_cnt++;
+				else
+					ok_cnt++;
+				break;
+			case 2:
+				Gyro_Data.pitchroll_check_step=0;
+				if(fail_cnt+10>=ok_cnt)
+					return 1;
+		}
+#endif
 	return 0;
 }
 

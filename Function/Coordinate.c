@@ -321,7 +321,7 @@ void Record_Coordinate_Intime(void)
 				Set_Coordinate_Clean(gridx, gridy);
 				if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
 					{
-						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))
+						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))//&(mode.step!=0x11)&(mode.step!=0x51))
 							Set_Coordinate_Wall(gridx,gridy);
 					}
 				break;
@@ -334,7 +334,7 @@ void Record_Coordinate_Intime(void)
 				Set_Coordinate_Clean(gridx,gridy);
 				if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
 					{
-						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))
+						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))//&(mode.step!=0x11)&(mode.step!=0x51))
 							Set_Coordinate_Wall(gridx,gridy);
 					}
 				break;
@@ -1008,7 +1008,6 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				{
 					return 0x7f;
 				}
-
 			if(grid.y_area_max+2>=GRID_MAX)
 				{
 					motion1.ymax_ok=true;
@@ -1016,6 +1015,14 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
 					return 0x7f;
 				}
+			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
+				{
+					motion1.ymax_ok=true;
+					TRACE("sweep areanum is over max,ymax area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+					return 0x7f;
+				}
+			
 			temp_gridx=grid.x_area_min;
 			//TRACE("analysis Ymax next area entry...\r\n");
 			while(temp_gridx<grid.x_area_max)
@@ -1101,6 +1108,13 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				{
 					motion1.ymin_ok=true;
 					TRACE("ymin is near GRID_MIN,ymin area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+					return 0x7f;
+				}
+			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
+				{
+					motion1.ymin_ok=true;
+					TRACE("sweep areanum is over max,ymin area check complete!!!\r\n");
 					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
 					return 0x7f;
 				}
@@ -1413,7 +1427,6 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 		{
 			if(motion1.xmax_ok)
 				return 0x7f;
-
 			if(grid.x_area_max+2>=GRID_MAX)
 				{
 					motion1.xmax_ok=true;
@@ -1421,6 +1434,14 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
 					return 0x7f;
 				}
+			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
+				{
+					motion1.xmax_ok=true;
+					TRACE("sweep areanum is over max,Xmax area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+					return 0x7f;
+				}
+			
 			temp_gridy=grid.y_area_max;//temp_gridy=grid.y_area_min;			
 			while(temp_gridy>grid.y_area_min)//while(temp_gridy<grid.y_area_max)
 				{
@@ -1506,7 +1527,6 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 		{
 			if(motion1.xmin_ok)
 				return 0x7f;
-
 			if(grid.x_area_min-2<=GRID_MIN)
 				{
 					motion1.xmin_ok=true;
@@ -1514,6 +1534,14 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
 					return 0x7f;
 				}
+			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
+				{
+					motion1.xmin_ok=true;
+					TRACE("sweep areanum is over max,xmin area check complete!!!\r\n");
+					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+					return 0x7f;
+				}
+			
 			temp_gridy=grid.y_area_min;
 			//TRACE("analysis Xmin next area entry...\r\n");			
 			while(temp_gridy<grid.y_area_max)

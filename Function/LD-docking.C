@@ -632,6 +632,16 @@ void Do_Docking_My(void)
 			findseat_skid_check_flag=false;
 			return;
 		}
+
+	if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
+		{
+			if((mode.step<DOCKMODE_STEP_CHARGE))
+				{
+					stop_rap();
+					mode.step=DOCKMODE_STEP_FINDSEAT;
+					mode.step_mk=4;
+				}
+		}
 	/*************************************
 	
 	分类处理
@@ -4451,20 +4461,31 @@ void Start_Start_V(void)
 				if(do_action(2,380*Angle_1))
 					{
 						stop_rap();
+#ifdef DOCK_DEBUG
 						TRACE("t_count=%d in %s\r\n",t_count,__func__);
+#endif
 						if(t_count>=2)
 							{
 								if(lmm_flag|lml_flag|lmr_flag)
 									{
+#ifdef DOCK_DEBUG
+										TRACE("lm_hw get Signal,goto step_mk 10!!\r\n");
+#endif
 										mode.step_mk=10;
 										t_flag=false;
 									}
 								else if(rr_flag|ll_flag)
 									{
+#ifdef DOCK_DEBUG
+										TRACE("r_hw|l_hw get Signal,goto step_mk 20!!\r\n");
+#endif
 										mode.step_mk=20;
 									}
 								else
 									{
+#ifdef DOCK_DEBUG
+										TRACE("r_hw|l_hw|lm_hw can't get Signal goto step TOP!!\r\n");
+#endif
 										mode.step=DOCKMODE_STEP_TOP_SPOT;
 										mode.step_mk=0;
 									}
@@ -4481,6 +4502,9 @@ void Start_Start_V(void)
 								else
 #endif
 									{
+#ifdef DOCK_DEBUG
+										TRACE("Top signal is not good, goto step TOP!!\r\n");
+#endif
 										mode.step=DOCKMODE_STEP_REYBS;
 										mode.step_mk=0;
 									}
@@ -4598,14 +4622,16 @@ void Start_Start_V(void)
 					{
 						stop_rap();
 						mode.step=DOCKMODE_STEP_LEFT;
-						mode.step_mk=40;
+						//mode.step_mk=40;
+						mode.step_mk=1;
 						return;
 					}
 				if((r_hw.effectRight)&(r_hw.effectTop))
 					{
 						stop_rap();
 						mode.step=DOCKMODE_STEP_RIGHT;
-						mode.step_mk=40;
+						//mode.step_mk=40;
+						mode.step_mk=1;
 					}
 				break;
 			case 50:

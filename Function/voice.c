@@ -1,6 +1,9 @@
 #include "AAA-include.h"
 #include "stdlib.h"
-#define LEN sizeof(struct node)
+
+#define	VOICELIST_START 		1
+#define VOICE_LEN sizeof(struct node)
+
 
 u32 voice_time=0;
 u8 voice_level;
@@ -26,7 +29,7 @@ u8 Init_Voice_Head(void)
 				}
 			return 0;
 		}
-	voice_head=(struct node*)malloc(LEN);
+	voice_head=(struct node*)malloc(VOICE_LEN);
 	if(voice_head==NULL)
 		{
 			TRACE("voice head malloc fail!!\r\n");
@@ -44,18 +47,45 @@ void Send_Voice(u8 data)
 		return;
 #endif
 
-#if 1
+#ifdef VOICE_LIST						//使用语音LIST发出语音
 	if(!voice_ok)
 		return;
-
+#ifndef VOICELIST_START		//将新添加的语音放在语音list的最后
 	struct node *p,*q;
-	p=(struct node*)malloc(LEN);
+	p=(struct node*)malloc(VOICE_LEN);
+	
+	if(p==NULL)
+		return;
+	
 	q=voice_head;
 	while(q->next!=NULL)
 		q=q->next;
 	q->next=p;
 	p->data=data;
 	p->next=NULL;
+#else						//将新添加的语音放在语音list的最前（voice_head后面）
+	struct node *p=NULL;
+	p=(struct node*)malloc(VOICE_LEN);
+
+	if(p==NULL)
+		return;
+
+	p->next=voice_head->next;
+	voice_head->next=p;
+	p->data=data;
+#endif
+#else						//不使用LIST，直接发语音
+	V_CLK_1;
+	delay_us(100);
+	V_CLK_0;
+	delay_us(100);
+	for(int i=0;i<data;i++)
+		{
+			delay_100us(1);
+			V_DAT_1;
+			delay_100us(1);
+			V_DAT_0;	
+		}
 #endif
 }
 
@@ -63,10 +93,22 @@ void Del_Node(void)
 {
 	if(voice_head->next==NULL)
 		return;
+#ifndef VOICELIST_START		//最新的语音在List最后，所以先删除第一个语音信息（voice_head后面）
 	struct node *p=voice_head;
 	p=p->next;
 	voice_head->next=p->next;
 	free(p);
+#else						//最新的语音在list最前，所以先删除最后一个语音信息。
+	struct node *p=voice_head,*q;
+	while(p->next!=NULL)
+		{
+			q=p;
+			p=p->next;
+		}
+	q->next=NULL;
+	free(p);
+	
+#endif
 }
 
 void Del_All_VoiceNode(void)
@@ -133,9 +175,9 @@ u8 Voice_Driver(u8 data)
 		V_CLK_0;			
 		for(int i=0;i<temp_addr;i++)
 			{
-				delay_100us(1);
+				delay_100us(3);
 				V_DAT_1;
-				delay_100us(1);
+				delay_100us(3);
 				V_DAT_0;	
 			}
 	return 1;							 
@@ -171,10 +213,16 @@ u8 Voice_Driver(u8 data)
 void Voice_Handle(void)
 {
 	static u8 step=0;
-	struct node *p;
 	if(voice_head->next==NULL)
 		return;
+	struct node *p;
+#if 0
 	p=voice_head->next;
+#else
+	p=voice_head;
+	while(p->next!=NULL)
+		p=p->next;
+#endif
 
 
 	switch (step)
@@ -414,7 +462,11 @@ void delay_100us(u32 delay_time)
 void Init_Voice(void)
 {
 	if(Init_Voice_Head())
-		voice_ok=false;
+		{
+			voice_ok=false;
+			return;
+		}
+	voice_ok=true;
 	voice_level=Read_Voice_Level();
 #ifdef DEBUG_INIT
 	TRACE("voice_level=0x%x\r\n",voice_level);

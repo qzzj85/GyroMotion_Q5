@@ -9,7 +9,7 @@
 
 
 #define 	USE_HSE					1
-#define		USE_LSE					1
+//#define		USE_LSE					1
 #define 	CPU_FREQ_64MHz 			1
 #define 	FLOAT_PID 				1
 //#define		FREE_SKID_ACTION		1					//万向轮打滑动作处理
@@ -91,7 +91,7 @@
 //#define		MHW_CAPTURE				1
 #define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
 #define		GYRO_PITCHROLL_CHECK	1
-#define		PITCH_SPEEDUP			1			
+//#define		PITCH_SPEEDUP			1			
 #define		RING_PWM_CTL			1					//轮子PWM切断控制
 #define		GYRO_CAL				1				//惯导校准代码
 //#define		GYRO_COMPENSATION		1					//惯导角度补偿
@@ -103,11 +103,11 @@
 //#define		YIS055					1
 //#define	FAST_WALL_DET			1
 //#define		IR_CORRECT				1
-//#define		NEW_VOICE_IC			1
+#define		NEW_VOICE_IC			1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			11
+#define		CORRECT_VERSION			12
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

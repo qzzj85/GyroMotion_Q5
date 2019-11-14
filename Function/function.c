@@ -2010,37 +2010,6 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn=0xf0;
 								}
 							break;
-#if 0
-						case 3:
-							Speed=TURN_SPEED;
-							if(do_action(1,80*Angle_1))
-								{
-									stop_rap();
-									mode.step_abn++;
-								}
-							break;
-						case 4:
-							Speed=HIGH_MOVE_SPEED;
-							if(do_action(3,15*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_abn=20;
-								}
-							if(n)
-								{
-									stop_rap();
-									mode.step_abn=10;
-								}
-							break;
-						case 10:
-							Speed=HIGH_MOVE_SPEED;
-							if(do_action(4,3*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_abn=20;
-								}
-							break;
-#endif
 						case 0xf0:
 							mode.abnormity=0;
 							mode.step_abn=0;
@@ -2114,29 +2083,6 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn=0xf0;
 								}
 							break;
-#if 0
-						case 3:
-							Speed=HIGH_MOVE_SPEED;
-							if(do_action(3,15*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_abn=20;
-								}
-							if(n)
-								{
-									stop_rap();
-									mode.step_abn=10;
-								}
-							break;
-						case 10:
-							Speed=MID_MOVE_SPEED;
-							if(do_action(4,3*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_abn=20;
-								}
-							break;
-#endif
 						case 0xf0:
 							mode.abnormity=0;
 							mode.step_abn=0;

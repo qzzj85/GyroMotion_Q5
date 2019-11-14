@@ -82,3 +82,5 @@
 #include "ACC_DEC.h"
 #include "app_ctrl.h"
 #include "spot.h"
+#include "sweep_area.h"
+#include "area_tree.h"

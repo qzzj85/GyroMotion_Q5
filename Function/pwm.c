@@ -132,7 +132,7 @@ void Init_Sweep_Pwm(u16 period,u16 prescaler)
 	
   /* TIM3 enable counter */
 	TIM_Cmd(TIM3, ENABLE);
-	GPIO_InitStructure.GPIO_Pin =	SIDEBRUSH_PWM|CHG_PWM|FAN_PWM|MIDBRUSH_PWM;
+	GPIO_InitStructure.GPIO_Pin =	CHG_PWM|FAN_PWM|MIDBRUSH_PWM;//SIDEBRUSH_PWM;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);		 
@@ -200,7 +200,7 @@ void  Init_PWM(void)
   	
   /* TIM3 enable counter */
   TIM_Cmd(TIM3, ENABLE);
-	GPIO_InitStructure.GPIO_Pin =   SIDEBRUSH_PWM|MIDBRUSH_PWM|CHG_PWM|FAN_PWM;
+	GPIO_InitStructure.GPIO_Pin =   MIDBRUSH_PWM|CHG_PWM|FAN_PWM|SIDEBRUSH_PWM;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
@@ -464,11 +464,17 @@ void  Break_pwm(u16 channel)
 
 void Set_SideBrush_Pwm(u16 pwm)
 {
-	TIM_SetCompare3(TIM3,pwm);
+	//TIM_SetCompare3(TIM3,pwm);
 	if(pwm)
-	{LSB_PWR_1}
+		{
+			LSB_PWR_1;
+			RSB_PWR_1;
+		}
 	else
-	{LSB_PWR_0}
+		{
+			LSB_PWR_0;
+			RSB_PWR_0;
+		}	
 }
 
 void Set_MidBrush_Pwm(u16 pwm)

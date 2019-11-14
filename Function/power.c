@@ -1814,7 +1814,7 @@ u32 curr;//耗电电流
 	t = t*curr;
 	if(t > 2600)
 		{
-				return;
+			return;
 		}
 	
 	
@@ -1822,19 +1822,17 @@ u32 curr;//耗电电流
 			{
 				if(!flag_full)			//电池尚未充满
 					{
-						if(Battery.BatteryFDCap>t)
+						if(Battery.BatteryFDCap>t)			//大于t
 							{
 								Battery.BatteryFDCap-=t;
 							}
-						else
+						else if(Battery.BatteryFDCap>1)		//小于t且大于1
 							{
 								Battery.BatteryFDCap--;
-								if(Battery.BatteryFDCap<=1)			//电池电量上报始终为99%
-									Battery.BatteryFDCap=1;
-								//Battery.BatteryCapability+=t;		//电池尚未充满,但放电量已快计算完毕,说明现在电量和放电量偏小,重新计算电量
-								//if(Battery.BatteryCapability>=MAH2600)
-									//Battery.BatteryCapability=MAH2600;
-								//WriteBatteryCapability();			
+							}
+						else								//小于或者等于1
+							{
+								Battery.BatteryFDCap=1;
 							}
 					}
 				//电池充满电以后不算电量消耗
@@ -2195,7 +2193,7 @@ u8 Check_Return_Pwr(void)
 void Parse_LowPower2Dock(void)
 {
 
-	if(giv_sys_time-Battery.start_time<100000)
+	if(giv_sys_time-Battery.start_time<400000)
 		return;
 
 

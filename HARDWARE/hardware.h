@@ -163,9 +163,11 @@ PE15	船型开关检测
 ///////边扫管脚定义///////////////////////////////////////////
 #define	 	SIDEBRUSH_PWM	GPIO_Pin_8	 	//边扫PWM引脚			PC	NEW
 #define		LSB_PWR_PIN		GPIO_Pin_14		//左边扫电源控制			PB
-#define		LSB_PWR_1		{GPIOB->BSRR|=1<<14;}
-#define		LSB_PWR_0		{GPIOB->BRR|=1<<14;}
+#define		LSB_PWR_1		GPIOB->BSRR|=1<<14
+#define		LSB_PWR_0		GPIOB->BRR|=1<<14
 #define		RSB_PWR_PIN		GPIO_Pin_8		//右边扫电源控制			PC
+#define		RSB_PWR_1		GPIOC->BSRR|=1<<8
+#define		RSB_PWR_0		GPIOC->BRR|=1<<8
 ///////风机管脚定义///////////////////////////////////////////
 #define	 	FAN_PWM			GPIO_Pin_7	 	//风机PWM引脚			PC
 #define		FAN_SPEED_PIN	GPIO_Pin_4		//风机反馈引脚			PE

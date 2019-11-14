@@ -276,6 +276,19 @@ void Shift_BumpAction(void)
 											Init_Shift_RightYBS(1);
 											return;
 										}
+									else
+										{
+											if(check_point.ybs_dir==LEFT)
+												{
+													Init_Shift_LeftYBS(1);
+													return;
+												}
+											else if(check_point.ybs_dir==RIGHT)
+												{
+													Init_Shift_RightYBS(1);
+													return;
+												}
+										}
 								}
 							
 							if(mode.sub_mode==SHIFTPOINT2)
@@ -354,7 +367,7 @@ void Shift_BumpAction(void)
 						case 1:			
 							if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
 								return;
-							Set_Coordinate_WallClean(now_gridx,now_gridy);
+							Set_Coordinate_Wall(now_gridx,now_gridy);
 							mode.step_bp++;
 							bump_time++;
 							break;
@@ -852,7 +865,8 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 10:
-				TRACE("motion need dock and area num=%d\r\n",Read_CurrNode_AreaNO());
+				
+				//TRACE("motion need dock and area num=%d\r\n",Read_CurrNode_AreaNO());
 				temp_result=Find_PathPoint_WayAll(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
 					{
@@ -3090,7 +3104,7 @@ u8 Abort2Sweep(void)
 										//break;
 									}
 							}
-						if(check_result<4)
+						if(check_result<2)
 							return 0;
 					}
 				else
@@ -3109,9 +3123,65 @@ u8 Abort2Sweep(void)
 										//break;
 									}
 							}
-						if(check_result<4)
+						if(check_result<2)
 							return 0;
 					}
+
+
+				if(motion1.sweep_time<SWEEP_AREANUM_MAX)
+					{
+						if(temp_gridx2>now_gridx)				//向grid.x_area_max方向
+							{
+								if(temp_gridy2>now_gridy)		//向grid.y_area_max方向
+									{
+										if(motion1.ymax_ok)
+											{
+												motion1.ymax_ok=false;
+												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, 1);
+											}
+									}
+								else							//向grid.y_area_min方向
+									{
+										if(motion1.ymin_ok)
+											{
+												motion1.ymin_ok=false;
+												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, 3);
+											}
+									}
+								
+								if(motion1.xmax_ok)
+									{
+										motion1.xmax_ok=false;
+										Set_CurrNode_NewAreaInfo(motion1.xmax_ok, 2);
+									}
+							}
+						else									//向grid.x_area_min方向
+							{
+								if(temp_gridy2>now_gridy)		//向grid.y_area_max方向
+									{
+										if(motion1.ymax_ok)
+											{
+												motion1.ymax_ok=false;
+												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, 1);
+											}
+									}
+								else							//向grid.y_area_min方向
+									{
+										if(motion1.ymin_ok)
+											{
+												motion1.ymin_ok=false;
+												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, 3);
+											}
+									}
+
+								if(motion1.xmin_ok)
+									{
+										motion1.xmin_ok=false;
+										Set_CurrNode_NewAreaInfo(motion1.xmin_ok, 4);
+									}
+							}
+					}
+
 
 				//if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
 					{

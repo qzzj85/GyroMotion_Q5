@@ -174,7 +174,7 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Pin = VOICE_CLK|VOICE_DATA|RING_PWM_CTL_PIN|LSB_PWR_PIN; 
     GPIO_Init(GPIOB,&GPIO_InitStructure);
 	/////////////////////////PC¿ÚÍÆÍìÊä³ö///////////////////
-	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN;
+	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN|RSB_PWR_PIN;
     GPIO_Init(GPIOC,&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN|HW_POWER;
     GPIO_Init(GPIOD,&GPIO_InitStructure);

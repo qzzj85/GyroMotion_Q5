@@ -722,6 +722,7 @@ void YBS_Right_Bump(u8 out_enable)
 				case 0:
 					mode.bump_time=giv_sys_time;
 					mode.step_bp++;
+					Set_Coordinate_Wall(now_gridx,now_gridy);
 					return;
 				case 1:
 					if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -777,6 +778,7 @@ void YBS_Right_Bump(u8 out_enable)
 					case 0:
 						mode.bump_time=giv_sys_time;
 						mode.step_bp++;
+						Set_Coordinate_Wall(now_gridx,now_gridy);
 					return;
 					case 1:
 						if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -849,6 +851,7 @@ void YBS_Right_Bump(u8 out_enable)
 					case 0:
 						mode.bump_time=giv_sys_time;
 						mode.step_bp++;
+						Set_Coordinate_Wall(now_gridx,now_gridy);
 						break;
 					case 1:
 						if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -909,6 +912,7 @@ void YBS_Right_Bump(u8 out_enable)
 					case 0:
 						mode.bump_time=giv_sys_time;
 						mode.step_bp=1;
+						Set_Coordinate_Wall(now_gridx,now_gridy);
 					return;
 					case 1:
 						if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -967,6 +971,7 @@ void YBS_Right_Bump(u8 out_enable)
 					case 0:
 						mode.bump_time=giv_sys_time;
 						mode.step_bp++;
+						Set_Coordinate_Wall(now_gridx,now_gridy);
 						break;
 					case 1:
 						if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -1001,6 +1006,7 @@ void YBS_Right_Bump(u8 out_enable)
 						stop_rap();
 						mode.bump_time=giv_sys_time;
 						mode.step_bp++;
+						Set_Coordinate_Wall(now_gridx,now_gridy);
 						break;
 					case 1:
 						if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -1038,6 +1044,7 @@ void YBS_Right_Bump(u8 out_enable)
 					stop_rap();
 					mode.bump_time=giv_sys_time;
 					mode.step_bp++;
+					Set_Coordinate_Wall(now_gridx,now_gridy);
 					break;
 				case 1:
 					if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
@@ -1089,6 +1096,7 @@ void YBS_Right_Bump(u8 out_enable)
 					stop_rap();
 					mode.bump_time=giv_sys_time;
 					mode.step_bp++;
+					Set_Coordinate_Wall(now_gridx,now_gridy);
 				break;
 				case 1:
 					if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)

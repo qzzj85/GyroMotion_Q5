@@ -2465,7 +2465,7 @@ u8 Area_Check(u8 avoid_ybs)
 	curr_areanum=Read_CurrNode_AreaNO();
 	TRACE("curr_areanum=%d\r\n",curr_areanum);
 	
-	if(mode.mode!=SHIFT)
+	if((mode.mode!=SHIFT)&(mode.mode!=EXIT))
 		{
 			TRACE("mode.mode!=SHIFT!!\r\n");
 			TRACE("set worktime_area 10!!\r\n");
@@ -2910,7 +2910,8 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 		}
 
 	check_result=0;
-	for(i=0;i<first_len;i++)
+	//for(i=0;i<first_len;i++)
+	for(i=0;i<len;i++)
 		{
 			TRACE("first_check[%d].gridx=%d gridy=%d \r\n",i,first_check[i].gridx,first_check[i].gridy);
 			TRACE("and wall=%d\r\n",Read_Coordinate_Wall(first_check[i].gridx,first_check[i].gridy));
@@ -2918,7 +2919,8 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 				|(!Read_Coordinate_Clean(first_check[i].gridx,first_check[i].gridy)))
 				check_result++;
 		}
-	if(check_result>=first_len)
+	//if(check_result>=first_len)
+	if(check_result>=len)
 		{
 			TRACE("New Area has surround by firstwall!!\r\n");
 			for(i=0;i<len;i++)

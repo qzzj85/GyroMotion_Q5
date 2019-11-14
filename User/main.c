@@ -73,7 +73,7 @@ void log_out(void)
 			//TRACE("m.bump=%d\r\n",mode.bump);
 			//TRACE("m.st_bp=%d\r\n",mode.step_bp);
 		}
-#if 0
+#if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
 	TRACE("Gyro.x=%f\r\n",X_pos);
 	TRACE("Gyro.y=%f\r\n",Y_pos);

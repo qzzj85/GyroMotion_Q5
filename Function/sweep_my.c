@@ -732,6 +732,7 @@ void Do_FirstInit_Sweep(void)
 				motion1.xpos_start=Gyro_Data.x_pos; 			//qz add 20190307
 				motion1.ypos_start=Gyro_Data.y_pos; 			//qz add 20190307
 				motion1.sweep_time=0;
+				motion1.area_num=0;
 				motion1.continue_checkstep=0;
 				motion1.force_dock=false;
 				mode.status=1;

@@ -138,12 +138,12 @@ void  ACC_DEC_Curve(void)
 //==================================================================================================================================================================
 void ACC_DEC_Comm_rap_My (void)
 {
-	static bool rap_speed=false;
 	float f_ec;
 
 	Check_Speed_My(&(l_ring.real_speed), &(r_ring.real_speed));
 
 #ifdef PITCH_SPEEDUP
+	static bool rap_speed=false;
 		if((mode.speed_up)&(!rap_speed))//&(mode.abnormity==0))
 			{
 				r_rap.rap=15*r_rap.rap/10;

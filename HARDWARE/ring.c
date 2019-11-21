@@ -974,7 +974,7 @@ void stop_rap(void)
 							GYRO_CAL_PIN_0;
 							TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
 							delay_ms(1000);
-							delay_ms(1000);
+							//delay_ms(1000);
 							TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
 							GYRO_CAL_PIN_1;
 						}

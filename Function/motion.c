@@ -110,18 +110,23 @@ void Load_Abort_Data(void)
 	Get_Curr_BackInfo();
 }
 
-
+/*-------------------------------------------------
+function:用于回扫的漏扫检查，有些回扫区域完成后，可能还有漏扫
+input:None
+output:
+      0:没有回扫漏扫区域，1:有回扫漏扫区域
+--------------------------------------------------*/
 u8 Analysis_Back_Leak(void)
 {
 	s8 check_gridy1,check_gridy2,check_gridx,now_gridx;
 	s8 xmax_check1,xmin_check1,xmax_check2,xmin_check2;
-	if(grid.y_abort==grid.y_back_last)
+	if(grid.y_abort==grid.y_back_last)			//如果最后一次回扫的Y坐标与中断Y坐标一致，则直接退出
 		return 0;
 
 	TRACE("Enter in %s...\r\n",__func__);
 	check_gridy1=grid.y_abort;
 	now_gridx=grid.x;
-	while(check_gridy1!=grid.y_back_last)
+	while(check_gridy1!=grid.y_back_last)		//从当前中断Y坐标开始，直到最后一次回扫Y坐标为止，每个Y坐标进行检查
 		{
 			if(grid.y_back_last>grid.y_abort)
 				check_gridy2=check_gridy1+1;
@@ -136,13 +141,13 @@ u8 Analysis_Back_Leak(void)
 					if((Read_Coordinate_Seat(xmax_check2,check_gridy2))|(Read_Coordinate_Seat(xmax_check1,check_gridy1)))
 						break;
 					if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
-						{
+						{											//有回扫漏扫区域，准备前往
 							check_point.new_x1=check_gridx;
 							check_point.new_y1=check_gridy1;
 							check_point.new_x2=check_gridx;
 							check_point.new_y2=check_gridy2;
 							check_point.next_tgtyaw=F_Angle_Const;
-							Set_CheckPoint_NextAction(CHECK_BACK);
+							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);	//CHECK_ACTION设置为回扫（回扫漏扫仍是回扫）
 							if(check_gridy1>check_gridy2)
 								check_point.ybs_dir=LEFT;
 							else
@@ -161,7 +166,7 @@ u8 Analysis_Back_Leak(void)
 							check_point.new_x2=check_gridx;
 							check_point.new_y2=check_gridy2;
 							check_point.next_tgtyaw=B_Angle_Const;
-							Set_CheckPoint_NextAction(CHECK_BACK);
+							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);
 							if(check_gridy1>check_gridy2)
 								{
 									 check_point.ybs_dir=RIGHT;
@@ -202,8 +207,8 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 		return 0;
 	if(Read_Motion_BackSweep())
 		return 0;
-	if(motion1.first_leak_y)
-		return 0;
+	//if(motion1.first_leak_y)
+		//return 0;
 	TRACE("Analysis NeedBack...\r\n");
 	//if(motion1.tgt_yaw==F_Angle)
 	if(motion1.tgt_yaw==F_Angle_Const)
@@ -252,8 +257,12 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 	return 0;
 }
 
-//return:
-//0:需要继续回扫，1:停止回扫
+/*--------------------------------------
+function:用于回扫碰撞时的停止分析检查
+         主要是分析Y坐标是否已经到达边界
+return:
+	0:需要继续回扫，1:停止回扫
+----------------------------------------*/
 u8 Analysis_StopBack_InBump(s8 ydir,s8 now_gridx,s8 now_gridy)
 {
 	s8 next_gridy;
@@ -262,16 +271,16 @@ u8 Analysis_StopBack_InBump(s8 ydir,s8 now_gridx,s8 now_gridy)
 			next_gridy=now_gridy+1;
 			if(next_gridy>grid.y_area_max)							//当前Y坐标是区域最大Y坐标
 				return 1;											//返回1，退出回扫
-			else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最大Y坐标
-				return 1;											//且下一个Y坐标已经清扫，退出回扫
+			//else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最大Y坐标
+				//return 1;											//且下一个Y坐标已经清扫，退出回扫
 		}
 	else if(ydir<0)
 		{
 			next_gridy=now_gridy-1;									
 			if(next_gridy<grid.y_area_min)							//当前Y坐标是区域最小Y坐标
 				return 1;											//返回1，退出回扫
-			else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最小Y坐标
-				return 1;											//且下一个Y坐标已经清扫，退出回扫
+			//else if(Read_Coordinate_Clean(now_gridx,next_gridy))	//当前Y坐标不是区域最小Y坐标
+				//return 1;											//且下一个Y坐标已经清扫，退出回扫
 		}
 	return 0;
 }
@@ -645,7 +654,11 @@ void Work_TimeOut_Handle(void)
 							TRACE("working time out!!!\r\n");
 							TRACE("now is sweep,goto area_check!!!\r\n");
 							motion1.area_ok=true;
+#ifdef USE_AREA_TREE
+							Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
 							Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
 							Area_Check(0);
 							Init_Shift_Point1(0);
 						}
@@ -653,14 +666,23 @@ void Work_TimeOut_Handle(void)
 						{
 							switch(temp_nextaction)
 								{
+									case CHECK_BACK2NORMAL:
+										Del_All_BackInfo();
+										Area_Check(0);
+										Init_Shift_Point1(0);
+										break;
 									case CHECK_NORMALSWEEP:
-									case CHECK_BACK:
+									case CHECK_BACKSWEEP:
 									case CHECK_LEAKSWEEP:
 										stop_rap();
 										TRACE("working time out!!!\r\n");
 										TRACE("now is shift,set leak_area ok,and goto new_area!!!\r\n");
 										motion1.area_ok=true;
+#ifdef USE_AREA_TREE
+										Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
 										Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
 										Set_AreaWorkTime(5);
 										Area_Check(0);
 										Init_Shift_Point1(0);
@@ -673,26 +695,46 @@ void Work_TimeOut_Handle(void)
 												case DIR_YMAX:
 													TRACE("Dir Ymax timeout!!!,Set Ymax Ok!\r\n");
 													motion1.ymax_ok=true;
+#ifdef USE_AREA_TREE
+													Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
 													Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 												break;
 												case DIR_XMAX:
 													TRACE("DIR_XMAX timeout!!!,Set Xmax Ok!\r\n");
 													motion1.xmax_ok=true;
+#ifdef USE_AREA_TREE
+													Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
 													Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 												break;
 												case DIR_YMIN:
 													TRACE("DIR_YMIN timeout!!!,Set Ymin Ok!\r\n");
 													motion1.ymin_ok=true;
+#ifdef USE_AREA_TREE
+													Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
 													Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 												break;
 												case DIR_XMIN:
 													TRACE("DIR_XMIN timeout!!!,Set Xmin Ok!\r\n");
 													motion1.xmin_ok=true;
+#ifdef USE_AREA_TREE
+													Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
 													Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 												break;
 												default:
 													TRACE("Set AllNewArea OK!!\r\n");
+#ifdef USE_AREA_TREE
+													Set_Curr_AreaTree_AllNewOK();
+#else
 													Set_Curr_AllNewAreaOK();
+#endif
 													break;
 													
 											}

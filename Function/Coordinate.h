@@ -21,11 +21,12 @@
 #define GRIDY_POS_CNT		(2*RANGE_MAX/20+1)	//101
 
 #define CHECK_NORMALSWEEP	0
-#define	CHECK_BACK			1
-#define	CHECK_LEAKSWEEP		2
-#define	CHECK_NEWAREA		3
-#define	CHECK_GOEXIT		4
-#define	CHECK_DOCK			5
+#define	CHECK_BACKSWEEP		1
+#define	CHECK_BACK2NORMAL	2
+#define	CHECK_LEAKSWEEP		3
+#define	CHECK_NEWAREA		4
+#define	CHECK_GOEXIT		5
+#define	CHECK_DOCK			6
 
 #define	DIR_YMAX			1
 #define	DIR_XMAX			2
@@ -95,6 +96,7 @@ s8 Return_MinClean_GridY(s8 gridx, u8 nowall);
 void Set_Coordinate_Clean(s8 gridx,s8 gridy);
 void Set_Coordinate_Seat(s8 xgrid,s8 ygrid);
 
+u8 Analysis_Fake_Leak(s8 xcheck,s8 ycheck,u8 dir);
 
 #endif
 

@@ -9,6 +9,30 @@
 bool abort_shiftybs_flag=false;
 static u8 next_action=0;
 
+u8 Analysis_Reach_YAbort(void)
+{
+	if(Read_CheckPoint_NextAction()==CHECK_BACK2NORMAL)
+		{
+			if(Judge_GridYPOS_Reach(grid.y_abort,0))
+				{
+					stop_rap();
+					Init_Stop_BackSweep();
+					return 1;
+				}
+		}
+	return 0;
+}
+
+u8 Analysis_Reach_ExitArea(void)
+{
+	u8 temp_areano;
+	temp_areano=Read_Coordinate_AreaNo(grid.x,grid.y);
+	if((temp_areano!=0)&(temp_areano==motion1.exit_area_num))
+		return 1;
+	else
+		return 0;
+}
+
 u8 Read_Shift_Bump(void)
 {
 	u32 data1=0;
@@ -195,8 +219,27 @@ void Shift_BumpAction(void)
 	now_gridx=grid.x;now_gridy=grid.y;
 	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
 	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
+	
 	m=Read_Shift_Bump();
+	nextaction=Read_CheckPoint_NextAction();
 
+	if(nextaction==CHECK_GOEXIT)
+		{
+			if(Analysis_Reach_ExitArea())
+				{
+					stop_rap();
+					TRACE("now grid is in the exit area num!!!\r\n");
+					TRACE("Abort in %s!!!\r\n",__func__);
+					stop_rap();
+					mode.step=0;
+					mode.bump=0;
+					mode.step_bp=0;
+					mode.bump_flag=false;
+					Do_ExitAtion();
+					return;
+				}
+		}
+	
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
@@ -353,10 +396,12 @@ void Shift_BumpAction(void)
 			case BUMP_RIGHT_MID:
 			case BUMP_MID:
 				//if((now_gridx==check_point.new_x2)&(now_gridy==check_point.new_y2)&(mode.step_bp<10))
+#if 0
 				if((now_gridx==tgt_gridx2)&(Judge_GridYPOS_Reach(tgt_gridy2,0))&(mode.step_bp<10))
 					{
 						mode.step_bp=10;
 					}
+#endif
 				switch(mode.step_bp)
 					{
 						case 0:
@@ -378,18 +423,11 @@ void Shift_BumpAction(void)
 									stop_rap();
 									mode.step_bp++;
 									mode.bump_time=giv_sys_time;
-
-									if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))
-										{
-											mode.step_bp=6;
-											return;
-										}
-
+									
 									if(bump_time>2)
 										{
 											bump_time=0;
 											//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
-											nextaction=Read_CheckPoint_NextAction();
 											
 											if(nextaction==CHECK_GOEXIT)
 												{
@@ -422,6 +460,20 @@ void Shift_BumpAction(void)
 														{
 															Init_Shift_RightYBS(1);
 															return;
+														}
+													
+													else
+														{
+															if(check_point.ybs_dir==LEFT)
+																{
+																	Init_Shift_LeftYBS(1);
+																	return;
+																}
+															else if(check_point.ybs_dir==RIGHT)
+																{
+																	Init_Shift_RightYBS(1);
+																	return;
+																}
 														}
 												}
 											
@@ -478,7 +530,17 @@ void Shift_BumpAction(void)
 												}
 											return;
 										}
-									
+									else
+										{
+											if(((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))|((now_gridx==tgt_gridx2)&(now_gridy==tgt_gridy2)))
+												{
+													if(nextaction<=CHECK_NEWAREA)
+														{
+															mode.step_bp=6;
+															return;
+														}
+												}
+										}
 									switch(mode.bump)
 										{
 											case BUMP_ONLY_LEFTMID:
@@ -592,13 +654,22 @@ void Shift_BumpAction(void)
 									Area_Check(0);
 									Init_Shift_Point1(0);
 								}
-							else if(temp_data==CHECK_BACK)
+							else if(temp_data==CHECK_BACKSWEEP)
 								{
-									TRACE("Abort for CHECK_BACK!!!\r\n");
+									TRACE("Abort for CHECK_BACKSWEEP!!!\r\n");
 									if(Analysis_Back_Leak()==0)
 										Init_Stop_BackSweep();
 									else
 										Init_Shift_Point1(1);
+								}
+							else if(temp_data==CHECK_BACK2NORMAL)
+								{
+									mode.bump=0;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									bump_time=0;
+									mode.step=0;
+									return;
 								}
 							else
 								{
@@ -700,7 +771,7 @@ void Init_Shift_Point1(u8 pre_action)
 void Do_Shift_Point1(void)
 {
 	static u32 length;
-	static u8 turn_dir,path_num;
+	static u8 turn_dir,path_num,temp_nextaction,turn_angle;
 	static s8 temp_tgty,temp_tgtx;
 //	static short tgt_angle;
 	s8 tgt_gridy1,tgt_gridx1,tgt_gridy2,tgt_gridx2,temp_gridy,temp_gridx,now_gridx,now_gridy;
@@ -709,6 +780,8 @@ void Do_Shift_Point1(void)
 	tgt_gridy2=check_point.new_y2;tgt_gridx2=check_point.new_x2;
 	now_gridx=grid.x;now_gridy=grid.y;
 	static struct PATH_POINT *temp_point=NULL;
+
+	temp_nextaction=Read_CheckPoint_NextAction();
 	
 	ACC_DEC_Curve();
 
@@ -729,6 +802,9 @@ void Do_Shift_Point1(void)
 		}
 	
 	if(Analysis_Check_Dock())
+		return;
+
+	if(Analysis_Reach_YAbort())
 		return;
 	
 	Shift_BumpAction();
@@ -849,6 +925,13 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 7:
+				if(temp_nextaction>=CHECK_NEWAREA)
+					{
+						TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+						TRACE("Goto Right YBS!!\r\n");
+						Init_Shift_RightYBS(2);
+						return;
+					}
 				temp_result=Find_PathPoint_Way(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
 					{
@@ -907,11 +990,13 @@ void Do_Shift_Point1(void)
 					{
 						stop_rap();
 						mode.step++;
-						length=abs(now_gridy-tgt_gridy1)*20;length+=20;
+						length=abs(now_gridy-tgt_gridy1)*20;
+						length+=20;
 					}
 				break;
 			case 22:
-				Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
 				if(do_action_my(3,length*CM_PLUS,motion1.tgt_yaw))
 					{
 						stop_rap();
@@ -952,7 +1037,8 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 25:
-				Speed=HIGH_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
 				if(do_action_my(3,length*CM_PLUS,motion1.tgt_yaw))
 					{
 						stop_rap();
@@ -995,7 +1081,8 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 42:
-				Speed=HIGH_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
 				if(do_action_my(3,length*CM_PLUS,motion1.tgt_yaw))
 					{
 						stop_rap();
@@ -1036,7 +1123,8 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 45:
-				Speed=HIGH_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
 				if(do_action_my(3,length*CM_PLUS,motion1.tgt_yaw))
 					{
 						stop_rap();
@@ -1806,6 +1894,9 @@ void Do_Shift_Point2(void)
 	
 	if(Analysis_Check_Dock())
 		return;
+
+	if(Analysis_Reach_YAbort())
+		return;
 	
 	Shift_BumpAction();
 	if(mode.bump)
@@ -1954,15 +2045,23 @@ void Do_Shift_Point2(void)
 					{
 						stop_rap();
 						//if(check_point.leak_sweep)
-						if(Read_CheckPoint_NextAction()==CHECK_LEAKSWEEP)
-							Init_LeakSweep(motion1.tgt_yaw);
-						else if(Read_CheckPoint_NextAction()==CHECK_NORMALSWEEP)
-							Init_NormalSweep(motion1.tgt_yaw);
-						else if(Read_CheckPoint_NextAction()==CHECK_BACK)
+						if(temp_nextaction==CHECK_LEAKSWEEP)
+							{
+								Init_LeakSweep(motion1.tgt_yaw);
+								motion1.repeat_sweep=true;
+							}
+						else if(temp_nextaction==CHECK_NORMALSWEEP)
+							{
+								Init_NormalSweep(motion1.tgt_yaw);
+								motion1.repeat_sweep=true;
+							}
+						else if(temp_nextaction==CHECK_BACKSWEEP)
 							{
 								Init_Back_Sweep(motion1.tgt_yaw);
+								motion1.repeat_sweep=true;
 							}
-						motion1.repeat_sweep=true;
+						else if(temp_nextaction==CHECK_BACK2NORMAL)
+							Init_Stop_BackSweep();
 						Set_AreaWorkTime(20);
 					}
 				break;
@@ -1998,9 +2097,13 @@ void Init_Shift_RightYBS(u8 temp_data)
 		{
 			mode.step = 0x88;//QZ:原来为0x88;
 		}
-	else
+	else if(temp_data==1)
 		{
 			mode.step = 0;
+		}
+	else
+		{
+			mode.step =0xa0;
 		}
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();			//打开万向轮检测 
@@ -2224,7 +2327,8 @@ u8 Abort_ShiftYBS(void)
 
 	//Abort2Sweep(tgt_gridx2, tgt_gridy2);
 	
-	if(abort_shiftybs_flag)
+	//if(abort_shiftybs_flag)
+	if((abort_shiftybs_flag)&(temp_nextaction!=CHECK_BACK2NORMAL))
 		{
 			abort_shiftybs_flag=false;
 			if(temp_nextaction<=CHECK_LEAKSWEEP)
@@ -2235,9 +2339,9 @@ u8 Abort_ShiftYBS(void)
 					if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)<=20)
 						return 0;
 
-					if(temp_nextaction==CHECK_BACK)
+					if(temp_nextaction==CHECK_BACKSWEEP)
 						{
-							TRACE("Abort for CHECK_BACK!!!\r\n");
+							TRACE("Abort for CHECK_BACKSWEEP!!!\r\n");
 							if(Analysis_Back_Leak()==0)
 								Init_Stop_BackSweep();
 							else
@@ -2264,6 +2368,7 @@ u8 Abort_ShiftYBS(void)
 													Init_Shift_Point1(2);
 													return 1;
 												}
+											#if 0
 											if(Find_PathPoint_YBS(check_point.new_x1,check_point.new_y1))
 												{
 													stop_rap();
@@ -2274,6 +2379,7 @@ u8 Abort_ShiftYBS(void)
 													Init_Shift_Point1(2);
 													return 1;													
 												}
+											#endif
 										}
 								}
 							else
@@ -2368,7 +2474,11 @@ u8 Abort_ShiftYBS(void)
 										TRACE("next action is NORMALSWEEP or LEAKSWEEP!!!\r\n");
 										TRACE("abort now action,prepare to next action!!!\r\n");
 										motion1.area_ok=true;
+#ifdef USE_AREA_TREE
+										Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
 										Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
 										
 										Area_Check(1);
 										Init_Shift_Point1(1);
@@ -2376,7 +2486,11 @@ u8 Abort_ShiftYBS(void)
 									case CHECK_NEWAREA:
 										TRACE("next action is NEWAREA!!!\r\n");
 										TRACE("Area check again!!!\r\n");
+#ifdef USE_AREA_TREE
+										Set_Curr_AreaTree_AllNewOK();
+#else
 										Set_Curr_AllNewAreaOK();
+#endif
 										
 										Area_Check(1);
 										Init_Shift_Point1(1);
@@ -2407,8 +2521,9 @@ void Do_ShiftYBS(void)
 //	static u8 piv_out;	//机器是否向外展开，1为向外展开，0为向里缩小
 //	static u8 piv_left; //机器是否向左转，1为向左转，0为向右转
 	u8 temp_data1=0;
-	u8 abnormal;
+	u8 abnormal,turn_dir=0;
 	u32 uin32;
+	static short turn_angle=0;
 
 #ifdef DC_NOBAT_RUN
 	if((power.charge_dc)&(!dc_nobat_run))
@@ -2471,6 +2586,9 @@ void Do_ShiftYBS(void)
 		return;
 	
 	if(Abort2Sweep())
+		return;
+
+	if(Analysis_Reach_YAbort())
 		return;
 
 	if(Analysis_Check_Dock())
@@ -2885,7 +3003,43 @@ void Do_ShiftYBS(void)
 							mode.step =0x41;
 						}
 				break;
-								
+
+			case 0xa0:
+				switch(check_point.new_area_dir)
+					{
+						case DIR_YMAX:
+							turn_angle=B_Angle_Const;
+							break;
+						case DIR_XMAX:
+							turn_angle=R_Angle_Const;
+							break;
+						case DIR_YMIN:
+							turn_angle=F_Angle_Const;
+							break;
+						case DIR_XMIN:
+							turn_angle=L_Angle_Const;
+							break;
+						default:
+							mode.step=0;
+							return;
+					}
+				mode.step++;
+				break;
+			case 0xa1:
+				turn_dir=Get_TurnDir(turn_angle);
+				Speed=TURN_SPEED;
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(turn_angle,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 0xa2:
+				Speed=FAST_MOVE_SPEED;
+				do_action_my(3,FARAWAY*CM_PLUS,turn_angle);
+				break;
+			
 			//绕过障碍后的处理过程
 			case 0xD0:
 				if(giv_sys_time-mode.time<5000)
@@ -2907,6 +3061,16 @@ void Do_ShiftYBS(void)
 void Do_ExitAtion(void)
 {		
 	TRACE("Enter in %s..\r\n");
+#ifdef USE_AREA_TREE
+	Back_To_ParentTree();
+	if(Read_Curr_AreaTree_NO()==0)
+		{
+			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+			Init_Docking();
+			return;
+		}
+	Get_Curr_AreaTree_Info();
+#else
 	Del_AreaNode_End();							//删除上一清扫区域的节点
 	if(Read_CurrNode_AreaNO()==0)
 		{
@@ -2915,6 +3079,7 @@ void Do_ExitAtion(void)
 			return;
 		}
 	Get_CurrNode_Info();						//获取当前区域的节点信息
+#endif
 	Cal_PosArea_Max();							//获取当前区域的坐标信息
 	if(motion1.force_dock)
 		{
@@ -2948,7 +3113,7 @@ u8 Abort2Sweep(void)
 		{
 
 			case CHECK_NORMALSWEEP:
-			case CHECK_BACK:
+			case CHECK_BACKSWEEP:
 			case CHECK_LEAKSWEEP:
 				if(now_gridy!=tgt_gridy2)
 					return 0;
@@ -3051,6 +3216,12 @@ u8 Abort2Sweep(void)
 #if 1
 			case CHECK_NEWAREA:
 			case CHECK_GOEXIT:
+				
+				if((now_gridy>=grid.y_area_max)|(now_gridy<=grid.y_area_min))
+					return 0;
+				if((now_gridx>=grid.x_area_max)|(now_gridx<=grid.x_area_min))
+					return 0;
+
 				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
 					{
 						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
@@ -3137,7 +3308,11 @@ u8 Abort2Sweep(void)
 										if(motion1.ymax_ok)
 											{
 												motion1.ymax_ok=false;
-												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, 1);
+#ifdef USE_AREA_TREE
+												Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 											}
 									}
 								else							//向grid.y_area_min方向
@@ -3145,14 +3320,22 @@ u8 Abort2Sweep(void)
 										if(motion1.ymin_ok)
 											{
 												motion1.ymin_ok=false;
-												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, 3);
+#ifdef USE_AREA_TREE
+												Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 											}
 									}
 								
 								if(motion1.xmax_ok)
 									{
 										motion1.xmax_ok=false;
-										Set_CurrNode_NewAreaInfo(motion1.xmax_ok, 2);
+#ifdef USE_AREA_TREE
+										Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
+										Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 									}
 							}
 						else									//向grid.x_area_min方向
@@ -3162,7 +3345,11 @@ u8 Abort2Sweep(void)
 										if(motion1.ymax_ok)
 											{
 												motion1.ymax_ok=false;
-												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, 1);
+#ifdef USE_AREA_TREE
+												Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+												Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 											}
 									}
 								else							//向grid.y_area_min方向
@@ -3170,14 +3357,22 @@ u8 Abort2Sweep(void)
 										if(motion1.ymin_ok)
 											{
 												motion1.ymin_ok=false;
-												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, 3);
+#ifdef USE_AREA_TREE
+												Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+												Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 											}
 									}
 
 								if(motion1.xmin_ok)
 									{
 										motion1.xmin_ok=false;
-										Set_CurrNode_NewAreaInfo(motion1.xmin_ok, 4);
+#ifdef USE_AREA_TREE
+										Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
+										Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 									}
 							}
 					}
@@ -3188,8 +3383,8 @@ u8 Abort2Sweep(void)
 						//if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
 							{
 								stop_rap();
-								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
-								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx2,temp_gridy2);
+								TRACE("girdx1=%d gridy1=%d not clean\r\n",temp_gridx1,temp_gridy1);
+								TRACE("girdx2=%d gridy2=%d not clean\r\n",temp_gridx2,temp_gridy2);
 								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
 								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
 								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
@@ -3206,7 +3401,9 @@ u8 Abort2Sweep(void)
 								return 1;
 							}
 					}
-//				break;
+				break;
+			default:
+				break;
 #endif
 		}
 	return 0;	
@@ -3331,9 +3528,6 @@ u8 Abort_ShiftExit_YBS(void)
 	u8 temp_areano=0;
 	now_gridx=grid.x;now_gridy=grid.y;
 
-	temp_areano=Read_Coordinate_AreaNo(now_gridx,now_gridy);
-
-
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
@@ -3351,7 +3545,7 @@ u8 Abort_ShiftExit_YBS(void)
 			return 1;
 		}
 	
-	if(temp_areano==motion1.exit_area_num)
+	if(Analysis_Reach_ExitArea())
 		{
 			TRACE("now grid is in the exit area num!!!\r\n");
 			TRACE("now grid is in the exit area num!!!\r\n");

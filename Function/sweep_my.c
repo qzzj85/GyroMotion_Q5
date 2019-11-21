@@ -154,6 +154,14 @@ u8 Check_OutofRange(void)
 #endif
 }
 
+/*-------------------------------------------------
+function:清扫时，检查下一Y坐标是否已经清扫过
+         主要用于清扫时，检查重叠区域，发现下一Y坐标被清扫过，则认为到达重叠区域，且会改变grid.y_area_max
+input:None
+output:
+		0:没有清扫且没有改变grid.y_area_max/grid.y_area_min
+		1:已经清扫且改变了grid.y_are_max/grid.y_area_min
+--------------------------------------------------*/
 u8 Check_Already_YClean(void)
 {
 	s8 now_gridx,now_gridy,ydir;
@@ -657,7 +665,11 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 	grid.y_area_start=grid.y;
 
  	Cal_PosArea_Max();
+#ifdef USE_AREA_TREE
+	if(Add_AreaTree())
+#else
 	if(Add_AreaNode_End())
+#endif
 		{
 			stop_rap();
 			error_code=SEND_ERROR_NODEMALLOC;
@@ -665,7 +677,9 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 			Init_Err();
 			return;
 		}
+#ifndef USE_AREA_TREE
 	Load_CurrNode_Info();
+#endif
 	Init_NormalSweep(tgt_yaw);		
 	switch(motion1.y_acc)
 		{
@@ -712,7 +726,11 @@ void Do_FirstInit_Sweep(void)
 						return;
 					}
 				//Delete_All_PathPoint();
+#ifdef USE_AREA_TREE
+				if(Init_AreaTree())
+#else
 				if(Creat_AreaNodeList())
+#endif
 					{
 						stop_rap();
 						error_code=SEND_ERROR_NODEMALLOC;
@@ -2466,14 +2484,14 @@ void Do_BackSweep(void)
 			case 2:
 				if(ydir>0)
 					{
-						if(now_gridy+1>grid.y_area_max)
+						if(now_gridy+1>grid.y_area_max)				//已到达边界
 							{
 								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
 								Init_Stop_BackSweep();
 								return;
 							}
 					}
-				else if(ydir<0)
+				else if(ydir<0)										//已到达边界
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
@@ -2762,6 +2780,17 @@ void Continue_Sweep(void)
 
 void Init_Stop_BackSweep(void)
 {
+	TRACE("Enter in %s...\r\n",__func__);
+	if(grid.y!=grid.y_abort)
+		{
+			TRACE("use shift point!!\r\n");
+			s8 tgt_gridx,tgt_xmin,tgt_xmax;
+			check_point.new_x1=grid.x_abort;check_point.new_y1=grid.y_abort;
+			check_point.new_x2=grid.x_abort;check_point.new_y2=grid.y_abort;
+			check_point.next_action=CHECK_BACK2NORMAL;
+			Init_Shift_Point1(0);
+			return;
+		}
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化显示***********/
@@ -2799,7 +2828,9 @@ void StopBack_Bump_Action(void)
 	static u8 turn_dir=0;
 	static u16 ypos_dif=0;
 	short ypos,tgt_ypos;
+	s8 now_gridx,now_gridy;
 	
+	now_gridx=grid.x;now_gridy=grid.y;
 	tgt_ypos=Return_GridYPos_Point(grid.y_abort);
 	ypos=Gyro_Data.y_pos;
 	m=Read_Sweep_Bump(0,0);
@@ -2828,7 +2859,7 @@ void StopBack_Bump_Action(void)
 	switch(mode.step_bp)
 		{
 			case 0:
-				Set_Coordinate_Wall(grid.x,grid.y);
+				Set_Coordinate_Wall(now_gridx,now_gridy);
 				mode.bump_time=giv_sys_time;
 				mode.step_bp++;
 				turn_flag=false;
@@ -2956,9 +2987,10 @@ void StopBack_Bump_Action(void)
 					}
 				break;
 			case 8:
+				Set_Coordinate_Wall(now_gridx,now_gridy);
 				if(giv_sys_time-mode.bump_time<1000)
 					return;
-				Speed=MID_MOVE_SPEED;
+				Speed=BUMP_BACK_SPEED;
 				if(do_action(4,2*CM_PLUS))
 					{
 						stop_rap();
@@ -2993,6 +3025,9 @@ void Do_Stop_BackSweep(void)
 	short ypos,tgt_xpos,tgt_ypos;
 	static u8 turn_dir=0;
 	static short tgt_yaw=0;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
+
 	ypos=Gyro_Data.y_pos;
 	tgt_xpos=Return_GridXPos_Point(grid.x_abort);tgt_ypos=Return_GridYPos_Point(grid.y_abort);
 
@@ -3029,17 +3064,22 @@ void Do_Stop_BackSweep(void)
 		}
 	if(mode.bump)
 		return;
+	if(mode.sub_mode!=STOP_BACKSWEEP)
+		return;
 	
 	switch(mode.step)
 		{	
 			case 0:
+				
 				if(giv_sys_time-mode.bump_time<200)
 					return;
-				if(ypos+5<tgt_ypos)			//当前Y坐标小于中断坐标，需要转到R_ANGLE_CONST
+				//if(ypos+5<tgt_ypos)			//当前Y坐标小于中断坐标，需要转到R_ANGLE_CONST
+				if(now_gridy<grid.y_abort)
 					{
 						tgt_yaw=R_Angle_Const;
 					}
-				else if(ypos>tgt_ypos+5)			//当前Y坐标大于中断坐标，需要转到R_ANGLE_CONST
+				//else if(ypos>tgt_ypos+5)			//当前Y坐标大于中断坐标，需要转到R_ANGLE_CONST
+				else if(now_gridy>grid.y_abort)
 					{
 						tgt_yaw=L_Angle_Const;
 					}
@@ -3398,7 +3438,7 @@ u8 YBS_AbortFor_Sweep(void)
 
 								{
 									TRACE("Need Repeat!\r\n");
-									motion1.repeat_sweep=true;
+									//motion1.repeat_sweep=true;
 								}
 						}
 					else
@@ -3444,7 +3484,7 @@ u8 YBS_AbortFor_Sweep(void)
 
 								{
 									TRACE("Need Repeat!\r\n");
-									motion1.repeat_sweep=true;
+									//motion1.repeat_sweep=true;
 								}
 						}
 					else

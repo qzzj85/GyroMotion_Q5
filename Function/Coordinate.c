@@ -40,10 +40,18 @@ volatile uint32_t last_r, now_r; // 采样周期计数 单位 us
 float hal_r;
 float X_pos,Y_pos;
 u16  check_whell,check_angle;
+
+#if 1
+int   last_l_all_length, last_r_all_length;
+ short  old_angle = 0;
+
+ float r_length,l_length,r1;
+#else
 float r_length,l_length;
 float last_l_all_length, last_r_all_length;
 float  old_angle = 0;
 float  r1;	
+#endif
 
 //COORDINATE coordinate[COORDI_XLENGTH][COORDI_YLENGTH] __attribute__((at(0x20002000)));//qz add 20190307:4mX4m空间的坐标格,每20cm一个坐标
 volatile u8 coordinate[COORDI_YLENGTH+1][COORDI_XLENGTH+1] __attribute__((at(0x20008000)));		//坐标格信息，高6位表示区域编号（从1号开始），低2位表示CLEAN和WALL标志
@@ -73,8 +81,58 @@ void Cal_Grid_Pos(void)
 		}
 }
 
+#ifdef 	GYRO_ROTATE_DET
+       unsigned int gyro_det_time;
+       short  old_det_angle = 0;
+       float  gyro_angle = 0;   	   
+       float  machine_angle = 0; 
+	     float  temp_angle = 0;  
+       bool gyro_det_flag = FALSE   ;
+#endif
 void Cal_xy(void)
 {
+#if  1
+	float x_add, y_add,w_add;
+	int   r1;
+		 
+	r1 = r_ring.all_length-last_r_all_length +l_ring.all_length-last_l_all_length ;
+	x_add =(float) r1/2/CM_PLUS * cos( (float)old_angle /100*TT);
+	y_add = (float)r1/2/CM_PLUS * sin( (float)old_angle /100*TT);
+	X_pos +=x_add;
+	Y_pos +=y_add;;
+	Gyro_Data.x_pos = X_pos;
+	Gyro_Data.y_pos =	Y_pos ;
+	old_angle = Gyro_Data.yaw;
+#ifdef 	GYRO_ROTATE_DET
+ 	r1 =  (l_ring.all_length-last_l_all_length)- (r_ring.all_length-last_r_all_length);       
+	w_add = (float)r1/CM_PLUS/21.6 /TT ; // 21.6cm为左右轮之间的距离  
+	if (gyro_det_flag == FALSE)
+		{
+			gyro_det_time = giv_sys_time;
+			temp_angle  = 0;
+			old_det_angle =   Gyro_Data.yaw;
+			gyro_det_flag = TRUE;
+		}
+	else  
+		{
+			temp_angle	+= w_add;
+            if ((giv_sys_time-   gyro_det_time)> 5000 ) //500ms
+                {
+					machine_angle   = temp_angle ;
+					gyro_det_flag = FALSE;			  
+					gyro_angle  =    (float) (Gyro_Data.yaw- old_det_angle )/100;
+					if (gyro_angle > 270)      
+						gyro_angle  -= 360;
+					if (gyro_angle < -270)      
+						gyro_angle  += 360;  
+	                if (fabs(gyro_angle - machine_angle )>10) 
+						Send_Voice(VOICE_ERROR_WARNING	);
+                }  
+		}
+#endif
+	last_r_all_length=r_ring.all_length;
+	last_l_all_length=l_ring.all_length;
+#else  // 0
   	float x_add, y_add;
   	float m_dis;//,m_angle ;
   	float r_length_temp,l_length_temp;
@@ -115,6 +173,7 @@ void Cal_xy(void)
 
 	Gyro_Data.x_pos=X_pos;
 	Gyro_Data.y_pos=Y_pos;
+#endif
 }
 
 void Reset_XY(void)
@@ -174,8 +233,9 @@ void Set_Coordinate_Clean(s8 gridx,s8 gridy)
 		{
 			if(mode.sub_mode!=SWEEP_FIRST_INIT)
 				motion1.clean_size+=0.04;
+			
+			coordinate[gridy_real][gridx_real]|=motion1.area_num<<3;
 		}
-	coordinate[gridy_real][gridx_real]|=motion1.area_num<<3;
 }
 
 void Reset_Coordinate_Clean(s8 xgrid,s8 ygrid)
@@ -1012,14 +1072,22 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				{
 					motion1.ymax_ok=true;
 					TRACE("ymax is near GRID_MAX,ymax area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 					return 0x7f;
 				}
 			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
 				{
 					motion1.ymax_ok=true;
 					TRACE("sweep areanum is over max,ymax area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 					return 0x7f;
 				}
 			
@@ -1084,7 +1152,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 							//TRACE("Can't find Ymax next area entry!!!\r\n");
 							TRACE("YMAX area check complete!!!\r\n");
 							motion1.ymax_ok=true;
-							Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+#ifdef USE_AREA_TREE
+							Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+							Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 							return 0x7f;
 						}
 					temp_gridx=(temp_gridx1+temp_gridx)/2;
@@ -1096,7 +1168,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 					//TRACE("Can't find Ymax next area entry!!!\r\n");
 					TRACE("YMAX area check complete!!!\r\n");
 					motion1.ymax_ok=true;
-					Set_CurrNode_NewAreaInfo(motion1.ymax_ok,1);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymax_ok, DIR_YMAX);
+#endif
 					return 0x7f;
 				}
 		}
@@ -1108,14 +1184,22 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 				{
 					motion1.ymin_ok=true;
 					TRACE("ymin is near GRID_MIN,ymin area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 					return 0x7f;
 				}
 			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
 				{
 					motion1.ymin_ok=true;
 					TRACE("sweep areanum is over max,ymin area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 					return 0x7f;
 				}
 			
@@ -1181,7 +1265,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 							//TRACE("Can't find Ymin next area entry!!!\r\n");
 							TRACE("YMIN area check complete!!!\r\n");
 							motion1.ymin_ok=true;
-							Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+#ifdef USE_AREA_TREE
+							Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+							Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 							return 0x7f;
 						}
 					temp_gridx=(temp_gridx1+temp_gridx)/2;
@@ -1194,7 +1282,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 					//TRACE("Can't find Ymin next area entry!!!\r\n");
 					TRACE("YMIN area check complete!!!\r\n");
 					motion1.ymin_ok=true;
-					Set_CurrNode_NewAreaInfo(motion1.ymin_ok,3);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.ymin_ok, DIR_YMIN);
+#endif
 					return 0x7f;
 				}
 		}
@@ -1431,14 +1523,22 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 				{
 					motion1.xmax_ok=true;
 					TRACE("xmax is near GRID_MAX,xmax area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 					return 0x7f;
 				}
 			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
 				{
 					motion1.xmax_ok=true;
 					TRACE("sweep areanum is over max,Xmax area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 					return 0x7f;
 				}
 			
@@ -1506,7 +1606,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 							//TRACE("Can't find Xmax next area entry!!!\r\n");
 							TRACE("XMAX area check complete!!!\r\n");
 							motion1.xmax_ok=true;
-							Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+#ifdef USE_AREA_TREE
+							Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
+							Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 							return 0x7f;
 						}
 					temp_gridy=(temp_gridy+temp_gridy1)/2;
@@ -1519,7 +1623,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 					//TRACE("Can't find Xmax next area entry!!!\r\n");
 					TRACE("XMAX area check complete!!!\r\n");
 					motion1.xmax_ok=true;
-					Set_CurrNode_NewAreaInfo(motion1.xmax_ok,2);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmax_ok, DIR_XMAX);
+#endif
 					return 0x7f;
 				}
 		}
@@ -1531,14 +1639,22 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 				{
 					motion1.xmin_ok=true;
 					TRACE("xmin is near GRID_MIN,xmin area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 					return 0x7f;
 				}
 			if(motion1.sweep_time>=SWEEP_AREANUM_MAX)
 				{
 					motion1.xmin_ok=true;
 					TRACE("sweep areanum is over max,xmin area check complete!!!\r\n");
-					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 					return 0x7f;
 				}
 			
@@ -1606,7 +1722,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 							//TRACE("Can't find Xmin next area entry!!!\r\n");
 							TRACE("XMIN area check complete!!!\r\n");
 							motion1.xmin_ok=true;
-							Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+#ifdef USE_AREA_TREE
+							Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
+							Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 							return 0x7f;
 						}
 					//temp_gridy=temp_gridy+1;
@@ -1619,7 +1739,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 					//TRACE("Can't find Xmin next area entry!!!\r\n");
 					TRACE("XMIN area check complete!!!\r\n");
 					motion1.xmin_ok=true;
-					Set_CurrNode_NewAreaInfo(motion1.xmin_ok,4);
+#ifdef USE_AREA_TREE
+					Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
+#else
+					Set_CurrNode_NewAreaInfo(motion1.xmin_ok, DIR_XMIN);
+#endif
 					return 0x7f;
 				}
 		}
@@ -1711,6 +1835,11 @@ u8 Analysis_Leak_Point(void)
 											check_point.ydir=1;
 											check_point.ybs_dir=RIGHT;
 										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
+										{
+											continue;
+										}
 									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx+1;
@@ -1768,6 +1897,11 @@ u8 Analysis_Leak_Point(void)
 										{
 											check_point.ydir=0;
 											check_point.ybs_dir=LEFT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
+										{
+											continue;
 										}
 									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
 										{
@@ -1836,6 +1970,11 @@ LEAK_POINT_MIN_CHECK:
 											check_point.ydir=0;
 											check_point.ybs_dir=RIGHT;
 										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
+										{
+											continue;
+										}
 									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
 										{
 		//									temp1_gridx=temp_gridx-1;
@@ -1892,6 +2031,11 @@ LEAK_POINT_MIN_CHECK:
 										{
 											check_point.ydir=1;
 											check_point.ybs_dir=LEFT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
+										{
+											continue;
 										}
 									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
 										{
@@ -1974,7 +2118,7 @@ LEAK_POINT_MIN_CHECK:
 		}
 #endif
 
-#if 1
+#if 0
 	if(check_gridy2>check_gridy1)
 		{
 			check_gridy3=check_gridy2+1;
@@ -2014,6 +2158,44 @@ LEAK_POINT_MIN_CHECK:
 									}
 							}
 					}
+				}
+		}
+#endif
+
+#if 1
+	check_point.backup_grid=0;
+	s8 ydir=0;
+	if(check_gridy1>check_gridy2)
+		ydir=0;
+	else
+		ydir=1;
+	for(temp_gridx=min_cleanx1+1;temp_gridx<max_cleanx1;temp_gridx++)
+		{
+			if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(!Read_Coordinate_Seat(temp_gridx,check_gridy1)))
+				{
+					if(Analysis_Fake_Leak(temp_gridx,check_gridy1,ydir))
+						continue;
+					
+					temp1_gridx=temp_gridx;
+					while(temp1_gridx<grid.x_area_max)
+						{
+							if((Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))&(!Read_Coordinate_Seat(temp1_gridx,check_gridy1)))
+								{
+									check_point.backup_grid++;
+								}
+							temp1_gridx++;
+						}
+					check_point.new_x1=temp_gridx;
+					check_point.new_y1=check_gridy1;
+					check_point.new_x2=temp_gridx;
+					check_point.new_y2=check_gridy2;
+					check_point.next_tgtyaw=B_Angle_Const;
+					if(ydir)
+						check_point.ybs_dir=RIGHT;
+					else
+						check_point.ybs_dir=LEFT;
+					if(Can_Entry_Point())
+						return 1;
 				}
 		}
 #endif
@@ -2104,7 +2286,8 @@ u8 Find_Leak_Area(void)
 												}
 										}
 									TRACE("y1 can't find entry!\r\n");
-									break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
 								}
 						}
 					if(Analysis_Leak_Point())
@@ -2175,7 +2358,8 @@ u8 Find_Leak_Area(void)
 												}
 										}
 									TRACE("y1 can't find entry!\r\n");
-									break;
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
 								}
 						}					
 					if(Analysis_Leak_Point())
@@ -2248,7 +2432,8 @@ u8 Find_Leak_Area(void)
 												}
 										}
 									TRACE("y1 can't find entry!\r\n");
-									break;
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
 								}
 						}					
 					if(Analysis_Leak_Point())
@@ -2318,7 +2503,8 @@ u8 Find_Leak_Area(void)
 												}
 										}
 									TRACE("y1 can't find entry!\r\n");
-									break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
 								}
 						}
 					if(Analysis_Leak_Point())
@@ -2334,7 +2520,11 @@ u8 Find_Leak_Area(void)
 		}
 	motion1.area_ok=true;
 	//Logout_Area_Coordinate();
+#ifdef USE_AREA_TREE
+	Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
 	Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
 	TRACE("now point to Ymax&Ymin check out! No leak!!\r\n");
 	TRACE("leak area check complete!!!\r\n");
 	return 0;
@@ -2422,7 +2612,11 @@ u8 Find_NextArea_Entry(void)
 
 u8 Find_ExitArea_Entry(void)
 {
+#ifdef USE_AREA_TREE
+	Out_Curr_AreaTree_Exit();
+#else
 	Out_CurrNode_Exit();
+#endif
 	return 0;
 }
 
@@ -2462,7 +2656,11 @@ u8 Area_Check(u8 avoid_ybs)
 {
 	u8 curr_areanum=0,return_data=0;
 	TRACE("Enter in %s...\r\n",__func__);
+#ifdef USE_AREA_TREE
+	curr_areanum=Read_Curr_AreaTree_NO();
+#else
 	curr_areanum=Read_CurrNode_AreaNO();
+#endif
 	TRACE("curr_areanum=%d\r\n",curr_areanum);
 	
 	if((mode.mode!=SHIFT)&(mode.mode!=EXIT))
@@ -2952,6 +3150,33 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 #endif
 	return 1;
 
+}
+
+u8 Analysis_Fake_Leak(s8 xcheck,s8 ycheck,u8 ydir)
+{
+	s8 temp_ycheck=0;
+	if(ydir>0)
+		{
+			for(temp_ycheck=ycheck+1;temp_ycheck<=grid.y_area_max;temp_ycheck++)
+				{
+					if(Read_Coordinate_Clean(xcheck,temp_ycheck))
+						{
+							//if(temp_ycheck!=grid.y_area_max)
+							return 1;
+						}
+				}
+		}
+	else
+		{
+			for(temp_ycheck=ycheck-1;temp_ycheck>=grid.y_area_min;temp_ycheck--)
+				{
+					if(Read_Coordinate_Clean(xcheck,temp_ycheck))
+						{
+							return 1;
+						}
+				}
+		}
+	return 0;
 }
 
 void Coor_Nothing(void)

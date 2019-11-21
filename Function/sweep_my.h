@@ -1,7 +1,7 @@
 #ifndef __SWEEP_MY_H
 #define __SWEEP_MY_H
 #define POS_BIOS			3
-#define	TURN_ANGLE_BIOS		50		//0.5¶È
+#define	TURN_ANGLE_BIOS		100//50		//0.5¶È
 #define	HORIZON_LENGTH		20
 
 extern short F_Angle,B_Angle,F_Angle_Const,B_Angle_Const,L_Angle_Const,R_Angle_Const;

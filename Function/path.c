@@ -784,7 +784,7 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							pointgrid[point_num].gridx=temp_gridx;
 							pointgrid[point_num].gridy=temp_gridy+1;
 							point_num++;
-							if(point_num>99)		//越界
+							if(point_num>99)		//越界,最多100个path point点
 								{
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
 									return 0;

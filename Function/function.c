@@ -101,7 +101,7 @@ void Init_Mode(void)
 #endif
 		{			
 	//		Send_Voice(VOICE_SWEEPER_INIT);
-			Send_Voice(VOICE_SWEEPER_INIT);
+	//		Send_Voice(VOICE_SWEEPER_INIT);
 			Init_Cease();
 			Open_Led(1,0,1);		//绿灯慢闪
 			Send_Voice(VOICE_SWEEPER_OK);
@@ -1202,19 +1202,6 @@ u8 Action_Protect_My(u8 abnoraml)
 								else
 									{
 										mode.step_abn=0xf0;
-#if 0
-										SideBrush.error_time=0; 	//重新开始检测条件初始化
-										SideBrush.fail=0x00;
-										SideBrush.flag=true;		//重新开启检测
-										SideBrush.check_step=0; 	//重新开始检测条件初始化
-										SideBrush.done_time=giv_sys_time;	//记录保护动作完成时间
-										mode.Info_Abort=0;
-										mode.abnormity=0;
-										mode.step_abn=0;
-										mode.step=0;				//恢复模式步骤qz add 20180801
-										mode.step_mk=0; 			//qz add 20180919
-										Sweep_Level_Set(sweep_level);	//重新打开清扫等级
-#endif
 									}
 							}
 							break;
@@ -1283,6 +1270,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step=0;				//恢复模式步骤qz add 20180801
 							mode.step_mk=0; 			//qz add 20180919
 							Sweep_Level_Set(sweep_level);	//重新打开清扫等级
+							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								break;
 							switch(mode.mode)
 								{
 									case SWEEP:
@@ -2021,6 +2010,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
+							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -2094,6 +2085,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
+							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -2133,6 +2126,13 @@ u8 Action_Protect_My(u8 abnoraml)
 							Speed=HIGH_MOVE_SPEED;
 							if(do_action(turn_dir,15*CM_PLUS))
 								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
+							if(n)
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
 									stop_rap();
 									mode.step_abn++;
 									mode.abn_time=giv_sys_time;
@@ -2284,6 +2284,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
+							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -4089,6 +4091,7 @@ u8 Gyro_PitchRoll_Check(void)
 
 u8 Check_Rotate_Skid(void)
 {
+	int rota_angle_change=0,gyro_angle_change=0;
 	if(Rotate_Skid.check_flag)
 		{
 			if(Rotate_Skid.check_time<70 )
@@ -4108,17 +4111,17 @@ u8 Check_Rotate_Skid(void)
 			else
 				{
 					Rotate_Skid.end_angle=Gyro_Data.yaw;
-					float rota_angle_change=(((float)(Rotate_Skid.r_sum_length-Rotate_Skid.l_sum_length))*PULSE_LENGTH*360/(2*3.141592*RING_RANGE));
+					rota_angle_change=(int)(((float)(Rotate_Skid.r_sum_length-Rotate_Skid.l_sum_length))*PULSE_LENGTH*360/(2*3.141592*RING_RANGE));
 					//因为有时候无法判断机器在左转还是右转，比如沿边的时候，
 					//所以通过里程计计算的角度来判断方向
 					u8 dir=0;
-					if(rota_angle_change>=0.0)
+					if(rota_angle_change>=0)
 						dir=1;
 					else
 						dir=0;
 					//因为以最大速度300mm/s来跑，500ms最多跑73度，如果绝对值大于180度，判定方向计算错误，
 					//需要纠正
-					int gyro_angle_change=Check_Gyro_angle(dir);
+					gyro_angle_change=Check_Gyro_angle(dir);
 					if(abs(gyro_angle_change)>180)
 						{
 							if(gyro_angle_change>0)
@@ -4126,9 +4129,14 @@ u8 Check_Rotate_Skid(void)
 							else
 								gyro_angle_change=0-(gyro_angle_change+360);
 						}
+
+					while(abs(rota_angle_change)>360)
+						{
+							rota_angle_change=rota_angle_change/360;
+						}
 #ifdef ROTATE_SKID_DEBUG
 					TRACE("a_c=%d\r\n",gyro_angle_change);
-					TRACE("r_c=%f\r\n",rota_angle_change);
+					TRACE("r_c=%d\r\n",rota_angle_change);
 #endif
 					Enable_Rotate_Skid_Check(0);
 					#if 1

@@ -75,25 +75,21 @@ void log_out(void)
 		}
 #if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
-	TRACE("Gyro.x=%f\r\n",X_pos);
-	TRACE("Gyro.y=%f\r\n",Y_pos);
+//	TRACE("Gyro.x=%d y=%d\r\n",X_pos,Y_pos);
 	TRACE("grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 	TRACE("m.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("c_p.next_action=%d\r\n",check_point.next_action);
 	TRACE("c_p.new x1=%d y1=%d\r\n",check_point.new_x1,check_point.new_y1);
 	TRACE("c_p.new x2=%d y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
 	TRACE("m.area_num=%d\r\n",motion1.area_num);
 	TRACE("m.ydir=%d\r\n",motion1.y_dir);
-//	TRACE("c_p.ybs_dir=%d\r\n",check_point.ybs_dir);
 //	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
-//	TRACE("w_m.siag=%d\r\n",w_m.sign);
 	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
 	u32 min=(giv_sys_time-motion1.worktime_area)/10000/60;
 	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
-	TRACE("clean_size=%f\r\n",motion1.clean_size);
 	TRACE("top=%d\r\n",top_time_sec);
-	TRACE("speed_up=%d\r\n",mode.speed_up);
 #else
 	//TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
 	//TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);

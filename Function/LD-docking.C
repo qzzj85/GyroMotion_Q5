@@ -55,7 +55,7 @@ void Init_Docking(void)
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 	motion1.force_dock=false;
-	motion1.start_seat=false;
+//	motion1.start_seat=false;
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化设置的值********************/

@@ -7,7 +7,7 @@
 #define		CLIFF_BACK_LENGTH		5	//cm
 
 
-#define     YBS_DISTANCE_CONST          25		//	ºÁÃ×
+#define     YBS_DISTANCE_CONST          30		//	ºÁÃ×
 #define		YBS_DISTANCE_LONG			160
 
 

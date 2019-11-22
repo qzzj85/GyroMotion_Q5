@@ -89,7 +89,8 @@ void log_out(void)
 	u32 min=(giv_sys_time-motion1.worktime_area)/10000/60;
 	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
-	TRACE("top=%d\r\n",top_time_sec);
+//	TRACE("top=%d\r\n",top_time_sec);
+	TRACE("start_seat=%d\r\n",motion1.start_seat);
 #else
 	//TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
 	//TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);

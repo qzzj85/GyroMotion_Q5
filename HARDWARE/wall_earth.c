@@ -70,7 +70,7 @@ void init_wallearth(void)
 	w_l.low_door=600;	//QZ:Ñù»úµ÷ÊÔ
 	w_lm.low_door=600;//200;
 	w_rm.low_door=600;//300;
-	w_m.low_door=600;//300;
+	w_m.low_door=400;//600;//300;
 	w_r.low_door=600;
 
 #ifdef W_MM_ENABLE
@@ -79,7 +79,7 @@ void init_wallearth(void)
 #endif
 
 	w_l.high_door=300;	//qz add 20180919
-	w_m.high_door=300;
+	w_m.high_door=200;//300;
 	w_r.high_door=300;
 	w_rm.high_door=300;
 	w_lm.high_door=300;

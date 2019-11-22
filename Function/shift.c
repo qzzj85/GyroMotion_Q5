@@ -285,25 +285,22 @@ void Shift_BumpAction(void)
 							break;
 						case 2:
 							//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
-							nextaction=Read_CheckPoint_NextAction();
-							
-							if(nextaction==CHECK_GOEXIT)
+
+							switch(nextaction)
 								{
-									if((mode.bump==BUMP_LEFT_CLIFF))
-										{
-											Init_ShiftExit_LeftYBS(0);
-											return;
-										}
-									else
-										{
-											Init_ShiftExit_RightYBS(0);
-											return;
-										}
-								}
-							else if(nextaction==CHECK_DOCK)
-								{
-									Init_Dock_RightYBS(0);
-									return;
+									case CHECK_NEWAREA:
+									case CHECK_GOEXIT:
+										TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+										TRACE("Goto Right Shift YBS!!\r\n");
+										Init_Shift_RightYBS(2);
+										return;
+									case CHECK_DOCK:
+										TRACE("now is CHECK_DOCK!!!\r\n");
+										TRACE("Goto Rigth Dock YBS");
+										Init_Dock_RightYBS(0);
+										return;
+									default:
+										break;
 								}
 							
 							if(mode.sub_mode==SHIFTPOINT1)
@@ -311,24 +308,24 @@ void Shift_BumpAction(void)
 									temp_data=Judge_YBS_Dir();
 									if(temp_data==1)
 										{
-											Init_Shift_LeftYBS(1);
+											Init_Shift_LeftYBS(0);
 											return;
 										}
 									else if(temp_data==2)
 										{
-											Init_Shift_RightYBS(1);
+											Init_Shift_RightYBS(0);
 											return;
 										}
 									else
 										{
 											if(check_point.ybs_dir==LEFT)
 												{
-													Init_Shift_LeftYBS(1);
+													Init_Shift_LeftYBS(0);
 													return;
 												}
 											else if(check_point.ybs_dir==RIGHT)
 												{
-													Init_Shift_RightYBS(1);
+													Init_Shift_RightYBS(0);
 													return;
 												}
 										}
@@ -340,12 +337,12 @@ void Shift_BumpAction(void)
 										{
 											if(check_point.ybs_dir==LEFT)
 												{
-													Init_Shift_LeftYBS(1);
+													Init_Shift_LeftYBS(0);
 													return;
 												}
 											else if(check_point.ybs_dir==RIGHT)
 												{
-													Init_Shift_RightYBS(1);
+													Init_Shift_RightYBS(0);
 													return;
 												}
 											
@@ -353,12 +350,12 @@ void Shift_BumpAction(void)
 												{
 													if(check_point.next_tgtyaw==F_Angle_Const)
 														{
-															Init_Shift_RightYBS(1);
+															Init_Shift_RightYBS(0);
 															return;
 														}
 													else
 														{
-															Init_Shift_LeftYBS(1);
+															Init_Shift_LeftYBS(0);
 															return;
 														}
 												}
@@ -366,12 +363,12 @@ void Shift_BumpAction(void)
 												{
 													if(check_point.next_tgtyaw==F_Angle_Const)
 														{
-															Init_Shift_LeftYBS(1);
+															Init_Shift_LeftYBS(0);
 															return;
 														}
 													else
 														{
-															Init_Shift_RightYBS(1);
+															Init_Shift_RightYBS(0);
 															return;
 														}
 												}
@@ -379,11 +376,11 @@ void Shift_BumpAction(void)
 								}
 							if((mode.bump==BUMP_LEFT_CLIFF))
 								{
-									Init_Shift_LeftYBS(1);
+									Init_Shift_LeftYBS(0);
 								}
 							else
 								{
-									Init_Shift_RightYBS(1);
+									Init_Shift_RightYBS(0);
 								}
 							return;
 					}
@@ -428,17 +425,33 @@ void Shift_BumpAction(void)
 										{
 											bump_time=0;
 											//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
-											
+											switch(nextaction)
+												{
+													case CHECK_NEWAREA:
+													case CHECK_GOEXIT:
+														TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+														TRACE("Goto Right Shift YBS!!\r\n");
+														Init_Shift_RightYBS(2);
+														return;
+													case CHECK_DOCK:
+														TRACE("now is CHECK_DOCK!!!\r\n");
+														TRACE("Goto Rigth Dock YBS");
+														Init_Dock_RightYBS(0);
+														return;
+													default:
+														break;
+												}
+#if 0											
 											if(nextaction==CHECK_GOEXIT)
 												{
 													if((mode.bump>=BUMP_ONLY_LEFT)&(mode.bump<=BUMP_LEFT_MID))
 														{
-															Init_ShiftExit_LeftYBS(1);
+															Init_ShiftExit_LeftYBS(0);
 															return;
 														}
 													else
 														{
-															Init_ShiftExit_RightYBS(1);
+															Init_ShiftExit_RightYBS(0);
 															return;
 														}
 												}
@@ -447,18 +460,19 @@ void Shift_BumpAction(void)
 													Init_Dock_RightYBS(0);
 													return;
 												}
-
+#endif
+									//////////以下为nextaction小于CHECK_NEWAREA////////////////
 											if(mode.sub_mode==SHIFTPOINT1)
 												{
 													temp_data=Judge_YBS_Dir();
 													if(temp_data==1)
 														{
-															Init_Shift_LeftYBS(1);
+															Init_Shift_LeftYBS(0);
 															return;
 														}
 													else if(temp_data==2)
 														{
-															Init_Shift_RightYBS(1);
+															Init_Shift_RightYBS(0);
 															return;
 														}
 													
@@ -466,12 +480,12 @@ void Shift_BumpAction(void)
 														{
 															if(check_point.ybs_dir==LEFT)
 																{
-																	Init_Shift_LeftYBS(1);
+																	Init_Shift_LeftYBS(0);
 																	return;
 																}
 															else if(check_point.ybs_dir==RIGHT)
 																{
-																	Init_Shift_RightYBS(1);
+																	Init_Shift_RightYBS(0);
 																	return;
 																}
 														}
@@ -483,12 +497,12 @@ void Shift_BumpAction(void)
 														{
 															if(check_point.ybs_dir==LEFT)
 																{
-																	Init_Shift_LeftYBS(1);
+																	Init_Shift_LeftYBS(0);
 																	return;
 																}
 															else if(check_point.ybs_dir==RIGHT)
 																{
-																	Init_Shift_RightYBS(1);
+																	Init_Shift_RightYBS(0);
 																	return;
 																}
 															
@@ -496,12 +510,12 @@ void Shift_BumpAction(void)
 																{
 																	if(check_point.next_tgtyaw==F_Angle_Const)
 																		{
-																			Init_Shift_RightYBS(1);
+																			Init_Shift_RightYBS(0);
 																			return;
 																		}
 																	else
 																		{
-																			Init_Shift_LeftYBS(1);
+																			Init_Shift_LeftYBS(0);
 																			return;
 																		}
 																}
@@ -509,12 +523,12 @@ void Shift_BumpAction(void)
 																{
 																	if(check_point.next_tgtyaw==F_Angle_Const)
 																		{
-																			Init_Shift_LeftYBS(1);
+																			Init_Shift_LeftYBS(0);
 																			return;
 																		}
 																	else
 																		{
-																			Init_Shift_RightYBS(1);
+																			Init_Shift_RightYBS(0);
 																			return;
 																		}
 																}
@@ -522,11 +536,11 @@ void Shift_BumpAction(void)
 												}
 											if((mode.bump>=BUMP_ONLY_LEFT)&(mode.bump<=BUMP_LEFT_MID))
 												{
-													Init_Shift_LeftYBS(1);
+													Init_Shift_LeftYBS(0);
 												}
 											else
 												{
-													Init_Shift_RightYBS(1);
+													Init_Shift_RightYBS(0);
 												}
 											return;
 										}
@@ -925,12 +939,21 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 7:
-				if(temp_nextaction>=CHECK_NEWAREA)
+				switch(temp_nextaction)
 					{
-						TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
-						TRACE("Goto Right YBS!!\r\n");
-						Init_Shift_RightYBS(2);
-						return;
+						case CHECK_NEWAREA:
+						case CHECK_GOEXIT:
+							TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+							TRACE("Goto Right Shift YBS!!\r\n");
+							Init_Shift_RightYBS(2);
+							return;
+						case CHECK_DOCK:
+							TRACE("now is CHECK_DOCK!!!\r\n");
+							TRACE("Goto Rigth Dock YBS");
+							Init_Dock_RightYBS(0);
+							return;
+						default:
+							break;
 					}
 				temp_result=Find_PathPoint_Way(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
@@ -1768,32 +1791,32 @@ void Do_Shift_Point1(void)
 				temp_result=Judge_YBS_Dir();
 				if(temp_result==1)
 					{
-						Init_Shift_LeftYBS(1);
+						Init_Shift_LeftYBS(0);
 						return;
 					}
 				else if(temp_result==2)
 					{
-						Init_Shift_RightYBS(1);
+						Init_Shift_RightYBS(0);
 						return;
 					}
 
 				if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
 					{
 						if(mode.last_sub_mode==YBS_SUB_LEFT)
-							Init_ShiftExit_LeftYBS(0);
+							Init_ShiftExit_LeftYBS(1);
 						else if(mode.last_sub_mode==YBS_SUB_RIGHT)
-							Init_ShiftExit_RightYBS(0);
+							Init_ShiftExit_RightYBS(1);
 						else
-							Init_ShiftExit_RightYBS(0);
+							Init_ShiftExit_RightYBS(1);
 					}
 				else
 					{
 						if(mode.last_sub_mode==YBS_SUB_LEFT)
-							Init_Shift_LeftYBS(0);
+							Init_Shift_LeftYBS(1);
 						else if(mode.last_sub_mode==YBS_SUB_RIGHT)
-							Init_Shift_RightYBS(0);
+							Init_Shift_RightYBS(1);
 						else
-							Init_Shift_RightYBS(0);
+							Init_Shift_RightYBS(1);
 					}
 				break;
 			case 151:
@@ -2068,7 +2091,9 @@ void Do_Shift_Point2(void)
 		}
 }
 
-void Init_Shift_RightYBS(u8 temp_data)
+//输入参数pre_action：
+//0:直接沿边；1：先以当前角度直行再沿边；2:CHECK_NEWAREA/CHECK_GOEXIT专用动作再直行
+void Init_Shift_RightYBS(u8 pre_action)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -2093,13 +2118,13 @@ void Init_Shift_RightYBS(u8 temp_data)
 	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
-	if(temp_data==0)
+	if(pre_action==0)
 		{
-			mode.step = 0x88;//QZ:原来为0x88;
+			mode.step = 0;//QZ:原来为0x88;
 		}
-	else if(temp_data==1)
+	else if(pre_action==1)
 		{
-			mode.step = 0;
+			mode.step = 0x88;
 		}
 	else
 		{
@@ -2130,7 +2155,9 @@ void Init_Shift_RightYBS(u8 temp_data)
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 }
 
-void Init_Shift_LeftYBS(u8 temp_data)
+//输入参数pre_action：
+//0:直接沿边；1：先以当前角度直行再沿边；2:CHECK_NEWAREA/CHECK_GOEXIT专用动作再直行
+void Init_Shift_LeftYBS(u8 pre_action)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -2157,10 +2184,10 @@ void Init_Shift_LeftYBS(u8 temp_data)
 	mode.time=giv_sys_time;
 
 	mode.status=1;
-	if(temp_data==0)
-		mode.step = 0x88;//QZ:原来为0x88;
+	if(pre_action==0)
+		mode.step = 0x40;//QZ:原来为0x88;
 	else
-		mode.step=0x40;
+		mode.step=0x88;
 #ifdef FREE_SKID_CHECK
 		Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
@@ -3098,6 +3125,9 @@ u8 Abort2Sweep(void)
 {
 	s8 now_gridy,now_gridx,tgt_gridy2;//,tgt_gridx1,tgt_gridx2,tgt_gridy1
 	u8 nextaction=0,check_result=0;
+
+	static s8 last_gridx=0x7f,last_gridy=0x7f;
+	
 	now_gridx=grid.x;now_gridy=grid.y;
 //	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
 	tgt_gridy2=check_point.new_y2;//tgt_gridx2=check_point.new_x2;
@@ -3192,10 +3222,18 @@ u8 Abort2Sweep(void)
 							}
 					}
 
+
 				if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
 					{
 						if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
 							{
+
+								if((last_gridx==now_gridx)&(last_gridy==now_gridx))
+									{
+										return 0;
+									}
+								last_gridx=now_gridx;last_gridy=now_gridy;
+
 								stop_rap();
 								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
 								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx2,temp_gridy2);
@@ -3377,7 +3415,12 @@ u8 Abort2Sweep(void)
 							}
 					}
 
-
+					if((last_gridx==now_gridx)&(last_gridy==now_gridx))
+						{
+							return 0;
+						}
+					last_gridx=now_gridx;last_gridy=now_gridy;
+					
 				//if(!Read_Coordinate_Clean(temp_gridx1,temp_gridy1))
 					{
 						//if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
@@ -3409,7 +3452,7 @@ u8 Abort2Sweep(void)
 	return 0;	
 }
 
-void Init_ShiftExit_RightYBS(u8 temp_data)
+void Init_ShiftExit_RightYBS(u8 pre_action)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -3434,13 +3477,13 @@ void Init_ShiftExit_RightYBS(u8 temp_data)
 	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
-	if(temp_data==0)
+	if(pre_action==0)
 		{
-			mode.step = 0x88;//QZ:原来为0x88;
+			mode.step = 0;//QZ:原来为0x88;
 		}
 	else
 		{
-			mode.step = 0;
+			mode.step = 0x88;
 		}
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();			//打开万向轮检测 
@@ -3467,7 +3510,7 @@ void Init_ShiftExit_RightYBS(u8 temp_data)
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 }
 
-void Init_ShiftExit_LeftYBS(u8 temp_data)
+void Init_ShiftExit_LeftYBS(u8 pre_action)
 {
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
@@ -3495,10 +3538,10 @@ void Init_ShiftExit_LeftYBS(u8 temp_data)
 	mode.time=giv_sys_time;
 
 	mode.status=1;
-	if(temp_data==0)
-		mode.step = 0x88;//QZ:原来为0x88;
+	if(pre_action==0)
+		mode.step = 0x40;//QZ:原来为0x88;
 	else
-		mode.step=0x40;
+		mode.step=0x88;
 	Enable_Free_Skid_Check();			//打开万向轮检测 
 
 #ifdef ROTATE_SKID_CHECK	

@@ -39,6 +39,7 @@ s8 Find_Adjoin_GapAll(s8 gridx1,s8 gridy1,s8 gridy2);
 u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid);
 u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy);
 u8 Judge_YBS_Dir(void);
+u8 Find_PathPoint_NoWall_Way(s8 tgt_gridx,s8 tgt_gridy);
 
 
 #endif

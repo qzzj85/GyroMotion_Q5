@@ -41,7 +41,7 @@ float hal_r;
 float X_pos,Y_pos;
 u16  check_whell,check_angle;
 
-#if 1
+#if 0
 int   last_l_all_length, last_r_all_length;
  short  old_angle = 0;
 
@@ -91,7 +91,7 @@ void Cal_Grid_Pos(void)
 #endif
 void Cal_xy(void)
 {
-#if  1
+#if  0
 	float x_add, y_add,w_add;
 	int   r1;
 		 

@@ -118,9 +118,15 @@ void init_wallearth(void)
 ****************************************************/
 void  check_earth( WALL_DATA *earth,u16 difference)
 {
-u16	in16;
-//u8	in8;
-u32	hehe;
+	u16	in16;
+	u32	hehe;
+
+	if(earth->darkness<0x200)		//在强阳光下，darkness也会很小，不检测
+		{
+			earth->sign=FARN;
+			return;
+		}
+	
 #if 0		//shftemp			
 	if(earth->darkness > (earth->brightness + difference/30))
 			{

@@ -235,6 +235,7 @@ void Shift_BumpAction(void)
 					mode.bump=0;
 					mode.step_bp=0;
 					mode.bump_flag=false;
+					Delete_All_PathPoint();
 					Do_ExitAtion();
 					return;
 				}
@@ -244,6 +245,7 @@ void Shift_BumpAction(void)
 		{
 			stop_rap();
 			TRACE("motion is in start area!!!\r\n");
+			Delete_All_PathPoint();
 			Init_Cease();
 		}
 
@@ -655,9 +657,7 @@ void Shift_BumpAction(void)
 								}
 							break;
 						case 6:
-//							if(check_point.go_exit|check_point.next_area)
-							temp_data=Read_CheckPoint_NextAction();
-							if(temp_data>CHECK_NEWAREA)
+							if(nextaction>CHECK_NEWAREA)
 								{
 									mode.bump=0;
 									mode.step_bp=0;
@@ -668,15 +668,21 @@ void Shift_BumpAction(void)
 									Area_Check(0);
 									Init_Shift_Point1(0);
 								}
-							else if(temp_data==CHECK_BACKSWEEP)
+							else if(nextaction==CHECK_BACKSWEEP)
 								{
-									TRACE("Abort for CHECK_BACKSWEEP!!!\r\n");
+									TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
+									mode.bump=0;
+									mode.step_bp=0;
+									mode.bump_flag=false;
+									bump_time=0;
+									mode.step=0;
+									
 									if(Analysis_Back_Leak()==0)
 										Init_Stop_BackSweep();
-									else
+									else if((tgt_gridx1!=check_point.new_x1)&(tgt_gridy1!=check_point.new_y1))
 										Init_Shift_Point1(1);
 								}
-							else if(temp_data==CHECK_BACK2NORMAL)
+							else if(nextaction==CHECK_BACK2NORMAL)
 								{
 									mode.bump=0;
 									mode.step_bp=0;
@@ -778,6 +784,7 @@ void Init_Shift_Point1(u8 pre_action)
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
+	Delete_All_PathPoint();
 	delay_ms(500);
 }
 
@@ -939,6 +946,7 @@ void Do_Shift_Point1(void)
 					}
 				break;
 			case 7:
+#if 0
 				switch(temp_nextaction)
 					{
 						case CHECK_NEWAREA:
@@ -955,12 +963,59 @@ void Do_Shift_Point1(void)
 						default:
 							break;
 					}
-				temp_result=Find_PathPoint_Way(check_point.new_x1,check_point.new_y1);
+#endif
+				//temp_result=Find_PathPoint_Way(check_point.new_x1,check_point.new_y1);
+				temp_result=Find_PathPoint_NoWall_Way(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
 					{
 						TRACE("motion can use pathpoint move!!!\r\n");
 						TRACE("go to PATHPOINT step!!!\r\n");
 						mode.step=SHIFTMODE_STEP_PATHPOINT;
+					}
+				else if(temp_nextaction>=CHECK_NEWAREA)
+					{
+#if 0
+						switch(temp_nextaction)
+							{
+								case CHECK_NEWAREA:
+								case CHECK_GOEXIT:
+									TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+									TRACE("Goto Right Shift YBS!!\r\n");
+									Init_Shift_RightYBS(2);
+									return;
+								case CHECK_DOCK:
+									TRACE("now is CHECK_DOCK!!!\r\n");
+									TRACE("Goto Rigth Dock YBS");
+									Init_Dock_RightYBS(0);
+									return;
+								default:
+									break;
+							}
+#else
+						if(temp_nextaction==CHECK_DOCK)
+							{
+								TRACE("now is CHECK_DOCK!!!\r\n");
+								TRACE("Goto Rigth Dock YBS");
+								Init_Dock_RightYBS(0);
+								return;
+							}
+						
+						temp_result=Judge_YBS_Dir();
+						if(temp_result==1)
+							{
+								TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+								TRACE("Goto Left Shift YBS!!\r\n");
+								Init_Shift_LeftYBS(0);
+								return;
+							}
+						else
+							{
+								TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+								TRACE("Goto Right Shift YBS!!\r\n");
+								Init_Shift_RightYBS(2);
+								return;
+							}
+#endif
 					}
 				else
 					{
@@ -1599,7 +1654,8 @@ void Do_Shift_Point1(void)
 				mode.step=SHIFTMODE_STEP_TURNGRID;
 				break;
 
-
+			///////////////使用PATHPOINT路径行走////////////////////
+			///////////////使用PATHPOINT路径行走////////////////////
 			case SHIFTMODE_STEP_PATHPOINT:
 				stop_rap();
 				TRACE("begin ShiftMode Step Pathpoint in %s!!!\r\n",__func__);
@@ -1884,6 +1940,7 @@ void Init_Shift_Point2(void)
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
+	Delete_All_PathPoint();
 	delay_ms(500);
 }
 
@@ -2153,6 +2210,7 @@ void Init_Shift_RightYBS(u8 pre_action)
 	TRACE("Init Shift Right YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+	Delete_All_PathPoint();
 }
 
 //输入参数pre_action：
@@ -2211,6 +2269,7 @@ void Init_Shift_LeftYBS(u8 pre_action)
 	TRACE("Init Shift Left YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+	Delete_All_PathPoint();
 }
 
 u8 CheckOutRange_Clean_inShift(u16 data)
@@ -2368,10 +2427,10 @@ u8 Abort_ShiftYBS(void)
 
 					if(temp_nextaction==CHECK_BACKSWEEP)
 						{
-							TRACE("Abort for CHECK_BACKSWEEP!!!\r\n");
+							TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
 							if(Analysis_Back_Leak()==0)
 								Init_Stop_BackSweep();
-							else
+							else if((tgt_gridx1!=check_point.new_x1)&(tgt_gridy1!=check_point.new_y1))
 								Init_Shift_Point1(1);
 							return 1;
 							
@@ -3415,7 +3474,8 @@ u8 Abort2Sweep(void)
 							}
 					}
 
-					if((last_gridx==now_gridx)&(last_gridy==now_gridx))
+					//if((last_gridx==now_gridx)&(last_gridy==now_gridy))
+					if((abs(last_gridx-now_gridx)<2)&(abs(last_gridy-now_gridy)<2))
 						{
 							return 0;
 						}

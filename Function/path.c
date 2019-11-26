@@ -205,11 +205,16 @@ u8 IS_Can_ReachPointX_NoWall(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 {
 	s8 temp_gridx,temp_gridy;
 	s8 temp_xmin,temp_xmax;
-	temp_gridx=now_gridx;temp_gridy=now_gridy;
+	temp_gridy=now_gridy;
 
 	TRACE("enter in %s\r\n",__func__);
-	if(temp_gridx==tgt_gridx)
+	if(now_gridx==tgt_gridx)
 		return 1;
+
+	if(now_gridx<tgt_gridx)
+		temp_gridx=now_gridx+1;
+	else if(now_gridx>tgt_gridx)
+		temp_gridx=now_gridx-1;
 
 	while(temp_gridx!=tgt_gridx)											//目标点与当前点X坐标不一致
 		{
@@ -246,7 +251,7 @@ u8 IS_Can_ReachPointX_NoWall(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 		}
 }
 
-s8 Find_Adjoin_Gap_NoWall(s8 gridx1,s8 gridy1,s8 gridy2)
+s8 Find_PathPoint_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 {
 	s8 max_cleanx1,min_cleanx1,temp_gridx1;
 
@@ -754,7 +759,7 @@ function:分析无墙节点路径
 output:  0--->没有路径或者节点内存无法分配
          1--->已找到路径
 -------------------------------------------------*/
-u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
+u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 {
 	POINT_GRID pointgrid[100];
 	u8 point_num=0,i;
@@ -776,7 +781,7 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 			temp_gridx=now_gridx;
 			for(temp_gridy=now_gridy;temp_gridy<tgt_gridy;temp_gridy++)
 				{
-					temp_gridx=Find_Adjoin_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy+1);
+					temp_gridx=Find_PathPoint_Gap(temp_gridx,temp_gridy,temp_gridy+1);
 					if(temp_gridx==0x7f)
 						break;
 					else
@@ -852,7 +857,7 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 			temp_gridx=now_gridx;
 			for(temp_gridy=now_gridy;temp_gridy>tgt_gridy;temp_gridy--)
 				{
-					temp_gridx=Find_Adjoin_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy-1);
+					temp_gridx=Find_PathPoint_Gap(temp_gridx,temp_gridy,temp_gridy-1);
 					if(temp_gridx==0x7f)
 						break;
 					else
@@ -943,7 +948,7 @@ u8 Find_PathPoint_Way(s8 tgt_gridx,s8 tgt_gridy)
 			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
 			return 0;
 		}
-	result=Analysis_PathPoint_NoWall(&now_grid,&tgt_grid);
+	result=Analysis_PathPoint(&now_grid,&tgt_grid);
 	TRACE("result=%d\r\n",result);
 	TRACE("Out %s!\r\n",__func__);
 	return result;
@@ -1173,7 +1178,7 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 
 	temp_grid.gridx=now_gridx;temp_grid.gridy=now_gridy;
-	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);
+	result=Analysis_PathPoint(&temp_grid,&tgt_grid);
 	if(result)
 		{
 			turn_grid=temp_grid;
@@ -1181,7 +1186,7 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 	
 	temp_grid.gridx=now_gridx+1;temp_grid.gridy=now_gridy;
-	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);
+	result=Analysis_PathPoint(&temp_grid,&tgt_grid);
 	if(result)
 		{
 			turn_grid=temp_grid;
@@ -1189,7 +1194,7 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 	
 	temp_grid.gridx=now_gridx-1;temp_grid.gridy=now_gridy;
-	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);
+	result=Analysis_PathPoint(&temp_grid,&tgt_grid);
 	if(result)
 		{
 			turn_grid=temp_grid;
@@ -1197,7 +1202,7 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 	
 	temp_grid.gridx=now_gridx;temp_grid.gridy=now_gridy+1;
-	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);
+	result=Analysis_PathPoint(&temp_grid,&tgt_grid);
 	if(result)
 		{
 			turn_grid=temp_grid;
@@ -1205,7 +1210,7 @@ u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 
 	temp_grid.gridx=now_gridx;temp_grid.gridy=now_gridy-1;
-	result=Analysis_PathPoint_NoWall(&temp_grid,&tgt_grid);
+	result=Analysis_PathPoint(&temp_grid,&tgt_grid);
 	if(result)
 		{
 			turn_grid=temp_grid;
@@ -1677,7 +1682,7 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 			temp_gridx=now_gridx;
 			for(temp_gridy=now_gridy;temp_gridy>tgt_gridy;temp_gridy--)
 				{
-					temp_gridx=Find_Adjoin_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy-1);
+					temp_gridx=Find_PathPoint_Gap(temp_gridx,temp_gridy,temp_gridy-1);
 					if(temp_gridx==0x7f)
 						break;
 					else
@@ -1768,3 +1773,542 @@ u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 		}
 }
 
+s8 Find_PathPoint_Gap_NoWall(s8 gridx1,s8 gridy1,s8 gridy2)
+{
+	s8 max_cleanx1,min_cleanx1,temp_gridx1;
+
+	max_cleanx1=Return_MaxClean_GridX(gridy1,0);
+	min_cleanx1=Return_MinClean_GridX(gridy1,0);
+
+	for(temp_gridx1=gridx1;temp_gridx1<=max_cleanx1;temp_gridx1++)
+		{
+			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx1,gridy2)))
+				{
+					//if(IS_Can_ReachPointX_NoWall(gridx1,temp_gridx1,gridy1))
+					if(IS_Can_ReachPointX_NoWall(gridx1,temp_gridx1,gridy1))
+						return temp_gridx1;
+				}
+		}
+	TRACE("now point to max checkout!!!\r\n");
+
+	for(temp_gridx1=gridx1;temp_gridx1>=min_cleanx1;temp_gridx1--)
+		{
+			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx1,gridy2)))
+				{
+					//if(IS_Can_ReachPointX_NoWall(gridx1,temp_gridx1,gridy1))
+					if(IS_Can_ReachPointX_NoWall(gridx1,temp_gridx1,gridy1))
+						return temp_gridx1;
+				}
+		}
+	TRACE("now point to min checkout!!!\r\n");
+	TRACE("gridx1=%d gridy1=%d gridy2=%d\r\n",gridx1,gridy1,gridy2);
+	TRACE("gridy1 can't to gridy2,No comman point!!!\r\n");
+	TRACE("Out %s\r\n",__func__);
+	return (0x7f);	
+}
+
+/*----------------------------------------------
+function:分析无墙节点路径
+output:  0--->没有路径或者节点内存无法分配
+         1--->已找到路径
+-------------------------------------------------*/
+u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
+{
+	POINT_GRID pointgrid[100],pointgrid2[100];
+	s8 point_num=0,point_num2=0,i=0,k=0;
+	s8 now_gridx,now_gridy,temp_gridx,temp_gridy,tgt_gridx,tgt_gridy,temp_gridx2,temp_gridy2;
+	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;
+	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;
+
+	TRACE("Enter in %s...\r\n",__func__);
+	TRACE("now_gridx=%d gridy=%d\r\n",now_gridx,now_gridy);
+	TRACE("tgt_gridx=%d gridy=%d\r\n",tgt_gridx,tgt_gridy);
+	if(Delete_All_PathPoint())
+		{
+			motion1.pathpoint_ok=false;
+			return 0;
+		}
+//	pointgrid=(POINT_GRID*)malloc(POINTGRID_LEN*100);
+	if(now_gridy<tgt_gridy)					//now点Y坐标小于tgt点Y坐标
+		{
+			point_num=0;
+			temp_gridx=now_gridx;temp_gridy=now_gridy;			//从now点的增长方向开始
+			
+			//////////////////增长的方向///////////////////////////
+			while(temp_gridy<tgt_gridy)
+				{
+					temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy+1);
+					if(temp_gridx==0x7f)			//没有发现Gap点，退出循环检查，准备尝试Y减少方向分析
+						break;
+					else
+						{
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy+1;
+							point_num++;
+							if(point_num>99)		//越界,最多100个path point点,准备尝试Y减少方向分析
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									break;
+								}
+								
+						}
+					temp_gridy++;
+				}
+			if(temp_gridy==tgt_gridy)				//到达tgt_gridy坐标
+				{
+					if(IS_Can_ReachPointX_NoWall(temp_gridx,tgt_gridx,tgt_gridy))		//可以直接去往tgt_gridx,tgt_gridy
+						{
+							pointgrid[point_num].gridx=tgt_gridx;
+							pointgrid[point_num].gridy=tgt_gridy;
+							point_num++;
+							path_length=point_num;
+							for(i=0;i<point_num;i++)
+								{
+									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							//加入PATH_POINT节点
+							return 1;
+						}
+					//不可以直接去往tgt_gridx,tgt_gridy，准备继续尝试Y增长方向
+					point_num2=1;
+					temp_gridy=tgt_gridy;
+					while(temp_gridy<grid.y_area_max)		//第一次循环时，temp_gridy==tgt_gridy
+						{
+							temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy+1);
+							if(temp_gridx==0x7f)			//now点Y增长方向没有Gap点，退出while循环，结束Y增长方向的分析，准备试试减少方向的分析
+								break;
+
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy+1;
+							point_num++;
+							if(point_num>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									break;
+								}
+
+							temp_gridy++;					//大于tgt_gridy的now点增长方向有Gap点
+							temp_gridx2=tgt_gridx;			//从tgt点的增长方向开始分析
+							point_num2=1;					//重新置位point_num2的位置。												
+							for(temp_gridy2=tgt_gridy;temp_gridy2<temp_gridy;temp_gridy2++)
+								{
+									temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2+1);
+									if(temp_gridx2==0x7f)	//tgt点Y增长方向没有Gap点，退出for循环，结束Y增长方向的分析，准备试试减少方向的分析
+										break;
+									pointgrid2[point_num2].gridx=temp_gridx2;
+									pointgrid2[point_num2].gridy=temp_gridy2+1;
+									point_num2++;
+									if(point_num2>99)		//越界,最多100个path point点
+										{
+											TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+											break;
+										}
+								}
+
+							if(temp_gridy2!=temp_gridy)
+								{
+									//tgt点Y增长方向没有Gap点，退出while循环，结束Y增长方向的分析，准备试试减少方向的分析
+									break;
+								}
+
+							if(IS_Can_ReachPointX_NoWall(temp_gridx2, temp_gridx, temp_gridy))
+								{
+									pointgrid2[0].gridx=tgt_gridx;
+									pointgrid2[0].gridy=tgt_gridy;									
+									//tgt点增长的GAP和now点增长的GAP可以直接到达，在增长方向发现PathPoint路径
+									//整理PathPoint路径，退出分析函数，
+									path_length=point_num+point_num2;
+									for(i=0;i<point_num;i++)
+										{
+											if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+												{
+													motion1.pathpoint_ok=false;
+													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+													Delete_All_PathPoint();
+													return 0;
+												}
+										}
+									for(k=point_num2-1;k>=0;k--,i++)
+										{
+											if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
+												{
+													motion1.pathpoint_ok=false;
+													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+													Delete_All_PathPoint();
+													return 0;
+												}
+										}
+									return 1;
+								}
+							//tgt点增长的GAP和now点增长的GAP无法直接到达，准备下一次循环
+						}
+					//已到达grid.y_area_max,增长方向无法使用PP，结束增长方向的分析，准备试试减少方向的分向 						
+				}			
+			//无法到达tgt_gridy坐标，结束增长方向的分析，准备试试减少方向的分析	
+			
+			////////////////now_gridy<tgt_gridy///////////////////////	
+			////////////////减少方向的分析///////////////////////////
+			point_num=0;point_num2=1;i=0;k=0;
+			temp_gridx2=tgt_gridx;temp_gridy2=tgt_gridy;						//减少的方向，从tgt点开始分析
+			while(temp_gridy2>now_gridy)
+				{
+					temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2-1);
+					if(temp_gridx2==0x7f)
+						return 0;
+
+					pointgrid2[point_num2].gridx=temp_gridx2;
+					pointgrid2[point_num2].gridy=temp_gridy2-1;
+					point_num2++;
+					temp_gridy2--;
+				}			
+			//此时temp_gridy2==now_gridy
+			if(IS_Can_ReachPointX_NoWall(temp_gridx2, now_gridx, temp_gridy))	//判断tgt点减少方向是否可以直接到达now点
+				{
+					pointgrid2[0].gridx=tgt_gridx;									
+					pointgrid2[0].gridy=tgt_gridy;
+					path_length=point_num2;
+					for(k=point_num2-1,i=0;k>=0;k--,i++)
+						{
+							if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))		//可以直接到达，则开始添加pathpoint
+								{
+									motion1.pathpoint_ok=false;
+									TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+									Delete_All_PathPoint();
+									return 0;
+								}
+						}
+					return 1;
+				}
+			//不可从tgt点减少方向的now_gridy直接到达now点
+			temp_gridy2=now_gridy;									//开始从tgt点now_gridy坐标往减少方向分析										
+			//temp_gridx=now_gridx;temp_gridy=now_gridy;			
+			while(temp_gridy2>grid.y_area_min)
+				{
+					temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2-1);
+					if(temp_gridx2==0x7f)							//tgt点Y减少方向没有Gap点，直接结束
+						return 0;
+					pointgrid2[point_num2].gridx=temp_gridx2;
+					pointgrid2[point_num2].gridy=temp_gridy2-1;
+					point_num2++;
+					if(point_num2>99)				//越界,最多100个path point点，直接结束
+						{
+							TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+							return 0;
+						}
+
+					temp_gridy2--;									//小于now_gridy的tgt点减少方向有Gap点
+					temp_gridx=now_gridx;							//从now点的减少方向开始分析					
+					point_num=0;									//重新置位point_num的位置。
+					for(temp_gridy=now_gridy;temp_gridy>temp_gridy2;temp_gridy--)
+						{
+							temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy-1);
+							if(temp_gridx==0x7f)					//now点Y减少方向没有Gap点，直接结束
+								return 0;
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy-1;
+							point_num++;
+							if(point_num>99)						//越界,最多100个path point点
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									return 0;
+								}
+						}
+					
+					if(temp_gridy2!=temp_gridy)
+						{
+							//tgt点Y减少方向没有Gap点，退出while循环，直接结束
+							return 0;
+						}
+					
+					if(IS_Can_ReachPointX_NoWall(temp_gridx, temp_gridx2, temp_gridy))		//判断减少方向的tgt点和now点可否直接到达
+						{
+							pointgrid2[0].gridx=tgt_gridx;
+							pointgrid2[0].gridy=tgt_gridy;							
+							//tgt点减少的GAP和now点减少的GAP可以直接到达，在减少方向发现PathPoint路径
+							//整理PathPoint路径，退出分析函数，
+							path_length=point_num+point_num2;						
+							for(i=0;i<point_num;i++)
+								{
+									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							for(k=point_num2-1;k>=0;k--,i++)
+								{
+									if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							return 1;
+						}
+					//tgt点增长的GAP和now点增长的GAP无法直接到达，准备下一次循环
+				}
+			return 0;
+		}
+
+	//now点Y坐标大于tgt点Y坐标
+	else if(now_gridy>tgt_gridy)
+		{
+			//首先从Y坐标减少方向上分析
+			temp_gridx=now_gridx;temp_gridy=now_gridy;		//首先从now点开始分析
+			while(temp_gridy>tgt_gridy)
+				{
+					temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy-1);
+					if(temp_gridx==0x7f)
+						break;								//now点Y减少方向没有Gap点到tgt_gridy，退出while循环，准备Y增加方向分析
+					else
+						{
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy-1;
+							point_num++;
+							if(point_num>99)		//越界
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									return 0;
+								}
+						}
+					temp_gridy--;
+				}
+			if(temp_gridy==tgt_gridy)						//now点Y减少方向到达tgt_gridy
+				{
+					if(IS_Can_ReachPointX_NoWall(temp_gridx,tgt_gridx,tgt_gridy))	//分析now点减少的tgt_gridy是否可以直接到达tgt点
+						{
+							pointgrid[point_num].gridx=tgt_gridx;
+							pointgrid[point_num].gridy=tgt_gridy;
+							point_num++;
+							path_length=point_num;
+							for(i=0;i<point_num;i++)		//可以到达，整理pathpoint，退出
+								{
+									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							//加入PATH_POINT节点
+							return 1;
+						}
+					//now点Y减少方向的tgt_gridy无法直接到达tgt点
+					//准备从now点，继续按照Y减少方向分析
+					point_num2=1;
+					temp_gridy=tgt_gridy;
+					while(temp_gridy>grid.y_area_min)		//第一次循环时，temp_gridy==tgt_gridy
+						{
+							temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy-1);
+							if(temp_gridx==0x7f)			//now点Y减少方向没有Gap点，退出while循环，结束Y减少方向的分析，准备试试增长方向的分析
+								break;					
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy+1;
+							point_num++;
+							if(point_num>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									break;
+								}
+					
+							temp_gridy--;					//小于tgt_gridy的now点减少方向有Gap点
+							temp_gridx2=tgt_gridx;			//从tgt点的减少方向开始分析
+							point_num2=1;					//重新置位point_num2的位置。											
+							for(temp_gridy2=tgt_gridy;temp_gridy2>temp_gridy;temp_gridy2--)
+								{
+									temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2-1);
+									if(temp_gridx2==0x7f)	//tgt点Y减少方向没有Gap点，退出for循环，结束Y减少方向的分析，准备试试增加方向的分析
+										break;
+									pointgrid2[point_num2].gridx=temp_gridx2;
+									pointgrid2[point_num2].gridy=temp_gridy2-1;
+									point_num2++;
+									if(point_num2>99)		//越界,最多100个path point点
+										{
+											TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+											break;
+										}
+								}
+					
+							if(temp_gridy2!=temp_gridy)
+								{
+									//tgt点Y减少方向没有Gap点，退出while循环，结束Y减少方向的分析，准备试试增加方向的分析
+									break;
+								}
+					
+							if(IS_Can_ReachPointX_NoWall(temp_gridx2, temp_gridx, temp_gridy))
+								{
+									pointgrid2[0].gridx=tgt_gridx;
+									pointgrid2[0].gridy=tgt_gridy;
+									//tgt点减少的GAP和now点减少的GAP可以直接到达，在减少方向发现PathPoint路径
+									//整理PathPoint路径，退出分析函数，
+									path_length=point_num+point_num2;
+									for(i=0;i<point_num;i++)
+										{
+											if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+												{
+													motion1.pathpoint_ok=false;
+													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+													Delete_All_PathPoint();
+													return 0;
+												}
+										}
+									for(k=point_num2-1;k>=0;k--,i++)
+										{
+											if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
+												{
+													motion1.pathpoint_ok=false;
+													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+													Delete_All_PathPoint();
+													return 0;
+												}
+										}
+									return 1;
+								}
+							//tgt点增长的GAP和now点增长的GAP无法直接到达，准备下一次循环
+						}
+						//已到达grid.y_area_max,增长方向无法使用PP，结束增长方向的分析，准备试试减少方向的分向 						
+				}
+
+			////////////////now_gridy>tgt_gridy,增长方向的分析///////////////////////////
+			point_num=0;point_num2=1;i=0;k=0;
+			temp_gridx2=tgt_gridx;temp_gridy2=tgt_gridy;	//从tgt点Y增长方向开始分析
+			while(temp_gridy2<now_gridy)
+				{
+					temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2+1);
+					if(temp_gridx2==0x7f)					//tgt点增长方向没有Gap点，直接退出
+						return 0;
+
+					pointgrid2[point_num2].gridx=temp_gridx2;
+					pointgrid2[point_num2].gridy=temp_gridy2+1;
+					point_num2++;
+					temp_gridy2++;					
+				}
+			//此时tgt点Y增长到达now_gridy
+			//判断tgt点增长的now_gridy是否可以直接到达now点
+			if(IS_Can_ReachPointX_NoWall(temp_gridx2, now_gridx, temp_gridy))
+				{				//可以直接到达，整理pathpoint，退出。
+					pointgrid2[0].gridx=tgt_gridx;
+					pointgrid2[0].gridy=tgt_gridy;
+					path_length=point_num2;
+					for(k=point_num2-1,i=0;k>=0;k--,i++)
+						{
+							if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
+								{
+									motion1.pathpoint_ok=false;
+									TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+									Delete_All_PathPoint();
+									return 0;
+								}
+						}
+					return 1;
+				}
+			//tgt点增长的now_gridy无法直接到达now点，tgt继续增长分析
+			temp_gridy2=now_gridy;
+			while(temp_gridy2<grid.y_area_max)
+				{
+					temp_gridx2=Find_PathPoint_Gap_NoWall(temp_gridx2,temp_gridy2,temp_gridy2+1);
+					if(temp_gridx2==0x7f)			//now点Y增长方向没有Gap点，结束Y增长方向的分析，准备试试减少方向的分析
+						return 0;
+
+					pointgrid2[point_num2].gridx=temp_gridx2;
+					pointgrid2[point_num2].gridy=temp_gridy2+1;
+					point_num2++;
+					if(point_num2>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
+						{
+							TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+							return 0;
+						}
+
+					temp_gridy2++;					//大于now_gridy的tgt点增长方向有Gap点
+					temp_gridx=now_gridx;			//从now点的增长方向开始分析
+					point_num=0;
+					for(temp_gridy=now_gridy;temp_gridy<temp_gridy2;temp_gridy++)
+						{
+							temp_gridx=Find_PathPoint_Gap_NoWall(temp_gridx,temp_gridy,temp_gridy+1);
+							if(temp_gridx==0x7f)	//now点Y增长方向没有Gap点，退出for循环，直接退出
+								return 0;
+							pointgrid[point_num].gridx=temp_gridx;
+							pointgrid[point_num].gridy=temp_gridy+1;
+							point_num++;
+							if(point_num>99)		//越界,最多100个path point点
+								{
+									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+									return 0;
+								}
+						}
+					
+					if(temp_gridy2!=temp_gridy)
+						{
+							//tgt点Y增长方向没有Gap点，退出while循环，直接退出
+							return 0;
+						}
+					
+					if(IS_Can_ReachPointX_NoWall(temp_gridx, temp_gridx2, temp_gridy))
+						{
+							pointgrid2[0].gridx=tgt_gridx;
+							pointgrid2[0].gridy=tgt_gridy;
+							
+							//tgt点增长的GAP和now点增长的GAP可以直接到达，在增长方向发现PathPoint路径
+							//整理PathPoint路径，退出分析函数，
+							path_length=point_num+point_num2;
+							for(i=0;i<point_num;i++)
+								{
+									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							for(k=point_num2-1;k>=0;k--,i++)
+								{
+									if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
+										{
+											motion1.pathpoint_ok=false;
+											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+											Delete_All_PathPoint();
+											return 0;
+										}
+								}
+							return 1;
+						}
+					//tgt点增长的GAP和now点增长的GAP无法直接到达，准备下一次循环
+					//重新置位point_num的位置。
+				}
+			return 0;
+		}
+	return 0;
+}
+
+u8 Find_PathPoint_NoWall_Way(s8 tgt_gridx,s8 tgt_gridy)
+{
+	u8 result=0;
+	POINT_GRID now_grid,tgt_grid;
+	now_grid.gridx=grid.x;now_grid.gridy=grid.y;
+	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
+
+	TRACE("Enter in %s...\r\n",__func__);
+	if(!motion1.pathpoint_ok)
+		{
+			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+			return 0;
+		}
+	result=Analysis_PathPoint_NoWall(&now_grid,&tgt_grid);
+	if(!result)
+		Delete_All_PathPoint();
+	TRACE("result=%d\r\n",result);
+	TRACE("Out %s!\r\n",__func__);
+	return result;
+}

@@ -175,7 +175,7 @@ void Do_Cease(void)
 			case 0:
 				break;
 			case 1:
-				Speed=2000;
+				Speed=FAST_MOVE_SPEED;
 				if(do_action(4,15*CM_PLUS))
 					{
 						stop_rap();

@@ -79,11 +79,13 @@ void Get_Const_Angle(void)
 
 void Save_Abort_Data(void)
 {
+#if 1
 	TRACE("Saving Abort Data...\r\n");
-	motion1.xpos_abort=Gyro_Data.x_pos;
-	motion1.ypos_abort=Gyro_Data.y_pos;
 	motion1.tgtyaw_abort=motion1.tgt_yaw;
+	motion1.leftright_abort=motion1.leftright;
 	motion1.anti_tgtyaw_abort=motion1.anti_tgt_yaw;
+	motion1.repeat_sweep_abort=motion1.repeat_sweep;
+	motion1.ydir_abort=motion1.y_dir;
 	grid.x_abort=grid.x;
 	grid.y_abort=grid.y;
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
@@ -91,23 +93,28 @@ void Save_Abort_Data(void)
 	TRACE("motion1.leftright=%d\r\n",motion1.leftright);
 	TRACE("Saving Abort Data complete!\r\n");
 	TRACE("Ready to back sweep!\r\n");
+#else
+	Add_BackInfo();
+#endif
 }
 
-void Load_Abort_Data(void)
+void Restore_Abort_Data(void)
 {
-	TRACE("Loading Abort Data...\r\n");
-#if 0
+	TRACE("Restore Abort Data...\r\n");
+#if 1
 	motion1.tgt_yaw=motion1.tgtyaw_abort;
 	motion1.anti_tgt_yaw=motion1.anti_tgtyaw_abort;
 	motion1.leftright=motion1.leftright_abort;
 	motion1.repeat_sweep=motion1.repeat_sweep_abort;
+	motion1.y_dir=motion1.ydir_abort;
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgtyaw_abort);
 	TRACE("motion1.leftright=%d\r\n",motion1.leftright);
 	TRACE("Ready to Normal Sweep from Back Sweep!\r\n");
 	TRACE("Loading Abort Data complete!\r\n");
-#endif
+#else
 	Get_Curr_BackInfo();
+#endif
 }
 
 /*-------------------------------------------------

@@ -696,6 +696,7 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 	if(motion1.x_acc==2)
 		motion1.repeat_sweep=true;		//第一次清扫，如果是X轴是双方向清扫，则设置重复扫一次，单方向的，则没有必要
 	Set_AreaWorkTime(20);
+	Delete_All_PathPoint();
 }
 
 void Do_FirstInit_Sweep(void)
@@ -991,9 +992,8 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							mode.bump_time=giv_sys_time;
 							break;
 						case 10:						//准备回扫进入
-							Add_BackInfo();
-							Set_Motion_BackSweep(1);	//设置回扫标志
 							Save_Abort_Data();
+							Set_Motion_BackSweep(1);	//设置回扫标志
 							Change_LeftRight();
 							Set_Motion_YDir_Reverse();
 							mode.step_bp=4;
@@ -1140,9 +1140,8 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							mode.bump_time=giv_sys_time;
 							break;
 						case 10:
-							Add_BackInfo();
-							Set_Motion_BackSweep(1);
 							Save_Abort_Data();
+							Set_Motion_BackSweep(1);
 							Change_LeftRight();
 							Set_Motion_YDir_Reverse();
 							mode.step_bp=4;
@@ -1419,9 +1418,8 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							mode.bump_time=giv_sys_time;
 							break;
 						case 10:
-							Add_BackInfo();
-							Set_Motion_BackSweep(1);		//设置回扫标志
 							Save_Abort_Data();
+							Set_Motion_BackSweep(1);		//设置回扫标志
 							Change_LeftRight();
 							Set_Motion_YDir_Reverse();
 							mode.step_bp=4;
@@ -1744,7 +1742,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							break;
 						case 5:
 							Speed=MID_MOVE_SPEED;
-							if(do_action(3,30*CM_PLUS))
+							if(do_action_my(3,30*CM_PLUS,tgt_angle))
 								{
 									stop_rap();
 									mode.step_bp=7;
@@ -1781,10 +1779,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							Init_Pass2Sweep();
 							break;
 						case 10:
-							Add_BackInfo();
-							Set_Motion_BackSweep(1);		//设置回扫标志
 							Save_Abort_Data();
 							Change_LeftRight();
+							Set_Motion_BackSweep(1);		//设置回扫标志
 							Set_Motion_YDir_Reverse();
 							mode.step_bp=3;
 							break;
@@ -2022,7 +2019,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							break;
 						case 3:
 							Speed=MID_MOVE_SPEED;
-							if(do_action(3,30*CM_PLUS))
+							if(do_action_my(3,30*CM_PLUS,tgt_angle))
 								{
 									stop_rap();
 									mode.step_bp++;
@@ -2781,6 +2778,25 @@ void Continue_Sweep(void)
 void Init_Stop_BackSweep(void)
 {
 	TRACE("Enter in %s...\r\n",__func__);
+
+	if(Analysis_Back_Leak())
+		{
+			TRACE("find back leak!!\r\n");
+			TRACE("goto back leak!!\r\n");
+			Init_Shift_Point1(0);
+			return;
+		}
+	else
+		{
+			Restore_Abort_Data();
+			Set_Motion_BackSweep(0);
+			Area_Check(0);
+			Init_Shift_Point1(0);
+			return;
+		}
+
+
+	
 	if(grid.y!=grid.y_abort)
 		{
 			TRACE("use shift point!!\r\n");
@@ -2817,7 +2833,7 @@ void Init_Stop_BackSweep(void)
 	while(giv_sys_time-mode.time<5000);
 	delay_ms(500);
 	TRACE("Init Stop Backsweep complete!!!\r\n");
-	Load_Abort_Data();		//然后再装在中断之前的数据
+	Restore_Abort_Data();		//然后再装在中断之前的数据
 	TRACE("grid.x_abort=%d y_abort=%d\r\n",grid.x_abort,grid.y_abort);
 }
 
@@ -3145,7 +3161,7 @@ void Do_Stop_BackSweep(void)
 			case 7:
 				if(Analysis_Back_Leak())
 					{
-						Add_BackInfo();
+						Save_Abort_Data();
 						Set_Motion_BackSweep(1);	//设置回扫标志
 //						Save_Abort_Data();
 						Change_LeftRight();
@@ -3551,7 +3567,7 @@ u8 YBS_AbortFor_Sweep(void)
 					TRACE("It should be BackSweep,but Round Obstacles,");
 					TRACE("So temproray to NormalSweep!\r\n");
 					Set_Motion_BackSweep(0);										//绕过障碍后，先取消回扫，正常直行
-					Load_Abort_Data();		//然后再装在中断之前的数据
+					Restore_Abort_Data();		//然后再装在中断之前的数据
 				}
 			return 1;
 		}

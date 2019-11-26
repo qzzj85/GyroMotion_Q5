@@ -108,7 +108,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				3
-#define		CORRECT_VERSION			14
+#define		CORRECT_VERSION			16
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -1009,15 +1009,18 @@ typedef struct 					//清扫结构体
 	bool 	xmax_ok;						//XMAX新区域检查完成标志
 	bool 	xmin_ok;						//XMIN新区域检查完成标志
 	bool 	repeat_sweep;			//重复扫标志，true:重复扫，false：无需要，沿边出现空旷区域时重复扫
+	bool	repeat_sweep_abort;
 	bool 	pathpoint_ok;
 	bool	start_seat;
 	bool	force_dock;
 	
 	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
 	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边
+	u8 		leftright_abort;
 	u8 		y_acc;					//正常清扫时Y轴增长方向，0：负方向，1：正方向，2：双方向
 	u8 		x_acc;					//正常清扫时X轴增长方向，0：负方向，1：正方向，2：双方向
 	s8 		y_dir;					//Y轴清扫时的增长方向(0:负方向,1:正方向),因为y_acc有0,1,2三个值，2代表双方向清扫，无法再用y_acc表示目前正在清扫的方向
+	s8 		ydir_abort;
 	u8  	continue_checkstep;		//沿边时检测是否绕过障碍的步骤
 	u8 		sweep_time;				//区域打扫次数，用于新开辟区域时的编号增加，从#1开始
 	u8 		area_num;				//当前区域编号
@@ -1041,8 +1044,6 @@ typedef struct 					//清扫结构体
 	short 	ypos_start;			//起始点y坐标
 	short 	tgt_yaw;				//直线清扫时目标角度
 	short 	anti_tgt_yaw;			//直线清扫时目标反角度
-	short 	xpos_abort;			//被打断(如回扫)时的x坐标
-	short 	ypos_abort;			//被打断(如回扫)时的y坐标
 	short 	tgtyaw_abort;
 	short 	anti_tgtyaw_abort;
 	short 	xpos_start_area;		//区域打扫（4X4）X起始坐标

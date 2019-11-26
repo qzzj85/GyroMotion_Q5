@@ -75,7 +75,7 @@ void log_out(void)
 		}
 #if 1
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
-//	TRACE("Gyro.x=%d y=%d\r\n",X_pos,Y_pos);
+//	TRACE("Gyro.x=%f y=%f\r\n",X_pos,Y_pos);
 	TRACE("grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 	TRACE("m.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("c_p.next_action=%d\r\n",check_point.next_action);

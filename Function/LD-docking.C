@@ -4764,6 +4764,7 @@ void Init_Dock_RightYBS(u8 direct_first)
 	TRACE("Init Shift Right YBS Mode Complete!\r\n");
 #endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+	Delete_All_PathPoint();
 	dock_ybs_time=giv_sys_time;
 }
 

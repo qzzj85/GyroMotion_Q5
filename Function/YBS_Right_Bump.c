@@ -1509,8 +1509,8 @@ void YBS_Right_Bump(u8 out_enable)
 					break;
 
 				case 10:
-					Set_Motion_BackSweep(1);	//设置回扫标志
 					Save_Abort_Data();
+					Set_Motion_BackSweep(1);	//设置回扫标志
 					Change_LeftRight();
 					mode.step_bp++;
 					break;

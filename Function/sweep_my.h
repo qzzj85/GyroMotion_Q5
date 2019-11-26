@@ -24,7 +24,7 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc);
 void Do_Pass2Init(void);
 void Save_Abort_Data(void);
 u8 Check_OutofRange(void);
-void Load_Abort_Data(void);
+void Restore_Abort_Data(void);
 void Init_First_Sweep(u8 start_seat);
 u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable);
 void Pass2Sweep_Bump_Action(void);

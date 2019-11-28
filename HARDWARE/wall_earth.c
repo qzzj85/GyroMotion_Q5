@@ -123,7 +123,7 @@ void  check_earth( WALL_DATA *earth,u16 difference)
 
 	if(earth->darkness<0x200)		//在强阳光下，darkness也会很小，不检测
 		{
-			earth->sign=FARN;
+			earth->sign=NEAR;
 			return;
 		}
 	

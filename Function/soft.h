@@ -99,6 +99,8 @@
 #define		MILE_COMPENSATION		1					//里程计补偿
 #define		STOP_SPD_CNT			1
 
+//#define		NEW_Q55_BOARD_1113		1
+
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
 //#define		OUT_8MHZ				1
@@ -109,8 +111,8 @@
 //#define		USE_AREA_TREE			1
 
 #define 	MAIN_VERISON 			1
-#define 	SUB_VERSION				3
-#define		CORRECT_VERSION			17
+#define 	SUB_VERSION				4
+#define		CORRECT_VERSION			0
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -598,6 +600,7 @@ Q5样机
 #define		SPEED250		1000	//250mm/s
 #define		SPEED200		820		//200mm/s
 #define		SPEED150		600		//150mm/s
+#define		SPEED120		500		//120mm/s
 #define		SPEED100		400		//100ms/s
 #define		SPEED50			200		//50mm/s
 

@@ -93,7 +93,11 @@ PE15	船型开关检测
 
 */
 //////////下面是速度检测发射控制管脚定义/////////////////////
+#ifdef	 NEW_Q55_BOARD_1113 
+#define		SPEED_SEND		GPIO_Pin_1		//轮子速度检测电源控制	       PD
+#else
 #define		SPEED_SEND		GPIO_Pin_8		//轮子速度检测电源控制	       PD
+#endif
 //////////下面是左右轮驱动使用的io脚定义///////////////////////
 #define   	L_SPEED        	GPIO_Pin_0		//左轮速度检测       		PE
 #define		EXTI_Line_LSPD	EXTI_Line0
@@ -114,9 +118,16 @@ PE15	船型开关检测
 #define  	CHARGE_DC   	GPIO_Pin_12   	//DC输入     			PE
 #define		GPIO_DC			GPIOE
 #define		EXTI_Line_DC	EXTI_Line12	
+
+        #ifdef   NEW_Q55_BOARD_1113 
+#define  	CHARGE_SEAT 	GPIO_Pin_9   	//回充座输入 			PD
+#define		GPIO_SEAT		GPIOD
+#define		EXTI_Line_SEAT	EXTI_Line9
+	#else	
 #define  	CHARGE_SEAT 	GPIO_Pin_8   	//回充座输入 			PA
 #define		GPIO_SEAT		GPIOA
 #define		EXTI_Line_SEAT	EXTI_Line8
+        #endif
 #define		PWR_SWITCH_PIN	GPIO_Pin_15		//船型开关检测			PE	
 ///////下面是红外接收的管脚定义/////////////////////////////// 
 #define  	HW_POWER        GPIO_Pin_9   	//红外电源输出控制    		PD //☆
@@ -145,8 +156,14 @@ PE15	船型开关检测
 #define		EXTI_Line_LMBUMP	EXTI_Line9
 ///////////下面是按键输入的管教定义////////////////////////////
 #define  	KEY_1			GPIO_Pin_8		//按键输入 				PD
+
+   #ifdef	 NEW_Q55_BOARD_1113 
+#define  	KEY_2			GPIO_Pin_2		//启停按键输入 			PE
+#define	 	GPIO_KEY2		GPIOE   
+   #else
 #define  	KEY_2			GPIO_Pin_10		//启停按键输入 			PE
 #define	 	GPIO_KEY2		GPIOE
+   #endif
 #define  	KEY_3			GPIO_Pin_12		//回充按键输入 			PC
 #define  	GPIO_KEY3       GPIOC
 #define  	HOLDPWR_PIN		GPIO_Pin_1		//HOLD_PWR CTL		PD
@@ -191,6 +208,14 @@ PE15	船型开关检测
 #define	 	GYRO_RST_PIN	GPIO_Pin_10
 #define	 	GYRO_RST_1		{GPIOC->BSRR|=1<<10;}
 #define	 	GYRO_RST_0		{GPIOC->BRR|=1<<10;}
+
+#ifdef GYRO_PWM_RUN_STATE
+#define	 	GYRO_PWM_RUN_PIN	GPIO_Pin_12
+#define		READ_GYRO_PWM_RUN_PIN	GPIOC->IDR&=0X1000
+#define	 	GYRO_PWM_RUN_1		{GPIOC->BSRR|=1<<12;}
+#define	 	GYRO_PWM_RUN_0		{GPIOC->BRR|=1<<12;}
+#endif
+
 //////////////////LED灯控制引脚///////////////////////////	
 #define  	LED_GREEN		GPIO_Pin_7		//PD
 #define	 	LED_GREEN_ON	{GPIOD->BSRR|=1<<7;}
@@ -210,9 +235,17 @@ PE15	船型开关检测
 #define	 	RING_PWM_CTL_1		{GPIOB->BSRR|=1<<15;}
 #define  	RING_PWM_CTL_0		{GPIOB->BRR|=1<<15;}
 ////////////惯导矫正控制引脚/////////////////////////////////
+    #ifdef    NEW_Q55_BOARD_1113             
+#define     GYRO_CAL_PIN	GPIO_Pin_8			//PD
+#define     GYRO_CAL_PIN_1	{GPIOD->BSRR|=1<<8;}
+#define		GYRO_CAL_PIN_0	{GPIOD->BRR|=1<<8;}
+ 
+    #else
 #define     GYRO_CAL_PIN	GPIO_Pin_11			//PA
 #define     GYRO_CAL_PIN_1	{GPIOA->BSRR|=1<<11;}
 #define		GYRO_CAL_PIN_0	{GPIOA->BRR|=1<<11;}
+ 
+      #endif 
 ////////////电源控制///////////////////////////////////////
 #define		PWR3V3_PIN		GPIO_Pin_3
 #define		PWR3V3_ON		{GPIOD->BSRR|=1<<3;}

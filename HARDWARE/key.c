@@ -117,6 +117,14 @@ void AutoReadKey(void)
 		//read_key(&key1);		//&key1   取得变量key1的指针				 
 		read_key(&key2);	 
 //		read_key(&key3);
+#ifdef 		GYRO_PWM_RUN_STATE
+						if ((action.sign == 1)&&(r_rap.ori == FRONT)&&(l_rap.ori == FRONT)){
+									  if ( READ_GYRO_PWM_RUN_PIN ) GYRO_PWM_RUN_0;
+						}
+						else {
+							 if (!( READ_GYRO_PWM_RUN_PIN ) )  GYRO_PWM_RUN_1;
+						}
+#endif	
 
 		switch(Read_Button_Key(&key2))
 			{

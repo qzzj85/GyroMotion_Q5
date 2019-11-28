@@ -261,7 +261,11 @@ void Enable_ExternInt_Weekup(u8 use_key)
 			GPIO_InitStructure.GPIO_Pin=KEY_2;
 			GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
 			GPIO_Init(GPIO_KEY2,&GPIO_InitStructure);
+			   #ifdef   NEW_Q55_BOARD_1113 
+			GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource2);
+			   #else
 			GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource10);
+			   #endif			
 		}
 
 	/*PP2暂时可能不会加入关机电路，所以进入DEAD低功耗以后，为了能够
@@ -276,8 +280,15 @@ void Enable_ExternInt_Weekup(u8 use_key)
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE,GPIO_PinSource12);
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA,GPIO_PinSource8);
 
+	    #ifdef   NEW_Q55_BOARD_1113 
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD,GPIO_PinSource9);
 	if(use_key)
-		EXTI_InitStructure.EXTI_Line = EXTI_Line10|EXTI_Line_DC|EXTI_Line_SEAT;
+		EXTI_InitStructure.EXTI_Line = EXTI_Line2|EXTI_Line_DC|EXTI_Line_SEAT;			
+		#else	
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA,GPIO_PinSource8);
+	if(use_key)
+		EXTI_InitStructure.EXTI_Line = EXTI_Line10|EXTI_Line_DC|EXTI_Line_SEAT;		
+        #endif	
 	else
 		EXTI_InitStructure.EXTI_Line = EXTI_Line_DC|EXTI_Line_SEAT;
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;	   
@@ -286,7 +297,11 @@ void Enable_ExternInt_Weekup(u8 use_key)
 	EXTI_Init(&EXTI_InitStructure);
 	
 	if(use_key)
+	#ifdef   NEW_Q55_BOARD_1113 
+	    EXTI_ClearITPendingBit(EXTI_Line2);
+	#else
 		EXTI_ClearITPendingBit(EXTI_Line10);
+    #endif	
 	EXTI_ClearITPendingBit(EXTI_Line_DC);
 	EXTI_ClearITPendingBit(EXTI_Line_SEAT);
 }

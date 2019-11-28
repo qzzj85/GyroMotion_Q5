@@ -1677,6 +1677,51 @@ void RTC_IRQHandler(void)
 		}			
 }
 
+
+#ifdef   NEW_Q55_BOARD_1113   
+#ifdef TUYA_WIFI
+void USART2_IRQHandler(void)
+{
+#if 1
+	if(USART_GetITStatus(USART2,USART_IT_RXNE) != RESET) //
+	{ 
+#ifdef TUYA_WIFI
+		uart_receive_input((uint8_t)USART_ReceiveData(USART2));
+#endif
+		USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+	}
+	/* Òç³ö */
+	if(USART_GetFlagStatus(USART2,USART_FLAG_ORE) == SET)  
+		{ 
+			USART_ClearFlag(USART2,USART_FLAG_ORE); //¶ÁSR 
+			USART_ReceiveData(USART2); //¶ÁDR 
+		} 
+#else
+	u8 Res;
+	if(USART_GetITStatus(USART1, USART_IT_IDLE)!=RESET)
+		{
+			USART_ClearITPendingBit(USART1, USART_IT_IDLE);
+			Res=USART1->SR;
+			Res=USART1->DR;
+			Res=Res;
+			DMA_Cmd(DMA1_Channel5,DISABLE);
+			//	UART1.RevLength=USART1_RX_SIZE;
+			//	UART1.RevLength=DMA_GetCurrDataCounter(DMA1_Channel5);
+			UART1.RevLength=USART1_RX_SIZE-DMA_GetCurrDataCounter(DMA1_Channel5);
+			DMA_SetCurrDataCounter(DMA1_Channel5,USART1_RX_SIZE);
+
+			DMA_Cmd(DMA1_Channel5, DISABLE);
+			UART1.Rece_Done=true;	
+		}
+#endif
+}
+
+#endif
+
+#else //NEW_Q55_BOARD_1113   
+
+
+
 #ifdef TUYA_WIFI
 void USART1_IRQHandler(void)
 {
@@ -1714,6 +1759,7 @@ void USART1_IRQHandler(void)
 #endif
 }
 #endif
+#endif //  NEW_Q55_BOARD_1113   
 
 void USART3_IRQHandler(void)
 {
@@ -1774,7 +1820,12 @@ void DMA1_Channel7_IRQHandler(void)
 			//DMA_ClearFlag(DMA1_FLAG_TC4);
 			DMA_ClearITPendingBit(DMA1_FLAG_TC7);
 			DMA_Cmd(DMA1_Channel7,DISABLE);
-			UART1.Trans_Busy=false;
+#ifdef   NEW_Q55_BOARD_1113   
+   UART2.Trans_Busy=false;
+#else
+UART1.Trans_Busy=false;
+
+#endif			
 		}
 }
 

@@ -41,6 +41,7 @@
 	#define USART3_RX_SIZE	19//23
 #endif
 
+#if 0
 #define	USART2_TX_SIZE	128
 #define	USART2_RX_SIZE	128
 #ifdef TUYA_WIFI
@@ -65,6 +66,45 @@
 #define	USART1_RX_SIZE	128
 
 #endif	  	
+#endif
+
+#ifdef TUYA_WIFI
+	#define PROTOCOL_HEAD			0x07  // 需要和tuyasdk system.h里面一致 
+	#define WIFI_UART_QUEUE_LMT 			16			   
+	#define WIFI_UART_RECV_BUF_LMT			24 
+	#define WIFIR_UART_SEND_BUF_LMT 		48
+#endif
+
+#ifdef   NEW_Q55_BOARD_1113
+	#define USART1_TX_SIZE	128
+	#define USART1_RX_SIZE	128
+	#ifdef TUYA_WIFI
+		#define	USART2_TX_SIZE	PROTOCOL_HEAD + WIFIR_UART_SEND_BUF_LMT
+			#ifdef DMA_IRQ	 // DMA+串口中断方式
+				#define USART2_RX_SIZE	PROTOCOL_HEAD + WIFI_UART_RECV_BUF_LMT
+			#else  // DMA+查询方式	
+				#define USART2_RX_SIZE	128
+			#endif
+	#else
+		#define USART2_TX_SIZE	16
+		#define USART2_RX_SIZE	128
+	#endif
+#else
+	#define USART2_TX_SIZE	128
+	#define USART2_RX_SIZE	128
+	#ifdef TUYA_WIFI
+		#define USART1_TX_SIZE	PROTOCOL_HEAD + WIFIR_UART_SEND_BUF_LMT
+		#ifdef DMA_IRQ   // DMA+串口中断方式
+			#define	USART1_RX_SIZE	PROTOCOL_HEAD + WIFI_UART_RECV_BUF_LMT
+		#else  // DMA+查询方式  
+			#define	USART1_RX_SIZE	128
+		#endif
+	#else	
+		#define USART1_TX_SIZE	16
+		#define USART1_RX_SIZE	128
+	#endif
+#endif
+
 extern UART UART1;			//串口数据结构
 extern UART UART2;
 extern UART UART3;
@@ -129,6 +169,7 @@ void u3_printf(char* fmt,...);
 
 void DMA_USART2_TX_Length(u32 length);
 
+void DMA_USART1_TX_Length(u32 length);
 
 void USART2_Putc(u8 c);
 void USART2_Send_Enter(void);

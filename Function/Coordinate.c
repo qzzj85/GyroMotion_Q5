@@ -2713,7 +2713,7 @@ u8 Area_Check(u8 avoid_ybs)
 			Set_AreaWorkTime(10);
 		}
 	
-	if((!motion1.force_dock)&(Find_Leak_Area())	)					//寻找当前区域漏扫
+	if((!motion1.force_dock)&(Find_Leak_Area_II())	)					//寻找当前区域漏扫
 		{
 			TRACE("Go to LeakArea!!!\r\n");
 			motion1.first_leak_y=check_point.new_y2;
@@ -3336,7 +3336,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;																	//发现可进入点								
 												}
-											check_gridx++;
+											check_gridx--;
 										}									
 									TRACE("y1 can't find entry!\r\n");
 									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
@@ -3408,6 +3408,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;
 												}
+											check_gridx++;
 										}
 
 									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
@@ -3440,6 +3441,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;
 												}
+											check_gridx--;
 										}
 									TRACE("y1 can't find entry!\r\n");
 									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
@@ -3515,6 +3517,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;
 												}
+											check_gridx++;
 										}
 
 									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
@@ -3547,6 +3550,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;
 												}
+											check_gridx--;
 										}
 									TRACE("y1 can't find entry!\r\n");
 									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
@@ -3619,6 +3623,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;																	//发现可进入点								
 												}
+											check_gridx++;
 										}
 
 									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
@@ -3653,6 +3658,7 @@ u8 Find_Leak_Area_II(void)
 													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
 													return 1;																	//发现可进入点								
 												}
+											check_gridx--;
 										}
 									TRACE("y1 can't find entry!\r\n");
 									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			

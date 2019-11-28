@@ -4478,6 +4478,9 @@ void Set_ZS_Level(u16 level)
 
 void Sweep_Level_Set(u16 sweep_level)
 {
+	if(mode.mode==DOCKING)
+		sweep_level=SWEEP_LEVEL_DOCK;
+
 	switch (sweep_level)
 		{
 			case SWEEP_LEVEL_STOP:

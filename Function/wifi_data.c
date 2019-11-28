@@ -250,7 +250,11 @@ void mcu_wifi_proc_key(void)
 		}
 	else  
 		{
+#ifdef   NEW_Q55_BOARD_1113   
+                           if ((Read_MapData_Status() == 1)&&(UART2.Trans_Busy==0))
+#else
 			if ((Read_MapData_Status() == 1)&&(UART1.Trans_Busy==0))
+#endif			
 				{
 					for (i=0;i< WIFIDATA_LEN;i++)
 						{

@@ -215,12 +215,21 @@ void u3_printf(char* fmt,...)
 
 void u2_printf(char* fmt,...)  
 {  
-	while(DMA1_Channel7->CNDTR!=0);	//等待通道2传输完成 
-	va_list ap;
-	va_start(ap,fmt);
-	vsprintf((char*)USART2_TX_BUF,fmt,ap);
-	va_end(ap);
-	DMA_USART2_TX_Length(strlen((const char*)USART2_TX_BUF));
+#ifdef   NEW_Q55_BOARD_1113   
+			  while(DMA1_Channel4->CNDTR!=0); //等待通道2传输完成 
+			  va_list ap;
+			  va_start(ap,fmt);
+			  vsprintf((char*)USART1_TX_BUF,fmt,ap);
+			  va_end(ap);
+			  DMA_USART1_TX_Length(strlen((const char*)USART1_TX_BUF));
+  #else     
+		while(DMA1_Channel7->CNDTR!=0); //等待通道2传输完成 
+		va_list ap;
+		va_start(ap,fmt);
+		vsprintf((char*)USART2_TX_BUF,fmt,ap);
+		va_end(ap);
+		DMA_USART2_TX_Length(strlen((const char*)USART2_TX_BUF));
+#endif
 }
 			
 //LRC 异或校验
@@ -586,6 +595,22 @@ bool command_check2(unsigned char p,unsigned char length)
 }
 
 #ifdef   TUYA_WIFI
+#ifdef   NEW_Q55_BOARD_1113   
+void Uart1_send(u8 *temp1 ,unsigned short count1)
+{
+   u8 i= 0;
+   
+   for (i=0;i<count1;i++)
+   	    USART2_TX_BUF[i] = *temp1++;
+   
+   UART2.TxdDataNum = count1;	
+
+   USART2_TX_DMA_Enable();
+   UART2.Trans_Busy = true;
+   while (UART2.Trans_Busy == 1) ;
+}
+
+#else
 void Uart1_send(u8 *temp1 ,unsigned short count1)
 {
    u8 i= 0;
@@ -599,6 +624,8 @@ void Uart1_send(u8 *temp1 ,unsigned short count1)
    UART1.Trans_Busy = true;
    while (UART1.Trans_Busy == 1) ;
 }
+#endif
+
 #endif
 
 void Uart1_Comunication(void)
@@ -852,6 +879,13 @@ void URAT1_init(u32 bound)
 
     USART_Init(USART1, &USART_InitStructure); //初始化串口
 
+
+#ifdef   NEW_Q55_BOARD_1113   
+    USART_Cmd(USART1, ENABLE);					  //使能串口 
+    USART_ClearFlag(USART1, USART_FLAG_TC); 		//解决第一个字节无法发送问题	
+#else//NEW_Q55_BOARD_1113   
+
+
 #ifndef TUYA_WIFI
 	USART_Cmd(USART1, ENABLE);					  //使能串口 
 	USART_ClearFlag(USART1, USART_FLAG_TC); 		//解决第一个字节无法发送问题	
@@ -876,6 +910,7 @@ void URAT1_init(u32 bound)
     USART_ClearFlag(USART1,USART_FLAG_TC);
     USART_Cmd(USART1, ENABLE); 
 #endif
+#endif	
 #endif	
 }
 //============================================================================================
@@ -909,7 +944,12 @@ void DMA_Uart1Tx_Config(u16 DataLength)
 	DMA_Init(DMA_UART1_Tx, &DMA_InitStructure);  				//根据DMA_InitStruct中指定的参数初始化DMA的通道USART1_Tx_DMA_Channel所标识的寄存器
   	DMA_ITConfig(DMA_UART1_Tx, DMA_IT_TC, ENABLE);		  //使能发送完成中断
   	USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);		  //使能USART1发送配置
+ #ifdef NEW_Q55_BOARD_1113
+          DMA_Cmd(DMA_UART1_Tx,ENABLE); 	 // 调试口 需要提前打开, 把datalength 置空   ,否则 调试发送就不能执行 
+ #else
 	DMA_Cmd(DMA_UART1_Tx,DISABLE);						  				//失效DMA发送
+#endif
+
 //#ifndef TUYA_WIFI
 
 	NVIC_InitStructure.NVIC_IRQChannel	=	DMA1_Channel4_IRQn;		   				//DMA_UART1_Tx
@@ -961,14 +1001,24 @@ void UART_TX_DMA_Enable(void)
 	DMA_Cmd(DMA_UART1_Tx, DISABLE );  //关闭USART1 TX DMA1 所指示的通道 
  	DMA_SetCurrDataCounter(DMA1_Channel4,UART1.TxdDataNum);//DMA通道的DMA缓存的大小
  	DMA_Cmd(DMA_UART1_Tx, ENABLE);  //使能USART1 TX DMA1 所指示的通道 
-}	  
+}	
+
+#ifdef   NEW_Q55_BOARD_1113   
+void DMA_USART1_TX_Length(u32 length)
+{
+	DMA_Cmd(DMA_UART1_Tx, DISABLE);		//关闭DMA,防止处理其间有数据
+	DMA_UART1_Tx->CNDTR = length;			//重装填
+	DMA_Cmd(DMA_UART1_Tx,ENABLE); 		//使能串口1的DMA发送  
+}
+#endif
+
 //============================================================================================
 
 void USART2_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
-//	NVIC_InitTypeDef NVIC_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
 
 	//UART2.RevLength=128;
 
@@ -1009,8 +1059,41 @@ void USART2_Init(void)
 	USART_ITConfig(USART2,USART_IT_RXNE,DISABLE);
 	USART_ITConfig(USART2,USART_IT_TC,DISABLE);
 #endif
+
+
+#ifndef   NEW_Q55_BOARD_1113   
+USART_Cmd(USART2,ENABLE);
+USART_ClearFlag(USART2, USART_FLAG_TC); 		//解决第一个字节无法发送问题	
+#else //NEW_Q55_BOARD_1113   
+ 
+#ifdef TUYA_WIFI
+	//mask
+	NVIC_InitStructure.NVIC_IRQChannel=USART2_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=4;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+	//mask
+#ifdef DMA_IRQ // DMA  + 串口中断方式 
 	USART_Cmd(USART2,ENABLE);
-	USART_ClearFlag(USART2, USART_FLAG_TC);		    //解决第一个字节无法发送问题	
+	
+	USART_ClearITPendingBit(USART2,USART_IT_IDLE);		//mask
+	USART_ITConfig(USART2,USART_IT_IDLE,ENABLE);		//mask
+	USART_ITConfig(USART2,USART_IT_RXNE,DISABLE);		//mask
+	USART_ITConfig(USART2,USART_IT_TC,DISABLE); 		//mask
+	USART_ClearFlag(USART2, USART_FLAG_TC); 		//解决第一个字节无法发送问题
+#else // 普通中断模式 
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+    USART_ClearFlag(USART2,USART_FLAG_TC);
+    USART_Cmd(USART2, ENABLE); 
+#endif
+#endif	
+
+
+#endif//NEW_Q55_BOARD_1113   
+
+
+	
 }
 
 void USART2_DMA_TX_Init(u16 BufferSize)

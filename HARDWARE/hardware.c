@@ -39,6 +39,25 @@ void  Init_System(void)
 	init_time_2();        				//Timer2 10K中断  计数器，用于系统的基本心跳
 	Init_Hardware();    				//初始化系统的硬件，如有移植需要修改
 	URAT1_init(115200);
+
+#ifdef   NEW_Q55_BOARD_1113   
+         USART2_Init();
+#ifdef TUYA_WIFI
+         USART2_DMA_TX_Init(USART1_TX_SIZE);
+#ifdef DMA_IRQ 
+        USART2_DMA_RX_Init(USART1_RX_SIZE);
+#endif
+	wifi_protocol_init();
+#else			
+	USART2_DMA_TX_Init(16);
+	USART2_DMA_RX_Init(128);	
+#endif		
+	 URAT1_init(115200);
+         DMA_Uart1Tx_Config(USART1_TX_SIZE);
+         DMA_Uart1Rx_Config(USART1_RX_SIZE);
+#else //NEW_Q55_BOARD_1113  
+
+        URAT1_init(115200);
 #ifdef TUYA_WIFI
 	DMA_Uart1Tx_Config(USART1_TX_SIZE);
 #ifdef DMA_IRQ 
@@ -52,6 +71,25 @@ void  Init_System(void)
 	USART2_Init();
 	USART2_DMA_TX_Init(16);
 	USART2_DMA_RX_Init(USART2_RX_SIZE);
+#endif// NEW_Q55_BOARD_1113   
+
+
+#if 0
+	
+#ifdef TUYA_WIFI
+	DMA_Uart1Tx_Config(USART1_TX_SIZE);
+#ifdef DMA_IRQ 
+	DMA_Uart1Rx_Config(USART1_RX_SIZE);
+#endif
+	wifi_protocol_init();
+#else			
+	DMA_Uart1Tx_Config(16);
+	DMA_Uart1Rx_Config(128);
+#endif		
+	USART2_Init();
+	USART2_DMA_TX_Init(16);
+	USART2_DMA_RX_Init(USART2_RX_SIZE);
+#endif	
 	USART3_Init();
 	USART3_DMA_TX_Init(USART3_TX_SIZE);
 	USART3_DMA_RX_Init(USART3_RX_SIZE);
@@ -119,14 +157,23 @@ void Init_Hardware (void)
 	 /////////////////////////PA口浮空输入：
   	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
   	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
-	GPIO_InitStructure.GPIO_Pin=CHARGE_SEAT|VOICE_BUSY_PIN;		//左边扫保护引脚，暂时按照GPIO读取
+  #ifdef   NEW_Q55_BOARD_1113 
+			GPIO_InitStructure.GPIO_Pin=VOICE_BUSY_PIN;   //左边扫保护引脚，暂时按照GPIO读取
+  #else
+		GPIO_InitStructure.GPIO_Pin=CHARGE_SEAT|VOICE_BUSY_PIN; 	//左边扫保护引脚，暂时按照GPIO读取
+#endif
+
 	GPIO_Init(GPIOA,&GPIO_InitStructure);
 	///////////////////////PB浮空输入
   	///////////////////////PC浮空输入
   	GPIO_InitStructure.GPIO_Pin=KEY_3;
   	GPIO_Init(GPIOC, &GPIO_InitStructure);  
   	///////////////////////PD浮空输入
+  #ifdef   NEW_Q55_BOARD_1113 
+    	GPIO_InitStructure.GPIO_Pin =L_HW|R_HW|LM_HW|LB_HW|RM_HW|RB_HW|CHARGE_SEAT ;
+  #else
   	GPIO_InitStructure.GPIO_Pin =L_HW|R_HW|LM_HW|LB_HW|RM_HW|RB_HW;
+  #endif	
   	GPIO_Init(GPIOD, &GPIO_InitStructure);  
   ///////////////////////PE浮空输入 
   	GPIO_InitStructure.GPIO_Pin =CHARGE_DC|R_SPEED|L_SPEED|PWR_SWITCH_PIN|KEY_2|FAN_SPEED_PIN|MB_SPEED_PIN;
@@ -168,15 +215,26 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 
 	//////////////////////////PA口推挽输出///////////////////
+ #ifndef   NEW_Q55_BOARD_1113 	
 	GPIO_InitStructure.GPIO_Pin = GYRO_CAL_PIN;
+         GPIO_Init(GPIOA,&GPIO_InitStructure);
+#endif		
     GPIO_Init(GPIOA,&GPIO_InitStructure);
 	/////////////////////////PB口推挽输出///////////////////
   	GPIO_InitStructure.GPIO_Pin = VOICE_CLK|VOICE_DATA|RING_PWM_CTL_PIN|LSB_PWR_PIN; 
     GPIO_Init(GPIOB,&GPIO_InitStructure);
 	/////////////////////////PC口推挽输出///////////////////
-	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN|RSB_PWR_PIN;
+#ifdef GYRO_PWM_RUN_STATE
+    GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN |RSB_PWR_PIN| GYRO_PWM_RUN_PIN;
+#else
+    GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN|RSB_PWR_PIN;
+#endif	
     GPIO_Init(GPIOC,&GPIO_InitStructure);
+	#ifdef   NEW_Q55_BOARD_1113 
+	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN|GYRO_CAL_PIN;
+	#else
 	GPIO_InitStructure.GPIO_Pin=HOLDPWR_PIN|BAT_CHECK_PIN|PWR3V3_PIN|PWR5V_PIN|LED_RED|LED_GREEN|HW_POWER;
+         #endif	
     GPIO_Init(GPIOD,&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Pin=WALL_SEND|EARTH_SEND|FAN_PWR_CTL;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
@@ -193,6 +251,9 @@ void Init_Hardware (void)
 	BAT_CHECK_1;			//拉高电池电压检测
 	Enable_RingPWMCtrl();
 	Open_Ring_Cnt();
+#ifdef 		GYRO_PWM_RUN_STATE
+            GYRO_PWM_RUN_1;
+#endif	
 /**************************/
 //
 //开漏开漏开漏开漏开漏开漏开漏
@@ -351,8 +412,11 @@ void Set_R_BackOnOff(void)
 功能：置高
 ***********************************************************/
 void Set_HW_Power_ON(void)
-{           
-	GPIO_ResetBits(GPIO_HWPWR, HW_POWER);
+{      
+#ifndef	 NEW_Q55_BOARD_1113 
+	
+		GPIO_ResetBits(GPIO_HWPWR, HW_POWER);
+#endif
 }
 
 
@@ -458,7 +522,11 @@ void Reset_R_BackOnOff(void)
 ***********************************************************/
 void Reset_HW_Power_OFF(void)
 { 
-	GPIO_SetBits(GPIO_HWPWR, HW_POWER);
+#ifndef	 NEW_Q55_BOARD_1113 
+	
+		GPIO_ResetBits(GPIO_HWPWR, HW_POWER);
+#endif
+
 }
 //=============
 
@@ -622,7 +690,13 @@ u8 Read_Charge_Seat(void)
 #ifndef OUT_8MHZ
 	return GPIO_ReadInputDataBit(GPIO_SEAT, CHARGE_SEAT)  ;
 #else
+
+  #ifdef   NEW_Q55_BOARD_1113 
+	  return GPIO_ReadInputDataBit(GPIO_SEAT, CHARGE_SEAT)	;
+  #else 
 	return 0;
+ #endif   
+
 #endif
 }
  

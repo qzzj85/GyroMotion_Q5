@@ -128,8 +128,13 @@ void init_time_2(void)
 	TIM_ITConfig(TIM2, TIM_IT_Update , ENABLE);
 
 	NVIC_InitStructure.NVIC_IRQChannel 										= TIM2_IRQn;
+#ifdef MILE_COMPENSATION
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority	= 0;	
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority				= 1;  
+#else
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority 	= 1;	
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority 				= 0;  
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority				= 0;  
+#endif
 	NVIC_InitStructure.NVIC_IRQChannelCmd 								= ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }

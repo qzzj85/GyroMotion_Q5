@@ -38,7 +38,7 @@ void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r)
 	r_length_temp=r_ring.speed_length-r_ring.last_speed_length;
 	r_ring.last_speed_length=r_ring.speed_length;
 
-#ifdef STOP_SPD_CNT
+#if 0 //def STOP_SPD_CNT
 	if(l_length_temp)
 		{
 			l_ring.stop_buf[0]=l_ring.stop_buf[1];
@@ -246,24 +246,7 @@ void ACC_DEC_Comm_rap_My (void)
 							disable_pwm(L_BACK);
 							disable_pwm(L_FRONT);
 #ifdef MILE_COMPENSATION
-#ifdef STOP_SPD_CNT
-							l_ring.stop_spd=0;
-							for(int i=0;i<10;i++)
-								{
-									l_ring.stop_spd+=l_ring.stop_buf[i];
-									l_ring.stop_buf[i]=0;
-								}					
-							l_ring.stop_spd=l_ring.stop_spd*10;
-#else
-							//l_ring.stop_spd=l_rap.rap_run;
-							l_ring.stop_spd=l_rap.rap;
-#endif
-							l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
-							//TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
-							if(l_rap.ori==FRONT)
-								l_ring.all_length+=l_ring.cal_length;
-							else if(l_rap.ori==BACK)
-								l_ring.all_length-=l_ring.cal_length;
+
 #endif					
 							l_rap.sign		= 0;
 							l_rap.pwm			= 0;
@@ -271,24 +254,9 @@ void ACC_DEC_Comm_rap_My (void)
 							l_rap.rap_run=0;
 						}
 #ifdef MILE_COMPENSATION
-#ifdef STOP_SPD_CNT
-					r_ring.stop_spd=0;
-					for(int i=0;i<10;i++)
-						{
-							r_ring.stop_spd+=r_ring.stop_buf[i];
-							r_ring.stop_buf[i]=0;
-						}
-					r_ring.stop_spd=r_ring.stop_spd*10;
-#else
-					//r_ring.stop_spd=r_rap.rap_run;
-					r_ring.stop_spd=r_rap.rap;
-#endif
-					r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
-					//TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
-					if(r_rap.ori==FRONT)
-						r_ring.all_length+=r_ring.cal_length;
-					else if(r_rap.ori==BACK)
-						r_ring.all_length-=r_ring.cal_length;
+					Close_Ring_Cnt();
+					back_speed();
+					Open_Ring_Cnt();
 #endif					
 					r_rap.sign		= 0;
 					r_rap.pwm			= 0;
@@ -318,24 +286,7 @@ void ACC_DEC_Comm_rap_My (void)
 							disable_pwm(R_FRONT);
 							disable_pwm(R_BACK);
 #ifdef MILE_COMPENSATION
-#ifdef STOP_SPD_CNT
-							r_ring.stop_spd=0;
-							for(int i=0;i<10;i++)
-								{
-									r_ring.stop_spd+=r_ring.stop_buf[i];
-									r_ring.stop_buf[i]=0;
-								}
-							r_ring.stop_spd=r_ring.stop_spd*10;
-#else
-							//r_ring.stop_spd=r_rap.rap_run;
-							r_ring.stop_spd=r_rap.rap;
-#endif
-							r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
-							TRACE("length_cal_data=%d\r\n",r_ring.cal_length);
-							if(r_rap.ori==FRONT)
-								r_ring.all_length+=r_ring.cal_length;
-							else if(r_rap.ori==BACK)
-								r_ring.all_length-=r_ring.cal_length;
+
 #endif					
 							r_rap.sign		= 0;
 							r_rap.pwm			= 0;
@@ -343,24 +294,9 @@ void ACC_DEC_Comm_rap_My (void)
 							r_rap.rap_run=0;
 						}
 #ifdef MILE_COMPENSATION
-#ifdef STOP_SPD_CNT
-					l_ring.stop_spd=0;
-					for(int i=0;i<10;i++)
-						{
-							l_ring.stop_spd+=l_ring.stop_buf[i];
-							l_ring.stop_buf[i]=0;
-						}					
-					l_ring.stop_spd=l_ring.stop_spd*10;
-#else
-					//l_ring.stop_spd=l_rap.rap_run;
-					l_ring.stop_spd=l_rap.rap;
-#endif
-					l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
-					TRACE("length_cal_data=%d\r\n",l_ring.cal_length);
-					if(l_rap.ori==FRONT)
-						l_ring.all_length+=l_ring.cal_length;
-					else if(l_rap.ori==BACK)
-						l_ring.all_length-=l_ring.cal_length;
+					Close_Ring_Cnt();
+					back_speed();
+					Open_Ring_Cnt();
 #endif					
 					l_rap.sign		= 0;
 					l_rap.pwm			= 0;

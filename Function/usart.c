@@ -713,6 +713,7 @@ void Uart3_Communication(void)
 
 void Uart3_Communication_II(void)
 {
+	int data1=0;	
 	u16 cnt_checksum=0,rece_checksum=0,num=0;
 	unsigned char COMBUF3[USART3_RX_SIZE];
 //	short temp_x=0,temp_y=0;
@@ -803,6 +804,15 @@ void Uart3_Communication_II(void)
 				Gyro_Data.y_acc=(COMBUF3[12]<<8)+COMBUF3[11];
 				Gyro_Data.z_acc=(COMBUF3[14]<<8)+COMBUF3[13];
 				Gyro_Data.start_check_time=giv_sys_time;
+
+				if(turn_stop_enable)
+					{
+						data1=abs(Gyro_Data.yaw-turn_stop_angle);
+						if(data1>DEGREE_180)
+							data1=DEGREE_360-data1;
+						if(data1<TURN_ANGLE_BIOS)
+							turn_stop_flag=true;
+					}
 			}
 	}
 

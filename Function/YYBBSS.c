@@ -52,6 +52,7 @@ void YBS_YBS(void)
 	u8 temp_data1=0;
 	u8 abnormal;
 	u32 uin32;
+	static short tgt_yaw=0;
 
 #if 1		
 #ifdef DC_NOBAT_RUN
@@ -96,6 +97,15 @@ void YBS_YBS(void)
 	
 //	YBS_Wall_Count();		//qz add 20180902
 
+	if(giv_sys_time-mode.time>25*10000)
+		{
+			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
+				{
+					Send_Voice(VOICE_SWEEP_DONE);
+					Init_Docking();
+				}
+		}
+
 	abnormal=Read_Protect();
 	if(mode.abnormity)
 		{
@@ -122,18 +132,13 @@ void YBS_YBS(void)
 		}
 			
 	if(mode.bump != 0)		//	有碰撞需要处理，返回d
-			{
-				//Wall_lost_counter = 0;
-				if(mode.step>=0x88)
-					{
-						if(mode.sub_mode==YBS_SUB_RIGHT)
-						{
-							//mode.step=0x00;			//qz mask 20180910
-						}
-						else
-							mode.step=0x40;
-					}
-
+		{
+			//Wall_lost_counter = 0;
+			if((mode.step==0x90)|(mode.step==0x91))
+				{
+					grid.x_ybs_start=grid.x;
+					grid.y_ybs_start=grid.y;
+				}
 
 #ifdef YBS_DIS_RESTORE
 			Disable_Rotate_Angle();
@@ -585,33 +590,14 @@ void YBS_YBS(void)
 					}
 				break;
 
-			case 0xE0:
-				Speed=1000;
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					temp_data1=1;
-				else
-					temp_data1=2;
-				if(do_action(temp_data1,180*Angle_1))
-					{
-						stop_rap();
-						mode.step++;
-					}
-				break;
-			case 0xE1:
-				if(mode.sub_mode==YBS_SUB_LEFT)
-					{
-						Init_Right_YBS(1);
-					}
-				else
-					{
-						Init_Left_YBS(1);
-					}
-				break;
-
 			//y坐标回溯超过20cm时，开启左沿边
 			case 0x90:
-				stop_rap();
-				Init_YBS_Exchange(YBS_SUB_RIGHT);
+				tgt_yaw=Gyro_Data.yaw;
+				mode.step++;
+				break;
+			case 0x91:
+				Speed=FAST_MOVE_SPEED;
+				do_action_my(3,FARAWAY*CM_PLUS,tgt_yaw);
 				break;
 		}	//	end of		switch (mode.step)	//step路径执行的步骤
 }
@@ -1593,7 +1579,7 @@ static int32_t xxxx_2;
 /*****************************************************************
 功能：初始化定点清扫的程序
 *****************************************************************/
-void Init_Right_YBS(u8 direct_first)
+void Init_Right_YBS(u8 pre_action,bool start_seat)
 {
 
 	if(mode.low_power)
@@ -1622,19 +1608,28 @@ void Init_Right_YBS(u8 direct_first)
 	mode.mode = YBS;			
 	mode.sub_mode = YBS_SUB_RIGHT;		
 	mode.step_bp = 0;
-	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
 	mode.All_Info_Abort=0;			//qz add 20180919
-
+	mode.time=giv_sys_time;
 	mode.status=1;
-	if(direct_first)
+	if(pre_action)
 		{
-			mode.step = 0x88;//QZ:原来为0x88;
+			mode.step = 0x90;//0x88;//QZ:原来为0x88;
 		}
 	else
 		{
 			mode.step = 0;
 		}
+
+	if(start_seat)
+		{
+			motion1.start_seat=true;
+		}
+	else
+		{
+			motion1.start_seat=false;
+		}
+	
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();			//打开万向轮检测	
 #endif
@@ -1650,7 +1645,6 @@ void Init_Right_YBS(u8 direct_first)
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Right YBS Mode Complete!\r\n");
 #endif
-
 
 	Sweep_Level_Set(sweep_level);
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
@@ -1716,94 +1710,6 @@ void Init_Left_YBS(u8 direct_first)
 	YBS_check_base=false;
 	CHECK_STATUS_FLAG=true;			//使能异常检测
 	Init_Check_Status();
-}
-
-//在沿边状态下，切换为另一沿边
-//返回0：不成功，返回1：成功
-u8 Init_YBS_Exchange(u8 next_ybs_mode)
-{
-	if((next_ybs_mode!=YBS_SUB_LEFT)&(next_ybs_mode!=YBS_SUB_RIGHT))
-		return 0;
-	mode.last_mode=mode.mode;
-	mode.last_sub_mode=mode.sub_mode;
-	/******初始化显示***********/
-	
-	clr_ram();
-	Enable_earth(); 					//打开地检
-	Enable_wall();						//打开墙检
-	enable_hwincept();					//允许红外接收电源
-	Enable_Speed(); 				//打开速度检测
-	 
-	Init_Action();
-	//	ReInitAd();
-	clr_all_hw_effect();				//清零回充信号标志
-	WriteWorkState();					//功能：保存工作状态
-	
-
-	mode.mode = YBS;			
-	mode.sub_mode = YBS_SUB_EXCHANGE;
-	mode.step=0;
-	mode.step_bp = 0;
-	mode.bump = 0;
-	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
-	mode.time=giv_sys_time;
-	if(next_ybs_mode==YBS_SUB_LEFT)
-		YBS2leftright=false;//QZ:原来为0x88;
-	else
-		YBS2leftright=true;
-	Enable_Free_Skid_Check();			//打开万向轮检测 
-
-#ifdef ROTATE_SKID_CHECK	
-	//Enable_Rotate_Skid_Check(0);
-#endif
-
-	while(giv_sys_time-mode.time<1000);
-	motion1.xpos_ybs_start=Gyro_Data.x_pos;
-	motion1.ypos_ybs_start=Gyro_Data.y_pos;
-#ifdef DEBUG_Enter_Mode
-	TRACE("Init EXCHANGE YBS Mode Complete!\r\n");
-#endif
-	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
-	return 1;
-}
-
-void Do_YBS_Exchange(void)
-{
-	u8 turn_dir=0;
-	
-	YBS_Comm_Rap_My();
-	
-	switch(mode.step)
-		{
-			case 0:
-				if(!YBS2leftright)
-					{
-						turn_dir=1;
-
-					}
-				else
-					{
-						turn_dir=2;
-					}
-				Speed=1000;
-				if(do_action(turn_dir,180*Angle_1))
-					{
-						stop_rap();
-						mode.step++;
-					}
-				break;
-			case 1:
-				if(!YBS2leftright)
-					{
-						Init_Left_YBS(1);
-					}
-				else
-					{
-						Init_Right_YBS(1);
-					}
-				break;
-		}
 }
 
 u8 Parse_ContinueInYBS(s8 now_gridx,s8 now_gridy)

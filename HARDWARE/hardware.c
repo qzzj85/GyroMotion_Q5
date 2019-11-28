@@ -137,7 +137,7 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_8;		//左边扫保护引脚，暂时按照GPIO读取
 	GPIO_Init(GPIOA,&GPIO_InitStructure);
-	RCC_MCOConfig(RCC_MCO_HSI);
+	RCC_MCOConfig(RCC_MCO_HSE);
 #endif
 /**************************/
 //

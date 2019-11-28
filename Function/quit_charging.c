@@ -112,9 +112,13 @@ void Do_Quit_Chargeing(void)
 							Init_First_Sweep(1);
 							break;
 						case SWEEP_METHOD_YBS:
-							Init_Right_YBS(1);
+							Reset_XY();
+							delay_ms(3000);
+							Init_Right_YBS(1,1);
 							break;
 						case SWEEP_METHOD_SPOT:
+							Reset_XY();
+							delay_ms(3000);
 							Init_Sweep_Spot(SPOT_FROM_CHARGE);
 							break;
 					}

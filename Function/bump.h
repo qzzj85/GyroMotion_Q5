@@ -67,4 +67,7 @@ void Close_Bump_Exit(void);
 void Open_Ring_Cnt(void);
 void Close_Ring_Cnt(void);
 
+void back_speed(void);
+
+
 #endif

@@ -1,6 +1,7 @@
 #ifndef CORDINATE_H
 #define	CORDINATE_H
 
+#define	DEGREE_05			500
 #define	DEGREE_10			1000
 #define	DEGREE_30			3000
 #define DEGREE_180			18000
@@ -40,6 +41,10 @@ extern GRID grid;
 extern CHECK_POINT check_point;
 extern short gridy_pos[GRIDY_POS_CNT],gridx_pos[GRIDY_POS_CNT];
 extern GYRO_BIOS gyro_bios;
+extern short turn_stop_angle;
+extern bool  turn_stop_flag;
+extern bool	 turn_stop_enable;
+
 void Cal_xy(void);
 void Record_Coordinate_Intime(void);
 void Logout_Area_Coordinate(void);
@@ -97,6 +102,8 @@ void Set_Coordinate_Clean(s8 gridx,s8 gridy);
 void Set_Coordinate_Seat(s8 xgrid,s8 ygrid);
 
 u8 Analysis_Fake_Leak(s8 xcheck,s8 ycheck,u8 dir);
+
+u8 Find_Leak_Area_II(void);
 
 #endif
 

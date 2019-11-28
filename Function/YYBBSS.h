@@ -2,7 +2,7 @@
 #define YYBBSS_H_
 
 
-#define TURN_SPEED 		MID_MOVE_SPEED//500//1000
+#define TURN_SPEED 		HIGH_MOVE_SPEED//MID_MOVE_SPEED//500//1000
 //qz add 20180314
 #define		CLIFF_BACK_LENGTH		5	//cm
 
@@ -90,7 +90,7 @@ uint16_t  Return_Distance(uint16_t data);
 void  	YBS_Left_Distance_Check(void);
 void  	YBS_Left_Check_corner(void);
 void 	YBS_YBS(void);
-void 	Init_Right_YBS(u8 direct_first);
+void Init_Right_YBS(u8 pre_action,bool start_seat);
 void 	Init_Left_YBS(u8 direct_first);
 
 u8 		YBS_YaoKong_Manage(void);	

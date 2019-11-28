@@ -215,7 +215,9 @@ void Remote_Handle(void)
 										DelayMs(1);
 										stream_start(00);// ¿ªÊ¼´«Êä
 #endif
-										Init_Right_YBS(1);
+										Reset_XY();
+										delay_ms(3000);
+										Init_Right_YBS(1,0);
 									break;
 									case SLEEP:
 										Init_Cease();

@@ -945,8 +945,12 @@ void Motor_task(void)
 ******************************************************/
 void stop_rap(void)
 {
+#ifdef MILE_COMPENSATION
+    stop();
+#else
 	Disable_RingPWMCtrl();
 	stop();
+#endif
 //	l_rap.pulse		=	0;     
 	l_ring.length	=	0;
 //	r_rap.pulse		=	0;     
@@ -1008,37 +1012,9 @@ void stop(void)
 #ifdef MILE_COMPENSATION
 	if((!bump_value)&((r_rap.sign)|(l_rap.sign)))
 		{
-#ifdef STOP_SPD_CNT
-			l_ring.stop_spd=0;r_ring.stop_spd=0;
-			for(int i=0;i<10;i++)
-				{
-					l_ring.stop_spd+=l_ring.stop_buf[i];
-					r_ring.stop_spd+=r_ring.stop_buf[i];
-					l_ring.stop_buf[i]=0;
-					r_ring.stop_buf[i]=0;
-				}
-
-			r_ring.stop_spd=r_ring.stop_spd*10;
-			l_ring.stop_spd=l_ring.stop_spd*10;
-#else
-			r_ring.stop_spd=r_rap.rap_run;
-			l_ring.stop_spd=l_rap.rap_run;
-			r_ring.stop_spd=r_rap.rap;
-			l_ring.stop_spd=l_rap.rap;
-#endif
-			r_ring.cal_length=r_ring.stop_spd*r_ring.stop_spd/LENGTH_CAL;
-			if(r_rap.ori==FRONT)
-				r_ring.all_length+=r_ring.cal_length;
-			else if(r_rap.ori==BACK)
-				r_ring.all_length-=r_ring.cal_length;
-
-			l_ring.cal_length=l_ring.stop_spd*l_ring.stop_spd/LENGTH_CAL;
-			if(l_rap.ori==FRONT)
-				l_ring.all_length+=l_ring.cal_length;
-			else if(l_rap.ori==BACK)
-				l_ring.all_length-=l_ring.cal_length;
-			//TRACE("l_rap=%d spd=%d cal=%d\r\n",l_rap.rap,l_ring.stop_spd,l_ring.cal_length);
-			//TRACE("r_rap=%d spd=%d cal=%d\r\n",r_rap.rap,r_ring.stop_spd,r_ring.cal_length);
+	    Close_Ring_Cnt();
+        back_speed();
+        Open_Ring_Cnt();
 		}
 #endif
 	l_rap.sign=0;

@@ -53,6 +53,10 @@ float  old_angle = 0;
 float  r1;	
 #endif
 
+short turn_stop_angle=0;
+bool  turn_stop_flag=false;
+bool  turn_stop_enable=false;
+
 //COORDINATE coordinate[COORDI_XLENGTH][COORDI_YLENGTH] __attribute__((at(0x20002000)));//qz add 20190307:4mX4m空间的坐标格,每20cm一个坐标
 volatile u8 coordinate[COORDI_YLENGTH+1][COORDI_XLENGTH+1] __attribute__((at(0x20008000)));		//坐标格信息，高6位表示区域编号（从1号开始），低2位表示CLEAN和WALL标志
 int x_max[20];		//x_max为20个y坐标上，每个y坐标能到达的最大x坐标。
@@ -82,13 +86,20 @@ void Cal_Grid_Pos(void)
 }
 
 #ifdef 	GYRO_ROTATE_DET
-       unsigned int gyro_det_time;
-       short  old_det_angle = 0;
-       float  gyro_angle = 0;   	   
-       float  machine_angle = 0; 
-	     float  temp_angle = 0;  
-       bool gyro_det_flag = FALSE   ;
+	unsigned int gyro_det_time;
+	short  old_det_angle = 0;
+	float  gyro_angle = 0;   	   
+	float  machine_angle = 0; 
+	float  temp_angle = 0;  
+	bool gyro_det_flag = FALSE   ;
 #endif
+#ifdef STOP_SPD_CNT
+	u8  stop_spd_count_l = 0;
+	u8	stop_spd_count_r = 0;
+	int  last_r_len = 0;
+	int last_l_len = 0;
+#endif
+
 void Cal_xy(void)
 {
 #if  0
@@ -137,10 +148,29 @@ void Cal_xy(void)
   	float m_dis;//,m_angle ;
   	float r_length_temp,l_length_temp;
 
-	//r_length = R_all_length - last_r_all_length;
-	//l_length = L_all_length - last_l_all_length;	
-	//last_l_all_length = L_all_length ;
-	//last_r_all_length = R_all_length ;
+
+#ifdef STOP_SPD_CNT
+	int   l_length_t, r_length_t;
+	r_length_t =r_ring.all_length-last_r_len;
+	l_length_t =l_ring.all_length-last_l_len;		 
+	if((l_length_t)&&(l_rap.sign))
+		{
+			l_ring.stop_buf[stop_spd_count_l]=l_length_t;
+			if(stop_spd_count_l++>9) 
+				stop_spd_count_l = 0;
+		}
+
+	if((r_length_t)&&(r_rap.sign))
+		{
+			r_ring.stop_buf[stop_spd_count_r]=r_length_t;
+			if(stop_spd_count_r++>9) 
+				stop_spd_count_r = 0;
+		}
+	last_l_len = l_ring.all_length;
+	last_r_len = r_ring.all_length;
+#endif
+
+
 	r_length_temp=(float)(r_ring.all_length)/2;
 	l_length_temp=(float)(l_ring.all_length)/2;
 	r_length=r_length_temp-last_r_all_length;
@@ -503,9 +533,22 @@ void Logout_Area_Coordinate(void)
 u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw)
 {
  	int data1=0;
+	turn_stop_angle=tgt_yaw;
+	turn_stop_enable=true;
 	data1=abs(Gyro_Data.yaw-tgt_yaw);
 	if(data1>DEGREE_180)
 		data1=DEGREE_360-data1;
+	
+	if(turn_stop_flag)
+		{
+			if(data1<DEGREE_05)
+				{
+					turn_stop_flag=false;
+					turn_stop_enable=false;
+					return 1;
+				}
+		}
+	
 	if(data1<bios_yaw)
 		{
 //			TRACE("yaw_dif=%d\r\n",data1);
@@ -2251,7 +2294,7 @@ u8 Find_Leak_Area(void)
 							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))			//检查点出现空白未扫
 								{
 									TRACE("y1 also hadnot sweeped!\r\n");
-									break;//直接退出，漏扫检查完毕
+									continue;//break;//直接退出，漏扫检查完毕
 								}
 							else																								//检查点未出现空白
 								{
@@ -2320,7 +2363,7 @@ u8 Find_Leak_Area(void)
 							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))
 								{
 									TRACE("y1 also hadnot sweeped!\r\n");
-									break;																					//直接退出，漏扫检查完毕
+									continue;//break;																					//直接退出，漏扫检查完毕
 								}
 							else
 								{
@@ -2396,7 +2439,7 @@ u8 Find_Leak_Area(void)
 							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))
 								{
 									TRACE("y1 also hadnot sweeped!\r\n");
-									break;																					//直接退出，漏扫检查完毕
+									continue;//break;																					//直接退出，漏扫检查完毕
 								}
 							else
 								{
@@ -2466,7 +2509,7 @@ u8 Find_Leak_Area(void)
 							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))			//检查点出现空白未扫
 								{
 									TRACE("y1 also hadnot sweeped!\r\n");
-									break;//直接退出，漏扫检查完毕
+									continue;//break;//直接退出，漏扫检查完毕
 								}
 							else																								//检查点未出现空白
 								{
@@ -3178,6 +3221,467 @@ u8 Analysis_Fake_Leak(s8 xcheck,s8 ycheck,u8 ydir)
 		}
 	return 0;
 }
+
+//function:检查漏扫区域
+//return: 0,无漏扫，1，有漏扫
+u8 Find_Leak_Area_II(void)
+{
+	s8 start_gridy,max_gridy,min_gridy;
+	s8 check_gridy,check_gridx,temp_gridx;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
+	
+	Init_CheckPoint();
+
+	if(motion1.area_ok)
+		return 0;
+	
+	start_gridy=grid.y;
+	if(start_gridy>grid.y_area_max)
+		start_gridy=grid.y_area_max;
+	else if(start_gridy<grid.y_area_min)
+		start_gridy=grid.y_area_min;
+	max_gridy=grid.y_area_max;
+	min_gridy=grid.y_area_min;
+	s8 ydir=Read_Motion_YDir();
+#if 0
+	TRACE("Analysis leak area...!!!\r\n");
+	TRACE("start_gridy=%d\r\n",start_gridy);
+	TRACE("max_gridy=%d\r\n",max_gridy);
+	TRACE("min_gridy=%d\r\n",min_gridy);
+	TRACE("ydir=%d\r\n",ydir);
+#endif
+	if(ydir>0)							//当前正在沿Y轴正方向清扫
+		{
+			TRACE("prepare now point to Ymax check...\r\n");
+			for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy+1;
+
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+					
+					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
+						{
+							TRACE("y2 hadnot sweeped!!!\r\n");
+							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))			//检查点出现空白未扫
+								{
+									TRACE("y1 also hadnot sweeped!\r\n");
+									continue;//break;//直接退出，漏扫检查完毕
+								}
+							else																								//检查点未出现空白
+								{
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx<check_point.max_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx+1,check_gridy)))
+												{
+													temp_gridx=check_gridx;
+													while(temp_gridx<check_point.max_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx++;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy+1;
+													check_point.ydir=1;
+													check_point.ybs_dir=RIGHT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;																	//发现可进入点								
+												}
+											check_gridx++;
+										}
+
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx>check_point.min_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx-1,check_gridy)))
+												{
+													temp_gridx=check_gridx;
+													while(temp_gridx>check_point.min_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx--;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy+1;
+													check_point.ydir=1;
+													check_point.ybs_dir=RIGHT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;																	//发现可进入点								
+												}
+											check_gridx++;
+										}									
+									TRACE("y1 can't find entry!\r\n");
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
+								}
+						}
+					if(Analysis_Leak_Point())
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							TRACE("find leak area!\r\n");
+							TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+							TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+							return 1;
+						}
+				}
+			TRACE("now point to Ymax check out!\r\n");
+			TRACE("prepare now point to Ymin check...\r\n");
+			for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy-1;
+					
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+					
+					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+						{
+							TRACE("y2 hadnot sweeped!!!\r\n");
+							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))
+								{
+									TRACE("y1 also hadnot sweeped!\r\n");
+									continue;//break;																					//直接退出，漏扫检查完毕
+								}
+							else
+								{
+									TRACE("point2 can't be sweep!\r\n");
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx<check_point.max_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx+1,check_gridy)))
+												{
+													temp_gridx=check_gridx;
+													while(temp_gridx<check_point.max_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx++;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy-1;
+													//check_point.ydir=1;
+													check_point.ydir=0;
+													check_point.ybs_dir=LEFT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+													TRACE("point1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;
+												}
+										}
+
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx>check_point.min_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx-1,check_gridy)))
+												{
+													temp_gridx=check_gridx;
+													while(temp_gridx>check_point.min_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx--;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy-1;
+													//check_point.ydir=1;
+													check_point.ydir=0;
+													check_point.ybs_dir=LEFT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+													TRACE("point1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;
+												}
+										}
+									TRACE("y1 can't find entry!\r\n");
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
+								}
+						}					
+					if(Analysis_Leak_Point())
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							TRACE("find leak area!\r\n");
+							TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+							TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+							return 1;
+						}
+					}
+			TRACE("now point Ymin check out,No leak!\r\n");
+		}
+	
+	else				//当前正在沿Y轴负方向清扫
+		{
+			TRACE("prepare now point to Ymin check...\r\n");
+			for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy-1;
+					
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+					
+					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+						{
+							TRACE("y2 hadnot sweeped!!!\r\n");
+							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))
+								{
+									TRACE("y1 also hadnot sweeped!\r\n");
+									continue;//break;																					//直接退出，漏扫检查完毕
+								}
+							else
+								{
+									TRACE("point2 can't be sweep!\r\n");
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx<check_point.max_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx+1,check_gridy)))
+												{
+													//temp_gridx=check_gridx+1;
+													temp_gridx=check_gridx;
+													while(temp_gridx<check_point.max_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx++;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													//check_gridx=(check_gridx+temp_gridx)/2;
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy-1;
+													check_point.ydir=0;
+													check_point.ybs_dir=LEFT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													TRACE("point1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;
+												}
+										}
+
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx>check_point.min_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx-1,check_gridy)))
+												{
+													//temp_gridx=check_gridx+1;
+													temp_gridx=check_gridx;
+													while(temp_gridx>check_point.min_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx--;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													//check_gridx=(check_gridx+temp_gridx)/2;
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy-1;
+													check_point.ydir=0;
+													check_point.ybs_dir=LEFT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													TRACE("point1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;
+												}
+										}
+									TRACE("y1 can't find entry!\r\n");
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
+								}
+						}					
+					if(Analysis_Leak_Point())
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							TRACE("find leak area!\r\n");
+							TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+							TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+							return 1;
+						}
+					}
+			TRACE("now point to Ymin check out!\r\n");
+			TRACE("prepare now point to Ymax check...\r\n");
+			for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy+1;
+
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+					
+					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
+						{
+							TRACE("y2 hadnot sweeped!!!\r\n");
+							if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))			//检查点出现空白未扫
+								{
+									TRACE("y1 also hadnot sweeped!\r\n");
+									continue;//break;//直接退出，漏扫检查完毕
+								}
+							else																								//检查点未出现空白
+								{
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx<check_point.max_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx+1,check_gridy)))
+												{
+													//temp_gridx=check_gridx+1;
+													temp_gridx=check_gridx;
+													while(temp_gridx<check_point.max_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx++;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													//check_gridx=(temp_gridx+check_gridx)/2;
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy+1;
+													//check_point.ydir=0;
+													check_point.ydir=1;
+													check_point.ybs_dir=RIGHT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+													TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;																	//发现可进入点								
+												}
+										}
+
+									check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+									while(check_gridx>check_point.min_cleanx1)
+										{
+											if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy))&(Read_Coordinate_Clean(check_gridx-1,check_gridy)))
+												{
+													//temp_gridx=check_gridx+1;
+													temp_gridx=check_gridx;
+													while(temp_gridx>check_point.min_cleanx1)
+														{
+															if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy))
+																{
+																	temp_gridx--;
+																	check_point.backup_grid++;
+																}
+															else
+																break;
+														}
+													//check_gridx=(temp_gridx+check_gridx)/2;
+													check_point.new_x1=check_gridx;
+													check_point.new_y1=check_gridy;
+													check_point.new_x2=check_gridx;
+													check_point.new_y2=check_gridy+1;
+													//check_point.ydir=0;
+													check_point.ydir=1;
+													check_point.ybs_dir=RIGHT;
+													check_point.next_tgtyaw=F_Angle_Const;
+													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+													TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+													TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+													return 1;																	//发现可进入点								
+												}
+										}
+									TRACE("y1 can't find entry!\r\n");
+									//break;																					//未发现可进入点，直接退出，漏扫检查完毕 																			
+									continue;
+								}
+						}
+					if(Analysis_Leak_Point())
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							TRACE("find leak area!\r\n");
+							TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+							TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+							return 1;
+						}
+				}
+			TRACE("now point to Ymax check out!\r\n");
+		}
+	motion1.area_ok=true;
+	//Logout_Area_Coordinate();
+#ifdef USE_AREA_TREE
+	Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
+	Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
+	TRACE("now point to Ymax&Ymin check out! No leak!!\r\n");
+	TRACE("leak area check complete!!!\r\n");
+	return 0;
+}
+
 
 void Coor_Nothing(void)
 {

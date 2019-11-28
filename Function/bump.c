@@ -29,13 +29,65 @@ void Init_Bump_Interrupt(void)
 	EXTI_ClearITPendingBit(EXTI_Line9);	//×óÅö×²
 	
 	NVIC_InitStructure.NVIC_IRQChannel=EXTI9_5_IRQn;
+#ifdef MILE_COMPENSATION
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority=0;
+#else
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0;
+#endif
 	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 
 	
 }
+
+#ifdef MILE_COMPENSATION
+void back_speed(void)
+{
+	u8 i;
+	disable_pwm(R_FRONT);
+	disable_pwm(L_FRONT);
+	disable_pwm(R_BACK);
+	disable_pwm(L_BACK);	
+	l_ring.stop_spd=0;r_ring.stop_spd=0;
+	for(int i=0;i<10;i++)
+		{
+			l_ring.stop_spd+=l_ring.stop_buf[i];
+			r_ring.stop_spd+=r_ring.stop_buf[i];
+			l_ring.stop_buf[i]=0;
+			r_ring.stop_buf[i]=0;
+		}
+    r_ring.stop_spd=r_ring.stop_spd*10;
+    l_ring.stop_spd=l_ring.stop_spd*10;
+
+	int l_spd,r_spd;
+	u8  l1=L_FRONT,r1=R_FRONT;
+	l_spd = 2000 * l_ring.stop_spd /1000;
+	r_spd = 2000 * r_ring.stop_spd /1000;	
+	if (l_spd >0) 
+		l1 = L_BACK;
+	if (l_spd == 0) 
+		l1 = 0xff;
+	if (r_spd >0) 
+		r1 = R_BACK;
+	if (r_spd == 0) 
+		r1 = 0xff;	
+	l_spd =abs(l_spd/50);
+	r_spd =abs(r_spd/50);	
+    for (i=50;i>0;i--)
+		{
+			enable_pwm(r1,r_spd*i);
+			enable_pwm(l1,l_spd*i);      
+			DelayMs(1);
+		}
+	disable_pwm(R_FRONT);
+	disable_pwm(L_FRONT);
+	disable_pwm(R_BACK);
+	disable_pwm(L_BACK);
+}
+
+#endif
 
 void Close_Bump_Exit(void)
 {
@@ -43,10 +95,19 @@ void Close_Bump_Exit(void)
 		return;
 	EXTI->IMR&=0XFFFFFDBF;			//ÆÁ±ÎÅö×²ÖÐ¶Ï
 	EXTI->PR&=0x00000240;			//Çå³ýÅö×²ÖÐ¶Ï
+	
+#ifdef MILE_COMPENSATION
+	bump_exiton=false;
+	bump_exitoff_time++;
+	Close_Ring_Cnt();		
+    back_speed();
+	Disable_RingPWMCtrl();	
+#else
 	Disable_RingPWMCtrl();
 	bump_exiton=false;
 	bump_exitoff_time++;
 	Close_Ring_Cnt();
+#endif	
 }
 
 void Open_Bump_Exit(void)

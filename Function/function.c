@@ -234,9 +234,6 @@ void Action_Mode(void)
 			break;
 	  /*********************ÑØ±ß×´Ì¬*******************/
 			case YBS:
-				if(mode.sub_mode==YBS_SUB_EXCHANGE)
-					Do_YBS_Exchange();
-				else
 				   YBS_YBS();        
 			break;
 	  /*********************ËÙ¶È¿ØÖÆ×´Ì¬*******************/

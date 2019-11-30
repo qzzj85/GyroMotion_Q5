@@ -125,7 +125,7 @@ output:
 --------------------------------------------------*/
 u8 Analysis_Back_Leak(void)
 {
-	s8 check_gridy1,check_gridy2,check_gridx,now_gridx;
+	s8 check_gridy1,check_gridy2,check_gridx,check_gridx1,now_gridx;
 	s8 xmax_check1,xmin_check1,xmax_check2,xmin_check2;
 	if(grid.y_abort==grid.y_back_last)			//如果最后一次回扫的Y坐标与中断Y坐标一致，则直接退出
 		return 0;
@@ -148,41 +148,77 @@ u8 Analysis_Back_Leak(void)
 					if((Read_Coordinate_Seat(xmax_check2,check_gridy2))|(Read_Coordinate_Seat(xmax_check1,check_gridy1)))
 						break;
 					if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
-						{											//有回扫漏扫区域，准备前往
+						{		
+							check_point.backup_grid=0;					
+							check_gridx1=check_gridx;
+							while(check_gridx1<xmax_check1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
+										{
+											check_point.backup_grid++;
+											check_gridx1++;
+										}
+									else
+										break;
+								}
 							check_point.new_x1=check_gridx;
 							check_point.new_y1=check_gridy1;
 							check_point.new_x2=check_gridx;
 							check_point.new_y2=check_gridy2;
 							check_point.next_tgtyaw=F_Angle_Const;
-							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);	//CHECK_ACTION设置为回扫（回扫漏扫仍是回扫）
 							if(check_gridy1>check_gridy2)
-								check_point.ybs_dir=LEFT;
+								{
+									check_point.ydir=0;
+									check_point.ybs_dir=LEFT;
+								}
 							else
-								check_point.ybs_dir=RIGHT;
-							return 1;
+								{
+									check_point.ydir=1;
+									check_point.ybs_dir=RIGHT;
+								}
+							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);	//CHECK_ACTION设置为回扫（回扫漏扫仍是回扫）
+							if(Can_Entry_Point())
+								return 1;
 						}
 				}
+			
 			for(check_gridx=now_gridx;check_gridx>xmin_check1;check_gridx--)
 				{
 					if((Read_Coordinate_Seat(xmin_check2,check_gridy2))|(Read_Coordinate_Seat(xmin_check1,check_gridy1)))
 						break;
 					if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
 						{
+							check_point.backup_grid=0;					
+							check_gridx1=check_gridx;
+							while(check_gridx1>xmin_check1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(!Read_Coordinate_Clean(check_gridx,check_gridy2)))
+										{
+											check_point.backup_grid++;
+											check_gridx1--;
+										}
+									else
+										break;
+								}
 							check_point.new_x1=check_gridx;
 							check_point.new_y1=check_gridy1;
 							check_point.new_x2=check_gridx;
 							check_point.new_y2=check_gridy2;
 							check_point.next_tgtyaw=B_Angle_Const;
 							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);
+
 							if(check_gridy1>check_gridy2)
 								{
-									 check_point.ybs_dir=RIGHT;
+									check_point.ydir=0;
+									check_point.ybs_dir=RIGHT;
 								}
 							else
 								{
+									check_point.ydir=1;
 									check_point.ybs_dir=LEFT;
 								}
-							return 1;
+							if(Can_Entry_Point())
+								return 1;
 						}
 				}
 			if(check_gridy1>grid.y_back_last)
@@ -643,6 +679,7 @@ u8 Analysis_LastYClean(void)
 
 void Set_AreaWorkTime(u32 min_num)
 {
+	TRACE("set max time=%d\r\n",min_num);
 	u32 sec_num=min_num*60*10000;
 	motion1.worktime_area=giv_sys_time;
 	motion1.worktime_area_max=sec_num;

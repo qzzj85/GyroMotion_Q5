@@ -11,6 +11,7 @@ POINT_GRID turn_grid;							//YBS分析到可行路径后的中转点
 u32 path_length=0;								//路径分析的行走点个数
 u32 last_path_length=0;
 //POINT_GRID last_grid[100];
+bool pathpoint_inybs=false;
 
 void Init_LastPointGrid(POINT_GRID *p)
 {
@@ -1162,13 +1163,21 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 	return 0;
 }
 
-u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy)
+u8 Find_PathPoint_NoWall_YBS(s8 tgt_gridx,s8 tgt_gridy)
 {
 	POINT_GRID tgt_grid,temp_grid;
 	s8 now_gridx,now_gridy;
+	static s8 last_tgt_gridx=0x7f,last_tgt_gridy=0x7f;
 	u8 result=0;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
+
+//	if(pathpoint_inybs)
+//		return 0;
+//	pathpoint_inybs=true;
+	if((last_tgt_gridx==tgt_gridx)&(last_tgt_gridy==tgt_gridy))
+		return 0;
+	last_tgt_gridx=tgt_gridx;last_tgt_gridy=tgt_gridy;
 
 	TRACE("Enter %s..\r\n",__func__);
 	if(!motion1.pathpoint_ok)

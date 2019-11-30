@@ -626,6 +626,50 @@ u8 Judge_GridYPOS_Nearby_Reach(s8 gridy)
 	return 0;
 }
 
+u8 Judge_GridYPOS_Far_Reach(s8 gridy)
+{
+	s8 now_gridy,test_gridy1,test_gridy2;
+	bool test_gridy1_enable=1,test_gridy2_enable=1;
+	short tgt_ypos;
+
+	now_gridy=gridy;
+	now_gridy+=50;
+	if(now_gridy>=GRIDY_POS_CNT)
+		now_gridy=GRIDY_POS_CNT-1;
+	if(now_gridy<0)
+		now_gridy=0;
+	test_gridy1=now_gridy-1;
+	test_gridy2=now_gridy+1;
+	
+	if((test_gridy1<0)|(test_gridy1>=GRIDY_POS_CNT))
+		test_gridy1_enable=0;
+	if((test_gridy2<0)|(test_gridy2>=GRIDY_POS_CNT))
+		test_gridy2_enable=0;
+
+	if(test_gridy1_enable)
+		{
+			tgt_ypos=gridy_pos[test_gridy1];
+			//if((Judge_Ypos_Reach(tgt_ypos,POS_BIOS))|(Gyro_Data.y_pos<tgt_ypos))
+			if(Gyro_Data.y_pos<tgt_ypos-5)
+				{
+					TRACE("Far Reach!\r\n");
+					return 1;
+				}
+		}
+
+	if(test_gridy2_enable)
+		{
+			tgt_ypos=gridy_pos[test_gridy2];
+			//if((Judge_Ypos_Reach(tgt_ypos,POS_BIOS))|(Gyro_Data.y_pos>tgt_ypos))
+			if(Gyro_Data.y_pos>tgt_ypos+5)
+				{
+					TRACE("Far Reach!\r\n");
+					return 1;
+				}
+		}
+	return 0;
+}
+
 u8 Judge_GridYPOS_Reach_Large(s8 gridy)
 {
 	short tgt_ypos;
@@ -1152,6 +1196,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 #endif
 					else if(Read_Coordinate_Seat(temp_gridx,grid.y_area_max))
 						temp_gridx++;
+					
+					else if((Read_Coordinate_Wall(temp_gridx,grid.y_area_max))|(Read_Coordinate_Wall(temp_gridx,grid.y_area_max+1))\
+						|(Read_Coordinate_Wall(temp_gridx,grid.y_area_max+2)))
+						temp_gridx++;
+					
 					else
 						{
 							temp_area1=Read_Coordinate_AreaNo(temp_gridx,  grid.y_area_max+1);
@@ -1264,6 +1313,11 @@ s8 Analysis_Boundary_Y_II(u8 minormax)
 #endif
 					else if(Read_Coordinate_Seat(temp_gridx,grid.y_area_min))
 						temp_gridx--;
+
+					else if((Read_Coordinate_Wall(temp_gridx,grid.y_area_min))|(Read_Coordinate_Wall(temp_gridx,grid.y_area_min-1))\
+						|(Read_Coordinate_Wall(temp_gridx,grid.y_area_min-2)))
+						temp_gridx--;
+					
 					else
 						{
 							temp_area1=Read_Coordinate_AreaNo(temp_gridx,  grid.y_area_min-1);
@@ -1602,6 +1656,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 #endif
 					else if(Read_Coordinate_Seat(grid.x_area_max,temp_gridy))
 						temp_gridy--;//temp_gridy++;
+
+					else if((Read_Coordinate_Wall(grid.x_area_max,temp_gridy))|(Read_Coordinate_Wall(grid.x_area_max+1,temp_gridy))\
+						|(Read_Coordinate_Wall(grid.x_area_max+2,temp_gridy)))
+						temp_gridy--;
+					
 					else
 						{
 							temp_area1=Read_Coordinate_AreaNo(grid.x_area_max+1,temp_gridy);
@@ -1719,6 +1778,11 @@ u8 Analysis_Boundary_X_II(u8 minormax)
 #endif
 					else if(Read_Coordinate_Seat(grid.x_area_min,temp_gridy))
 						temp_gridy++;
+
+					else if((Read_Coordinate_Wall(grid.x_area_min,temp_gridy))|(Read_Coordinate_Wall(grid.x_area_min-1,temp_gridy))\
+						|(Read_Coordinate_Wall(grid.x_area_min-2,temp_gridy)))
+						temp_gridy++;
+					
 					else
 						{
 							temp_area1=Read_Coordinate_AreaNo(grid.x_area_min-1,temp_gridy);
@@ -3030,7 +3094,8 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 			TRACE("backup grid=0!!\r\n");
 			return 0;
 		}
-	if(len>20)
+	if(len>20
+)
 		{
 			TRACE("backup grid>20!!\r\n");
 			return 0;

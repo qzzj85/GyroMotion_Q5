@@ -3605,6 +3605,369 @@ u8 YBS_AbortFor_Sweep(void)
 }
 
 
+u8 YBS_AbortFor_Sweep_II(void)
+{
+	s8 now_gridx,now_gridy;
+	short xpos,ypos;
+	s8 ydir=Read_Motion_YDir();
+	xpos=Gyro_Data.x_pos;ypos=Gyro_Data.y_pos;
+	now_gridx=grid.x;now_gridy=grid.y;	
+
+	if(grid.y<grid.y_straight_start)
+		{
+			if((Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(mode.step!=0x11)&(mode.step!=0x51))\
+				|(Judge_GridYPOS_Far_Reach(grid.y_straight_start)))
+				{
+					if(ydir>0)		//沿Y轴正方向清扫
+						{
+							if(Read_Motion_BackSweep())
+								{
+									stop_rap();
+									TRACE("Quit Now backsweep in %s\r\n",__func__);
+									Init_Stop_BackSweep();
+									return 1;
+								}
+							else
+								{
+									stop_rap();
+									TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
+									TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
+									TRACE("Gyro.x_pos=%d\r\n",xpos);
+									TRACE("Gyro.y_pos=%d\r\n",ypos);
+									TRACE("back check!!!\r\n");
+									//Logout_Area_Coordinate();
+									//y坐标回溯超过20cm时，开启左沿边
+									Area_Check(0);
+									Init_Shift_Point1(0);
+									return 1;
+		//							Logout_Area_Coordinate();
+									//while(1);
+								}
+						}
+					else if(ydir<0) 						//沿Y坐标负向方向
+						{
+							if(abs(now_gridx-grid.x_straight_start)<=1)
+								{
+									if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
+										{
+											return 0;
+										}
+									else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
+										{
+											return 0;
+										}
+									YBS_check_base=true;
+								}
+							stop_rap();
+							TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
+							TRACE("y_pos=%d\r\n",ypos);
+							TRACE("ypos<motion1_ypos+20!\r\n");
+							//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
+							if(((mode.step==0x11)|(mode.step==0x51)))
+								{
+									if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+		
+										{
+											TRACE("Need Repeat!\r\n");
+											//motion1.repeat_sweep=true;
+										}
+								}
+							else
+								{
+									TRACE("No Need Repeat!\r\n");
+									motion1.repeat_sweep=false;
+								}
+								Init_Pass2Sweep();
+							return 1;
+						}
+					else
+						{
+							Set_Motion_YDir(-1);
+							Init_Pass2Sweep();
+							return 1;
+						}
+				}
+		}
+	else if(grid.y>grid.y_straight_start)
+		{
+			if(((Judge_GridYPOS_Nearby_Reach(grid.y_straight_start))&(mode.step!=0x11)&(mode.step!=0x51))\
+				|(Judge_GridYPOS_Far_Reach(grid.y_straight_start)))
+				{
+					if(ydir>0)		//沿Y轴正方向清扫
+						{
+							if(abs(now_gridx-grid.x_straight_start)<=1)
+								{
+									if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
+										{
+											return 0;
+										}
+									else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
+										{
+											return 0;
+										}								
+									YBS_check_base=true;
+								}
+							stop_rap();
+							TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
+							TRACE("y_pos=%d\r\n",ypos);
+							TRACE("ypos>motion1_ypos+20!\r\n");
+							//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
+							if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
+								{
+									if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+		
+										{
+											TRACE("Need Repeat!\r\n");
+											//motion1.repeat_sweep=true;
+										}
+								}
+							else
+								{
+									TRACE("No Need Repeat!\r\n");
+									motion1.repeat_sweep=false;
+								}
+								Init_Pass2Sweep();
+							return 1;
+						}
+					else if(ydir<0)
+						{
+							if(Read_Motion_BackSweep())
+								{
+									stop_rap();
+									TRACE("Quit Now backsweep in %s\r\n",__func__);
+									Init_Stop_BackSweep();
+									return 1;
+								}
+							else
+								{
+									stop_rap();
+									TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
+									TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
+									TRACE("Gyro.x_pos=%d\r\n",xpos);
+									TRACE("Gyro.y_pos=%d\r\n",ypos);
+									TRACE("back check!!!\r\n");
+									//Logout_Area_Coordinate();
+									//y坐标回溯超过20cm时，开启左沿边
+									Area_Check(1);
+									Init_Shift_Point1(1);
+									return 1;
+		//							Logout_Area_Coordinate();
+									//while(1);
+								}
+						}
+					else
+						{
+							Set_Motion_YDir(1);
+								Init_Pass2Sweep();
+							return 1;
+						}
+				}
+		}
+#if 0
+	if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y<grid.y_straight_start))
+		{
+			if(ydir>0)		//沿Y轴正方向清扫
+				{
+					if(Read_Motion_BackSweep())
+						{
+							stop_rap();
+							TRACE("Quit Now backsweep in %s\r\n",__func__);
+							Init_Stop_BackSweep();
+							return 1;
+						}
+					else
+						{
+							stop_rap();
+							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
+							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
+							TRACE("Gyro.x_pos=%d\r\n",xpos);
+							TRACE("Gyro.y_pos=%d\r\n",ypos);
+							TRACE("back check!!!\r\n");
+							//Logout_Area_Coordinate();
+							//y坐标回溯超过20cm时，开启左沿边
+							Area_Check(0);
+							Init_Shift_Point1(0);
+							return 1;
+//							Logout_Area_Coordinate();
+							//while(1);
+						}
+				}
+			else if(ydir<0)							//沿Y坐标负向方向
+				{
+					if(abs(now_gridx-grid.x_straight_start)<=1)
+						{
+							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
+								{
+									return 0;
+								}
+							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
+								{
+									return 0;
+								}
+							YBS_check_base=true;
+						}
+					stop_rap();
+					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
+					TRACE("y_pos=%d\r\n",ypos);
+					TRACE("ypos<motion1_ypos+20!\r\n");
+					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
+					if(((mode.step==0x11)|(mode.step==0x51)))
+						{
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+
+								{
+									TRACE("Need Repeat!\r\n");
+									//motion1.repeat_sweep=true;
+								}
+						}
+					else
+						{
+							TRACE("No Need Repeat!\r\n");
+							motion1.repeat_sweep=false;
+						}
+						Init_Pass2Sweep();
+					return 1;
+				}
+			else
+				{
+					Set_Motion_YDir(-1);
+					Init_Pass2Sweep();
+					return 1;
+				}
+		}
+	//else if(ypos>motion1.ypos_ybs_start+20)		//沿边y坐标大于起始沿边y坐标15cm
+	else if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y>grid.y_straight_start))
+		{
+			if(ydir>0)		//沿Y轴正方向清扫
+				{
+					if(abs(now_gridx-grid.x_straight_start)<=1)
+						{
+							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
+								{
+									return 0;
+								}
+							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
+								{
+									return 0;
+								}								
+							YBS_check_base=true;
+						}
+					stop_rap();
+					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
+					TRACE("y_pos=%d\r\n",ypos);
+					TRACE("ypos>motion1_ypos+20!\r\n");
+					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
+					if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
+						{
+							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
+
+								{
+									TRACE("Need Repeat!\r\n");
+									//motion1.repeat_sweep=true;
+								}
+						}
+					else
+						{
+							TRACE("No Need Repeat!\r\n");
+							motion1.repeat_sweep=false;
+						}
+						Init_Pass2Sweep();
+					return 1;
+				}
+			else if(ydir<0)
+				{
+					if(Read_Motion_BackSweep())
+						{
+							stop_rap();
+							TRACE("Quit Now backsweep in %s\r\n",__func__);
+							Init_Stop_BackSweep();
+							return 1;
+						}
+					else
+						{
+							stop_rap();
+							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
+							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
+							TRACE("Gyro.x_pos=%d\r\n",xpos);
+							TRACE("Gyro.y_pos=%d\r\n",ypos);
+							TRACE("back check!!!\r\n");
+							//Logout_Area_Coordinate();
+							//y坐标回溯超过20cm时，开启左沿边
+							Area_Check(1);
+							Init_Shift_Point1(1);
+							return 1;
+//							Logout_Area_Coordinate();
+							//while(1);
+						}
+				}
+			else
+				{
+					Set_Motion_YDir(1);
+						Init_Pass2Sweep();
+					return 1;
+				}
+		}
+#endif
+	if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
+		{			
+			stop_rap();
+			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
+			TRACE("stop for Area Check!!!\r\n");
+			Area_Check(1);
+			Init_Shift_Point1(1);
+			return 1;
+		}
+
+	//判断沿边时是否绕过障碍，绕过则继续直行清扫
+	if((Parse_ContinueInYBS(now_gridx,now_gridy))&(mode.step<0xD0))		
+		{
+			stop_rap();
+			mode.step=0xD0;
+			TRACE("Gyro.yaw=%d motion.tgt_yaw=%d\r\n",Gyro_Data.yaw,motion1.tgt_yaw);	
+			TRACE("Round Obstacles!!!\r\n");
+			if((Read_Motion_BackSweep())&(mode.last_mode==NORMAL_SWEEP))					//如果刚刚判断需要回扫,当前还是正常直行状态
+				{
+					TRACE("It should be BackSweep,but Round Obstacles,");
+					TRACE("So temproray to NormalSweep!\r\n");
+					Set_Motion_BackSweep(0);										//绕过障碍后，先取消回扫，正常直行
+					Restore_Abort_Data();		//然后再装在中断之前的数据
+				}
+			return 1;
+		}
+
+	if(YBS_check_base)
+		{
+			if((now_gridx==grid.x_area_start)&(now_gridy==grid.y_area_start))
+				{
+					stop_rap();
+					TRACE("YBS check base!!!\r\n");
+					//y坐标回溯超过20cm时，开启左沿边
+					YBS_check_base=false;
+					Area_Check(1);
+					Init_Shift_Point1(1);
+					return 1;
+				}
+		}
+
+#if 0
+	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
+		{
+			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
+				{
+					stop_rap();
+					TRACE("The Motion ybs reach the orignal point!!!\r\n");
+					motion1.area_ok=true;
+					Set_CurrNode_LeakInfo(motion1.area_ok);
+					Area_Check(1);
+					Init_Shift_Point1(1);
+				}
+		}
+#endif
+
+	return 0;
+}
+
+
 void Sweep_YBS(void)
 {
 //  static u8 piv_out;  //机器是否向外展开，1为向外展开，0为向里缩小
@@ -3673,7 +4036,7 @@ void Sweep_YBS(void)
 			return;
 		}
 
-	if(YBS_AbortFor_Sweep())
+	if(YBS_AbortFor_Sweep_II())
 		return;
 	
 	

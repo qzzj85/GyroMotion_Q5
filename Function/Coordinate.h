@@ -73,6 +73,8 @@ void Set_Coordinate_Clean(s8 xgrid,s8 ygrid);
 void Set_Coordinate_Wall(s8 xgrid,s8 ygrid);
 void Logout_CheckPoint(void);
 u8 Judge_GridYPOS_Nearby_Reach(s8 gridy);
+u8 Judge_GridYPOS_Far_Reach(s8 gridy);
+
 void Cal_Grid_Pos(void);
 u8 Judge_GridYPOS_Reach(s8 gridy,short dir);
 void Set_Coordinate_WallClean(s8 xgrid,s8 ygrid);

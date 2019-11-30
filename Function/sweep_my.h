@@ -41,6 +41,7 @@ void Save_Pause_Data(void);
 void Init_PauseSweep(void);
 void Do_PauseSweep(void);
 void Set_Seat_Grid(void);
+u8 YBS_AbortFor_Sweep_II(void);
 
 
 #endif

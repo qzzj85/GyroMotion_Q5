@@ -77,6 +77,7 @@ void log_out(void)
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
 	TRACE("Gyro.x=%f y=%f\r\n",X_pos,Y_pos);
 	TRACE("grid.x=%d y=%d\r\n",now_gridx,now_gridy);
+	TRACE("grid.y_stari=%d\r\n",grid.y_straight_start);
 	TRACE("m.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("c_p.next_action=%d\r\n",check_point.next_action);
 	TRACE("c_p.new x1=%d y1=%d\r\n",check_point.new_x1,check_point.new_y1);
@@ -85,12 +86,13 @@ void log_out(void)
 	TRACE("m.area_num=%d\r\n",motion1.area_num);
 	TRACE("m.ydir=%d\r\n",motion1.y_dir);
 //	TRACE("re_sweep=%d\r\n",motion1.repeat_sweep);
-	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
+//	TRACE("m.f_l_y=%d\r\n",motion1.first_leak_y);
 	u32 min=(giv_sys_time-motion1.worktime_area)/10000/60;
 	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
+	TRACE("max_time=%d\r\n",motion1.worktime_area_max);
 //	TRACE("top=%d\r\n",top_time_sec);
-	TRACE("start_seat=%d\r\n",motion1.start_seat);
+//	TRACE("start_seat=%d\r\n",motion1.start_seat);
 #else
 	//TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
 	//TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);

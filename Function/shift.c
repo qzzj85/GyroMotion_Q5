@@ -785,6 +785,7 @@ void Init_Shift_Point1(u8 pre_action)
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
 	Delete_All_PathPoint();
+	pathpoint_inybs=false;
 	delay_ms(500);
 }
 
@@ -2411,17 +2412,151 @@ u8 Abort_ShiftYBS(void)
 				}
 		}
 
-	//Abort2Sweep(tgt_gridx2, tgt_gridy2);
-	
-	//if(abort_shiftybs_flag)
+#if 1
+	if(abort_shiftybs_flag)
+		{
+			abort_shiftybs_flag=false;
+			//if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)<=20)
+				//return 0;
+			switch(temp_nextaction)
+				{
+					case CHECK_BACK2NORMAL:
+						break;
+					case CHECK_BACKSWEEP:
+						TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
+						if(Analysis_Back_Leak()==0)
+							Init_Stop_BackSweep();
+						else if((tgt_gridx1!=check_point.new_x1)&(tgt_gridy1!=check_point.new_y1))
+							Init_Shift_Point1(1);
+						else if(Find_PathPoint_NoWall_YBS(tgt_gridx1,tgt_gridy1))
+								{
+									stop_rap();
+									TRACE("Find PathPoint nowallway in %s\r\n",__func__);
+									TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+									TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+									check_point.use_pathpoint=true;
+									Init_Shift_Point1(2);
+									return 1;													
+								}
+						break;
+					case CHECK_NORMALSWEEP:
+					case CHECK_LEAKSWEEP:
+						area_check=Area_Check(1);
+						if(area_check==1)
+							{
+								if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
+									{
+										if(mode.last_sub_mode==SHIFTPOINT1)
+											{
+												if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
+													{
+														stop_rap();
+														TRACE("Find directly Way in %s\r\n",__func__);
+														TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+														TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+														//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
+														//Init_Shift_Point2();
+														Init_Shift_Point1(2);
+														return 1;
+													}
+#if 1
+												if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
+													{
+														stop_rap();
+														TRACE("Find pathpoint nowallway in %s\r\n",__func__);
+														TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+														TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+														check_point.use_pathpoint=true;
+														Init_Shift_Point1(2);
+														return 1;													
+													}
+#endif
+											}
+									}
+								else
+									{
+										stop_rap();
+										Init_Shift_Point1(1);
+										return 1;
+									}
+							}
+						else if(area_check==4)
+							{
+								stop_rap();
+								TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+								Init_Docking();
+								return 1;
+							}
+						else
+							{
+								if(area_check==3)
+								Set_AreaWorkTime(10);
+								stop_rap();
+								Init_Shift_Point1(1);
+	//							Set_AreaWorkTime(5);
+								return 1;
+							}
+						break;
+					case CHECK_NEWAREA:
+						if(!Can_Entry_NewArea(&check_point))
+							{
+								stop_rap();
+								TRACE("The New Area Entry has Closed!!\r\n");
+								TRACE("Find Next New Area!!\r\n");
+								Area_Check(1);
+								Init_Shift_Point1(1);
+								return 1;
+							}
+					case CHECK_GOEXIT:
+					case CHECK_DOCK:						
+						if(mode.last_sub_mode==SHIFTPOINT1)
+							{
+								if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
+									{
+										stop_rap();
+										TRACE("Find directly Way in %s\r\n",__func__);
+										TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+										TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+										Init_Shift_Point1(2);
+										return 1;
+									}
+#if 1
+								else if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
+									{
+										stop_rap();
+										TRACE("Find pathpoint Way in %s\r\n",__func__);
+										TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
+										TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+										check_point.use_pathpoint=true;
+										Init_Shift_Point1(2);
+										return 1;
+									}
+#endif
+								else
+									return 0;
+							}
+						else if(mode.last_sub_mode==SHIFTPOINT2)
+							{
+								if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
+									{
+										stop_rap();
+										Area_Check(1);
+										Init_Shift_Point1(1);
+										return 1;
+									}							
+							}
+						break;
+					default:
+						break;
+				}
+		}
+
+#else	
 	if((abort_shiftybs_flag)&(temp_nextaction!=CHECK_BACK2NORMAL))
 		{
 			abort_shiftybs_flag=false;
 			if(temp_nextaction<=CHECK_LEAKSWEEP)
 				{
-//					s8 tgt_gridx1,tgt_gridx2,tgt_gridy1,tgt_gridy2;
-//					tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
-//					tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
 					if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)<=20)
 						return 0;
 
@@ -2455,7 +2590,7 @@ u8 Abort_ShiftYBS(void)
 													return 1;
 												}
 											#if 0
-											if(Find_PathPoint_YBS(check_point.new_x1,check_point.new_y1))
+											if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
 												{
 													stop_rap();
 													TRACE("Find indirectly nowallway in %s\r\n",__func__);
@@ -2544,6 +2679,7 @@ u8 Abort_ShiftYBS(void)
 						}
 				}
 		}
+#endif
 
 	if(giv_sys_time-mode.time>600000)				//Ô­À´ÊÇ15s
 		{
@@ -2554,6 +2690,13 @@ u8 Abort_ShiftYBS(void)
 							TRACE("motion1 ybs has been complete one circle!!!\r\n:");
 							switch (temp_nextaction)
 								{
+									case CHECK_BACKSWEEP:
+										//stop_rap();
+										//TRACE("nextaction is CHECK_BACKSWEEP!!!\r\n");
+										//TRACE("abort now action,prepare to Area Check!!!\r\n");
+										//Area_Check(1);
+										//Init_Shift_Point1(1);
+										//break;
 									case CHECK_NORMALSWEEP:
 									case CHECK_LEAKSWEEP:
 										stop_rap();

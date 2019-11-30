@@ -17,6 +17,7 @@
 
 extern POINT_GRID turn_grid;
 extern u32 path_length;
+extern bool pathpoint_inybs;
 
 u8 Init_PathPoint(void);
 u8 Delete_All_PathPoint(void);
@@ -28,9 +29,8 @@ u8 Find_Directly_Way(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_Indirectly_Way(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_PathPoint_Way(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy);
-u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy);
+u8 Find_PathPoint_NoWall_YBS(s8 tgt_gridx,s8 tgt_gridy);
 u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy);
-u8 Find_PathPoint_YBS(s8 tgt_gridx,s8 tgt_gridy);
 
 u8 Add_PathPoint(s8 gridx,s8 gridy,u8 data);
 

@@ -41,6 +41,8 @@ void log_out(void)
 		{
 			TRACE("w_l.dis=%d w_lm.dis=%d  w_m.dis=%d  w_rm.dis=%d  w_r.dis=%d\r\n",w_l.dis,w_lm.dis,\
 			w_m.dis,w_rm.dis,w_r.dis);
+			TRACE("w_l.dif=%d w_lm.dif=%d w_m.dif=%d w_rm.dif=%d w_r.dif=%d\r\n",w_l.difference,w_lm.difference,\
+				w_m.difference,w_rm.difference,w_r.difference);
 			TRACE("e_l.dif=%d e_m.dif=%d e_r.dif=%d\r\n",e_l.difference,e_m.difference,e_r.difference);
 	//		TRACE("batcap=%d\r\n",Battery.BatteryCapability);
 	//		TRACE("batfd=%d\r\n",Battery.BatteryFDCap);

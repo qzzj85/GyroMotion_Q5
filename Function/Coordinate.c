@@ -411,7 +411,7 @@ void Record_Coordinate_Intime(void)
 				Set_Coordinate_Clean(gridx, gridy);
 				if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
 					{
-						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))//&(mode.step!=0x11)&(mode.step!=0x51))
+						if((mode.bump<BUMP_SEAT)&(mode.step<0x88)&(mode.step!=0x11)&(mode.step!=0x51))
 							Set_Coordinate_Wall(gridx,gridy);
 					}
 				break;
@@ -424,7 +424,7 @@ void Record_Coordinate_Intime(void)
 				Set_Coordinate_Clean(gridx,gridy);
 				if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
 					{
-						if((mode.bump<BUMP_SEAT)&(mode.step<0x88))//&(mode.step!=0x11)&(mode.step!=0x51))
+						if((mode.bump<BUMP_SEAT)&(mode.step<0x88)&(mode.step!=0x11)&(mode.step!=0x51))
 							Set_Coordinate_Wall(gridx,gridy);
 					}
 				break;
@@ -3088,6 +3088,12 @@ u8 Can_Entry_NewArea(CHECK_POINT *check_point)
 	len=check_point->backup_grid;
 	first_len=len+2;//second_len=len+4;
 	POINT_GRID entry_point[20],first_check[25];//second_check[second_len];
+
+	if(giv_sys_time-motion1.worktime_area_continue<1800000)
+		{
+			TRACE("work countinue time less 3min!!\r\n");
+			return 1;
+		}
 
 	if(len<=0)
 		{

@@ -11,12 +11,28 @@ static u8 next_action=0;
 
 u8 Analysis_Reach_YAbort(void)
 {
-	if(Read_CheckPoint_NextAction()==CHECK_BACK2NORMAL)
+	u8 temp_nextaction=Read_CheckPoint_NextAction();
+	if(temp_nextaction==CHECK_BACK2NORMAL)
 		{
 			if(Judge_GridYPOS_Reach(grid.y_abort,0))
 				{
 					stop_rap();
 					Init_Stop_BackSweep();
+					return 1;
+				}
+		}
+
+	if(temp_nextaction==CHECK_BACKSWEEP)
+		{
+			if(Judge_GridYPOS_Reach(grid.y_abort,0))
+				{
+					stop_rap();
+					TRACE("Motion is on Grid.y_abort!!!\r\n");
+					TRACE("Cancle All BACKSWEEP,goto normal!!\r\n");
+					Restore_Abort_Data();
+					Set_Motion_BackSweep(0);
+					Area_Check(0);
+					Init_Shift_Point1(0);
 					return 1;
 				}
 		}
@@ -423,6 +439,15 @@ void Shift_BumpAction(void)
 									mode.step_bp++;
 									mode.bump_time=giv_sys_time;
 									
+									if(((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))|((now_gridx==tgt_gridx2)&(now_gridy==tgt_gridy2)))
+										{
+											//if(nextaction<=CHECK_NEWAREA)
+												{
+													mode.step_bp=6;
+													return;
+												}
+										}
+									
 									if(bump_time>2)
 										{
 											bump_time=0;
@@ -443,26 +468,7 @@ void Shift_BumpAction(void)
 													default:
 														break;
 												}
-#if 0											
-											if(nextaction==CHECK_GOEXIT)
-												{
-													if((mode.bump>=BUMP_ONLY_LEFT)&(mode.bump<=BUMP_LEFT_MID))
-														{
-															Init_ShiftExit_LeftYBS(0);
-															return;
-														}
-													else
-														{
-															Init_ShiftExit_RightYBS(0);
-															return;
-														}
-												}
-											else if(nextaction==CHECK_DOCK)
-												{
-													Init_Dock_RightYBS(0);
-													return;
-												}
-#endif
+
 									//////////以下为nextaction小于CHECK_NEWAREA////////////////
 											if(mode.sub_mode==SHIFTPOINT1)
 												{
@@ -546,17 +552,7 @@ void Shift_BumpAction(void)
 												}
 											return;
 										}
-									else
-										{
-											if(((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))|((now_gridx==tgt_gridx2)&(now_gridy==tgt_gridy2)))
-												{
-													if(nextaction<=CHECK_NEWAREA)
-														{
-															mode.step_bp=6;
-															return;
-														}
-												}
-										}
+
 									switch(mode.bump)
 										{
 											case BUMP_ONLY_LEFTMID:
@@ -753,7 +749,7 @@ void Init_Shift_Point1(u8 pre_action)
 				mode.step=5;
 				break;
 			case 1:					//需要避开沿边
-				mode.step=0;
+				mode.step=5;//0;
 				break;
 			case 2:					//需要先到TURN_GRID
 				mode.step=SHIFTMODE_STEP_TURNGRID;
@@ -761,7 +757,6 @@ void Init_Shift_Point1(u8 pre_action)
 		}
 //		WriteWorkState();
 
-//	Set_Motion_BackSweep(0);
 
 	w_l.on=0;
 	w_r.on=0;
@@ -826,8 +821,8 @@ void Do_Shift_Point1(void)
 	if(Analysis_Check_Dock())
 		return;
 
-	if(Analysis_Reach_YAbort())
-		return;
+	//if(Analysis_Reach_YAbort())
+		//return;
 	
 	Shift_BumpAction();
 	if(mode.bump)
@@ -1917,9 +1912,6 @@ void Init_Shift_Point2(void)
 	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 //		WriteWorkState();
-
-//	Set_Motion_BackSweep(0);
-
 	w_l.on=0;
 	w_r.on=0;
 	w_rm.on=0;
@@ -1976,8 +1968,8 @@ void Do_Shift_Point2(void)
 	if(Analysis_Check_Dock())
 		return;
 
-	if(Analysis_Reach_YAbort())
-		return;
+	//if(Analysis_Reach_YAbort())
+		//return;
 	
 	Shift_BumpAction();
 	if(mode.bump)
@@ -2691,12 +2683,13 @@ u8 Abort_ShiftYBS(void)
 							switch (temp_nextaction)
 								{
 									case CHECK_BACKSWEEP:
-										//stop_rap();
-										//TRACE("nextaction is CHECK_BACKSWEEP!!!\r\n");
-										//TRACE("abort now action,prepare to Area Check!!!\r\n");
-										//Area_Check(1);
-										//Init_Shift_Point1(1);
-										//break;
+										stop_rap();
+										TRACE("nextaction is CHECK_BACKSWEEP!!!\r\n");
+										TRACE("abort now action,prepare to Area Check!!!\r\n");
+										Set_Motion_BackSweep(0);
+										Area_Check(1);
+										Init_Shift_Point1(1);
+										break;
 									case CHECK_NORMALSWEEP:
 									case CHECK_LEAKSWEEP:
 										stop_rap();

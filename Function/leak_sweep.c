@@ -557,7 +557,7 @@ void Do_Leak_BackSweep(void)
 				break;
 			case 3:
 				Speed=TURN_SPEED;
-				if(do_action(turn_dir,100*Angle_1))
+				if(do_action(turn_dir,90*Angle_1))
 					{
 						stop_rap();
 						mode.step++;

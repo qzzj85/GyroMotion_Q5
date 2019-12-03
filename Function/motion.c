@@ -119,7 +119,8 @@ void Restore_Abort_Data(void)
 
 /*-------------------------------------------------
 function:用于回扫的漏扫检查，有些回扫区域完成后，可能还有漏扫
-input:None
+input:None
+
 output:
       0:没有回扫漏扫区域，1:有回扫漏扫区域
 --------------------------------------------------*/
@@ -339,10 +340,11 @@ OUTPUT:
 ---------------------------------------------*/
 u8 Analysis_StopBack(short tgt_yaw)
 {
-	s8 temp_x,ydir;
+	s8 temp_x,temp_x2,ydir;
 	s8 now_gridx,now_gridy,next_gridy,next_gridx;
 	now_gridx=grid.x;now_gridy=grid.y;
-	
+
+	TRACE("Enter in %s...\r\n",__func__);
 	ydir=Read_Motion_YDir();
 	if(ydir>0)
 		{
@@ -362,6 +364,7 @@ u8 Analysis_StopBack(short tgt_yaw)
 	if(tgt_yaw==F_Angle_Const)
 		{
 			temp_x=grid.x;
+			temp_x2=grid.x;
 #if 0
 			if(temp_x+1>grid.x_area_max)
 				temp_x=grid.x;
@@ -370,18 +373,32 @@ u8 Analysis_StopBack(short tgt_yaw)
 #endif			
 			if(temp_x+1<=grid.x_area_max)
 				temp_x+=1;
+			if(temp_x2+2<=grid.x_area_max)
+				temp_x2+=2;
+			
 			next_gridx=now_gridx;
-			if(Read_Coordinate_Clean(temp_x,grid.y))
+			//if(Read_Coordinate_Clean(temp_x,grid.y))
+			if((Read_Coordinate_Clean(temp_x,grid.y))&(Read_Coordinate_Clean(temp_x2,grid.y)))
 				{
+					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x);
+					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x2);
 					if(Read_Coordinate_Clean(next_gridx,next_gridy))
-						return 1;
+						{
+							TRACE("coor[%d][%d] has clean !!\r\n",next_gridy,next_gridx);
+							TRACE("return 1\r\n");
+							return 1;
+						}
 					else
-						return 2;
+						{
+							TRACE("return 2!!\r\n");
+							return 2;
+						}
 				}
 		}
 	else
 		{
 			temp_x=grid.x;
+			temp_x2=grid.x;
 #if 0
 			if(temp_x-1<grid.x_area_min)
 				temp_x=GRID_MIN;
@@ -390,13 +407,26 @@ u8 Analysis_StopBack(short tgt_yaw)
 #endif
 			if(temp_x-1>=grid.x_area_min)
 				temp_x-=1;
+			if(temp_x2-2>=grid.x_area_min)
+				temp_x2-=2;
+			
 			next_gridx=now_gridx;
-			if(Read_Coordinate_Clean(temp_x,grid.y))
+			//if(Read_Coordinate_Clean(temp_x,grid.y))
+			if((Read_Coordinate_Clean(temp_x,grid.y))&(Read_Coordinate_Clean(temp_x2,grid.y)))
 				{
+					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x);
+					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x2);					
 					if(Read_Coordinate_Clean(next_gridx,next_gridy))
-						return 1;
+						{
+							TRACE("coor[%d][%d] has clean !!\r\n",next_gridy,next_gridx);
+							TRACE("return 1\r\n");
+							return 1;
+						}
 					else
-						return 2;
+						{
+							TRACE("return 2!!\r\n");
+							return 2;
+						}
 				}
 		}
 	return 0;

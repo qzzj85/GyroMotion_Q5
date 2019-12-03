@@ -696,6 +696,7 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 	if(motion1.x_acc==2)
 		motion1.repeat_sweep=true;		//第一次清扫，如果是X轴是双方向清扫，则设置重复扫一次，单方向的，则没有必要
 	Set_AreaWorkTime(20);
+	motion1.worktime_area_continue=giv_sys_time;
 	Delete_All_PathPoint();
 }
 
@@ -1114,6 +1115,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										turn_angle=120;
 									else
 										turn_angle=90;
+									turn_angle=90;
 								}
 							mode.step_bp++;
 							break;
@@ -1384,6 +1386,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										turn_angle=120;
 									else
 										turn_angle=90;
+									turn_angle=90;
 								}
 							else						//需要准备右沿边
 								{
@@ -2510,7 +2513,7 @@ void Do_BackSweep(void)
 				break;
 			case 3:
 				Speed=TURN_SPEED;
-				if(do_action(turn_dir,100*Angle_1))
+				if(do_action(turn_dir,90*Angle_1))
 					{
 						stop_rap();
 						mode.step++;
@@ -2778,7 +2781,7 @@ void Continue_Sweep(void)
 void Init_Stop_BackSweep(void)
 {
 	TRACE("Enter in %s...\r\n",__func__);
-
+#if 1
 	if(Analysis_Back_Leak())
 		{
 			TRACE("find back leak!!\r\n");
@@ -2804,6 +2807,14 @@ void Init_Stop_BackSweep(void)
 			check_point.new_x1=grid.x_abort;check_point.new_y1=grid.y_abort;
 			check_point.new_x2=grid.x_abort;check_point.new_y2=grid.y_abort;
 			check_point.next_action=CHECK_BACK2NORMAL;
+			Init_Shift_Point1(0);
+			return;
+		}
+#endif
+	if(Analysis_Back_Leak())
+		{
+			TRACE("find back leak!!\r\n");
+			TRACE("goto back leak!!\r\n");
 			Init_Shift_Point1(0);
 			return;
 		}
@@ -2834,6 +2845,7 @@ void Init_Stop_BackSweep(void)
 	delay_ms(500);
 	TRACE("Init Stop Backsweep complete!!!\r\n");
 	Restore_Abort_Data();		//然后再装在中断之前的数据
+	grid.x_abort=grid.x;
 	TRACE("grid.x_abort=%d y_abort=%d\r\n",grid.x_abort,grid.y_abort);
 }
 
@@ -2871,6 +2883,364 @@ void StopBack_Bump_Action(void)
 				}
 		}
 #endif
+
+	switch(mode.step_bp)
+		{
+			case 0:
+				Set_Coordinate_Wall(now_gridx,now_gridy);
+				mode.bump_time=giv_sys_time;
+				mode.step_bp++;
+				turn_flag=false;
+			break;
+			case 1:
+				if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
+					return;
+				Speed=BUMP_BACK_SPEED;
+				if(do_action(4,2*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_bp++;
+					}
+				break;
+			case 2:
+				if(Judge_Ypos_Reach(tgt_ypos,5))
+					{
+						mode.step=4;
+						mode.bump=0;
+						mode.bump_flag=false;
+						mode.step_bp=0;
+						return;
+					}
+				if((mode.step!=3)&(mode.step!=7))
+					{
+						mode.step=0;
+						mode.bump=0;
+						mode.bump_flag=false;
+						mode.step_bp=0;
+						mode.bump_time=giv_sys_time;
+					}
+				else if(mode.step==3)			//沿Y轴移动
+					{
+						mode.step_bp=3;			
+					}
+				else							//沿X轴移动
+					{
+						mode.step_bp=7;						
+					}
+				break;
+			case 3:
+#if 0
+				if(motion1.tgt_yaw==L_Angle_Const)
+					{
+						if(xpos>motion1.xpos_abort)
+							{
+								turn_dir=1;
+							}
+						else
+							{
+								turn_dir=2;
+							}
+					}
+				else
+					{
+						if(xpos>motion1.xpos_abort)
+							{
+								turn_dir=2;
+							}
+						else
+							{
+								turn_dir=1;
+							}
+					}
+#else
+				if(motion1.tgt_yaw==L_Angle_Const)
+					{
+						turn_dir=2;
+					}
+				else
+					{
+						turn_dir=1;
+					}
+#endif
+				//ypos_dif=abs(motion1.ypos_abort-ypos);
+				ypos_dif=abs(tgt_ypos-ypos);
+				mode.step_bp++;
+				break;
+			case 4:
+				Speed=TURN_SPEED;
+				if(do_action(turn_dir,40*Angle_1))
+					{
+						stop_rap();
+						mode.step_bp++;
+					}
+				break;
+			case 5:
+				Speed=MID_MOVE_SPEED;
+				if(do_action(3,5*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_bp++;
+					}
+				if(m)
+					{
+						stop_rap();
+						mode.step_bp=8;
+						mode.bump_time=giv_sys_time;
+					}
+				break;
+			case 6:
+				if(turn_dir==1)
+					{
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
+					}
+				else
+					{
+						enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
+					}
+				#if 0
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.bump=0;
+						mode.step_bp=0;
+						mode.bump_flag=false;
+						mode.step=3;
+					}
+				#endif
+				if(m)
+					{
+						stop_rap();
+						mode.step_bp=8;
+						mode.bump_time=giv_sys_time;
+					}
+				break;
+			case 8:
+				Set_Coordinate_Wall(now_gridx,now_gridy);
+				if(giv_sys_time-mode.bump_time<1000)
+					return;
+				Speed=BUMP_BACK_SPEED;
+				if(do_action(4,2*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_bp=4;
+						//if(abs(motion1.ypos_abort-ypos)>ypos_dif+25)
+						if(abs(tgt_ypos-ypos)>ypos_dif+25)
+							{
+								if(!turn_flag)
+									{
+										if(turn_dir==1)
+											turn_dir=2;
+										else
+											turn_dir=1;
+										turn_flag=true;
+									}
+							}
+					}
+				break;
+				
+			case 7:
+				m=mode.bump;
+				Init_NormalSweep(motion1.tgt_yaw);
+				mode.bump=m;
+				mode.step_bp=0;
+				break;
+		}
+}
+
+void StopBack_Bump_Action_II(void)
+{
+	u8 m=0;
+	static bool turn_flag=false;
+	static u8 turn_dir=0,cliff_time=0;
+	static u16 ypos_dif=0;
+	short ypos,tgt_ypos;
+	s8 now_gridx,now_gridy;
+	
+	now_gridx=grid.x;now_gridy=grid.y;
+	tgt_ypos=Return_GridYPos_Point(grid.y_abort);
+	ypos=Gyro_Data.y_pos;
+	m=Read_Sweep_Bump(0,0);
+	//if(Judge_Ypos_Reach(motion1.ypos_abort,5))
+	//if(Judge_Ypos_Reach(tgt_ypos,POS_BIOS))
+	if(mode.bump==0)
+		return;
+	
+#if 1
+	if((Judge_GridYPOS_Reach(grid.y_abort,0))&(!m))
+		{
+			//if(mode.step==3)
+				{
+					stop_rap();
+					TRACE("Approach Y in %s\r\n",__func__);
+					mode.bump=0;
+					mode.bump_flag=false;
+					mode.step_bp=0;
+					//mode.step++;
+					mode.step=4;
+					return;
+				}
+		}
+#endif
+	
+	switch(mode.bump)
+		{
+			case BUMP_LEFT_CLIFF:
+			case BUMP_RIGHT_CLIFF:
+			case BUMP_MID_CLIFF:
+				switch(mode.step_bp)
+					{
+						switch(mode.step_bp)
+							{
+								case 0:
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									mode.step_bp++;
+									cliff_time=0;
+									break;
+								case 1:
+									Speed=TOP_MOVE_SPEED;
+									if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))
+										{
+											stop_rap();
+											if(!Read_Cliff())
+												{
+													mode.step_bp++;
+													return;
+												}
+											else
+												{
+													Set_Coordinate_Wall(now_gridx,now_gridy);
+													cliff_time++;
+												}
+											if(cliff_time>3)
+												{
+													error_code=ERROR_LIFT;
+													Send_Voice(VOICE_ERROR_DANGER);
+													mode.err_code|=WIFI_ERR_EARTH;
+													Init_Err();
+												}
+										}
+									if(!Read_Cliff())
+										{
+											stop_rap();
+											mode.step_bp++;
+										}
+									break;
+								case 2:										
+									Restore_Abort_Data();
+									Set_Motion_BackSweep(0);
+									Area_Check(0);
+									Init_Shift_Point1(0);
+									break;
+							}
+				break;
+			case BUMP_ONLY_LEFT:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.bump_time=giv_sys_time;
+							mode.step_bp++;
+							turn_flag=false;
+							break;
+						case 1:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 2:
+							Speed=TURN_SPEED;
+							if(do_action(2,40*Angle_1))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 3:
+							Speed=MID_MOVE_SPEED;
+							if(do_action(3,5*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 4:
+							enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
+							if(m)
+								{
+									stop_rap();
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									mode.bump=m;
+									mode.step_bp=0;
+								}
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+								{
+									stop_rap();
+									mode.step=0;
+									mode.step_bp=0;
+									mode.bump=0;
+									mode.bump_flag=false;
+								}
+							break;
+					}
+				break;
+			case BUMP_ONLY_RIGHT:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.bump_time=giv_sys_time;
+							mode.step_bp++;
+							turn_flag=false;
+							break;
+						case 1:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 2:
+							Speed=TURN_SPEED;
+							if(do_action(1,40*Angle_1))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 3:
+							Speed=MID_MOVE_SPEED;
+							if(do_action(3,5*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 4:
+							enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
+							if(m)
+								{
+									stop_rap();
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									mode.bump=m;
+									mode.step_bp=0;
+								}
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+								{
+									stop_rap();
+									mode.step=0;
+									mode.step_bp=0;
+									mode.bump=0;
+									mode.bump_flag=false;
+								}
+							break;
+							
+					}
+			}
+		}
 
 	switch(mode.step_bp)
 		{
@@ -3137,7 +3507,7 @@ void Do_Stop_BackSweep(void)
 					}
 				break;
 			case 4:
-				//Set_Motion_BackSweep(0);	//清空回扫标志
+				Set_Motion_BackSweep(0);	//清空回扫标志
 				TRACE("grid.y_abort=%d x_abort=%d\r\n",grid.y_abort,grid.x_abort);
 				TRACE("grid.y=%d x=%d\r\n",grid.y,grid.x);
 				TRACE("Stop BackSweep action complete!\r\n");
@@ -3159,6 +3529,7 @@ void Do_Stop_BackSweep(void)
 					}
 				break;
 			case 7:
+#if 0
 				if(Analysis_Back_Leak())
 					{
 						Save_Abort_Data();
@@ -3169,6 +3540,7 @@ void Do_Stop_BackSweep(void)
 						Init_Shift_Point1(0);
 						return;
 					}
+#endif
 				if(motion1.back_sweep)
 					{
 						if(!motion1.leakon)

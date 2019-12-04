@@ -672,8 +672,8 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 #endif
 		{
 			stop_rap();
-			error_code=SEND_ERROR_NODEMALLOC;
-			mode.err_code|=WIFI_ERR_OTHER;
+			error_code=ERROR_NODEMALLOC;
+			mode.wifi_err_code|=WIFI_ERR_OTHER;
 			Init_Err();
 			return;
 		}
@@ -722,8 +722,8 @@ void Do_FirstInit_Sweep(void)
 				if(Init_PathPoint())
 					{
 						stop_rap();
-						error_code=SEND_ERROR_PATHMALLOC;
-						mode.err_code|=WIFI_ERR_OTHER;
+						error_code=ERROR_PATHMALLOC;
+						mode.wifi_err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
@@ -735,16 +735,16 @@ void Do_FirstInit_Sweep(void)
 #endif
 					{
 						stop_rap();
-						error_code=SEND_ERROR_NODEMALLOC;
-						mode.err_code|=WIFI_ERR_OTHER;
+						error_code=ERROR_NODEMALLOC;
+						mode.wifi_err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
 				if(Init_BackHead())
 					{
 						stop_rap();
-						error_code=SEND_ERROR_BACKMALLOC;
-						mode.err_code|=WIFI_ERR_OTHER;
+						error_code=ERROR_BACKMALLOC;
+						mode.wifi_err_code|=WIFI_ERR_OTHER;
 						Init_Err();
 						return;
 					}
@@ -832,9 +832,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										}
 									if(cliff_time>3)
 										{
-											error_code=ERROR_LIFT;
+											error_code=ERROR_DANGER;
 											Send_Voice(VOICE_ERROR_DANGER);
-											mode.err_code|=WIFI_ERR_EARTH;
+											mode.wifi_err_code|=WIFI_ERR_EARTH;
 											Init_Err();
 										}
 								}
@@ -2111,11 +2111,6 @@ void Init_NormalSweep(short tgt_yaw)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
@@ -2256,7 +2251,7 @@ void Do_NormalSweep(void)
 				break;
 			case 3:
 				Speed=TURN_SPEED;
-				if(do_action(turn_dir,100*Angle_1))
+				if(do_action(turn_dir,90*Angle_1))
 					{
 						stop_rap();
 						mode.step++;
@@ -2331,11 +2326,6 @@ void Init_Back_Sweep(short tgt_yaw)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
@@ -2626,12 +2616,6 @@ void Init_Pass2Sweep(void)
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
-	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 
 }
 
@@ -3113,9 +3097,9 @@ void StopBack_Bump_Action_II(void)
 												}
 											if(cliff_time>3)
 												{
-													error_code=ERROR_LIFT;
+													error_code=ERROR_DANGER;
 													Send_Voice(VOICE_ERROR_DANGER);
-													mode.err_code|=WIFI_ERR_EARTH;
+													mode.wifi_err_code|=WIFI_ERR_EARTH;
 													Init_Err();
 												}
 										}
@@ -3598,12 +3582,6 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
-	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 
 
 	motion1.tgt_yaw=tgt_yaw;
@@ -4928,8 +4906,8 @@ void Do_PauseSweep(void)
 	//if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
 	if(e_m.sign==FARN)
 		{
-			error_code=SEND_ERROR_DANGER;
-			mode.err_code|=WIFI_ERR_EARTH;
+			error_code=ERROR_DANGER;
+			mode.wifi_err_code|=WIFI_ERR_EARTH;
 			Send_Voice(VOICE_ERROR_DANGER);
 			Init_Err();
 			return;

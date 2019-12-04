@@ -132,12 +132,6 @@ void Init_LeakSweep(short tgt_yaw)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
-
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
 	
@@ -288,7 +282,7 @@ void Do_LeakSweep(void)
 				break;
 			case 3:
 				Speed=TURN_SPEED;
-				if(do_action(turn_dir,100*Angle_1))
+				if(do_action(turn_dir,90*Angle_1))
 					{
 						stop_rap();
 						mode.step++;
@@ -369,11 +363,6 @@ void Init_Leak_BackSweep(short tgt_yaw)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(tgt_yaw);
 #if 1

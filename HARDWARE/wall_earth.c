@@ -70,7 +70,7 @@ void init_wallearth(void)
 	w_l.low_door=600;	//QZ:ั๙ป๚ต๗สิ
 	w_lm.low_door=600;//200;
 	w_rm.low_door=600;//300;
-	w_m.low_door=400;//600;//300;
+	w_m.low_door=600;//600;//300;
 	w_r.low_door=600;
 
 #ifdef W_MM_ENABLE

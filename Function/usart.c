@@ -12,8 +12,6 @@ u8 		IR_RECE_FLAG		=0;					//收到充电台信号标志位
 bool	SLAM_DOCK			=false;				//SLAM下发回充指令，即大回充
 bool 	DOCK_SWEEP			=false;				//回充边刷速度改变标志
 u16 	error_code			=0;					//底盘检测的异常代码，两字节，
-u16		dis_err_code		=0;					//需要显示的异常代码，包括底盘检测的和SLAM下发的
-u32 	dis_err_time;				
 
 u16 Leap_Year_Day[2]={365,366};
 u8 Year_Month_Day[2][12]={

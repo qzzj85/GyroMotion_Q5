@@ -969,8 +969,7 @@ void ChargeControl_Test(void)
 				//if( battery_temp_1s < 355)
 				if((battery_temp_1s<355)|(battery_temp_1s>3902))	//qz modify 20180515
 				{
-					error_code=SEND_ERROR_BAT;
-					dis_err_code=DIS_ERROR_BAT_DOWN;
+					error_code=ERROR_BAT;
 					Init_Err();
 					return ;
 				}

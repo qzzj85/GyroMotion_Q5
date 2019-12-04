@@ -294,9 +294,9 @@ void Shift_BumpAction(void)
 										}
 									if(cliff_time>3)
 										{
-											error_code=ERROR_LIFT;
+											error_code=ERROR_DANGER;
 											Send_Voice(VOICE_ERROR_DANGER);
-											mode.err_code|=WIFI_ERR_EARTH;
+											mode.wifi_err_code|=WIFI_ERR_EARTH;
 											Init_Err();
 										}
 								}
@@ -770,11 +770,6 @@ void Init_Shift_Point1(u8 pre_action)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
@@ -1924,11 +1919,6 @@ void Init_Shift_Point2(void)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);

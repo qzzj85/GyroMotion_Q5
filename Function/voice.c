@@ -378,7 +378,6 @@ void voice_usart(u8 data)
 			break;
 			case 0x0C:			//回充失败
 				addr=VOICE_DOCK_FAIL;
-				dis_err_code=DIS_ERROR_DOCK_FAIL;
 			break;
 			case 0x0D:			//我在这里
 				addr=VOICE_I_AM_HERE;
@@ -395,29 +394,24 @@ void voice_usart(u8 data)
 			break;
 			case 0x11:			//激光测距值固定
 				addr=VOICE_ERROR_BIRD_FAIL;
-				dis_err_code=DIS_ERROR_BIRD_DOWN;			//qz add 20180416:增加错误显示
-				error_code=SEND_ERROR_BIRD;				//qz add V2.3.9
+				error_code=ERROR_BIRD;				//qz add V2.3.9
 				
 			break;
 			case 0x12:			//激光头损坏,不能通讯
 				addr=VOICE_ERROR_BIRD_FAIL;
-				dis_err_code=DIS_ERROR_BIRD_DOWN;		//qz add 20180416:增加错误显示
-				error_code=SEND_ERROR_BIRDCOM;			//qz add V2.3.9
+				error_code=ERROR_BIRDCOM;			//qz add V2.3.9
 			break;
 			case 0x13:			//视频板异常
 				addr=VOICE_ERROR_VIDEO_FAIL;
-				dis_err_code=DIS_ERROR_VIDEO_DOWN;			//qz add 20180416:增加错误显示
-				error_code=SEND_ERROR_VIDEO;				//qz add V2.3.9
+				error_code=ERROR_VIDEO;				//qz add V2.3.9
 			break;
 			case 0x14:			//gyro板异常
 				addr=VOICE_ERROR_GYRO;
-				dis_err_code=DIS_ERROR_GYRO;			//qz add 20180416:增加错误显示
-				error_code=SEND_ERROR_GYRO;				//qz add V2.3.9
+				error_code=ERROR_GYRO;				//qz add V2.3.9
 			break;
 			case 0x15:			//底盘发送数据异常
 				addr=VOICE_ERROR_DIPAN_TICK;
-				dis_err_code=DIS_ERROR_DIPAN_TICK;		//qz add 20180416:增加错误显示
-				error_code=SEND_ERROR_DIPAN_TICK;			//qz add V2.3.9
+				error_code=ERROR_MOTION_TICK;			//qz add V2.3.9
 			break;
 		}
 

@@ -370,13 +370,14 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		{
 			log_show = true;				//显示更新时间		
 			Half_Sec  = true;
+			led.halfsec_flag=true;
 			Read_PwrSwitch_Status();
 		}
 	
 	if((giv_sys_time%10000)==0)
 		{
 			Sec=true;
-			led.slow_flag=true;
+			led.sec_flag=true;
 			top_time_sec=top_time;
 			top_time=0;
 		}

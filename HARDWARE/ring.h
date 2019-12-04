@@ -18,7 +18,6 @@ extern bool rap_time;                    //两轮速度调整时间标志
 
 extern u8 Wheel_State ;            //左右轮驱动状态 0为合格，1为驱动坏	 
 extern u32 Speed ;                    //两轮的最大速度  ，表示为脉冲时间
-extern u8 err;
 extern ACTION action;
 //////////////////////////////////子程序定义////////////////
 void Init_Ring(void);

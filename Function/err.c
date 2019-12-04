@@ -3,6 +3,8 @@
 ////////////////////////私有定义//////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
 ///////////////////////私有变量////////////////////////////////////
+static u8 cliff_step=0;
+
 ///////////////////////全局函数////////////////////////////////////	  
 void Init_Err(void); 
 void Do_Err(void);
@@ -41,7 +43,6 @@ void Init_Err(void)
 
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Err Mode Complete!\r\n");
-	TRACE("dis_error_code=0x%x\r\n",dis_err_code);
 #endif
 
 #if 1
@@ -52,15 +53,46 @@ void Init_Err(void)
 	Reset_UV();
 #endif
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
-	Open_Led(0,30000,2);			//qz add 20181120,红灯快闪3s
-	Open_Led(0,0,0);
+	//Open_Led(0,30000,2);			//qz add 20181120,红灯快闪3s
+	//Open_Led(0,0,0);
+	Open_Led(0,error_code,3);
 #ifdef NEW_VOICE_IC
 	Send_Voice(VOICE_ERROR_WARNING);
 #endif
+	cliff_step=0;
 }
 /******************************************************************
 功能：执行充电
 ******************************************************************/
+
+u8 Check_All_Cliff_OK(void)
+{
+	static u32 check_time=0;
+	switch(cliff_step)
+		{
+			case 0:
+				if((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN))
+					{
+						cliff_step++;
+						check_time=giv_sys_time;
+					}
+				break;
+			case 1:
+				if((e_r.sign==FARN)|(e_m.sign==FARN)|(e_r.sign==FARN))
+					{
+						cliff_step=0;
+						return 0;
+					}
+				if(giv_sys_time-check_time>10000)
+					{
+						cliff_step=0;
+						return 1;
+					}
+				
+		}
+	return 0;
+}
+
 void Do_Err(void)
 {
  ///遥控器按键管理		     
@@ -84,7 +116,7 @@ void Do_Err(void)
 		{
 		}
   #endif
-  if(error_code==SEND_ERROR_BOXNONE)
+  if(error_code==ERROR_BOXNONE)
   	{
   		if(!Read_Dust_Box())
   			{
@@ -98,12 +130,12 @@ void Do_Err(void)
   //出现过如下情况：当机器左轮或者右轮单独悬空时，会做保护动作，保护动作做完后，还是悬空则报警。
   //但是报警进入异常后，一旦又着地，则马上进入待机状态，让人无法知道刚才发生了什么，机器就不动了
   //所以把单轮悬空的状态从这里屏蔽，不能自动回复
-  //if((error_code==SEND_ERROR_DIPANLIFT)|(error_code==SEND_ERROR_LEFTLIFT)|(error_code==SEND_ERROR_RIGHTLIFT))
-  //if((error_code==SEND_ERROR_DIPANLIFT))	//qz add 20180913
-  if(error_code==SEND_ERROR_DANGER)
+  //if((error_code==ERROR_MOTION_LIFT)|(error_code==ERROR_LEFT_LIFT)|(error_code==ERROR_RIGHT_LIFT))
+  //if((error_code==ERROR_MOTION_LIFT))	//qz add 20180913
+  if(error_code==ERROR_DANGER)
   	{
   		//if((l_lidi.key)&(r_lidi.key)&((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN)))
-  		if((e_r.sign!=FARN)&(e_m.sign!=FARN)&(e_r.sign!=FARN))
+  		if(Check_All_Cliff_OK())
   			{
   				Send_Voice(VOICE_VOLUME_2);
   				Init_Cease();				

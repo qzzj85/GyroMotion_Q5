@@ -126,10 +126,9 @@ void RYBS_Cliff_Action(u8 bump_temp)
 							}
 						else
 							{
-								error_code=SEND_ERROR_DANGER;
-								dis_err_code=DIS_ERROR_DANGER;
+								error_code=ERROR_DANGER;
 								Send_Voice(VOICE_ERROR_DANGER);
-								mode.err_code|=WIFI_ERR_EARTH;
+								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Init_Err();
 							}
 						break;
@@ -248,10 +247,9 @@ void RYBS_Cliff_Action(u8 bump_temp)
 							}
 						else
 							{
-								error_code=SEND_ERROR_DANGER;
-								dis_err_code=DIS_ERROR_DANGER;
+								error_code=ERROR_DANGER;
 								Send_Voice(VOICE_ERROR_DANGER);
-								mode.err_code|=WIFI_ERR_EARTH;
+								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Init_Err();
 							}
 						break;
@@ -378,10 +376,9 @@ void RYBS_Cliff_Action(u8 bump_temp)
 						}
 					else
 						{
-							error_code=SEND_ERROR_DANGER;
-							dis_err_code=DIS_ERROR_DANGER;
+							error_code=ERROR_DANGER;
 							Send_Voice(VOICE_ERROR_DANGER);
-							mode.err_code|=WIFI_ERR_EARTH;
+							mode.wifi_err_code|=WIFI_ERR_EARTH;
 							Init_Err();
 						}
 					break;
@@ -1102,9 +1099,9 @@ void YBS_Right_Bump(u8 out_enable)
 					if(giv_sys_time-mode.bump_time<BUMP_TIME_DELAY)
 						return;
 					Speed = TURN_SPEED;
-					//if(do_action(1, (uint32_t)(15 * Angle_1)))			//右转,原来为40	//qz modify 20-->15 20180710
-					do_action(1,360*Angle_1);
-					if(m!=BUMP_WALL_RIGHT_MID)
+					if(do_action(1, (uint32_t)(30 * Angle_1)))			//右转,原来为40	//qz modify 20-->15 20180710
+					//do_action(1,360*Angle_1);
+					//if(m!=BUMP_WALL_RIGHT_MID)
 						{
 							stop_rap();	//qz add
 							mode.step_bp = 0;

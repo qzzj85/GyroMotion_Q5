@@ -4728,14 +4728,16 @@ u8 Check_All_Cliff(void)
 	switch (step)
 		{
 			case 0:
-				if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
+				//if((e_l.sign==FARN)&(e_m.sign==FARN)&(e_r.sign==FARN))
+				if(e_m.sign==FARN)
 					{
 						step++;
 						check_time=giv_sys_time;
 					}
 				break;
 			case 1:
-				if((e_l.sign==NEAR)|(e_m.sign==NEAR)|(e_r.sign==NEAR))
+				//if((e_l.sign==NEAR)|(e_m.sign==NEAR)|(e_r.sign==NEAR))
+				if(e_m.sign==NEAR)
 					{
 						step=0;
 					}
@@ -4823,10 +4825,9 @@ void Check_Status(void)
 					Fan.error_time++;
 					if(Fan.error_time>=3)
 						{
-							error_code=SEND_ERROR_FANFIX;
-							dis_err_code=DIS_ERROR_FAN_OC;
+							error_code=ERROR_FANOC;
 							voice_addr=VOICE_ERROR_FAN_OC;			//无需发送语音
-							mode.err_code|=WIFI_ERR_FAN;
+							mode.wifi_err_code|=WIFI_ERR_FAN;
 						}
 				}
 			
@@ -4837,20 +4838,17 @@ void Check_Status(void)
 			//if(Lift_Check())
 			if((l_lidi.fail)&(!r_lidi.fail))
 				{
-					error_code=SEND_ERROR_LEFTLIFT;
-					dis_err_code=DIS_ERROR_LEFT_LIFT;
+					error_code=ERROR_LEFT_LIFT;
 					voice_addr=VOICE_ERROR_L_LIFT;
 				}
 			else if((!l_lidi.fail)&(r_lidi.fail))
 				{
-					error_code=SEND_ERROR_RIGHTLIFT;
-					dis_err_code=DIS_ERROR_RIGHT_LIFT;
+					error_code=ERROR_RIGHT_LIFT;
 					voice_addr=VOICE_ERROR_R_LIFT;
 				}
 			else if(l_lidi.fail&r_lidi.fail)
 				{
-					error_code=SEND_ERROR_DIPANLIFT;
-					dis_err_code=DIS_ERROR_SWEEPER_LIFT;
+					error_code=ERROR_MOTION_LIFT;
 					voice_addr=VOICE_ERROR_LIFT;
 				}
 #endif
@@ -4859,8 +4857,7 @@ void Check_Status(void)
 #ifdef CLIFF_ENABLE
 			if(Check_All_Cliff())
 				{
-					error_code=SEND_ERROR_DANGER;
-					dis_err_code=DIS_ERROR_DANGER;
+					error_code=ERROR_DANGER;
 					voice_addr=VOICE_ERROR_DANGER;
 				}
 #endif
@@ -4870,8 +4867,7 @@ void Check_Status(void)
 			////////SLAM_TICK异常检测/////////
 			if(SLAM_Tick_Check())
 				{
-					error_code=SEND_ERROR_SLAMCOM;
-					dis_err_code=DIS_ERROR_SLAM_DOWN;
+					error_code=ERROR_SLAMCOM;
 					voice_addr=VOICE_ERROR_SLAM_TICK;		//无需发送语音
 				}
 #endif
@@ -4881,25 +4877,22 @@ void Check_Status(void)
 			//if(Ring_Fix_Check())
 			if((l_rap.fail)&(!r_rap.fail))
 				{
-					error_code=SEND_ERROR_RINGFIX;
-					dis_err_code=DIS_ERROR_LEFTRING_OC;
+					error_code=ERROR_LEFTRINGOC;
 					voice_addr=VOICE_ERROR_L_RING;
-					mode.err_code|=WIFI_ERR_LRING_OC;
+					mode.wifi_err_code|=WIFI_ERR_LRING_OC;
 				}
 			else if((!l_rap.fail)&(r_rap.fail))
 				{
-					error_code=SEND_ERROR_RINGFIX;
-					dis_err_code=DIS_ERROR_RIGHTRING_OC;
+					error_code=ERROR_RIGHTRINGOC;
 					voice_addr=VOICE_ERROR_R_RING;
-					mode.err_code|=WIFI_ERR_RRING_OC;
+					mode.wifi_err_code|=WIFI_ERR_RRING_OC;
 				}
 			if(l_rap.fail&r_rap.fail)
 				{
-					error_code=SEND_ERROR_RINGFIX;
-					dis_err_code=DIS_ERROR_RIGHTRING_OC;
+					error_code=ERROR_RINGOC;
 					voice_addr=VOICE_ERROR_R_RING;
-					mode.err_code|=WIFI_ERR_LRING_OC;
-					mode.err_code|=WIFI_ERR_RRING_OC;
+					mode.wifi_err_code|=WIFI_ERR_LRING_OC;
+					mode.wifi_err_code|=WIFI_ERR_RRING_OC;
 				}
 #endif
 
@@ -4908,27 +4901,23 @@ void Check_Status(void)
 			data1=Ring_OC_Check();
 			if(data1)
 				{
-					error_code=SEND_ERROR_RINGOC;
 					switch(data1)
 						{
 							case 1:
-								error_code=SEND_ERROR_LEFTRINGOC;		//qz add 20180913
-								dis_err_code=DIS_ERROR_LEFTRING_OC;
+								error_code=ERROR_LEFTRINGOC;		//qz add 20180913
 								voice_addr=VOICE_ERROR_L_RING;
-								mode.err_code|=WIFI_ERR_LRING_OC;
+								mode.wifi_err_code|=WIFI_ERR_LRING_OC;
 								break;
 							case 2:
-								error_code=SEND_ERROR_RIGHTRINGOC;		//qz add 20180913
-								dis_err_code=DIS_ERROR_RIGHTRING_OC;
+								error_code=ERROR_RIGHTRINGOC;		//qz add 20180913
 								voice_addr=VOICE_ERROR_R_RING;
-								mode.err_code|=WIFI_ERR_RRING_OC;
+								mode.wifi_err_code|=WIFI_ERR_RRING_OC;
 								break;
 							case 3:
-								error_code=SEND_ERROR_RIGHTRINGOC;		//qz add 20180913
-								dis_err_code=DIS_ERROR_RIGHTRING_OC;
+								error_code=ERROR_RINGOC;		//qz add 20180913
 								voice_addr=VOICE_ERROR_R_RING;
-								mode.err_code|=WIFI_ERR_LRING_OC;
-								mode.err_code|=WIFI_ERR_RRING_OC;
+								mode.wifi_err_code|=WIFI_ERR_LRING_OC;
+								mode.wifi_err_code|=WIFI_ERR_RRING_OC;
 								break;							
 						}
 				}
@@ -4938,10 +4927,9 @@ void Check_Status(void)
 			//////中扫过流异常检测//////////////
 			if(MB_OC_Check())
 				{
-					error_code=SEND_ERROR_MBOC;
-					dis_err_code=DIS_ERROR_MB_OC;
+					error_code=ERROR_MBOC;
 					voice_addr=VOICE_ERROR_ZS_OC;
-					mode.err_code|=WIFI_ERR_MB;
+					mode.wifi_err_code|=WIFI_ERR_MB;
 				}
 #endif
 
@@ -4950,10 +4938,9 @@ void Check_Status(void)
 			//if(Bump_Fix_Check())
 			if(l_bump.fail)
 				{
-					error_code=SEND_ERROR_BUMPFIX;
-					dis_err_code=DIS_ERROR_BUMP_FIX;
+					error_code=ERROR_BUMPFIX;
 					voice_addr=VOICE_ERROR_BUMP_FIX;
-					mode.err_code|=WIFI_ERR_BUMP;
+					mode.wifi_err_code|=WIFI_ERR_BUMP;
 				}
 #endif
 
@@ -4963,8 +4950,7 @@ void Check_Status(void)
 			data1=Dust_Box_Check();
 			if(dust_box.fail)
 				{
-					error_code=SEND_ERROR_BOXNONE;
-					dis_err_code=DIS_ERROR_BOX_NONE;
+					error_code=ERROR_BOXNONE;
 					voice_addr=VOICE_ERROR_DUSTBOX_NONE;
 				}
 
@@ -4974,15 +4960,15 @@ void Check_Status(void)
 #ifdef 		SB_FIX_CHECK
 			if(SideBrush.fail==1)
 				{
-					error_code=SEND_ERROR_LEFTSBOC;			//qz modify 20180913
-					dis_err_code=DIS_ERROR_LEFTSB_OC;
+					error_code=ERROR_SBOC;			//qz modify 20180913
 					voice_addr=VOICE_ERROR_L_SB;
+					mode.wifi_err_code|=WIFI_ERR_SB_OC;
 				}
 			else if(SideBrush.fail==2)
 				{
-					error_code=SEND_ERROR_RIGHTSBOC;		//qz modify 20180913
-					dis_err_code=DIS_ERROR_RIGHTSB_OC;
+					error_code=ERROR_SBOC;		//qz modify 20180913
 					voice_addr=VOICE_ERROR_R_SB;
+					mode.wifi_err_code|=WIFI_ERR_SB_OC;
 				}
 #endif
 
@@ -4990,8 +4976,7 @@ void Check_Status(void)
 #ifdef		FREE_SKID_INDEP_CHECK
 			if(Check_Free_Skid_Indep())
 				{
-					error_code=SEND_ERROR_SWEEPER_FIX;
-					dis_err_code=DIS_ERROR_SWEEPER_FIX;
+					error_code=ERROR_SWEEPER_FIX;
 					voice_addr=VOICE_ERROR_SWEEP_FIX;
 				}
 #endif
@@ -4999,37 +4984,34 @@ void Check_Status(void)
 #ifdef 		ROTATE_SKID_CHECK
 			if(Rotate_Skid.fail)
 				{
-					error_code=ERROR_RATATE_SKID;
+					error_code=ERROR_ROTATE_SKID;
 					voice_addr=VOICE_ERROR_SWEEP_FIX;
-					mode.err_code|=WIFI_ERR_OTHER;
+					mode.wifi_err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 			/////惯导数据检测////////////////
 #ifdef 		GYRO_TICK_CHECK
 			if(Check_Gyro_Tick())
 				{
-					error_code=SEND_ERROR_GYRO;
-					dis_err_code=DIS_ERROR_GYRO;
+					error_code=ERROR_GYRO;
 					voice_addr=VOICE_ERROR_GYRO;
-					mode.err_code|=WIFI_ERR_OTHER;
+					mode.wifi_err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 
 #ifdef 		GYRO_PITCH_CHECK
 			if(Gyro_Data.pitch_fail)
 				{
-					error_code=SEND_ERROR_GYRO;
-					dis_err_code=DIS_ERROR_GYRO;
+					error_code=ERROR_GYRO_PITCH;
 					voice_addr=VOICE_ERROR_GYRO;
-					mode.err_code|=WIFI_ERR_OTHER;
+					mode.wifi_err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 
 #ifdef 		GYRO_ROLL_CHECK
 			if(Gyro_Roll_Check())
 				{
-					error_code=SEND_ERROR_SWEEPER_FIX;
-					dis_err_code=DIS_ERROR_SWEEPER_FIX;
+					error_code=ERROR_GYRO_ROLL;
 #ifdef EFFICENT_DEBUG
 					TRACE("Gyro_Roll_Check Fail!\r\n");
 #endif
@@ -5039,10 +5021,9 @@ void Check_Status(void)
 #ifdef 		GYRO_PITCHROLL_CHECK
 			if(Gyro_Data.pitchroll_fail)
 				{
-					error_code=SEND_ERROR_GYRO;
-					dis_err_code=DIS_ERROR_GYRO;
+					error_code=ERROR_GYRO_PITCHROLL;
 					voice_addr=VOICE_ERROR_GYRO;
-					mode.err_code|=WIFI_ERR_OTHER;
+					mode.wifi_err_code|=WIFI_ERR_OTHER;
 				}
 #endif
 
@@ -5056,41 +5037,34 @@ void Check_Status(void)
 			switch(data1)
 				{
 					case 1:
-						error_code=SEND_ERROR_LEFTWALL;
-						dis_err_code=DIS_ERROR_LEFTWALL;
+						error_code=ERROR_LEFT_WALL;
 					break;
 					case 2:
-						error_code=SEND_ERROR_MIDWALL;
-						dis_err_code=DIS_ERROR_MIDWALL;
+						error_code=ERROR_MID_WALL;
 					break;
 					case 3:
-						error_code=SEND_ERROR_RIGHTWALL;
-						dis_err_code=DIS_ERROR_RIGHTWALL;
+						error_code=ERROR_RIGHT_WALL;
 					break;
 					case 4:
-						error_code=SEND_ERROR_LEFTEARTH;
-						dis_err_code=DIS_ERROR_LEFTEARTH;
+						error_code=ERROR_LEFT_EARTH;
 					break;
 					case 5:
-						error_code=SEND_ERROR_MIDEARTH;
-						dis_err_code=DIS_ERROR_MIDEARTH;
+						error_code=ERROR_MID_EARTH;
 					break;
 					case 6:
-						error_code=SEND_ERROR_RIGHTEARTH;
-						dis_err_code=DIS_ERROR_RIGHTEARTH;
+						error_code=ERROR_RIGHT_EARTH;
 					break;
 				}
 #endif
 			
 			//////异常处理///////////////////
-			if((dis_err_code==DIS_ERROR_SWEEPER_LIFT)|((dis_err_code<0XF000)&&(dis_err_code>0)))	//异常处理,异常全部进入ERR模式,双轮抬起进入状态需要进入异常模式
-				{			
+			if(error_code)
+				{
 					stop_rap();
 					if(voice_addr)
 						Send_Voice(voice_addr);
 					CHECK_STATUS_FLAG=false;
 					Init_Err();
-					
 				}
 		} 
 }
@@ -5189,8 +5163,7 @@ void Init_Check_Status(void)
 	Init_Gyro_Bios();
 
 	error_code=0;	//qz add 20180522
-	dis_err_code=0;
-	mode.err_code=0;
+	mode.wifi_err_code=0;
 
 #ifdef DEBUG_INIT
 	TRACE("Check Status init OK!\r\n");

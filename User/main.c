@@ -49,7 +49,7 @@ void log_out(void)
 			if(mode.sub_mode==ERR)
 				{
 					TRACE("errcode=0x%x\r\n",error_code);
-					TRACE("m.err_code=%d\r\n",mode.err_code);
+					TRACE("m.wifi_err_code=%d\r\n",mode.wifi_err_code);
 				}
 		}
 	else if(mode.mode==DOCKING)
@@ -79,7 +79,7 @@ void log_out(void)
 	TRACE("Gyro.yaw=%d\r\n",Gyro_Data.yaw);
 	TRACE("Gyro.x=%f y=%f\r\n",X_pos,Y_pos);
 	TRACE("grid.x=%d y=%d\r\n",now_gridx,now_gridy);
-	TRACE("grid.y_stari=%d\r\n",grid.y_straight_start);
+//	TRACE("grid.y_stari=%d\r\n",grid.y_straight_start);
 	TRACE("m.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("c_p.next_action=%d\r\n",check_point.next_action);
 	TRACE("c_p.new x1=%d y1=%d\r\n",check_point.new_x1,check_point.new_y1);
@@ -93,6 +93,7 @@ void log_out(void)
 	u32 sec=(giv_sys_time-motion1.worktime_area)/10000-min*60;
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("max_time=%d\r\n",motion1.worktime_area_max);
+	TRACE("version is V%d.%d.%d\r\n",MAIN_VERISON,SUB_VERSION,CORRECT_VERSION);
 //	TRACE("top=%d\r\n",top_time_sec);
 //	TRACE("start_seat=%d\r\n",motion1.start_seat);
 #else

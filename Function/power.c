@@ -270,8 +270,7 @@ void chargeing(void)
 //						giv_sys_err = 25;			//qz mask 20180515
 
 						//qz add 20180515
-						error_code=SEND_ERROR_BAT;
-						dis_err_code=DIS_ERROR_BAT_DOWN;
+						error_code=ERROR_BAT;
 						//Send_Voice(VOICE_ERROR_BAT_FAIL);
 						//qz add end
 						
@@ -527,8 +526,7 @@ void ChargeControl_My(void)
 				//if( battery_temp_1s < 355)
 				if((battery_temp_1s<355)|(battery_temp_1s>3902))	//qz modify 20180515
 				{
-					error_code=SEND_ERROR_BAT;
-					dis_err_code=DIS_ERROR_BAT_DOWN;
+					error_code=ERROR_BAT;
 					Init_Err();
 					return ;
 				}

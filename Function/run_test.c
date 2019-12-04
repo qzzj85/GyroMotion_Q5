@@ -40,11 +40,6 @@ void Init_RunTest(void)
 #endif
 	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//Çå³ý½ÓÊÕ»º´æqz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
 
 	motion1.tgt_yaw=Gyro_Data.yaw;
 	motion1.anti_tgt_yaw=Get_Reverse_Angle(Gyro_Data.yaw);
@@ -529,7 +524,7 @@ void Init_SweepTest(void)
 	if(Creat_AreaNodeList())
 		{
 			stop_rap();
-			error_code=SEND_ERROR_NODEMALLOC;
+			error_code=ERROR_NODEMALLOC;
 			Init_Err();
 			return;
 		}
@@ -559,7 +554,7 @@ void Init_SweepTest(void)
 	if(Add_AreaNode_End())
 		{
 			stop_rap();
-			error_code=SEND_ERROR_NODEMALLOC;
+			error_code=ERROR_NODEMALLOC;
 			Init_Err();
 			return;
 		}

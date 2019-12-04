@@ -52,7 +52,6 @@ void Do_Quit_Chargeing(void)
 	//if((power.charge_seat==1)&&(mode.step==0x00))
 	if(mode.step==0)
 		{
-			dis_err_code=0;
 
 			mode.step++;
 //			mode.Info_Abort=1;

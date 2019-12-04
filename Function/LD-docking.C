@@ -751,8 +751,7 @@ void Do_Docking_My(void)
 							{
 								case 0:
 									stop_rap();
-//									error_code=SEND_ERROR_DOCKFAIL;
-//									dis_err_code=DIS_ERROR_DOCK_FAIL;		//qz add 20180703
+//									error_code=ERROR_DOCKFAIL;
 									Send_Voice(VOICE_DOCK_FAIL);
 									dock_fail_time=giv_sys_time;
 									mode.step_mk++;
@@ -763,8 +762,7 @@ void Do_Docking_My(void)
 										{
 											REYBS_TIME=0;					//qz add 20180910
 											Init_Cease();	
-											dis_err_code=DIS_ERROR_DOCK_FAIL;	//qz add 20180710
-											error_code=SEND_ERROR_DOCKFAIL;
+											error_code=ERROR_DOCKFAIL;
 											return;
 										}
 									break;

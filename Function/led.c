@@ -10,7 +10,7 @@ void Init_Led(void)
 	led.green_sta=false;
 	led.red_sta=false;
 	led.quic_flag=false;
-	led.slow_flag=false;
+	led.sec_flag=false;
 	led.led_time=false;
 	led.show_time=0;
 	led.start_time=giv_sys_time;
@@ -49,9 +49,9 @@ void LED_Handle(void)
 						//led.status=LED_STA_OFF;
 						return;
 					}
-				if(led.slow_flag)
+				if(led.sec_flag)
 					{
-						led.slow_flag=false;
+						led.sec_flag=false;
 						if(led.red_sta)
 							{
 								LED_RED_OFF;
@@ -108,9 +108,9 @@ void LED_Handle(void)
 						//led.status=LED_STA_OFF;
 						return;
 					}
-				if(led.slow_flag)
+				if(led.sec_flag)
 					{
-						led.slow_flag=false;
+						led.sec_flag=false;
 						if(led.green_sta)
 							{
 								LED_GREEN_OFF;
@@ -147,6 +147,68 @@ void LED_Handle(void)
 							}
 					}
 				break;
+			case LED_STA_RED_GREEN:
+				switch(led.step)
+					{
+						case 0:
+							led.red_green_time=0;
+							led.green_sta=false;
+							led.red_sta=false;
+							led.step++;
+							led.halfsec_flag=false;
+							LED_RED_OFF;
+							LED_GREEN_OFF;
+							break;
+						case 1:
+							if(led.halfsec_flag)
+								{
+									led.halfsec_flag=false;
+									if(led.red_sta)
+										{
+											LED_RED_OFF;
+											led.red_sta=false;
+										}
+									else
+										{
+
+											if((led.red_green_time>=led.show_time))
+												{
+													LED_RED_OFF;
+													LED_GREEN_OFF;
+													led.red_sta=false;
+													led.green_sta=false;
+													led.step++;
+													led.sec_flag=false;
+													led.start_time=giv_sys_time;
+													return;
+												}
+										
+											LED_RED_ON;
+											led.red_sta=true;
+											led.red_green_time++;
+										}
+								}
+							break;
+						case 2:
+							if(led.sec_flag)
+								{
+									led.sec_flag=false;
+									if(led.green_sta)
+										{
+											LED_GREEN_OFF;
+											led.red_green_time=0;
+											led.step=0;
+											return;
+										}
+									else
+										{
+											LED_GREEN_ON;
+											led.green_sta=true;
+										}
+								}
+							break;
+					}
+				break;
 			case LED_STA_OFF:
 				LED_RED_OFF;
 				LED_GREEN_OFF;
@@ -165,6 +227,7 @@ show_time:  LED show time,if show_time is 0,means always show
 sloworquic: 0,ALWAYS SHOW (CONST)
             1,SLOW
             2,QUICK
+            3,red&green
 --------------------------------------*/            
 void Open_Led(u8 redorgreen,u32 show_time,u8 sloworquic)
 {
@@ -183,6 +246,10 @@ void Open_Led(u8 redorgreen,u32 show_time,u8 sloworquic)
 					case 2:
 						led.status=LED_STA_REDON_QUIC;
 						break;
+					case 3:
+						led.status=LED_STA_RED_GREEN;
+						led.step=0;
+						break;
 				}
 			led.show_time=show_time;
 			led.start_time=giv_sys_time;
@@ -199,6 +266,10 @@ void Open_Led(u8 redorgreen,u32 show_time,u8 sloworquic)
 						break;
 					case 2:
 						led.status=LED_STA_GREENON_QUIC;
+						break;
+					case 3:
+						led.status=LED_STA_RED_GREEN;
+						led.step=0;
 						break;
 				}
 			led.show_time=show_time;

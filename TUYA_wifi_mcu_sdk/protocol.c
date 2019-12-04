@@ -210,7 +210,7 @@ extern MODE mode;		 //??????????????
 
 void all_data_update(void)
 {
-	u8 power_switch=1,sweep_switch=0,work_sta=0,sweep_mode=0,err_code=0,suction=1,dir_control=0,bat_per=0;
+	u8 power_switch=1,sweep_switch=0,work_sta=0,sweep_mode=0,wifi_err_code=0,suction=1,dir_control=0,bat_per=0;
 	u32 clean_time=0;
 	float clean_size=0;
 
@@ -242,7 +242,7 @@ void all_data_update(void)
 	///////////////DPID_TIME//////////////////
 	clean_time=motion1.worktime/600000;
 	///////////////DPID_FAULT//////////////////
-	err_code=mode.err_code;
+	wifi_err_code=mode.wifi_err_code;
 	///////////////////////////////////////////
 	
 	///////////////DPID_POWER//////////////////
@@ -334,7 +334,7 @@ void all_data_update(void)
 	mcu_dp_value_update(DPID_CLEAN_AREA,(u32)(clean_size*10));
 	mcu_dp_value_update(DPID_ELECTRICITY_LEFT,bat_per);
 	mcu_dp_enum_update(DPID_SUCTION,suction);
-	mcu_dp_fault_update(DPID_FAULT,err_code);
+	mcu_dp_fault_update(DPID_FAULT,wifi_err_code);
 	mcu_dp_value_update(DPID_CLEAN_TIME,clean_time);
 	//mcu_dp_string_update(DPID_CLEAN_RECORD,string,23);
 }

@@ -109,22 +109,6 @@ void Init_Chargeing(u8 temp_sub_mode)
 ******************************************************************/
 void Do_Chargeing(void)
 {
-	//static uint8 piv_mode = 0;
-
-	//“未拔掉充电线”状态下,30s以后,此状态取消
-	if((dis_err_code==DIS_ERROR_DC_EXSIT)&(giv_sys_time-dis_err_time)>300000)
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
-	//出现“未拔掉充电线”状态下,如果DC直充信号消失,则此状态取消
-	if((dis_err_code==DIS_ERROR_DC_EXSIT)&(!power.charge_dc))
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
-
-	//qz add 20180919
 	switch (mode.step)
 		{
 			case 0:
@@ -178,7 +162,7 @@ void Do_Chargeing(void)
 						return;
 					}
 #endif
-				if(dis_err_code)
+				if(error_code)
 					{
 						Init_Err();
 						return;

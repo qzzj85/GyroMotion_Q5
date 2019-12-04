@@ -141,9 +141,6 @@ void AutoReadKey(void)
 								else if(power.charge_dc)
 									{
 										Send_Voice(VOICE_ERROR_DC_EXIST);
-										error_code=SEND_ERROR_DCEXIST;
-										dis_err_code=DIS_ERROR_DC_EXSIT;
-										dis_err_time=giv_sys_time;
 									}
 								else	//³äµç×ù³äµç
 									{

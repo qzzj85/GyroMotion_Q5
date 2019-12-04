@@ -112,34 +112,10 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			2
+#define		CORRECT_VERSION			3
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
-
-
-/////////////上报导航版错误代码//////////////////////
-#define		ERROR_DOCK_FAIL			0xF001
-#define		ERROR_DC_EXIST			0xF003
-#define		ERROR_BIRD				0xE011
-#define		ERROR_BIRD_COMM			0xE012
-#define		ERROR_VIDEO				0xE021
-#define		ERROR_GYRO				0xE031
-#define		ERROR_SLAM_TICK			0xE041
-#define		ERROR_SLAM_FAIL			0XE042
-#define		ERROR_LIFT				0xF003//0xE051
-#define		ERROR_DUSTBOX_NONE		0xE001
-#define		ERROR_FAN_FIX			0xE102
-#define		ERROR_BUMP_FIX			0xE002
-#define		ERROR_IR_FIX			0xE121
-#define		ERROR_IR_FAIL			0xE122
-#define		ERROR_RING_FIX			0xE131
-#define		ERROR_RING_OC			0xE132
-#define		ERROR_SWEEP_FIX			0xE133
-#define		ERROR_MB_OC				0xE141
-#define		ERROR_SB_OC				0xE151
-#define		ERROR_SB_FIX			0xE152
-#define		ERROR_BAT_TEMP			0xE091
 
 ////////////显示错误代码//////////////////////
 #define		DIS_ERROR_BOX_NONE			0XE000
@@ -170,9 +146,6 @@
 #define		DIS_ERROR_DOCK_FAIL			0XF002
 #define		DIS_ERROR_DC_EXSIT			0XF003
 
-
-#define		ERROR_RATATE_SKID		0xE200
-#define		ERROR_FREE_SKID_INDEP	0xE201
 
 ////////////底盘上报导航板请求///////////////
 #define 	DIPAN_REQ_NONE			0
@@ -442,7 +415,7 @@
 
 
 #define     SPEED           1000        // 定义为车轮的最大速度   
-#define     FARAWAY         10000//0XFFFFFFFF   //定义为无穷远
+#define     FARAWAY         410000//0XFFFFFFFF   //定义为无穷远		100000mm/PLUSE_LENGTH
 #define     LENGTH		    243			 //车轮的宽度  单位是毫米
 
 ////////////#define     METE            4615         //1米的脉冲数
@@ -957,7 +930,7 @@ typedef struct		//机器系统的工作状态
                          5:预约打扫
                          6:回充*/
 
-	u16 		err_code;
+	u16 		wifi_err_code;
 	u32 		action;		//动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线	
 	u32 		time;       //动作的起始时间
 	u32 		init_mode_time;	//qz add 20180814

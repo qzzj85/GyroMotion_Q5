@@ -1371,7 +1371,7 @@ u8 Judge_YBSDir_Area(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 				switch(now_area_dir)
 					{
 						case AREA_DOWNLEFT:
-							return 1;
+							return 2;
 						case AREA_DOWNRIGHT:
 							if(now_gridy<tgt_gridy)
 								{
@@ -1384,7 +1384,7 @@ u8 Judge_YBSDir_Area(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 						case AREA_UPLEFT:
 							return 0;
 						case AREA_UPRIGHT:
-							return 2;
+							return 1;
 					}
 				break;
 			case BOUNDARY_UPLEFT:							//XMAX¿¿×ó±ß½ç

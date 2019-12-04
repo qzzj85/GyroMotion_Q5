@@ -116,8 +116,6 @@ extern u8 		IR_RECE_FLAG;
 extern bool	SLAM_DOCK;
 extern bool DOCK_SWEEP;
 extern u16 	error_code;
-extern u16 	dis_err_code; 				//需要显示的异常代码，包括底盘检测的和SLAM下发的
-extern u32 dis_err_time;				
 
 extern UNIX_TIME 	Unix_Time;
 extern PREEN_DATA	Preen_Data[PREEN_LENGTH];

@@ -317,9 +317,8 @@ void Cliff_Bump_Action(u8 bump_temp)
 							}
 						else
 							{
-								error_code=SEND_ERROR_DANGER;
-								dis_err_code=DIS_ERROR_DANGER;
-								mode.err_code|=WIFI_ERR_EARTH;
+								error_code=ERROR_DANGER;
+								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Send_Voice(VOICE_ERROR_DANGER);
 								l_cliff_time=0;			//qz add 20180927
 							}
@@ -448,9 +447,8 @@ void Cliff_Bump_Action(u8 bump_temp)
 							}
 						else
 							{
-								error_code=SEND_ERROR_DANGER;
-								dis_err_code=DIS_ERROR_DANGER;
-								mode.err_code|=WIFI_ERR_EARTH;
+								error_code=ERROR_DANGER;
+								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Send_Voice(VOICE_ERROR_DANGER);
 							}
 						break;
@@ -577,9 +575,8 @@ void Cliff_Bump_Action(u8 bump_temp)
 						}
 					else
 						{
-							error_code=SEND_ERROR_DANGER;
-							dis_err_code=DIS_ERROR_DANGER;
-							mode.err_code|=WIFI_ERR_EARTH;
+							error_code=ERROR_DANGER;
+							mode.wifi_err_code|=WIFI_ERR_EARTH;
 							r_cliff_time=0;						//qz add 20180927
 							Send_Voice(VOICE_ERROR_DANGER);
 						}
@@ -1382,12 +1379,6 @@ void Init_Commander(void)
 #endif
 	//memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0]));		//Çå³ý½ÓÊÕ»º´æqz add 20180703
 	
-	if(dis_err_code==DIS_ERROR_DOCK_FAIL)		//qz add 20180710
-		{
-			dis_err_code=0;
-			error_code=0;
-		}
-
 #ifdef UV
 	if((mode.status)&(!SLAM_DOCK))		//qz add 20180902
 		Set_UV();

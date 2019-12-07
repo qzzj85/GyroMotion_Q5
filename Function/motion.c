@@ -823,7 +823,8 @@ void Work_TimeOut_Handle(void)
 										stop_rap();
 										TRACE("working time out!!!\r\n");
 										TRACE("now is exit,goto dock!!!\r\n");
-										Init_Docking();
+										//Init_Docking();
+										Init_Sweep_Done();
 										break;
 								}
 						}

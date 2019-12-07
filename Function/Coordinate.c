@@ -2817,7 +2817,8 @@ u8 Area_Check(u8 avoid_ybs)
 				{
 					TRACE("This is in original area!!!\r\n");
 					TRACE("Prepare to Dock!!!\r\n");
-					Init_Docking();
+					//Init_Docking();
+					Init_Sweep_Done();
 					return_data=4;
 				}
 			else								//不是，则进入下一区域

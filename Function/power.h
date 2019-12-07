@@ -108,7 +108,12 @@ FAN PWM					FAN CUR
 #define	VOL_16_5V			1861
 #define	VOL_16_8V			1895
 #define	VOL_17V				1918
+#define	VOL_17_1V			1930
 #define	VOL_17_25V			1946
+
+
+extern uint16 piv_current;
+extern uint16 piv_voltage;
 
 void 	judge_charge(void);
 void 	chargeing(void);
@@ -149,8 +154,12 @@ extern u16  dust_current_1s;       //灰尘风机电流
 extern u16  m_current_1s;          //中扫电流
 extern u16  sb_current_1s;
 
+extern u16  battery_voltage_10s;
+
 extern u16 l_current_50ms;
 extern u16 r_current_50ms;
+
+extern u16 full_power;
 
 extern POWER power ;
 extern BATTERY Battery;

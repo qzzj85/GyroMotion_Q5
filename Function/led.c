@@ -34,7 +34,7 @@ void LED_Handle(void)
 					{	
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				LED_RED_ON;
@@ -46,7 +46,7 @@ void LED_Handle(void)
 					{
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				if(led.sec_flag)
@@ -70,7 +70,7 @@ void LED_Handle(void)
 					{
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				if(led.quic_flag)
@@ -93,7 +93,7 @@ void LED_Handle(void)
 					{
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				LED_GREEN_ON;
@@ -105,7 +105,7 @@ void LED_Handle(void)
 					{
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				if(led.sec_flag)
@@ -129,7 +129,7 @@ void LED_Handle(void)
 					{
 						led.status=led.last_status;
 						led.show_time=led.last_show_time;
-						//led.status=LED_STA_OFF;
+						led.step=0;
 						return;
 					}
 				if(led.quic_flag)
@@ -147,7 +147,168 @@ void LED_Handle(void)
 							}
 					}
 				break;
-			case LED_STA_RED_GREEN:
+			case LED_STA_ALLON_CONST:
+				if((led.show_time!=0)&(giv_sys_time-led.start_time>led.show_time))
+					{
+						led.status=led.last_status;
+						led.show_time=led.last_show_time;
+						led.step=0;
+						return;
+					}
+				LED_GREEN_ON;
+				LED_RED_ON;
+				led.green_sta=true;
+				led.red_sta=true;
+				break;
+			case LED_STA_ALLON_SLOW:
+				if((led.show_time!=0)&(giv_sys_time-led.start_time>led.show_time))
+					{
+						led.status=led.last_status;
+						led.show_time=led.last_show_time;
+						led.step=0;
+						return;
+					}
+				switch(led.step)
+					{
+						case 0:
+							LED_GREEN_OFF;LED_RED_OFF;
+							led.green_sta=false;led.red_sta=false;
+							led.step++;
+							led.sec_flag=false;
+							break;
+						case 1:
+							if(led.sec_flag)
+								{
+									led.sec_flag=false;
+									if(led.green_sta)
+										{
+											LED_GREEN_OFF;
+											LED_RED_OFF;
+											led.green_sta=false;
+											led.red_sta=false;
+										}
+									else
+										{
+											LED_GREEN_ON;
+											LED_RED_ON;
+											led.green_sta=true;
+											led.red_sta=true;
+										}
+								}
+							break;
+					}
+				break;
+			case LED_STA_ALLON_QUIC:
+				if((led.show_time!=0)&(giv_sys_time-led.start_time>led.show_time))
+					{
+						led.status=led.last_status;
+						led.show_time=led.last_show_time;
+						led.step=0;
+						return;
+					}
+				switch(led.step)
+					{
+						case 0:
+							LED_GREEN_OFF;LED_RED_OFF;
+							led.green_sta=false;led.red_sta=false;
+							led.quic_flag=false;
+							led.step++;
+							break;
+						case 1:
+							if(led.quic_flag)
+								{
+									led.quic_flag=false;
+									if(led.green_sta)
+										{
+											LED_GREEN_OFF;
+											LED_RED_OFF;
+											led.green_sta=false;
+											led.red_sta=false;
+										}
+									else
+										{
+											LED_GREEN_ON;
+											LED_RED_ON;
+											led.green_sta=true;
+											led.red_sta=true;
+										}
+								}
+							break;
+					}
+				break;
+			case LED_STA_ALTERNATE_SLOW:
+				if((led.show_time!=0)&(giv_sys_time-led.start_time>led.show_time))
+					{
+						led.status=led.last_status;
+						led.show_time=led.last_show_time;
+						led.step=0;led.sec_flag=false;
+						return;
+					}
+				switch(led.step)
+					{
+						case 0:
+							LED_GREEN_OFF;LED_RED_OFF;
+							led.green_sta=false;led.red_sta=false;
+							led.step++;
+							led.sec_flag=false;
+							break;
+						case 1:
+							if(led.sec_flag)
+								{
+									led.sec_flag=false;
+									LED_GREEN_ON;led.green_sta=true;
+									LED_RED_OFF;led.red_sta=false;
+									led.step++;
+								}
+							break;
+						case 2:
+							if(led.sec_flag)
+								{
+									led.sec_flag=false;
+									LED_RED_ON;led.red_sta=true;
+									LED_GREEN_OFF;led.green_sta=false;
+									led.step=1;
+								}
+							break;
+					}
+				break;
+			case LED_STA_ALTERNATE_QUIC:
+				if((led.show_time!=0)&(giv_sys_time-led.start_time>led.show_time))
+					{
+						led.status=led.last_status;
+						led.show_time=led.last_show_time;
+						led.step=0;led.quic_flag=false;
+						return;
+					}
+				switch(led.step)
+					{
+						case 0:
+							LED_GREEN_OFF;LED_RED_OFF;
+							led.green_sta=false;led.red_sta=false;
+							led.step++;
+							led.quic_flag=false;
+							break;
+						case 1:
+							if(led.quic_flag)
+								{
+									led.quic_flag=false;
+									LED_GREEN_ON;led.green_sta=true;
+									LED_RED_OFF;led.red_sta=false;
+									led.step++;
+								}
+							break;
+						case 2:
+							if(led.quic_flag)
+								{
+									led.quic_flag=false;
+									LED_RED_ON;led.red_sta=true;
+									LED_GREEN_OFF;led.green_sta=false;
+									led.step=1;
+								}
+							break;
+					}
+				break;
+			case LED_STA_ERR_SHOW:
 				switch(led.step)
 					{
 						case 0:
@@ -223,6 +384,9 @@ void LED_Handle(void)
 Input Prama：
 redorgreen: 0,RED
             1,GREEN
+            2,RED&GREEN	
+            3,ALTERNATE
+            4,ERR_SHOW
 show_time:  LED show time,if show_time is 0,means always show
 sloworquic: 0,ALWAYS SHOW (CONST)
             1,SLOW
@@ -233,48 +397,83 @@ void Open_Led(u8 redorgreen,u32 show_time,u8 sloworquic)
 {
 	led.last_status=led.status;
 	led.last_show_time=led.show_time;
-	if(!redorgreen)
+	switch(redorgreen)
 		{
-			switch(sloworquic)
-				{
-					case 0:
-						led.status=LED_STA_REDON_CONST;
-						break;
-					case 1:
-						led.status=LED_STA_REDON_SLOW;
-						break;
-					case 2:
-						led.status=LED_STA_REDON_QUIC;
-						break;
-					case 3:
-						led.status=LED_STA_RED_GREEN;
-						led.step=0;
-						break;
-				}
-			led.show_time=show_time;
-			led.start_time=giv_sys_time;
+			case 0:							//只显示红灯
+				switch(sloworquic)
+					{
+						case 0:
+							led.status=LED_STA_REDON_CONST;
+							break;
+						case 1:
+							led.status=LED_STA_REDON_SLOW;
+							break;
+						case 2:
+							led.status=LED_STA_REDON_QUIC;
+							break;
+					}
+				led.show_time=show_time;
+				led.start_time=giv_sys_time;
+				break;
+			case 1:							//只显示绿灯
+				switch(sloworquic)
+					{
+						case 0:
+							led.status=LED_STA_GREENON_CONST;
+							break;
+						case 1:
+							led.status=LED_STA_GREENON_SLOW;
+							break;
+						case 2:
+							led.status=LED_STA_GREENON_QUIC;
+							break;
+					}
+				led.show_time=show_time;
+				led.start_time=giv_sys_time;
+				break;
+			case 2:
+				switch(sloworquic)
+					{
+						case 0:
+							led.status=LED_STA_ALLON_CONST;
+							break;
+						case 1:
+							led.status=LED_STA_ALLON_SLOW;
+							break;
+						case 2:
+							led.status=LED_STA_ALLON_QUIC;
+							break;
+					}
+				led.show_time=show_time;
+				led.start_time=giv_sys_time;
+				break;
+			case 3:
+				switch(sloworquic)
+					{
+						case 1:
+							led.status=LED_STA_ALTERNATE_SLOW;
+							led.step=0;
+							break;
+						case 2:
+							led.status=LED_STA_ALTERNATE_QUIC;
+							led.step=0;
+							break;
+						default:
+							led.status=LED_STA_ALTERNATE_SLOW;
+							led.step=0;
+							break;
+					}
+				led.show_time=show_time;
+				led.start_time=giv_sys_time;
+				break;
+			case 4:
+				led.status=LED_STA_ERR_SHOW;
+				led.show_time=show_time;
+				led.start_time=giv_sys_time;
+				led.step=0;
+			break;
+			
 		}
-	else
-		{
-			switch(sloworquic)
-				{
-					case 0:
-						led.status=LED_STA_GREENON_CONST;
-						break;
-					case 1:
-						led.status=LED_STA_GREENON_SLOW;
-						break;
-					case 2:
-						led.status=LED_STA_GREENON_QUIC;
-						break;
-					case 3:
-						led.status=LED_STA_RED_GREEN;
-						led.step=0;
-						break;
-				}
-			led.show_time=show_time;
-			led.start_time=giv_sys_time;
-		}	
 }
 
 void Close_Led(void)

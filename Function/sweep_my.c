@@ -238,6 +238,28 @@ u8 Check_Already_XClean(void)
 u8 Read_Only_Collide(void)
 {
 	u8 data1;
+
+	
+#ifdef CLIFF_ENABLE			//ZDK屏蔽
+	data1=Read_Cliff();
+	if(data1)
+		{
+			if((mode.bump>BUMP_ALL_CLIFF)|(mode.bump==0))
+				{
+					stop_rap();
+					mode.bump=data1;
+					mode.step_bp=0;
+					
+#ifdef EARTH_IN_TIM2
+					enable_pwm(L_BACK,1200);
+					enable_pwm(R_BACK,1200);
+					l_rap.ori=BACK;
+					r_rap.ori=BACK;
+#endif
+				}
+			return data1;
+		}
+#endif	 
 	
 	data1=Parse_BumpValue();
 	switch (data1)
@@ -708,15 +730,25 @@ void Do_FirstInit_Sweep(void)
 				Send_Voice(VOICE_SWEEP_START);
 				delay_ms(300);
 				Reset_XY();
+#ifdef GYRO_CAL
+				GYRO_CAL_PIN_0;
+#endif
 				mode.time=giv_sys_time;
-				Open_Led(1,0,1);
+				if(mode.self_test)
+					Open_Led(3,0,2);
+				else if(mode.burning)
+					Open_Led(2,0,2);
+				else
+					Open_Led(1,0,1);
 				mode.step++;
 				break;
 
 			case 1:
-				if(giv_sys_time-mode.time<30000)
+				if(giv_sys_time-mode.time<15000)
 					return;
-				
+#ifdef GYRO_CAL
+				GYRO_CAL_PIN_1;
+#endif
 				Init_Coordinate();
 				Get_Const_Angle();
 				if(Init_PathPoint())
@@ -755,6 +787,7 @@ void Do_FirstInit_Sweep(void)
 				motion1.area_num=0;
 				motion1.continue_checkstep=0;
 				motion1.force_dock=false;
+				motion1.yaw_start=Gyro_Data.yaw;
 				mode.status=1;
 				grid.x_start=grid.x;
 				grid.y_start=grid.y;
@@ -4959,6 +4992,274 @@ void Do_PauseSweep(void)
 			}
 }
 
+void Init_Sweep_Done(void)
+{
+	Send_Voice(VOICE_SWEEP_DONE);
+	if((motion1.force_dock|motion1.start_seat)&(!mode.burning))
+		{
+			Init_Docking();
+			return;
+		}
+	mode.last_mode=mode.mode;		//qz add 20180205
+	mode.last_sub_mode=mode.sub_mode;
+	/******初始化显示***********/
+		
+	/******初始化设置的值********************/
+	clr_ram();
+//	ReInitAd();
+	Enable_earth();
+	Enable_wall();
+	enable_hwincept();				//允许红外接收电源
+	Enable_Speed(); 				//允许速度发送
+	Init_Action();
+	
+	mode.mode = SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_DONE;
+	mode.step=0;
+	mode.time=giv_sys_time;
+	mode.bump = 0;
+	mode.step_bp = 0;
+	mode.bump_flag=0;
+	mode.Info_Abort=0;				//qz add 20180919
+	mode.All_Info_Abort=0;			//qz add 20180919
+
+	mode.status=1;
+//		WriteWorkState();
+
+	w_l.on=0;
+	w_r.on=0;
+	w_rm.on=0;
+	w_lm.on=0;
+#ifdef DEBUG_Enter_Mode
+	TRACE("Init SWEEP DONE Mode Complete!\r\n");
+#endif
+#ifdef FREE_SKID_CHECK
+	Enable_Free_Skid_Check();		//打开万向轮检测
+#endif
+	
+	delay_ms(500);
+}
+
+void SweepDone_Bump_Action(void)
+{
+	static u8 cliff_time=0;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
+     u8 m=Read_Only_Collide();
+	 switch(mode.bump)
+	 	{
+	 		case BUMP_LEFT_CLIFF:
+			case BUMP_MID_CLIFF:
+			case BUMP_RIGHT_CLIFF:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.step_bp++;
+							cliff_time=0;
+							break;
+						case 1:
+							Speed=TOP_MOVE_SPEED;
+							if(do_action(4,CLIFF_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									if(!Read_Cliff())
+										{
+											mode.step_bp++;
+											return;
+										}
+									else
+										{
+											Set_Coordinate_Wall(now_gridx,now_gridy);
+											cliff_time++;
+										}
+									if(cliff_time>3)
+										{
+											error_code=ERROR_DANGER;
+											Send_Voice(VOICE_ERROR_DANGER);
+											mode.wifi_err_code|=WIFI_ERR_EARTH;
+											Init_Err();
+										}
+								}
+							if(!Read_Cliff())
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 2:
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							mode.step=3;
+							break;
+					}
+				break;
+	 		case BUMP_ONLY_LEFT:
+			case BUMP_ONLY_RIGHT:
+			case BUMP_MID:
+				switch(mode.step_bp)
+					{
+						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.step_bp++;
+						break;
+						case 1:
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_bp++;
+								}
+							break;
+						case 2:
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							mode.step=3;
+					}
+				break;
+			default:
+				mode.bump=0;
+				mode.step_bp=0;
+				mode.bump_flag=false;
+				break;
+	 	}
+}
+
+void Do_SweepDone(void)
+{
+	static short tgt_yaw;
+	short xpos_start,ypos_start,xpos_now,ypos_now;
+	u8 turn_dir;
+
+	xpos_start=Return_GridXPos_Point(grid.x_start);
+	ypos_start=Return_GridYPos_Point(grid.y_start);
+	xpos_now=Gyro_Data.x_pos;ypos_now=Gyro_Data.y_pos;
+	ACC_DEC_Curve();
+	SweepDone_Bump_Action();
+	if(mode.bump)
+		return;
+	switch(mode.step)
+		{
+
+			case 0:
+				if((abs(ypos_now-ypos_start)<=2)&(abs(xpos_now-xpos_start)<=5))
+
+					{
+						mode.step=3;
+						return;
+					}
+				if(ypos_now>ypos_start+2)
+					{
+						tgt_yaw=L_Angle_Const;
+						mode.step++;
+					}
+				else if(ypos_now<ypos_start-2)
+					{
+						tgt_yaw=R_Angle_Const;
+						mode.step++;
+					}
+				else if(xpos_now>xpos_start+5)
+					{
+						tgt_yaw=B_Angle_Const;
+						mode.step++;
+					}
+				else if(xpos_now<xpos_start-5)
+					{
+						tgt_yaw=F_Angle_Const;
+						mode.step++;
+					}
+				else 
+					{
+						mode.step=3;
+						return;
+					}
+				break;
+			case 1:
+				Speed=MID_MOVE_SPEED;
+				turn_dir=Get_TurnDir(tgt_yaw);
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 2:
+				Speed=MID_MOVE_SPEED;
+				if(do_action_my(3,20*CM_PLUS,tgt_yaw))
+					{
+						stop_rap();
+						mode.step=0;
+						return;
+					}
+					if(tgt_yaw==L_Angle_Const)
+						{
+							if(ypos_now<ypos_start)
+								{
+									stop_rap();
+									mode.step=0;
+									return;
+								}
+						}
+					else if(tgt_yaw==R_Angle_Const)
+						{
+							if(ypos_now>ypos_start)
+								{
+									stop_rap();
+									mode.step=0;
+									return;
+								}
+						}
+					else if(tgt_yaw==B_Angle_Const)
+						{
+							if(xpos_now<xpos_start)
+								{
+									stop_rap();
+									mode.step=0;
+									return;
+								}
+						}
+					else
+						{
+							if(xpos_now>xpos_start)
+								{
+									stop_rap();
+									mode.step=0;
+									return;
+								}
+						}
+				break;
+			case 3:
+				if(!Judge_Yaw_Reach(motion1.yaw_start,TURN_ANGLE_BIOS))
+					{
+						mode.step++;
+					}
+				else
+					{
+						mode.step=5;
+					}
+				break;
+			case 4:
+				Speed=MID_MOVE_SPEED;
+				turn_dir=Get_TurnDir(motion1.yaw_start);
+				do_action(turn_dir,360*Angle_1);
+				if(Judge_Yaw_Reach(motion1.yaw_start,50))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				break;
+			case 5:
+				if(mode.burning)
+					Init_First_Sweep(0);
+				else
+					Init_Cease();
+				break;
+		}
+		
+}
 void Sweep_Nothing(void)
 {
 }

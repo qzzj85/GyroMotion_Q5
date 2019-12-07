@@ -212,6 +212,16 @@ void Action_Mode(void)
 						case SUBMODE_VIRTUAL_SLEEP:
 							Do_VirtualSleep();
 							break;
+						case SUBMODE_SELF_TEST:
+							Do_SelfTest();
+							break;
+						case SUBMODE_BURN_TEST:
+							Do_BurningTest();
+							break;
+						case SUBMODE_FACT_TEST:
+
+							Do_FactoryTest();
+							break;
 					}
 			break;
 	  
@@ -279,6 +289,9 @@ void Action_Mode(void)
 							break;
 						case SUBMODE_SPOT:
 							Do_Spot_My();
+							break;
+						case SUBMODE_SWEEP_DONE:
+							Do_SweepDone();
 							break;
 					}
 			break;
@@ -3803,16 +3816,16 @@ void Disable_Rotate_Skid_Check(void)
 
 u8 Check_Gyro_Tick(void)
 {
-	switch(Gyro_Data.check_step)
+	switch(Gyro_Data.tick_check_step)
 		{
 			case 0:
-				Gyro_Data.start_check_time=giv_sys_time;
-				Gyro_Data.check_step++;
+				Gyro_Data.tick_check_time=giv_sys_time;
+				Gyro_Data.tick_check_step++;
 			break;
 			case 1:
-				if(giv_sys_time-Gyro_Data.start_check_time>200000)			//20s
+				if(giv_sys_time-Gyro_Data.tick_check_time>50000)			//5s
 					{
-						Gyro_Data.check_step=0;
+						Gyro_Data.tick_check_step=0;
 						//qz add 20181101
 						if((!Gyro_Data.first_rst)&(!mode.status))
 							{
@@ -3821,6 +3834,7 @@ u8 Check_Gyro_Tick(void)
 								return 0;
 							}
 						//qz add end
+						Gyro_Data.tick_flag=false;
 						return 1;
 					}
 			break;
@@ -4991,7 +5005,8 @@ void Check_Status(void)
 #endif
 			/////惯导数据检测////////////////
 #ifdef 		GYRO_TICK_CHECK
-			if(Check_Gyro_Tick())
+			//if(Check_Gyro_Tick())
+			if(Gyro_Data.tick_flag==false)
 				{
 					error_code=ERROR_GYRO;
 					voice_addr=VOICE_ERROR_GYRO;
@@ -5131,7 +5146,9 @@ void Init_Check_Status(void)
 
 	//惯导数据检测初始化
 #ifdef GYRO_TICK_CHECK
-	Gyro_Data.check_step=0;
+	Gyro_Data.tick_check_step=0;
+	Gyro_Data.tick_check_time=giv_sys_time;
+	Gyro_Data.tick_flag=true;
 #endif
 
 #ifdef WALL_EARTH_ERROR_CHECK

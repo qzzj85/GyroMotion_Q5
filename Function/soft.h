@@ -112,7 +112,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			3
+#define		CORRECT_VERSION			4
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -327,6 +327,10 @@
 #define	SUBMODE_APP_CTRL			0XB1
 #define	SUBMODE_VIRTUAL_SLEEP		0XB2
 #define	SUBMODE_SPOT				0XB3
+#define	SUBMODE_SELF_TEST			0XB4
+#define	SUBMODE_BURN_TEST			0XB5
+#define	SUBMODE_FACT_TEST			0XB6
+#define	SUBMODE_SWEEP_DONE			0XB7
 //#define     COMMANDER_x10           0X10         //  指令模式
 
 //#define     YBS           0X20    	     //  沿墙模式
@@ -903,7 +907,9 @@ typedef struct		//机器系统的工作状态
 	bool 		factory_burnning;		//厂测跑机状态qz add 20181024
 	bool 		bump_flag; 				   //qz add for bleamn
 	bool        low_power;
-
+	bool		burning;
+	bool		self_test;
+		
 	u8 			factory_tst_item;		//qz add 20181107
 	u8 		 	mode ;	   //机器的运行模式  0：静止模式；1：扫地模式；2：自动回充模式；3；遥控模式	4:出错模式
 	u8  		sub_mode;	//子模式，0x01:cease,0xfe:quit_charge,0xff：err
@@ -941,6 +947,7 @@ typedef struct		//机器系统的工作状态
 	u32 		last_outbump;
 	u32 		bump_time;
 	u32 		abn_time;			//qz add 20181011
+	u32			self_test_time;
 	
 }MODE;
 
@@ -1022,6 +1029,7 @@ typedef struct 					//清扫结构体
 	short 	ypos_start;			//起始点y坐标
 	short 	tgt_yaw;				//直线清扫时目标角度
 	short 	anti_tgt_yaw;			//直线清扫时目标反角度
+	short	yaw_start;
 	short 	tgtyaw_abort;
 	short 	anti_tgtyaw_abort;
 	short 	xpos_start_area;		//区域打扫（4X4）X起始坐标
@@ -1113,7 +1121,8 @@ typedef struct
 	bool cal_flag;
 	bool pitch_fail;
 	bool pitchroll_fail;
-	u8 check_step;
+	bool tick_flag;
+	u8 tick_check_step;
 	u8 pitch_fail_cnt;
 	u8 pitchroll_fail_cnt;
 
@@ -1126,7 +1135,7 @@ typedef struct
 	u8 pitchroll_check_step;
 	u32 pitchroll_check_time;
 
-	u32 start_check_time;
+	u32 tick_check_time;
 	u32 count_times;
 	volatile short x_pos;		//qz modify 20190307 :add volatile
 	volatile short y_pos;

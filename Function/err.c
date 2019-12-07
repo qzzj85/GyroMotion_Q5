@@ -55,7 +55,7 @@ void Init_Err(void)
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 	//Open_Led(0,30000,2);			//qz add 20181120,红灯快闪3s
 	//Open_Led(0,0,0);
-	Open_Led(0,error_code,3);
+	Open_Led(4,error_code,0);
 #ifdef NEW_VOICE_IC
 	Send_Voice(VOICE_ERROR_WARNING);
 #endif

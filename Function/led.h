@@ -8,7 +8,14 @@
 #define		LED_STA_GREENON_SLOW	4
 #define		LED_STA_GREENON_QUIC	5
 #define		LED_STA_GREENON_CONST	6
-#define		LED_STA_RED_GREEN		7
+#define		LED_STA_ALLON_SLOW		7
+#define		LED_STA_ALLON_QUIC		8
+#define		LED_STA_ALLON_CONST		9
+#define		LED_STA_ALTERNATE_SLOW	10
+#define		LED_STA_ALTERNATE_QUIC	11
+
+#define		LED_STA_ERR_SHOW		12
+
 
 typedef struct
 {

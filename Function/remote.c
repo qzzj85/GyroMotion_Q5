@@ -31,14 +31,12 @@ void Remote_Handle(void)
 		return;
 
 	remote_info.effect=false;
-	
-//	if(((mode.mode==CEASE)&(mode.sub_mode!=CEASE)&(mode.sub_mode!=SLEEP)&(mode.sub_mode!=SELF_TEST)))	
-	//	return;
-	
+		
 	//机器处于船型开关未打开,退出
 	if((mode.mode==CHARGEING)&(mode.sub_mode==SWITCHOFF))
 		return;
-
+//	if(!Read_Key2())
+	//	return;
 	
 	switch (remote_info.remote_key)
 		{
@@ -89,6 +87,14 @@ void Remote_Handle(void)
 				/////机器处于充电状态且未进入时间预约设置模式，退出
 				if((mode.mode==CHARGEING))
 					return;
+
+				if(!Read_Key2())
+					{
+						Send_Voice(VOICE_VOLUME_2);
+						Init_Test(SUBMODE_SELF_TEST);
+						return;
+					}
+				
 				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
 				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
@@ -98,7 +104,6 @@ void Remote_Handle(void)
 			////////模式性按键///////
 			////////模式性按键///////
 			case REMOTE_KEY_DOCK:
-				motion1.force_dock=true;
 				switch(mode.mode)
 					{
 						case CEASE:
@@ -106,15 +111,16 @@ void Remote_Handle(void)
 								{
 									case CEASE:
 									case SUBMODE_PAUSESWEEP:
-										
+										motion1.force_dock=true;
 #ifdef TUYA_WIFI
-										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-										DelayMs(1);
-										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-										DelayMs(1);
-										stream_start(00);// 开始传输
+										Reset_Map();
 #endif
+										if(!Read_Key2())
+											{
+												Send_Voice(VOICE_VOLUME_2);
+												Init_Test(SUBMODE_BURN_TEST);
+												return;
+											}
 										Init_Docking();
 									break;
 									case SLEEP:
@@ -128,6 +134,13 @@ void Remote_Handle(void)
 						case SHIFT:
 						case PASS2INIT:
 						case EXIT:
+							if(!Read_Key2())
+								{
+									Send_Voice(VOICE_VOLUME_2);
+									Init_Test(SUBMODE_BURN_TEST);
+									return;
+								}						
+							motion1.force_dock=true;
 							stop_rap();
 							Send_Voice(VOICE_DOCK_START);
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
@@ -135,11 +148,33 @@ void Remote_Handle(void)
 							break;
 						case YBS:
 						case SPOT:
+							if(!Read_Key2())
+								{
+									Send_Voice(VOICE_VOLUME_2);
+									Init_Test(SUBMODE_BURN_TEST);
+									return;
+								}
+							motion1.force_dock=true;
 							stop_rap();
 							Send_Voice(VOICE_DOCK_START);
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 							Init_Docking();
 							break;
+						case CHARGEING:
+							if(Read_Key2())
+								return;
+							switch(mode.sub_mode)
+								{
+									case DC_CHARGING:
+										Send_Voice(VOICE_ERROR_DC_EXIST);
+										break;
+									case SEAT_CHARGING:
+										Send_Voice(VOICE_VOLUME_2);										
+										Init_Test(SUBMODE_BURN_TEST);
+										break;
+									default:
+										break;
+								}
 						default:
 							break;
 					}				
@@ -165,12 +200,7 @@ void Remote_Handle(void)
 									case CEASE:
 									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
-										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-										DelayMs(1);
-										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-										DelayMs(1);
-										stream_start(00);// 开始传输
+										Reset_Map();
 #endif
 										Init_First_Sweep(0);
 										break;
@@ -208,12 +238,7 @@ void Remote_Handle(void)
 									case CEASE:
 									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
-										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-										DelayMs(1);
-										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-										DelayMs(1);
-										stream_start(00);// 开始传输
+										Reset_Map();
 #endif
 										Reset_XY();
 										delay_ms(3000);
@@ -250,6 +275,12 @@ void Remote_Handle(void)
 				TRACE("Remote GUIHUA key,request guihua!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
+
+				if(!Read_Key2())
+					{
+						Init_Test(SUBMODE_FACT_TEST);
+						return;
+					}
 				switch(mode.mode)
 					{
 						case CEASE:
@@ -257,12 +288,7 @@ void Remote_Handle(void)
 								{
 									case CEASE:
 #ifdef TUYA_WIFI
-										mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-										wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-										DelayMs(1);
-										stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-										DelayMs(1);
-										stream_start(00);// 开始传输
+										Reset_Map();
 #endif
 										Init_First_Sweep(0);
 										break;
@@ -333,12 +359,7 @@ void Remote_Handle(void)
 							if(mode.sub_mode==CEASE)
 								{
 #ifdef TUYA_WIFI
-									mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-									wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-									DelayMs(1);
-									stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-									DelayMs(1);
-									stream_start(00);// 开始传输
+									Reset_Map();
 #endif
 									Init_First_Sweep(0);
 								}

@@ -51,6 +51,8 @@ u16  dust_current_1s;       //灰尘风机电流
 u16  m_current_1s;          //中扫电流
 u16  sb_current_1s;
 bool dc_nobat_run=false;	//不用电池,DC直插跑机标志位
+u16  battery_voltage_10s=0;	//电池10s的电压值
+u32  battery_voltage_10s_temp=0;
 
 u16  l_current_50ms=0;
 u16	 r_current_50ms=0;
@@ -70,6 +72,8 @@ uint16 piv_voltage;
 u32    real_chg_current;
 u32    real_bat_voltage;
 
+u16 full_power=VOL_16_8V;
+
 ///////////////////////全局函数////////////////////////////////////	
 ///////////////////////私有函数////////////////////////////////////
 ///////////////////////函数实体////////////////////////////////////
@@ -86,6 +90,7 @@ void init_power (void)
 
 
   battery_voltage = power.voltage;
+  battery_voltage_10s=power.voltage;
   //battery_temp = power.temp;
  #if 1//shftemp   
   jt_chargecurrent = account_current(CHARGE_CURRENT);
@@ -777,7 +782,7 @@ void ChargeControl_Volt_My(void)
 		///////特在此等待40s,用于导航板开机再行计算
 		///////qz add 20180625
 		case 10:
-			if(giv_sys_time-power.time>400000)
+			if(giv_sys_time-power.time>30000)
 			{
 				if(battery_voltage_1s<VOL_13V)			//如果电池电压小于13V,先涓流充电
 					{
@@ -834,7 +839,7 @@ void ChargeControl_Volt_My(void)
 		case 3:
 		Charge_PID_Ctr(800);
 		//判断电池的绝对温度大于50度或者电池电压大于21伏,电池转为涓流充电	 2369
-			if((battery_voltage > VOL_16_8V))	//qz modify 20180703:1805 16V 1861:16.5V
+			if((battery_voltage > full_power))	//qz modify 20180703:1805 16V 1861:16.5V
 			{
 				power.step = 4;
 				power.time = giv_sys_time;
@@ -922,7 +927,7 @@ void ChargeControl_Volt_My(void)
 			//qz add 20180710
 			//实测1882(16.67V)时,电池进入保护
 			//涓流充电电压大于16.8V,进入恒压充电
-			if(((giv_sys_time-power.time>100000)&&(battery_voltage>VOL_16_8V)&&(!flag_full)))
+			if(((giv_sys_time-power.time>100000)&&(battery_voltage>full_power)&&(!flag_full)))
 				{
 					Init_Charge_Data();
 					Battery.BatteryChargeForbid = 1;
@@ -938,7 +943,7 @@ void ChargeControl_Volt_My(void)
 		//恒压充电
 		case 6:
 		//充电电流大于180MA则降低PWM值
-			Charge_PID_CtrPwr(VOL_16_8V);	//qz modify 150->360:固定360mA
+			Charge_PID_CtrPwr(full_power);	//qz modify 150->360:固定360mA
 			Battery.BatteryChargeForbid = 1;	//恒压充电,禁止大电流充电
 			////////每分钟判断一次////////////////////////
 			if(gbv_minute != false)
@@ -1123,6 +1128,8 @@ static u32	l_linshi_current_1s = 0,               //左轮的临时电流
 			  
 static u16 sampling_number_1s = 0;                //采样次数
 
+static u32 battery_linshi_chargecurrent_10s=0;
+static u32 sampling_number_10s=0;
 u32 t;
    if(VOL_TEMP_ready == true)
 			 {VOL_TEMP_ready = false;}
@@ -1133,6 +1140,7 @@ u32 t;
 			 
 			 
    sampling_number ++;
+   sampling_number_10s++;
    t =	account_current(ADC_LRING_CURR);		//qz modify 20181120,冠唯采样电阻为0.47欧,贝莱恩为2欧, 2/0.47=4.25
    l_linshi_current += t;
 	l_linshi_current_1s += t ;
@@ -1159,6 +1167,7 @@ u32 t;
    t =	account_current(BATTERY_VOLTAGE);
    battery_linshi_voltage += t;
    battery_linshi_voltage_1s += t;
+   battery_linshi_chargecurrent_10s+=t;
 #if 0 //shftemp  
    t =	account_current(BATTERY_TEMP);
  #else
@@ -1211,6 +1220,12 @@ u32 t;
 					battery_linshi_chargecurrent_1s = 0;
 					sb_temp_current_1s=0;
 			 }
+   if(sampling_number_10s==50000)
+   	{
+   		battery_voltage_10s=(u16)(battery_linshi_chargecurrent_10s/50000);
+		sampling_number_10s=0;
+		battery_linshi_chargecurrent_10s=0;
+   	}
    if(sample_number_50ms== 100)		//50ms
    	{
    		l_current_50ms=(u16)(l_temp_curr_50ms/100);
@@ -1424,7 +1439,7 @@ s8 Get_APPBat(void)
 	//12.8V的AD值为2647,充电状态满值电压为16.8V(3475),非充电状态满值为16.4V(3392)
 	float a,b;
 	if(mode.mode==CHARGEING)
-		a=(float)(battery_voltage_1s-VOL_12_8V)/(float)(VOL_16_8V-VOL_12_8V);
+		a=(float)(battery_voltage_1s-VOL_12_8V)/(float)(full_power-VOL_12_8V);
 	else
 		a=(float)(battery_voltage_1s-VOL_12_8V)/(float)(VOL_16_5V-VOL_12_8V);
 	b=a*100;

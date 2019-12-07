@@ -94,6 +94,7 @@ void log_out(void)
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("max_time=%d\r\n",motion1.worktime_area_max);
 	TRACE("version is V%d.%d.%d\r\n",MAIN_VERISON,SUB_VERSION,CORRECT_VERSION);
+	TRACE("ÖÐ¹ú\r\n");
 //	TRACE("top=%d\r\n",top_time_sec);
 //	TRACE("start_seat=%d\r\n",motion1.start_seat);
 #else
@@ -184,16 +185,6 @@ int main(void)
 		Voice_Handle();
 #endif
 
-#if 0
-		YBS_Find_Seat();
-		if(Check_PreengageTime())
-			{
-				Slam_Data.dipan_req=DIPAN_REQ_PREEN;
-				//if(!mode.status)
-					//Slam_Data.dipan_req_pre=DIPAN_REQ_PREEN;
-			}
-#endif
-
 #ifdef PWRCAP_CAL
 		Battery_Reinit();
 #endif
@@ -206,9 +197,9 @@ int main(void)
 		MapData_Handle();
 		Work_TimeOut_Handle();						
 		Parse_LowPower2Dock();
-
+		Parse_SelfTest_Stop();
 #ifdef DEBUG
-		if(log_show)
+		if((log_show)&(mode.sub_mode!=SUBMODE_FACT_TEST))
 			{
 				log_show=false;
 				log_out();

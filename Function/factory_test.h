@@ -27,4 +27,5 @@
 extern FACTORY_DATA		factory_data;
 void 		Init_FactoryTest(void);
 void 		Do_FactoryTest(void);
+
 #endif

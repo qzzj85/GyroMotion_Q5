@@ -153,12 +153,7 @@ void AutoReadKey(void)
 									{
 										case CEASE:
 #ifdef TUYA_WIFI
-											mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-											wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-											DelayMs(1);
-											stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-											DelayMs(1);
-											stream_start(00);// 开始传输
+											Reset_Map();
 #endif	
 											Init_First_Sweep(0);
 											//Init_Right_YBS(1);	
@@ -219,8 +214,8 @@ void AutoReadKey(void)
 					//清空DS1307的数据
 					//if(key3.long_long_press)
 						{
-							WriteBatInitFlash();
-							NVIC_GenerateSystemReset();
+							//WriteBatInitFlash();
+							//NVIC_GenerateSystemReset();
 						}
 				break;
 				default:
@@ -409,11 +404,62 @@ u8 Read_Button_Key(KEY *key)
 								}
 						}
 
-						if(remote_info.remote_key==REMOTE_KEY_START)
-							{	
-								WriteBatInitFlash();
-								NVIC_GenerateSystemReset();
+#if 0
+						switch(remote_info.remote_key)
+							{
+								case REMOTE_KEY_DOCK:
+									//进入老化模式
+									switch(mode.mode)
+										{
+											case CHARGEING:
+												switch(mode.sub_mode)
+													{
+														case DC_CHARGING:
+															Send_Voice(VOICE_ERROR_DC_EXIST);
+															break;
+														case SEAT_CHARGING:
+															mode.burning=true;
+															Send_Voice(VOICE_VOLUME_2);
+															Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+															break;
+														case SWITCHOFF:
+															break;
+													}
+												break;
+											default:
+												stop_rap();
+#ifdef TUYA_WIFI
+												Reset_Map();
+#endif	
+												mode.burning=true;
+												Send_Voice(VOICE_VOLUME_2);
+												Init_First_Sweep(0);
+												break;
+										}
+									break;
+								case REMOTE_KEY_BACK:
+									//进入自测模式
+									Send_Voice(VOICE_VOLUME_2);
+									Init_Test();
+									break;
+								case REMOTE_KEY_FAN:
+									//进入陀螺仪测试
+									break;
+								case REMOTE_KEY_GUIHUA:
+									//进入语音播放测试
+									break;
+								case REMOTE_KEY_YBS:
+									//进入WIFI测试模式
+									break;
+								case REMOTE_KEY_START:
+									//进入厂测模式
+									break;
+								case REMOTE_KEY_RIGHT:
+									WriteBatInitFlash();
+									NVIC_GenerateSystemReset();
+									break;
 							}
+#endif
 					}
 				if(key->key)
 					key->check_step++;

@@ -42,6 +42,8 @@ extern MAP_DATA mapdata[WIFIDATA_LEN];
 u8 Read_MapData_Status(void);
 void MapData_Handle(void);
 void Set_MapData_Empty(void);
+void Reset_Map(void);
+
 
 void dp_download_power_handle_my(u8 power);
 void dp_download_mode_handle_my(u8 mode);

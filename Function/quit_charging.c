@@ -70,12 +70,7 @@ void Do_Quit_Chargeing(void)
 				anti_tgt_angle=Get_Reverse_Angle(tgt_angle);
 
 #ifdef TUYA_WIFI
-				mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-				wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-				DelayMs(1);
-				stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-				DelayMs(1);
-				stream_start(00);// 开始传输
+				Reset_Map();
 #endif
 				mode.step++;
 			case 0x01:

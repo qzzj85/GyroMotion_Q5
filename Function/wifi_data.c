@@ -437,12 +437,7 @@ void proc_wifi_ybs(void)
 					{
 						case CEASE:
 #ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
+							Reset_Map();
 #endif
 							Reset_XY();
 							delay_ms(3000);
@@ -486,12 +481,7 @@ void proc_wifi_dock(void)
 					{
 						case CEASE:
 #ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
+							Reset_Map();
 #endif
 							Init_Docking();
 						break;
@@ -531,12 +521,7 @@ void proc_wifi_play(void)
 					{
 						case CEASE:
 #ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数   地图  0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
+							Reset_Map();
 #endif
 							Init_First_Sweep(0);
 						break;
@@ -612,12 +597,7 @@ void proc_wifi_spot(void)
 					{
 						case CEASE:
 #ifdef TUYA_WIFI
-							mcu_dp_enum_update(5,2);  //状态上报为工作模式  
-							wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
-							DelayMs(1);
-							stream_open();	// 申请传输  WIFI_STREAM_ENABLE
-							DelayMs(1);
-							stream_start(00);// 开始传输
+							Reset_Map();
 #endif
 							Init_Spot(SPOT_FROM_CEASE);
 						break;
@@ -652,4 +632,14 @@ void proc_wifi_spot(void)
 			default:
 				break;
 		}
+}
+
+void Reset_Map(void)
+{
+	mcu_dp_enum_update(5,2);  //状态上报为工作模式  
+	wifi_uart_write_stream_init(0,0);// 初始化地图参数	地图	0  
+	DelayMs(1);
+	stream_open();	// 申请传输  WIFI_STREAM_ENABLE
+	DelayMs(1);
+	stream_start(00);// 开始传输
 }

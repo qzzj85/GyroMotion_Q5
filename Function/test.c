@@ -1,944 +1,1156 @@
-
-//=====================头文件====================================
-#include "AAA-Include.h"
-//=====================私有定义====================================
-
-//******全局定义******全局定义******全局定义******全局定义******全局定义******全局定义******全局定义************
-//=====================全局变量====================================
-
-//=====================全局函数====================================
-
-
-
-//******私有定义******私有定义******私有定义******私有定义******私有定义******私有定义******私有定义************
-//=====================私有变量====================================
-
-
-//=====================私有函数====================================
-
-
-
-//===============================================================================================================
-//===============================================================================================================
-
-
-
-
-
-bool m_hw_test,l_hw_test,r_hw_test,b_hw_test;
-
-
-
-
-////////////////////////私有定义//////////////////////////////////
-#define  VER   107
-////////////////////////全局变量//////////////////////////////////
-///////////////////////私有变量////////////////////////////////////
-///////////////////////全局函数////////////////////////////////////
-void frontandback(void) ;
-///////////////////////私有函数////////////////////////////////////
-void Test_Earth(uint8 state);
-void Test_Wall(uint8 state);
-void Test_HwIncept(uint8 state);
-void Test_Current(uint8 state);
-void Test_Action(uint8 state);
-void Test_KeyAndYaoKong(uint8 state);
-void Test_Display(uint8 state);
-void Test_MainBoard(uint8 state);
-///////////////////////函数实体////////////////////////////////////
-/******************************************************************
-自检整个机器
-******************************************************************/
-u32 Dis_TestData=0,start_time,current;
-int length1,length2;
-void Init_Test(void)
+#include "AAA-include.h"
+bool test_100ms_flag,test_500ms_flag,test_1s_flag;
+u32 test_result=0; 
+void Init_Test(u8 test_mode)
 {
-	mode.last_mode=mode.mode;
-	mode.last_sub_mode=mode.sub_mode;
-	clr_display();
-	Dis_On=true;
-	Dis_StatusOn=true;
-	Dis_Yuyue=false;
-	Enable_wall();			//qz modify 20180902
-	Enable_earth();
- 	Enable_Speed();
-	enable_hwincept();
-	mode.Info_Abort=1;		//不接收SLAM指令
-	mode.All_Info_Abort=1;			//qz add 20180919
-	mode.step=0;
-	mode.test_item=TST_MENU;
-	mode.sub_tst_item=0;
-	mode.test_dis_data=0;	
-	mode.mode=CEASE;
-	mode.sub_mode=SELF_TEST;
-//	mode.run_time=giv_sys_time;
-	mode.test_step=0;
-	WriteWorkState();
-
-	Sweep_Level_Set(STOP_ALL);
 	stop_rap();
+	mode.last_mode=mode.mode;		//qz add 20180205
+	mode.last_sub_mode=mode.sub_mode;
+	/******初始化显示***********/
+		
+	/******初始化设置的值********************/
+	clr_ram();
+//	ReInitAd();
+	Enable_earth();
+	Enable_wall();
+	enable_hwincept();				//允许红外接收电源
+	Enable_Speed(); 				//允许速度发送
+	Init_Action();
 	
-	CHECK_STATUS_FLAG=false;
-	Init_Check_Status();
-
-	Send_Voice(VOICE_VOLUME_3);
-
-#ifdef UV
-	Reset_UV();
+	mode.mode = CEASE;			
+	mode.sub_mode=test_mode;
+	mode.step=0;
+	mode.time=giv_sys_time;
+	mode.bump = 0;
+	mode.step_bp = 0;
+	mode.bump_flag=0;
+	mode.Info_Abort=0;				//qz add 20180919
+	mode.All_Info_Abort=0;			//qz add 20180919
+	mode.status=1;
+//		WriteWorkState();
+	w_l.on=0;
+	w_r.on=0;
+	w_rm.on=0;
+	w_lm.on=0;
+#ifdef DEBUG_Enter_Mode
+	if(mode.sub_mode==SUBMODE_SELF_TEST)
+		TRACE("Init SELF TEST Mode Complete!\r\n");
+	else if(mode.sub_mode==SUBMODE_BURN_TEST)
+		TRACE("Init Burn Test Mode Complete!\r\n");
+	else
+		TRACE("Init Factory Test Mode Complete!\r\n");
+#endif
+#ifdef FREE_SKID_CHECK
+	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
 }
 
-void FAN_MB_Test(void)
+void Do_BurningTest(void)
 {
-	
-	switch(mode.test_step)
+	switch(mode.step)
 		{
 			case 0:
-				length1=Fan.length;
-				current=m_current_1s;
-				mode.test_dis_data=1;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-						mode.test_dis_data=NONE;
-					}
-			break;
+				mode.burning=true;
+				Open_Led(2,0,2);
+				mode.step++;
+				break;
 			case 1:
-				Set_FJ_Level(STANDARD_PWM);
-				Set_ZS_Level(STANDARD_PWM);
-//				Set_BS_Level(STANDARD_PWM);
-				start_time=giv_sys_time;
-				mode.test_step++;
+				if((giv_sys_time-mode.time>30000)&(Read_Key2()))
+					mode.step++;
 				break;
 			case 2:
-				if(giv_sys_time-start_time>50000)
-					{
-						if((Fan.length>length1+10)&(m_current_1s>(current+10)))
-							{
-								mode.test_dis_data=PASS;
-							}
-						else
-							{
-								mode.test_dis_data=FAIL;
-							}
-						mode.test_step++;
-						Sweep_Level_Set(STOP_ALL);
-					}
-				break;
-			case 3:
-				if(Read_Button_Key(&key2)==1)
-					{
-						length1=Fan.length;
-						current=m_current_1s;
-						mode.test_step++;
-						mode.test_dis_data=NONE;
-					}
-				break;
-			case 4:
-				Set_FJ_Level(FORCE_PWM);
-				Set_ZS_Level(FORCE_PWM);
-//				Set_BS_Level(STANDARD_PWM);
-				start_time=giv_sys_time;
-				mode.test_step++;
-				break;
-			case 5:
-				if(giv_sys_time-start_time>50000)
-					{
-						if((Fan.length>length1+10)&(m_current_1s>(current+10)))
-							{
-								mode.test_dis_data=PASS;
-							}
-						else
-							{
-								mode.test_dis_data=FAIL;
-							}
-						mode.test_step++;
-						Sweep_Level_Set(STOP_ALL);
-					}
-				break;
-			case 6:
+#ifdef TUYA_WIFI
+				Reset_Map();
+#endif
+				if(mode.last_sub_mode==SEAT_CHARGING)
+					Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
+				else
+					Init_First_Sweep(0);
 				break;
 		}
 }
 
-void Voice_Test(void)
+void Do_SelfTest(void)
 {
-	mode.test_dis_data=2;
-	switch(mode.test_step)
+	static u8 bump_test=0;
+	u8 bump=0;
+	bump=Parse_BumpValue();
+	switch(mode.step)
 		{
 			case 0:
-				//Send_Voice(VOICE_VOLUME_TEST);
-				if(Read_Button_Key(&key2)==1)
-					mode.test_step++;
+				Open_Led(3,0,2);
+				bump_test=0;
+				mode.step++;
 				break;
 			case 1:
-				Send_Voice(VOICE_VOLUME_TEST);
-				mode.test_step++;
-				break;
-			case 2:
-				if(Read_Button_Key(&key2)==1)
-					mode.test_step=1;					
-				break;
-		}
-}
-
-void Switch_Test(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=3;
-				if(dust_box.key)
-					dust_box.flag=true;
-				else
-					dust_box.flag=false;
-
-				if(dust_sta.key)
-					dust_sta.flag=true;
-				else
-					dust_sta.flag=false;
-
-				if(l_bump.key)
-					l_bump.flag=true;
-				else
-					l_bump.flag=false;
-
-				if(r_bump.key)
-					r_bump.flag=true;
-				else
-					r_bump.flag=false;
-
-				if(m_bump.key)
-					m_bump.flag=true;
-				else
-					m_bump.flag=false;
-
-				if(l_lidi.key)
-					l_lidi.flag=true;
-				else
-					l_lidi.flag=false;
-
-				if(r_lidi.key)
-					r_lidi.flag=true;
-				else
-					r_lidi.flag=false;
-
-				dust_sta.fail=false;
-				dust_box.fail=false;
-				l_bump.fail=false;
-				m_bump.fail=false;
-				r_bump.fail=false;
-				l_lidi.fail=false;
-				r_lidi.fail=false;
-				//Set_DustStatus_Send();
-
-				mode.test_step++;
-
-				
-			break;
-			case 1:
-				if(dust_box.key)
+				if(bump==BUMP_ONLY_LEFT)
+					bump_test|=0x01;
+				if(bump==BUMP_ONLY_RIGHT)
+					bump_test|=0x02;
+				if(bump_test==0x03)
 					{
-						if((!dust_box.flag)&(!dust_box.fail))
-							{
-								dust_box.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Laji=true;
+						mode.step++;
+						return;
 					}
-				else
+				if(giv_sys_time-mode.time>100000)
 					{
-						Dis_Laji=false;
-						if((dust_box.flag)&(!dust_box.fail))
-							{
-								dust_box.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				
-				if(dust_sta.key)
-					{
-						Dis_Laji=!Dis_Laji;
-						if((!dust_sta.flag)&(!dust_sta.fail))
-							{
-								dust_sta.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else if(!dust_sta.key)
-					{
-						if((dust_sta.flag)&(!dust_sta.fail))
-							{
-								dust_sta.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				
-				if(l_bump.key)
-					{
-						Dis_Guihua=false;
-						if((!l_bump.flag)&(!l_bump.fail))
-							{
-								l_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else
-					{
-						Dis_Guihua=true;
-						if((l_bump.flag)&(!l_bump.fail))
-							{
-								l_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				
-				if(m_bump.key)
-					{
-						Dis_YBS=false;
-						if((!m_bump.flag)&(!m_bump.fail))
-							{
-								m_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else
-					{
-						Dis_YBS=true;
-						if((m_bump.flag)&(!m_bump.fail))
-							{
-								m_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				
-				if(r_bump.key)
-					{
-						Dis_Zhongdian=false;
-						if((!r_bump.flag)&(!r_bump.fail))
-							{
-								r_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else
-					{
-						Dis_Zhongdian=true;
-						if((r_bump.flag)&(!r_bump.fail))
-							{
-								r_bump.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-
-				if(l_lidi.key)
-					{
-						Dis_Docking=false;
-						if((!l_lidi.flag)&(!l_lidi.fail))
-							{
-								l_lidi.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else
-					{
-						Dis_Docking=true;
-						if((l_lidi.flag)&(!l_lidi.fail))
-							{
-								l_lidi.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				
-				if(r_lidi.key)
-					{
-						Dis_Yuyue=false;
-						if((!r_lidi.flag)&(!r_lidi.fail))
-							{
-								r_lidi.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-				else
-					{
-						Dis_Yuyue=true;
-						if((r_lidi.flag)&(!r_lidi.fail))
-							{
-								r_lidi.fail=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-					}
-
-				if(l_lidi.fail&r_lidi.fail&l_bump.fail&r_bump.fail&m_bump.fail&dust_box.fail&dust_sta.fail)
-					{
-						mode.test_step++;
-						dust_sta.fail=false;
-						dust_box.fail=false;
-						l_bump.fail=false;
-						m_bump.fail=false;
-						r_bump.fail=false;
-						l_lidi.fail=false;
-						r_lidi.fail=false;
-						mode.test_dis_data=PASS;
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
+						Init_Cease();
 					}
 				break;
 			case 2:
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				
-				break;
-				
-		}
-}
-
-void Wall_Test(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				Enable_wall();
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				mode.test_dis_data=TST_WALL;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				
-				Dis_Guihua=true;
-				mode.test_dis_data=w_l.dis;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 2:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				
-				Dis_YBS=true;
-				mode.test_dis_data=w_lm.dis;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 3:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				
-				Dis_Zhongdian=true;
-				mode.test_dis_data=w_m.dis;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 4:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				
-				Dis_Docking=true;
-				mode.test_dis_data=w_rm.dis;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 5:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				
-				Dis_Yuyue=true;
-				mode.test_dis_data=w_r.dis;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=1;
-					}
+				mode.self_test=true;
+				mode.self_test_time=giv_sys_time;
+				Send_Voice(VOICE_SWEEP_START);
+				Init_First_Sweep(0);
 				break;
 			
 		}
 }
 
-void Wall_Test_II(void)
+u8 Parse_SelfTest_Stop(void)
 {
-	static bool w_l_test,w_lm_test,w_m_test,w_rm_test;
-	switch (mode.test_step)
+	if(mode.self_test)
 		{
-			case 0:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				init_wallearth();
-				Enable_wall();
-				mode.test_step++;
-				w_l_test=false;
-				w_lm_test=false;
-				w_m_test=false;
-				w_rm_test=false;
-				mode.test_dis_data=TST_WALL;
-				break;
-			case 1:
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				if((w_l.sign==NEAR))
-					{
-						Send_Voice(VOICE_VOLUME_4);
-						Dis_Guihua=true;
-						mode.test_step=10;
-					}
-
-				if((w_lm.sign==NEAR))
-					{
-						Send_Voice(VOICE_VOLUME_4);
-						Dis_YBS=true;
-						mode.test_step=10;
-					}
-
-				if((w_m.sign==NEAR))
-					{
-						Send_Voice(VOICE_VOLUME_4);
-						Dis_Zhongdian=true;
-						mode.test_step=10;
-					}
-				if((w_rm.sign==NEAR))
-					{
-						Send_Voice(VOICE_VOLUME_4);
-						Dis_Docking=true;
-						mode.test_step=10;
-					}
-				break;
-			case 2:
-				mode.test_dis_data=w_r.dis;
-				if(Read_Button_Key(&key2)==1)
-						{
-						mode.test_step=0;
-					}
-
-				if((w_l.sign==NEAR)&(!w_l_test))
-					{
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_Guihua=true;
-						w_l_test=true;
-					}
-
-				if((w_lm.sign==NEAR)&(!w_lm_test))
-					{
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_YBS=true;
-						w_lm_test=true;
-					}
-
-				if((w_m.sign==NEAR)&(!w_m_test))
-					{
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_Zhongdian=true;
-						w_m_test=true;
-					}
-				if((w_rm.sign==NEAR)&(!w_rm_test))
-					{
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_Docking=true;
-						w_rm_test=true;
-					}
-				break;
-			case 10:
-				mode.test_dis_data=FAIL;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				break;
-
+			if(giv_sys_time-mode.self_test_time>60*10000)
+				{
+					stop_rap();
+					Send_Voice(VOICE_VOLUME_2);
+					Init_Cease();
+				}
 		}
+	return 0;
 }
 
-void Earth_Test(void)
+void Do_FactoryTest(void)
 {
-	static bool l_one,m_one,r_one;
-	switch(mode.test_step)
+	static u32 l_bump_cnt,r_bump_cnt,test_data1,test_cnt;
+	static u32 dc_result,seat_result,vol_result,el_result,em_result,er_result,wl_result,wlm_result,wm_result,wrm_result,wr_result;
+	static u32 sbcurr_result,mbcurr_result,fancurr_result,lring_result,rring_result;
+	u8 bump;
+	ACC_DEC_Curve();
+	clr_all_hw_effect();
+
+	switch(mode.step)
 		{
 			case 0:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				mode.test_dis_data=5;
-				Enable_earth();
-				if(e_l.sign==NEAR)
-					e_l.flag=true;
-				else
-					e_l.flag=false;
-
-				if(e_m.sign==NEAR)
-					e_m.flag=true;
-				else
-					e_m.flag=false;
-
-				if(e_r.sign==NEAR)
-					e_r.flag=true;
-				else
-					e_r.flag=false;
-
-				l_one=false;
-				m_one=false;
-				r_one=false;
-
-				mode.test_step++;
+				Open_Led(2,0,0);
+				CHECK_STATUS_FLAG=false;
+				test_result=0;
+				TRACE("============================================================\r\n");
+				TRACE("======================欢迎进入厂测模式======================\r\n");
+				TRACE("========================准备测试============================\r\n");
+				mode.step=100;
 				break;
-			case 1:
-				if(e_l.sign==NEAR)
-					{
-						if((!e_l.flag)&(!l_one))
-							{
-								l_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_YBS=false;
-					}
-				else
-					{
-						if((e_l.flag)&(!l_one))
-							{
-								l_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_YBS=true;
-					}
-
-				if(e_m.sign==NEAR)
-					{
-						if((!e_m.flag)&(!m_one))
-							{
-								m_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Zhongdian=false;
-					}
-				else
-					{
-						if((e_m.flag)&(!m_one))
-							{
-								m_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Zhongdian=true;
-					}
-				
-				if(e_r.sign==NEAR)
-					{
-						if((!e_r.flag)&(!r_one))
-							{
-								r_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Docking=false;
-					}
-				else
-					{
-						if((e_r.flag)&(!r_one))
-							{
-								r_one=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Docking=true;
-					}
-
-				if(l_one&m_one&r_one)
-					{
-						mode.test_dis_data=PASS;
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
-						mode.test_step++;
-					}
-				break;
-			case 2:
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				break;
-
-					
-		}
-}
-
-//qz add 20180927
-void Earth_Test_II(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				Clr_Alldisflag();
-				Dis_Yuyue=false;
-				mode.test_dis_data=5;
-				Enable_earth();
+			case 100:
+				if((giv_sys_time-mode.time>30000)&(Read_Key2()))
+					mode.step=100;
+				mode.step=1;
 				mode.time=giv_sys_time;
-				mode.test_step++;
-				e_l.flag=false;
-				e_m.flag=false;
-				e_r.flag=false;
+				TRACE("======================1，电压校准测试========================\r\n");
 				break;
-			case 1:
-				if(giv_sys_time-mode.time>1000)
-					mode.test_step++;
-				break;
-			case 2:
-				if(e_l.sign==FARN)
-					{
-						Dis_YBS=true;
-						mode.test_step=10;
-					}
-				if(e_m.sign==FARN)
-					{
-						Dis_Zhongdian=true;
-						mode.test_step=10;
-					}
-				if(e_r.sign==FARN)
-					{
-						Dis_Docking=true;
-						mode.test_step=10;
-					}
-				if((e_l.sign==NEAR)&(e_m.sign==NEAR)&(e_r.sign==NEAR))
-					{
-						mode.test_step++;
-					}
-				break;
-			case 3:
-				if(e_l.sign==FARN)
-					{
-						if(!e_l.flag)
-							{
-								e_l.flag=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_YBS=true;
-					}
-				else
-					{
-						Dis_YBS=false;
-					}
-
-				if(e_m.sign==FARN)
-					{
-						if(!e_m.flag)
-							{
-								e_m.flag=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Zhongdian=true;
-					}
-				else
-					{
-						Dis_Zhongdian=false;
-					}
-
-				if(e_r.sign==FARN)
-					{
-						if(!e_r.flag)
-							{
-								e_r.flag=true;
-								Send_Voice(VOICE_VOLUME_2);
-							}
-						Dis_Docking=true;
-					}
-				else
-					{
-						Dis_Docking=false;
-					}
-
-				if(e_l.flag&e_m.flag&e_r.flag)
-					{
-						mode.test_dis_data=PASS;
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
-						mode.test_step++;
-					}
-				break;
-			case 4:
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				break;
-			case 10:
-				mode.test_dis_data=FAIL;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				break;
-		}
-}
-void OC_Test(void)
-{
-	static bool l_sb,r_sb,mb,lring,rring;
-	u8 data1;
-	switch(mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=6;
-				if(Read_Button_Key(&key2))
-					{
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				Enable_Speed();
-				Set_BS_Level(STANDARD_PWM);
-				Set_ZS_Level(STANDARD_PWM);
-				enable_pwm(L_FRONT,800);
-				l_rap.ori=FRONT;
-				enable_pwm(R_FRONT,800);
-				r_rap.ori=FRONT;
-				l_sb=false;
-				r_sb=false;
-				mb=false;
-				lring=false;
-				rring=false;
-				length1=l_ring.all_length;
-				length2=r_ring.all_length;
-				start_time=giv_sys_time;
-				mode.test_step++;
-			case 2:									//qz add 20180828
-				if(giv_sys_time-start_time>20000)
-					{
-						mode.test_step++;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 3:
-				data1=SB_FIX_Check();
-				if((data1==1)&(!l_sb))
-					{
-						l_sb=true;
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_Guihua=true;
-					}
-				if((data1==2)&(!r_sb))
-					{
-						r_sb=true;
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_YBS=true;
-					}
-				if(l_sb&r_sb)
-					Set_BS_Level(STOP_ALL);
-	
-				if(MB_OC_Check()&(!mb))
-					{
-						mb=true;
-						Set_ZS_Level(STOP_ALL);
-						Send_Voice(VOICE_VOLUME_2);
-						Dis_Zhongdian=true;
-					}
-
-				if(giv_sys_time-start_time>10000)
-					{
-						if((l_ring.all_length>length1+30)&(!lring))
-							{
-								length1=l_ring.all_length;
-								start_time=giv_sys_time;
-							}
-						else if(!lring)
-							{
-								lring=true;
-								disable_pwm(L_FRONT);
-								Send_Voice(VOICE_VOLUME_2);
-								Dis_Docking=true;
-							}
-
-						if((r_ring.all_length>length2+30)&(!rring))
-							{
-								length2=r_ring.all_length;
-								start_time=giv_sys_time;
-							}
-						else if(!rring)
-							{
-								rring=true;
-								disable_pwm(R_FRONT);
-								Send_Voice(VOICE_VOLUME_2);
-								Dis_Yuyue=true;
-							}
-					}
-
-				if(l_sb&r_sb&mb&lring&rring)
-					{
-						Sweep_Level_Set(STOP_ALL);
-						stop_rap();
-						mode.test_step++;
-						mode.test_dis_data=PASS;
-					}
-				break;
-			case 4:
-				if(Read_Button_Key(&key2))
-					{
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
-						mode.test_step=0;
-					}
-				break;
-		}
-}
-
-void Dock_Test(void)
-{
- 	switch(mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=TST_DOCK;
-				if(Read_Button_Key(&key2)==1)
-					{
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
-						m_hw_test=false;
-						l_hw_test=false;
-						r_hw_test=false;
-						b_hw_test=false;
-						Disable_wall();
-						Disable_earth();
-						enable_hwincept();
-						clr_all_hw_effect();
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				clr_all_hw_effect();
-				mode.test_dis_data=ReadHwSign_My();
-				if(Read_Button_Key(&key2)==1)
-
-					{
-						Disable_wall();
-						Disable_earth();
-						disable_hwincept();
-						clr_all_hw_effect();
-						mode.test_step=0;
-					}
 				
-				//在Remote_Handle()函数中有FORWORD/LEFT/RIGHT/BACK键，也可以进行测试
-				if(l_hw_test&m_hw_test&r_hw_test&b_hw_test)
+			//////////////////电压校准测试////////////////////////////
+			case 1:
+				if(giv_sys_time-mode.time<12*10000)
+					return;
+				full_power=battery_voltage_10s;
+				TRACE("校准值:%d\r\n",full_power);
+				if(full_power!=0)
 					{
-						mode.test_step++;
-						mode.test_dis_data=PASS;
-						Clr_Alldisflag();
-						Dis_Yuyue=false;
+						TRACE("电压校准成功!!!\r\n");
+						test_result|=TEST_VOLCAL_OK;
+					}
+				else
+					{
+						TRACE("电压校准失败!!!\r\n");
+					}
+				TRACE("======================2，碰撞测试====================\r\n");
+				TRACE("请在10秒内，按左、右碰撞各至少3次!!\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				l_bump_cnt=0;r_bump_cnt=0;
+				break;
+			//////////////////碰撞测试////////////////////////////
+			case 2:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						bump=Parse_BumpValue();
+						if((bump==BUMP_ONLY_LEFT)&(test_500ms_flag))
+							{
+								test_500ms_flag=false;
+								TRACE("左碰撞!\r\n");
+								l_bump_cnt++;
+							}
+						else if((bump==BUMP_ONLY_RIGHT)&(test_500ms_flag))
+							{	
+								test_500ms_flag=false;
+								TRACE("右碰撞!\r\n");
+								r_bump_cnt++;
+							}
+						return;
+					}
+				TRACE("左碰撞%d次!右碰撞%d次\r\n",l_bump_cnt,r_bump_cnt);
+				if((l_bump_cnt>=3)&(r_bump_cnt>=3))
+					{
+						TRACE("碰撞测试通过!!!\r\n");
+						test_result|=TEST_BUMP_OK;
+					}
+				else
+					{
+						TRACE("碰撞测试失败!!!\r\n");
+					}
+				TRACE("======================3，电池温度测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////电池温度测试////////////////////////////
+			case 3:
+				TRACE("电池温度测试通过!!!\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				TRACE("======================4，陀螺仪测试====================\r\n");
+				break;
+			//////////////////陀螺仪测试////////////////////////////
+			case 4:
+				if(giv_sys_time-mode.time<50000)
+					return;
+				if(Gyro_Data.tick_flag)
+					{
+						test_result|=TEST_GRYO_OK;
+						TRACE("陀螺仪测试通过!!!\r\n");
+					}
+				else
+					TRACE("陀螺仪测试失败!!!\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;
+				TRACE("======================5，直充充电测试====================\r\n");
+				TRACE("请在10秒内插入直充充电线\r\n");
+				break;
+			//////////////////DC测试////////////////////////////
+			case 5:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(power.charge_dc)
+							{
+								TRACE("已检测到直充充电线!!!\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+								test_data1=0;test_cnt=0;
+								Init_Charge_Data();
+								disable_pwm(CHARGE_PWM);
+								power.pwm=0;
+								power.step=0;
+							}
+						else
+							{
+								if(test_1s_flag)
+									{
+										test_1s_flag=false;
+										TRACE("请插入直充充电线!!!\r\n");
+									}
+							}
+						return;
+					}
+				TRACE("未检测到直充充电线!!!\r\n");
+				TRACE("直充充电测试失败!!!\r\n");
+				TRACE("======================6，座充充电测试====================\r\n");
+				TRACE("请在10秒内接入充电座\r\n");
+				dc_result=0;
+				mode.step=7;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;
+				break;
+			case 6:
+				ChargeControl_Test();
+				if(!power.charge_dc)
+					{
+						TRACE("未检测到直充充电线!!\r\n");
+						mode.step=5;
+						return;
+					}
+				if(giv_sys_time-mode.time<15*10000)
+					{
+						if(test_1s_flag)
+							{
+								test_1s_flag=false;
+								TRACE("充电电流:%.2fmA\r\n",battery_chargecurrent_1s*CURR_CHG_CNT);
+								//test_data1+=battery_chargecurrent_1s;
+								//test_cnt++;
+							}
+						return;
+					}
+				//test_data1=test_data1/test_cnt;
+				TRACE("最终充电电流:%.2fmA\r\n",battery_chargecurrent_1s*CURR_CHG_CNT);
+				dc_result=battery_chargecurrent_1s;
+				switch(power.step)
+					{
+						case 2:
+						case 5:
+							if(abs((u32)(battery_chargecurrent_1s*CURR_CHG_CNT)-360)<50)
+								{
+									test_result|=TEST_DC_OK;
+									TRACE("直充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("直充充电测试失败!!!\r\n");
+							break;
+						case 3:
+							if(abs((u32)(battery_chargecurrent_1s*CURR_CHG_CNT)-800)<150)
+								{
+									test_result|=TEST_DC_OK;
+									TRACE("直充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("直充充电测试失败!!!\r\n");
+							break;
+						default:
+							if(battery_chargecurrent_1s>0)
+								{
+									test_result|=TEST_DC_OK;
+									TRACE("直充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("直充充电测试失败!!!\r\n");
+							break;
+								
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;
+				TRACE("======================6，座充充电测试====================\r\n");
+				TRACE("请在10秒内接入充电座\r\n");
+				break;
+			//////////////////SEAT测试////////////////////////////
+			case 7:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(power.charge_seat)
+							{
+								TRACE("已检测到充电座!!!\r\n");
+								mode.step++;
+								test_data1=0;test_cnt=0;
+								Init_Charge_Data();
+								disable_pwm(CHARGE_PWM);
+								power.pwm=0;
+								power.step=0;
+							}
+						else
+							{
+								if(test_1s_flag)
+									{
+										test_1s_flag=false;
+										TRACE("请接入充电座!!!\r\n");
+									}
+							}
+						return;
+					}
+				TRACE("未检测到充电座!!!\r\n");
+				TRACE("座充充电测试失败!!!\r\n");
+				mode.step=9;
+				mode.time=giv_sys_time;
+				seat_result=0;
+				TRACE("====================7，左前红外接收测试====================\r\n");
+				break;
+			case 8:
+				ChargeControl_Test();
+				if(!power.charge_seat)
+					{
+						TRACE("未检测到充电座!!\r\n");
+						mode.step=7;
+						return;
+					}
+				if(giv_sys_time-mode.time<15*10000)
+					{
+						if(test_1s_flag)
+							{
+								test_1s_flag=false;
+								TRACE("充电电流:%.2fmA\r\n",battery_chargecurrent_1s*CURR_CHG_CNT);
+								//test_data1+=battery_chargecurrent_1s;
+								//test_cnt++;
+							}
+						return;
+					}
+				//test_data1=test_data1/test_cnt;
+				TRACE("最终充电电流:%.2fmA\r\n",battery_chargecurrent_1s*CURR_CHG_CNT);
+				seat_result=battery_chargecurrent_1s;
+				switch(power.step)
+					{
+						case 2:
+						case 5:
+							if(abs((u32)(battery_chargecurrent_1s*CURR_CHG_CNT)-360)<50)
+								{
+									test_result|=TEST_SETA_OK;
+									TRACE("座充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("座充充电测试失败!!!\r\n");
+							break;
+						case 3:
+							if(abs((u32)(battery_chargecurrent_1s*CURR_CHG_CNT)-800)<150)
+								{
+									test_result|=TEST_SETA_OK;
+									TRACE("座充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("座充充电测试失败!!!\r\n");
+							break;
+						default:
+							if(battery_chargecurrent_1s>0)
+								{
+									test_result|=TEST_SETA_OK;
+									TRACE("座充充电测试通过!!!\r\n");
+								}
+							else
+								TRACE("座充充电测试失败!!!\r\n");
+							break;
+								
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;
+				TRACE("====================7，左前红外接收测试====================\r\n");
+				break;
+				break;
+			//////////////////左前红外接收测试/////////////////
+			case 9:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(l_hw.effect)
+							{
+								test_result|=TEST_LHW_OK;
+								TRACE("左前红外测试通过!!!\r\n");
+								TRACE("====================8，右前红外接收测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("左前红外测试失败!!!\r\n");
+				TRACE("====================8，右前红外接收测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////右前红外接收测试/////////////////
+			case 10:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(r_hw.effect)
+							{
+								test_result|=TEST_RHW_OK;
+								TRACE("右前红外测试通过!!!\r\n");
+								TRACE("====================9，中左红外接收测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("右前红外测试失败!!!\r\n");
+				TRACE("====================9，中左红外接收测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////中左红外接收测试/////////////////
+			case 11:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(lm_hw.effect)
+							{
+								test_result|=TEST_LMHW_OK;
+								TRACE("中左红外测试通过!!!\r\n");
+								TRACE("====================10，中右红外接收测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("中左红外测试失败!!!\r\n");
+				TRACE("====================10，中右红外接收测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////中右红外接收测试/////////////////
+			case 12:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(rm_hw.effect)
+							{
+								test_result|=TEST_RMHW_OK;
+								TRACE("中右红外测试通过!!!\r\n");
+								TRACE("====================11，后左红外接收测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("中右红外测试失败!!!\r\n");
+				TRACE("====================11，后左红外接收测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////后左红外接收测试/////////////////
+			case 13:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(lb_hw.effect)
+							{
+								test_result|=TEST_LBHW_OK;
+								TRACE("后左红外测试通过!!!\r\n");
+								TRACE("====================12，后右红外接收测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("后左红外测试失败!!!\r\n");
+				TRACE("====================12，后右红外接收测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			//////////////////后右红外接收测试/////////////////
+			case 14:
+				if(giv_sys_time-mode.time<10*10000)
+					{
+						if(rb_hw.effect)
+							{
+								test_result|=TEST_RBHW_OK;
+								TRACE("后右红外测试通过!!!\r\n");
+								TRACE("====================13，电池电压测试====================\r\n");
+								mode.step++;
+								mode.time=giv_sys_time;
+							}
+						return;
+					}
+				TRACE("后右红外测试失败!!!\r\n");
+				TRACE("====================13，电池电压测试====================\r\n");
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			/////////////////电池电压测试///////////////////////
+			case 15:
+				vol_result=battery_voltage_1s;
+				TRACE("电池电压:%.2fV\r\n",vol_result*VOLT_CHG_CNT);
+				if((vol_result>=VOL_12_8V)&(vol_result<=VOL_17_1V))
+					{						
+						test_result|=TEST_VOL_OK;
+						TRACE("电池电压测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("电池电压测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================14，左侧地检测试====================\r\n");
+				break;
+			/////////////////左侧地检测试/////////////////////
+			case 16:
+				if(giv_sys_time-mode.time<TEST_ERATH_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=e_l.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				el_result=test_data1/test_cnt;
+				TRACE("左侧地检值:%d\r\n",el_result);
+				if((el_result>0)&(el_result<4000))
+					{
+						test_result|=TEST_EL_OK;
+						TRACE("左侧地检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("左侧地检测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================15，中地检测试====================\r\n");
+				break;
+			/////////////////左侧地检测试/////////////////////
+			case 17:
+				if(giv_sys_time-mode.time<TEST_ERATH_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=e_m.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				em_result=test_data1/test_cnt;
+				TRACE("中地检值:%d\r\n",em_result);
+				if((em_result>0)&(em_result<4000))
+					{
+						test_result|=TEST_EM_OK;
+						TRACE("中地检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("中地检测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================16，右侧地检测试====================\r\n");
+				break;
+			/////////////////右侧地检测试/////////////////////
+			case 18:
+				if(giv_sys_time-mode.time<TEST_ERATH_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=e_r.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				er_result=test_data1/test_cnt;
+				TRACE("右侧地检值:%d\r\n",er_result);
+				if((er_result>0)&(er_result<4000))
+					{
+						test_result|=TEST_ER_OK;
+						TRACE("右侧检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("右侧检测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================17，左侧墙检测试====================\r\n");
+				break;
+			/////////////////左侧墙检测试/////////////////////
+			case 19:
+				if(giv_sys_time-mode.time<TEST_WALL_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=w_l.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				wl_result=test_data1/test_cnt;
+				TRACE("左侧墙检值:%d\r\n",wl_result);
+				if((wl_result>0)&(wl_result<4000))
+					{
+						test_result|=TEST_WL_OK;
+						TRACE("左侧墙检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("左侧墙检试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================18，中左墙检测试====================\r\n");
+				break;
+			/////////////////中左墙检测试/////////////////////
+			case 20:
+				if(giv_sys_time-mode.time<TEST_WALL_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=w_lm.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				wlm_result=test_data1/test_cnt;
+				TRACE("中左墙检值:%d\r\n",wlm_result);
+				if((wlm_result>0)&(wlm_result<4000))
+					{
+						test_result|=TEST_WLM_OK;
+						TRACE("中左墙检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("中左墙检试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================19，中墙检测试====================\r\n");
+				break;
+			/////////////////中墙检测试/////////////////////
+			case 21:
+				if(giv_sys_time-mode.time<TEST_WALL_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=w_m.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				wm_result=test_data1/test_cnt;
+				TRACE("中墙检值:%d\r\n",wm_result);
+				if((wm_result>0)&(wm_result<4000))
+					{
+						test_result|=TEST_WM_OK;
+						TRACE("中墙检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("中墙检试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================20，中右墙检测试====================\r\n");
+				break;
+			/////////////////中右墙检测试/////////////////////
+			case 22:
+				if(giv_sys_time-mode.time<TEST_WALL_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=w_rm.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				wrm_result=test_data1/test_cnt;
+				TRACE("中右墙检值:%d\r\n",wrm_result);
+				if((wrm_result>0)&(wrm_result<4000))
+					{
+						test_result|=TEST_WRM_OK;
+						TRACE("中右墙检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("中右墙检试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================21，右侧墙检测试====================\r\n");
+				break;
+			/////////////////右侧墙检测试/////////////////////
+			case 23:
+				if(giv_sys_time-mode.time<TEST_WALL_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=w_r.difference;
+								test_cnt++;
+							}
+						return;
+					}
+				wr_result=test_data1/test_cnt;
+				TRACE("中右墙检值:%d\r\n",wr_result);
+				if((wr_result>0)&(wr_result<4000))
+					{
+						test_result|=TEST_WR_OK;
+						TRACE("右侧墙检测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("右侧墙检试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				TRACE("====================22，边刷电流测试====================\r\n");
+				Set_BS_Level(STANDARD_PWM);
+				break;
+			/////////////////边刷电流测试/////////////////////
+			case 24:
+				if(giv_sys_time-mode.time<TEST_CURR_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=account_current(ADC_SB_CURRENT);
+								test_cnt++;
+							}
+						return;
+					}
+				sbcurr_result=test_data1/test_cnt;
+				TRACE("边刷电流值:%.2fmA\r\n",sbcurr_result*CURR_SB_CNT_mA);
+				if((sbcurr_result>0)&(sbcurr_result*CURR_SB_CNT_mA<SB_PROTECTCURRENT))
+					{
+						test_result|=TEST_SBCURR_OK;
+						TRACE("边刷电流测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("边刷电流测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				Sweep_Level_Set(SWEEP_LEVEL_STOP);
+				TRACE("====================23，中刷电流测试====================\r\n");
+				Set_ZS_Level(STANDARD_PWM);
+			break;
+			/////////////////中刷电流测试/////////////////////
+			case 25:
+				if(giv_sys_time-mode.time<TEST_CURR_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=account_current(ADC_MB_CURR);
+								test_cnt++;
+							}
+						return;
+					}
+				mbcurr_result=test_data1/test_cnt;
+				TRACE("边刷电流值:%.2fmA\r\n",mbcurr_result*CURR_MB_CNT_mA);
+				if((mbcurr_result>0)&(mbcurr_result*CURR_MB_CNT_mA<M_PROTECTCURRENT))
+					{
+						test_result|=TEST_MBCURR_OK;
+						TRACE("中刷电流测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("中刷电流测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_100ms_flag=false;
+				Sweep_Level_Set(SWEEP_LEVEL_STOP);
+				TRACE("====================24，风机电流测试====================\r\n");
+				Set_FJ_Level(STANDARD_PWM);
+			break;
+			/////////////////风机电流测试/////////////////////
+			case 26:
+				if(giv_sys_time-mode.time<TEST_CURR_TIME)
+					{	
+						if(test_100ms_flag)
+							{
+								test_100ms_flag=false;
+								test_data1+=account_current(ADC_FAN_CURR);
+								test_cnt++;
+							}
+						return;
+					}
+				fancurr_result=test_data1/test_cnt;
+				TRACE("边刷电流值:%.2fmA\r\n",fancurr_result*CURR_FAN_CNT_mA);
+				if(fancurr_result*CURR_FAN_CNT_mA>DUST_PROTECTCURRENT)
+					{
+						test_result|=TEST_FANCURR_OK;
+						TRACE("风机电流测试通过!!!\r\n");
+					}
+				else
+					{
+						TRACE("风机电流测试失败!!!\r\n");
+					}
+				mode.step++;
+				mode.time=giv_sys_time;
+				test_data1=0;test_cnt=0;test_500ms_flag=false;
+				Sweep_Level_Set(SWEEP_LEVEL_STOP);
+				motion1.tgt_yaw=Gyro_Data.yaw;
+				TRACE("====================25，左轮速度测试====================\r\n");
+				TRACE("左轮速度目标值:200mm/s!\r\n");				
+			break;
+			////////////////左轮速度测试/////////////////////
+			case 27:
+				Speed=SPEED200;
+				if(do_action_my(3,200*CM_PLUS,motion1.tgt_yaw))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				if((test_500ms_flag)&(giv_sys_time-mode.time>5000))
+					{
+						test_500ms_flag=false;
+						if(l_ring.real_speed)
+							{
+								TRACE("左轮速度值:%dmm/s!\r\n",(u32)(l_ring.real_speed*PULSE_LENGTH));
+								test_data1+=l_ring.real_speed;
+								test_cnt++;
+							}
 					}
 				break;
-			case 2:
-				if(Read_Button_Key(&key2)==1)
-
+			case 28:
+				lring_result=test_data1/test_cnt;
+				if(abs(lring_result-SPEED200)<30)
 					{
-						Disable_wall();
-						Disable_earth();
-						disable_hwincept();
-						clr_all_hw_effect();
-						mode.test_step=0;
+						test_result|=TEST_LRING_OK;
+						TRACE("左轮速度测试通过!!\r\n");
+					}
+				else
+					{
+						TRACE("左轮速度测试失败!!\r\n");
+					}
+				test_data1=0;test_cnt=0;test_500ms_flag=false;
+				mode.step++;
+				mode.time=giv_sys_time;
+				TRACE("====================26，右轮速度测试====================\r\n");
+				TRACE("右轮速度目标值:200mm/s!\r\n");				
+				break;
+			////////////////右轮速度测试/////////////////////
+			case 29:
+				Speed=SPEED200;
+				if(do_action_my(3,200*CM_PLUS,motion1.tgt_yaw))
+					{
+						stop_rap();
+						mode.step++;
+					}
+				if((test_500ms_flag)&(giv_sys_time-mode.time>5000))
+					{
+						test_500ms_flag=false;
+						if(r_ring.real_speed)
+							{
+								TRACE("右轮速度值:%dmm/s!\r\n",(u32)(r_ring.real_speed*PULSE_LENGTH));
+								test_data1+=r_ring.real_speed;
+								test_cnt++;
+							}
+					}
+				break;
+			case 30:
+				rring_result=test_data1/test_cnt;
+				if(abs(rring_result-SPEED200)<30)
+					{
+						test_result|=TEST_RRING_OK;
+						TRACE("右轮速度测试通过!!\r\n");
+					}
+				else
+					{
+						TRACE("右轮速度测试失败!!\r\n");
+					}
+				test_data1=0;test_cnt=0;test_500ms_flag=false;
+				mode.step++;
+				mode.time=giv_sys_time;
+				break;
+			case 31:
+				if(test_1s_flag)
+					{
+						test_1s_flag=false;
+						TRACE("===============测试结果=======================\r\n");
+						TRACE("电压校准测试:");
+						if(test_result&TEST_VOLCAL_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",full_power);
+							}
+
+						TRACE("碰撞测试:");
+						if(test_result&TEST_BUMP_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("左碰撞次数:%d 右碰撞次数:\r\n",l_bump_cnt,r_bump_cnt);
+							}
+
+						TRACE("电池温度测试:");
+						if(test_result&TEST_TEMP_OK)
+							TRACE("PASS!\r\n");
+
+						TRACE("惯导测试:");
+						if(test_result&TEST_GRYO_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("直充充电测试:");
+						if(test_result&TEST_DC_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%.2f\r\n",dc_result*CURR_CHG_CNT);
+							}
+
+						TRACE("座充充电测试:");
+						if(test_result&TEST_SETA_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%.2f\r\n",seat_result*CURR_CHG_CNT);
+							}
+
+						TRACE("左前红外接收测试:");
+						if(test_result&TEST_LHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("右前红外接收测试:");
+						if(test_result&TEST_RHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("左中红外接收测试:");
+						if(test_result&TEST_LMHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("右中红外接收测试:");
+						if(test_result&TEST_RMHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("左后红外接收测试:");
+						if(test_result&TEST_LBHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("右后红外接收测试:");
+						if(test_result&TEST_RBHW_OK)
+							TRACE("PASS!\r\n");
+						else
+							TRACE("FAIL!\r\n");
+
+						TRACE("电池电压测试:");
+						if(test_result&TEST_VOL_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%.2f\r\n",vol_result*VOLT_CHG_CNT);
+							}
+
+						TRACE("左地检测试:");
+						if(test_result&TEST_EL_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",el_result);
+							}
+
+						TRACE("中地检测试:");
+						if(test_result&TEST_EM_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",em_result);
+							}
+
+						TRACE("右地检测试:");
+						if(test_result&TEST_ER_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",er_result);
+							}
+
+						TRACE("左墙检测试:");
+						if(test_result&TEST_WL_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",wl_result);
+							}
+
+						TRACE("左中墙检测试:");
+						if(test_result&TEST_WLM_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",wlm_result);
+							}
+
+						TRACE("中墙检测试:");
+						if(test_result&TEST_WM_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",wm_result);
+							}
+
+						TRACE("右中墙检测试:");
+						if(test_result&TEST_WRM_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",wrm_result);
+							}
+
+						TRACE("右墙检测试:");
+						if(test_result&TEST_WR_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",wr_result);
+							}
+
+						TRACE("边刷电流测试:");
+						if(test_result&TEST_SBCURR_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",sbcurr_result);
+							}
+
+						TRACE("中刷电流测试:");
+						if(test_result&TEST_MBCURR_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",mbcurr_result);
+							}
+
+						TRACE("风机电流测试:");
+						if(test_result&TEST_FANCURR_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",fancurr_result);
+							}
+
+						TRACE("左轮速度测试:");
+						if(test_result&TEST_LRING_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",lring_result);
+							}
+
+						TRACE("右轮速度测试:");
+						if(test_result&TEST_RRING_OK)
+							TRACE("PASS!\r\n");
+						else
+							{
+								TRACE("FAIL!  ");
+								TRACE("错误值:%d\r\n",rring_result);
+							}
+
+						if(test_result==0x3FFFFFF)
+							{
+								TRACE("=================测试通过!!!==============\r\n");
+							}
+						else
+							{
+								TRACE("==================测试不通过!==============\r\n");
+							}
 					}
 				break;
 		}
@@ -946,99 +1158,87 @@ void Dock_Test(void)
 
 void ChargeControl_Test(void)
 {
-	u16 piv_current_tst;//piv_voltage_tst;
-
 	//////////////////充电控制//////////////////////////////////////
 
-	piv_current_tst = account_current(CHARGE_CURRENT);	 //采样当时的电流
-//	piv_voltage_tst = account_current(BATTERY_VOLTAGE);   //采样当时的电压
-	charge_data.piv_current_sum+=piv_current_tst;
+	piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
+	piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
+	charge_data.piv_current_sum+=piv_current;
 	charge_data.piv_current_count++;
+	charge_data.piv_voltage_sum+=piv_voltage;
+	charge_data.piv_voltage_count++;
 	switch(power.step)
 	{
 		///////开始充电前的准备/////////////
 		case 0:
 			power.time = giv_sys_time;
-			power.step++;
+			power.step = 10;
 			disable_pwm(CHARGE_PWM);
 			return;
-		/////////////////////////接上电极10秒钟，察看电池是否接上
-		case 1:
-			if((giv_sys_time - power.time) > 20000)//接触上电2秒钟
+
+		///////为防止插电开机导致的静态电流计算错误,
+		///////特在此等待40s,用于导航板开机再行计算
+		///////qz add 20180625
+		case 10:
+			if(giv_sys_time-power.time>10000)
 			{
-				//if( battery_temp_1s < 355)
-				if((battery_temp_1s<355)|(battery_temp_1s>3902))	//qz modify 20180515
-				{
-					error_code=ERROR_BAT;
-					Init_Err();
-					return ;
-				}
-
-			#if 0	//qz mask 20180515
-				if(battery_temp_1s > 3902)
-				{
-	//						giv_sys_err = 26;
-					Init_Err();
-					return ;
-				}
-			#endif
-				jt_chargecurrent = (u32)(CEASE_CUR*2.5);		//1/CURR_CHG_CNT=2.5
-				power.step = 2;
-				power.temp = battery_temp;//Get_BatteryTemp();
-				power.time = giv_sys_time;
-
-				//如果电池电压大于16.2V，且不允许进行大电流充电，则进入第四步——涓流充电
-				if((Battery.BatteryChargeForbid != 0)&&(battery_voltage_1s > 1827)) //15.8V~1783   16.2V~1827
-				{
-					power.step = 4;
-				}
-				else//处理机器长时间放置不用，电池自放电造成电量严重减少时，需要进行大电流充电
-				{
-					Battery.BatteryChargeForbid = 0;	//允许大电流充电
-				}
-
+				if(battery_voltage_1s<VOL_13V)			//如果电池电压小于13V,先涓流充电
+					{
+						power.step=1;
+						Battery.BatteryChargeForbid = 0;	//允许大电流充电
+					}
+				else if((Battery.BatteryChargeForbid != 0)&&(battery_voltage_1s > VOL_16_5V))
+					{
+						power.step=4;
+					}
+				else
+					{
+						Battery.BatteryChargeForbid = 0;	//允许大电流充电
+						power.step=2;
+					}
+				Init_Charge_Data();
+				jt_chargecurrent=battery_chargecurrent;
 				flag_full = false;					//电池未充满
+				power.time=giv_sys_time;
 			}
-			return; 
 			
-	//使用180ma充电10s并且电池温度低于40度，看电池是否允许大电流充电，不允许则进行涓流充电
+			break;
+		/////////////////////////接上电极10秒钟，察看电池是否接上
+		///////电压小于13V时，进行360mA-静态电流的恢复充电
+		case 1:
+			Charge_PID_Ctr(360);		//qz modify 150->360:固定360mA
+			if((giv_sys_time-power.time>100000)&(battery_voltage>VOL_13V))
+				{
+					power.step++;
+					power.time=giv_sys_time;
+					Init_Charge_Data();
+				}
+			break;		//qz modify return->break 20180823
+			
+		//使用180ma充电10s并且电池温度低于40度，看电池是否允许大电流充电，不允许则进行涓流充电
 		case 2:
 		//充电电流大于150MA则降低PWM值
-		Charge_PID_Ctr(360);		//qz modify 150->360:固定360mA
-			if(((giv_sys_time - power.time) > 100000)&&(battery_temp > temp[70])) //充电时间为5分钟并且电池温度低于40度
-			{
-				power.step = 3;
-				power.time = giv_sys_time;
-				power.step_time=giv_sys_time;
-			}
-			if((giv_sys_time - power.time) > 72000000)		//2 hour
-			{
-				power.step = 3;
-				power.time = giv_sys_time;
-				power.step_time=giv_sys_time;
-			}
+			Charge_PID_Ctr(360);		//qz modify 150->360:固定360mA
+			if(giv_sys_time-power.time>100000)
+				{
+					power.step++;
+					power.time = giv_sys_time;
+					power.step_time=giv_sys_time;
+				}
 			break;	
 			
-			
-	//电池限流限压的过程，判断电池转为涓流的条件是：
-	//1、电池充电电流小于360ma；
-	//2、电池的绝对温度大于50度
-	//3、在电池温度大于40度的情况下，滇池温度每分钟上升速度大于1.5度
+		//电池限流限压的过程，判断电池转为涓流的条件是：
+		//1、电池充电电流小于360ma；
+		//2、电池的绝对温度大于50度
+		//3、在电池温度大于40度的情况下，滇池温度每分钟上升速度大于1.5度
 		case 3:
-		//充电电流大于设定电流则降低PWM值
-		#if 1
 		Charge_PID_Ctr(800);
-		
-		#endif
-//		power.pwm=1625;	
 		//判断电池的绝对温度大于50度或者电池电压大于21伏,电池转为涓流充电	 2369
-			if((battery_temp < temp[80])|| (battery_voltage > 1861))	//qz modify 20180703:1805 16V 1861:16.5V
-			//if((battery_temp < temp[80])|| (battery_voltage > 1919))  //17.1V~1929	 17.5V~1974 16.9V~1909	17.3~1952  16.8~1896  17~1919
+			if((battery_voltage > full_power))	//qz modify 20180703:1805 16V 1861:16.5V
 			{
 				power.step = 4;
 				power.time = giv_sys_time;
 			}
-		//电池的充电电流小于360ma认为电池已经充满
+		//电池的充电电流小于360ma,进入小恒流充电
 			if(((battery_chargecurrent < jt_chargecurrent) 
 			|| ((battery_chargecurrent - jt_chargecurrent) < 894)) //电流小于360ma
 			&&((giv_sys_time - power.time) > 600000))
@@ -1046,77 +1246,54 @@ void ChargeControl_Test(void)
 				power.step = 4;
 				power.time = giv_sys_time;
 			}
-		//在大电流充电3小时以上，强制性将电池置为充饱状态。
-			if((giv_sys_time - power.time) > 144000000)		//qz modify 144000000 4h
+		//在大电流充电4小时以上，强制性进行涓流充电。
+			if((giv_sys_time - power.time) > 144000000) 	//qz modify 144000000 4h
 			{
 				power.step = 4;
 				power.time = giv_sys_time;	  
-				//Battery.BatteryFDCap = 0;						//qz mask 20180625
-				Dis_PowerGlint = false;
+				//Battery.BatteryFDCap = 0; 					//qz mask 20180625
 				Battery.BatteryChargeForbid = 1;
 			}
-		////////每分钟判断一次////////////////////////
-			if(gbv_minute != false)
-			{
-				gbv_minute = false;
-				//piv_temp = Get_BatteryTemp();
-			//电池的绝对温度大于40度，
-				if(battery_temp < temp[70])
-				{
-				//电池的温升速度大于1.5度
-					//if((piv_temp > power.temp)&&((piv_temp - power.temp) > 3))
-					if((battery_temp < power.temp)&&((power.temp - battery_temp) > 50))
-					{
-						power.step = 4;
-						power.time = giv_sys_time;
-					}
-				}
-				//power.temp = piv_temp;
-				power.temp = battery_temp;
-			}
+
 			break;	
 		case 4:
 			Init_Charge_Data();
+			power.time=giv_sys_time;
 			power.step++;
 		break;
+
+		//涓流充电
 		case 5:
+#if 0
+			Init_Charge_Data();
+			power.time=giv_sys_time;
+			power.step++;
+#else
 		//充电电流大于180MA则降低PWM值
 			Charge_PID_Ctr(360);	//qz modify 150->360:固定360mA
 			////////每分钟判断一次////////////////////////
 			if(gbv_minute != false)
 			{
-				gbv_minute = false;
-
-				//TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
-				//TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
-
+				gbv_minute = false; 		
+				//充电电流小于静态电流+100mA,则转入恒压充电
 				if((((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
 				&& ((giv_sys_time - power.time) > 100000)//10s	防止第1步直接到第4步时，刚开始因为充电PWM没开，充电电流为0，小于52mA 
 				&& (flag_full == false))
 	//				&& (Battery.BatteryChargeForbid == 0))		
 				{
-					
-					flag_full = true;
-
-					//qz add 20180710 
-					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
-					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
-						{
-							Battery.BatteryCapability-=Battery.BatteryFDCap;
-							WriteBatteryCapability();	
-						}
-					//qz add end
-					Battery.BatteryFDCap = 0;
-					Dis_PowerGlint = false;
+					Init_Charge_Data();
 					Battery.BatteryChargeForbid = 1;
-					Send_Voice(VOICE_CHARGING_FULL);
+					power.step++;
+					power.time=giv_sys_time;
+					return;
 				}
-			//涓充大于600分钟认为电池充满电
+	
+				//涓充大于600分钟认为电池充满电
 				if(((giv_sys_time - power.time) > 360000000)		//600分钟  
-					&&(Dis_PowerGlint == true))
+					&&(flag_full==false))						//qz add 20180910
+					
 				{
 					flag_full = true;
-
 					//qz add 20180710 
 					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
 					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
@@ -1126,56 +1303,105 @@ void ChargeControl_Test(void)
 						}
 					//qz add end
 					Battery.BatteryFDCap = 0;
-					Dis_PowerGlint = false;
 					Battery.BatteryChargeForbid = 1;
 					Send_Voice(VOICE_CHARGING_FULL);
+					Open_Led(1,0,0);	//qz add 20181120,绿灯常亮5s.qz modify 不限时常亮
+					power.step=7;
+					return;
 				}
 
 			//涓流充电电压大于16.8V,认为充电已满
 			//qz add 20180710
 			//实测1882(16.67V)时,电池进入保护
-			if(((giv_sys_time-power.time>100000)&&(battery_voltage>1880)&&(!flag_full)))
+			//涓流充电电压大于16.8V,进入恒压充电
+			if(((giv_sys_time-power.time>100000)&&(battery_voltage>full_power)&&(!flag_full)))
+				{
+					Init_Charge_Data();
+					Battery.BatteryChargeForbid = 1;
+					power.step++;
+					power.time=giv_sys_time;
+					return;
+				}
+			//qz add end
+			}
+#endif
+		break;
+
+		//恒压充电
+		case 6:
+		//充电电流大于180MA则降低PWM值
+			Charge_PID_CtrPwr(full_power);	//qz modify 150->360:固定360mA
+			Battery.BatteryChargeForbid = 1;	//恒压充电,禁止大电流充电
+			////////每分钟判断一次////////////////////////
+			if(gbv_minute != false)
+			{
+				gbv_minute = false;
+
+#if 1
+				if((((battery_chargecurrent - jt_chargecurrent) < 62)) //25mA(0.02C)
+				&& ((giv_sys_time - power.time) > 100000)//10s	防止第1步直接到第4步时，刚开始因为充电PWM没开，充电电流为0，小于52mA 
+				&& (flag_full == false))
 				{
 					flag_full = true;
-				
+
 					//qz add 20180710 
 					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
 					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
-					{
-						Battery.BatteryCapability-=Battery.BatteryFDCap;
-						WriteBatteryCapability();	
-					}
+						{
+							Battery.BatteryCapability-=Battery.BatteryFDCap;
+							WriteBatteryCapability();	
+						}
 					//qz add end
 					Battery.BatteryFDCap = 0;
-					Dis_PowerGlint = false;
 					Battery.BatteryChargeForbid = 1;
 					Send_Voice(VOICE_CHARGING_FULL);
+					Open_Led(1,0,0);	//qz add 20181120,绿灯常亮5s.qz modify 不限时常亮
+					power.step++;
 				}
-			//qz add end
-			
+#endif
+			//涓充大于120分钟或者充电电压大于17V认为电池充满电
+				if((((giv_sys_time - power.time) > 72000000)|(battery_voltage>VOL_17V))&&(!flag_full))		//120分钟  
+				{
+					flag_full = true;
+					//qz add 20180710 
+					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
+					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
+						{
+							Battery.BatteryCapability-=Battery.BatteryFDCap;
+							WriteBatteryCapability();	
+						}
+					//qz add end
+					Battery.BatteryFDCap = 0;
+					Battery.BatteryChargeForbid = 1;
+					Send_Voice(VOICE_CHARGING_FULL);
+					Open_Led(1,0,0);	//qz add 20181120,绿灯常亮5s.qz modify 不限时常亮
+					power.step++;			//qz add 20180910
+				}
+			}
+			break;
+		case 7:
 			//电池充满电，PWM关闭后，电池会自放电，长时间(比如一个月)后，电池需补充电量
-				if((flag_full == true)&&(battery_voltage_1s < 1783))		//15.8V
+				if((flag_full == true)&&(battery_voltage_1s < VOL_15_8V))		//15.8V
 				{
 					power.step = 3;
 					flag_full = false;
-					Dis_PowerGlint = true;
 					power.time = giv_sys_time;
-					Init_Charge_Data();		//qz add 20180522
+					Init_Charge_Data(); 	//qz add 20180522
 					Send_Voice(VOICE_CHARGING_START);
 				}
-			}
-
-		//防止电池保护板坏时一直充电，而充坏电池  (2015.4.7)
-			if(flag_full == true)
-			{
-				power.pwm = 0;
-				Init_Charge_Data();		//qz add 20180522
-			}
-
+		
+			//防止电池保护板坏时一直充电，而充坏电池  (2015.4.7)
+				if(flag_full == true)
+				{
+					power.pwm = 0;
+					Init_Charge_Data(); 	//qz add 20180522
+				}
 			break;
 		default :
-			power.step = 0; 	
+			power.step = 0;
+			break;
 	}
+
 	//if((charge_dc.key == 0)&&(charge_seat.key == 0))		//qz mask 20180515
 	if(!(power.charge_dc)&&(!power.charge_seat))	//qz add 20180515
 	{
@@ -1189,390 +1415,7 @@ void ChargeControl_Test(void)
 	}		
 }
 
-
-void Charge_Test(void)
+void Test_Nothing(void)
 {
-	switch (mode.test_step)
-		{
-			case 0:
-
-				mode.test_dis_data=TST_CHG;
-				if((power.charge_dc|power.charge_seat)&(Read_Button_Key(&key2)==1))
-					{
-						Init_Charge_Data();
-						power.pwm = 0;
-						disable_pwm(CHARGE_PWM);
-						power.step = 0;
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				ChargeControl_Test();
-				if(power.step==5)
-					{
-						mode.test_dis_data=FULL;
-					}
-				else
-					{
-						mode.test_dis_data=(u32)(battery_chargecurrent_1s*CURR_CHG_CNT);		//显示电流，单位mA
-					}
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				if((!power.charge_dc)&(!power.charge_seat))
-					{
-						mode.test_step=0;
-					}
-				break;
-			case 2:
-				ChargeControl_Test();
-				if(power.step==5)
-					{
-						mode.test_dis_data=FULL;
-					}
-				else
-					{
-						mode.test_dis_data=(u32)(battery_voltage_1s*VOLT_CHG_CNT*100);		//显示电流，单位V
-					}
-				if((!power.charge_dc)&(!power.charge_seat))
-					{
-						mode.test_step=0;
-					}
-				break;
-		}
-}
-
-
-void Ring_Speed_Test(void)
-{
-	switch(mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=TST_SPD;
-				Enable_Speed();
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				Speed=3000;
-				if(do_action(3, FARAWAY));
-				if(Half_Sec)
-					{
-						Half_Sec=false;
-						mode.test_dis_data=(u32)(l_ring.real_speed/PULSES_PER_MM);
-					}
-				Dis_Guihua=true;
-				Dis_Yuyue=false;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 2:
-				Speed=3000;
-				if(do_action(3, FARAWAY));
-				Dis_Guihua=false;
-				Dis_Yuyue=true;
-				if(Half_Sec)
-					{
-						Half_Sec=false;
-						mode.test_dis_data=(u32)(r_ring.real_speed/PULSES_PER_MM);
-					}
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=1;
-					}
-				break;
-		}
-}
-
-void Free_Ring_Test(void)
-{
-	switch(mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=TST_FREE;
-				if(Read_Button_Key(&key2)==1)
-					{
-						Enable_Speed();
-						w_ring.length=0;
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				mode.test_dis_data=w_ring.length;
-				if(Read_Button_Key(&key2)==1)
-					{
-						w_ring.length=0;
-						mode.test_step=0;
-					}
-				break;
-		}
-}
-
-void Free_Ring_Speed_Test(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=TST_FREE_SPD;
-				if(Read_Button_Key(&key2)==1)
-					{
-						Enable_Speed();
-						w_ring.length=0;
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				mode.test_dis_data=w_ring.length;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 2:
-				Speed=2000;
-				if(do_action(3,FARAWAY));
-				if(giv_sys_time-start_time>10000)
-					{
-						stop_rap();
-						mode.test_step=1;
-					}
-				mode.test_dis_data=w_ring.length;
-				break;
-		}
-}
-
-void Ring_Test(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				stop_rap();
-				Enable_Speed();
-				mode.test_dis_data=12;
-				w_ring.length=0;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 1:										//delay 500ms
-				if(giv_sys_time-start_time>5000)
-					mode.test_step++;
-				break;
-			case 2:										//中速前进2m
-				Speed=2500;
-				mode.test_dis_data=w_ring.length;
-				if(do_action(3,200*CM_PLUS))
-					{
-						stop_rap();
-						mode.test_step++;
-						start_time=giv_sys_time;
-					}
-				if(Read_Button_Key(&key2)==1)			//前往高速
-					{
-						stop_rap();
-						mode.test_step=5;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 3:										//delay 500ms
-				if(giv_sys_time-start_time>5000)
-					mode.test_step++;
-				break;
-			case 4:										//中速后退2m
-				Speed=2500;
-				mode.test_dis_data=w_ring.length;
-				if(do_action(4,200*CM_PLUS))
-					{	
-						stop_rap();
-						mode.test_step=1;
-						start_time=giv_sys_time;
-					}
-				if(Read_Button_Key(&key2)==1)			//前往高速
-					{
-						stop_rap();
-						mode.test_step=5;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 5:										//delay 500ms
-				if(giv_sys_time-start_time>5000)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 6:
-				Speed=4000;								//高速前进2m
-				mode.test_dis_data=w_ring.length;
-				if(do_action(3,200*CM_PLUS))
-					{
-						stop_rap();
-						mode.test_step++;
-						start_time=giv_sys_time;
-					}
-				if(Read_Button_Key(&key2)==1)			//返回低速
-					{
-						stop_rap();
-						mode.test_step=1;
-						start_time=giv_sys_time;
-					}
-				break;
-			case 7:										//delay 500ms
-				if(giv_sys_time-start_time>5000)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 8:										//高速后退2m
-				Speed=4000;
-				mode.test_dis_data=w_ring.length;
-				if(do_action(4,200*CM_PLUS))
-					{
-						stop_rap();
-						mode.test_step=5;
-						start_time=giv_sys_time;
-					}
-				if(Read_Button_Key(&key2)==1)			//返回低速
-					{
-						stop_rap();
-						mode.test_step=1;
-						start_time=giv_sys_time;
-					}
-				break;
-		}
-}
-
-void Wall_Data_Test(void)
-{
-	switch (mode.test_step)
-		{
-			case 0:
-				stop_rap();
-				Enable_wall();
-				mode.test_dis_data=13;
-				break;
-		}
 	
-	if(Read_Button_Key(&key2)==1)			//返回低速
-		{
-			stop_rap();
-			mode.test_step++;
-			if(mode.test_step>=6)
-				mode.test_step=0;
-			start_time=giv_sys_time;
-		}
 }
-
-void UV_Test(void)
-{
-#ifdef UV
-	switch (mode.test_step)
-		{
-			case 0:
-				mode.test_dis_data=TST_UV;
-				Reset_UV();
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step++;
-					}
-				break;
-			case 1:
-				Set_UV();
-				mode.test_dis_data=NONE;
-				if(Read_Button_Key(&key2)==1)
-					{
-						mode.test_step=0;
-					}
-				break;
-		}
-#endif
-}
-
-void Do_Test_My(void)
-{
-
-//	ACC_DEC_Comm_rap_My();
-//	YBS_Comm_Rap_My();
-	ACC_DEC_Curve();
-	switch (mode.test_item)
-		{
-			case TST_MENU:			//测试界面
-				mode.test_dis_data=MAIN_MENU;
-				break;
-			case TST_FAN_MB:		//风扇检查 滚刷检测
-				FAN_MB_Test();
-				break;
-			case TST_VOCIE:			//声音检查
-				Voice_Test();
-				break;
-			case TST_SWITCH:
-				Switch_Test();
-				break;
-			case TST_WALL:
-				//Wall_Test();
-				Wall_Test_II();
-				break;
-			case TST_EARTH:
-				//Earth_Test();
-				Earth_Test_II();
-				break;
-			case TST_OC:
-				OC_Test();
-				break;
-			case TST_DOCK:
-				Dock_Test();
-				break;
-			case TST_CHG:
-				Charge_Test();
-				break;
-			case TST_SPD:
-				Ring_Speed_Test();
-				break;
-			case TST_FREE:
-				Free_Ring_Test();
-				break;
-			case TST_FREE_SPD:
-				Free_Ring_Speed_Test();
-				break;
-			case 12:
-				Ring_Test();
-				break;
-			case TST_WALL_DATA:
-				Wall_Data_Test();
-				break;
-#ifdef UV
-			case TST_UV:
-				UV_Test();
-				break;
-#endif
-		}
-
-	if(Read_Button_Key(&key1)==1)
-		{
-			mode.test_item++;
-			if(mode.test_item>MAX_TST_ITEM)
-				mode.test_item=0;
-			mode.test_step=0;
-			Sweep_Level_Set(STOP_ALL);
-			stop_rap();
-			Clr_Alldisflag();
-			Dis_Yuyue=false;
-#ifdef UV
-			Reset_UV();
-#endif
-		}
-	
-	if(Read_Button_Key(&key3)==1)
-		{
-			Init_Cease();
-		}
-}
-
-

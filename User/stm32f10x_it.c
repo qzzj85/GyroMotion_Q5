@@ -355,6 +355,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 			action_wall_time=true;
 #endif
 			spd_acc_flag=true;
+			test_100ms_flag=true;
 		}
 
 	if((giv_sys_time%3000)==0)
@@ -372,6 +373,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 			Half_Sec  = true;
 			led.halfsec_flag=true;
 			Read_PwrSwitch_Status();
+			test_500ms_flag=true;
 		}
 	
 	if((giv_sys_time%10000)==0)
@@ -380,6 +382,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 			led.sec_flag=true;
 			top_time_sec=top_time;
 			top_time=0;
+			test_1s_flag=true;
 		}
 	
 	if((giv_sys_time%20000)==0)			//2s

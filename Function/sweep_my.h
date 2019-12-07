@@ -42,7 +42,8 @@ void Init_PauseSweep(void);
 void Do_PauseSweep(void);
 void Set_Seat_Grid(void);
 u8 YBS_AbortFor_Sweep_II(void);
-
+u8 Read_Only_Collide(void);
+void Init_Sweep_Done(void);
 
 #endif
 

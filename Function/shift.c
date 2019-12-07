@@ -257,15 +257,6 @@ void Shift_BumpAction(void)
 				}
 		}
 	
-	if(Analysis_Stop_StartArea())
-		{
-			stop_rap();
-			TRACE("motion is in start area!!!\r\n");
-			Delete_All_PathPoint();
-			Init_Cease();
-		}
-
-	
 	switch(mode.bump)
 		{
 			case BUMP_LEFT_CLIFF:
@@ -796,6 +787,15 @@ void Do_Shift_Point1(void)
 	temp_nextaction=Read_CheckPoint_NextAction();
 	
 	ACC_DEC_Curve();
+
+	if((Analysis_Stop_StartArea())&((mode.bump)|(mode.abnormity)))
+		{
+			stop_rap();
+			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+			Delete_All_PathPoint();
+			//Init_Cease();
+			Init_Sweep_Done();
+		}
 
 	u8 abnormal=Read_Protect();
 	if(mode.abnormity)
@@ -1938,6 +1938,15 @@ void Do_Shift_Point2(void)
 	temp_nextaction=Read_CheckPoint_NextAction();
 	
 	ACC_DEC_Curve();
+
+	if((Analysis_Stop_StartArea())&((mode.bump)|(mode.abnormity)))
+		{
+			stop_rap();
+			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+			Delete_All_PathPoint();
+			//Init_Cease();
+			Init_Sweep_Done();
+		}
 	
 	u8 abnormal=Read_Protect();
 	if(mode.abnormity)
@@ -2711,7 +2720,8 @@ u8 Abort_ShiftYBS(void)
 									case CHECK_DOCK:
 										TRACE("now action is GOEXIT!!!\r\n");
 										TRACE("That means can't go back!!!\r\n");
-										Init_Docking();
+										//Init_Docking();
+										Init_Sweep_Done();
 										break;											
 								}
 						}
@@ -2721,8 +2731,9 @@ u8 Abort_ShiftYBS(void)
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
-			TRACE("motion is in start area!!!\r\n");
-			Init_Cease();
+			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+			//Init_Cease();
+			Init_Sweep_Done();
 		}
 
 	return 0;
@@ -3287,7 +3298,8 @@ void Do_ExitAtion(void)
 	if(Read_CurrNode_AreaNO()==0)
 		{
 			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-			Init_Docking();
+			//Init_Docking();
+			Init_Sweep_Done();
 			return;
 		}
 	Get_CurrNode_Info();						//获取当前区域的节点信息
@@ -3760,8 +3772,9 @@ u8 Abort_ShiftExit_YBS(void)
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
-			TRACE("motion is in start area!!!\r\n");
-			Init_Cease();
+			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+			//Init_Cease();
+			Init_Sweep_Done();
 			return 1;
 		}
 

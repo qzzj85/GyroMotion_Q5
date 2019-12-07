@@ -77,8 +77,9 @@ void Init_SLAM_DATA(void)
 void Init_Gyro_Data(void)
 {
 	Gyro_Data.first_rst=false;
-	Gyro_Data.check_step=0;
-	Gyro_Data.start_check_time=giv_sys_time;
+	Gyro_Data.tick_check_step=0;
+	Gyro_Data.tick_check_time=giv_sys_time;
+	Gyro_Data.tick_flag=true;
 	Gyro_Data.first_roll=Gyro_Data.roll;		//qz add 20180927
 	Gyro_Data.count_times=0;
 	Gyro_Data.g_ek[0]=0;
@@ -727,7 +728,7 @@ void Uart3_Communication(void)
 				Gyro_Data.x_acc=(COMBUF3[10]<<8)+COMBUF3[9];
 				Gyro_Data.y_acc=(COMBUF3[12]<<8)+COMBUF3[11];
 				Gyro_Data.z_acc=(COMBUF3[14]<<8)+COMBUF3[13];
-				Gyro_Data.start_check_time=giv_sys_time;
+				Gyro_Data.tick_check_time=giv_sys_time;
 			}
 	}
 
@@ -828,7 +829,7 @@ void Uart3_Communication_II(void)
 				Gyro_Data.x_acc=(COMBUF3[10]<<8)+COMBUF3[9];
 				Gyro_Data.y_acc=(COMBUF3[12]<<8)+COMBUF3[11];
 				Gyro_Data.z_acc=(COMBUF3[14]<<8)+COMBUF3[13];
-				Gyro_Data.start_check_time=giv_sys_time;
+				Gyro_Data.tick_check_time=giv_sys_time;
 
 				if(turn_stop_enable)
 					{

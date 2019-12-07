@@ -974,7 +974,11 @@ void stop_rap(void)
 									return;
 								}
 #endif
+#ifdef MILE_COMPENSATION
+							delay_ms(300);
+#else
 							delay_ms(700);
+#endif
 							GYRO_CAL_PIN_0;
 							TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
 							delay_ms(1000);

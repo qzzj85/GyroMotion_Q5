@@ -5,8 +5,8 @@
 
 
 /////////下面是一些软件定义//////////////////////////////////
-#define  BATTERY_VOLTAGE    0   //电池电压通道   //PA0 AD转换通道0
-#define  CHARGE_CURRENT		2
+#define  ADC_BAT_VOL    0   //电池电压通道   //PA0 AD转换通道0
+#define  ADC_BAT_CHGCURR		2
 
 #define  ADC_EARTH_L        4   //左边地检通道  //PA3 AD转换通道3
 #define  ADC_EARTH_M        5   //中间地检  	  //PA4	AD转换通道4		

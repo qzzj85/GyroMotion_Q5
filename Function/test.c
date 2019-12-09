@@ -1160,8 +1160,8 @@ void ChargeControl_Test(void)
 {
 	//////////////////充电控制//////////////////////////////////////
 
-	piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
-	piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
+	piv_current = account_current(ADC_BAT_CHGCURR);	 //采样当时的电流
+	piv_voltage = account_current(ADC_BAT_VOL);   //采样当时的电压
 	charge_data.piv_current_sum+=piv_current;
 	charge_data.piv_current_count++;
 	charge_data.piv_voltage_sum+=piv_voltage;

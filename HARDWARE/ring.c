@@ -1267,7 +1267,7 @@ void Init_Ring(void)
 	NVIC_InitStruce.NVIC_IRQChannelSubPriority=0;
 	NVIC_Init(&NVIC_InitStruce);
 #endif
-	giv_sys_time=0;
+	//giv_sys_time=0;
 	//	Reset_Speed_Send();
 	 ////////////////////初始化变量的值////////////////////
 	l_ring.all_length			= 0;		//qz add 20180803

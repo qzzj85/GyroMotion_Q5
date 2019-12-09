@@ -468,6 +468,10 @@ void Open_Led(u8 redorgreen,u32 show_time,u8 sloworquic)
 				break;
 			case 4:
 				led.status=LED_STA_ERR_SHOW;
+				if((show_time>10)&(show_time<16))
+					show_time=11;
+				else if(show_time>17)
+					show_time=12;
 				led.show_time=show_time;
 				led.start_time=giv_sys_time;
 				led.step=0;

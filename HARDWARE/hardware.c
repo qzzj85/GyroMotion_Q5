@@ -38,6 +38,7 @@ void  Init_System(void)
 	NVIC_Configuration();				//初始化系统的中断，如有移植需要修改
 	init_time_2();        				//Timer2 10K中断  计数器，用于系统的基本心跳
 	Init_Hardware();    				//初始化系统的硬件，如有移植需要修改
+	init_ad();							//初始化AD	  
 	URAT1_init(115200);
 
 #ifdef   NEW_Q55_BOARD_1113   
@@ -96,8 +97,10 @@ void  Init_System(void)
 	
 	Init_Voice();						//初始化语音芯片，包括音量设置
 	Init_WatchDog();					//初始化看门狗
-	init_rtc();							//初始化RTC,BKP数据读取,建立闹钟中断
-	Battery_Data_Init();
+//	Reset_Bat_Data();
+	Init_BKP_Bat_Rtc();
+//	init_rtc();							//初始化RTC,BKP数据读取,建立闹钟中断
+//	Battery_Data_Init();
 //	Init_PWM();							//初始化PWM，PWM用于电机驱动、风扇驱动、充电驱动
 	Init_Ring_Pwm(PWM_RING_MAX,PWM_RING_PRESCALER);
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
@@ -107,7 +110,6 @@ void  Init_System(void)
 	time = giv_sys_time;
 	while((giv_sys_time - time) < 400){judge_charge();};
 		Init_Bump_Interrupt();				//初始化碰撞中断
-	init_ad();							//初始化AD	  
 	init_key();							//初始化按键类信息，如：按键、开关等
 	Init_Ring();
 	init_wallearth();	
@@ -1075,3 +1077,36 @@ void Disable_RingPWMCtrl(void)
 #endif
 }
 
+void Init_BKP_Bat_Rtc(void)
+{
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+
+#ifdef DS1307
+	u8 data=0;
+	if(DS1307_Read_Backup(FLAG_BACKUP_ADDR, &data))
+		return;
+	if(data!=0x5A)												//第一次开机或者DS1307电池没电了
+		{
+			DS1307_Data_Reinit();
+			Battery.reinit=true;		//电池电量重置标志
+#ifdef DEBUG_INIT
+			TRACE("DS1307 Data Reinit!\r\n");
+#endif
+		}
+#else
+	u16 data1;
+	PWR_BackupAccessCmd(ENABLE);
+	data1=BKP_ReadBackupRegister(BAT_REINIT_BKP);
+	if(data1!=0xAA55)										//第一次开机或者电池没电了
+		{
+			BKP_DeInit();											//备份域复位
+			Reinit_Rtc();												//rtc时钟重新设置
+			Reinit_Battery();
+		}
+	PWR_BackupAccessCmd(DISABLE);
+#endif
+
+	Init_Battery_Data();
+	Init_Rtc_Data();
+
+}

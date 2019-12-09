@@ -16,6 +16,75 @@ bool watchdog_time;
 bool PREEN_TIME_UP=false;
 
 
+void Reinit_Rtc(void)
+{
+	PWR_BackupAccessCmd(ENABLE);
+
+#ifdef USE_LSE				 	 
+	RCC_LSEConfig(RCC_LSE_ON);
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
+		{
+			TRACE("hang at %s %d\r\n",__func__,__LINE__);
+		}
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+#else
+	RCC_LSICmd(ENABLE);
+	while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY)==RESET);
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+#endif
+	RCC_RTCCLKCmd(ENABLE);
+	RTC_WaitForSynchro();
+	
+	RTC_WaitForLastTask();
+	RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
+
+	Rtc_time=0;
+	RTC_WaitForLastTask();
+	WriteRtcTime();
+	
+	PWR_BackupAccessCmd(DISABLE);
+	
+}
+
+void Init_Rtc_Data(void)
+{
+  	NVIC_InitTypeDef NVIC_InitStructure;
+  	EXTI_InitTypeDef EXTI_InitStructure;
+  	//将闹钟中断与外部中断联系起来
+
+	PWR_BackupAccessCmd(ENABLE);
+	EXTI_ClearITPendingBit(EXTI_Line17);
+	EXTI_InitStructure.EXTI_Line = EXTI_Line17;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;	   
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;			 
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);    
+
+	Rtc_time = RTC_GetCounter();
+	RTC_WaitForLastTask();
+	if(Rtc_time >= 604800)
+		{
+			Rtc_time = Rtc_time % 604800;
+			RTC_SetCounter(Rtc_time);
+			RTC_WaitForLastTask();
+		}
+
+	RTC_WaitForLastTask();
+	RTC_ITConfig(RTC_IT_ALR, ENABLE);
+	/* Wait until last write operation on RTC registers has finished */
+	RTC_WaitForLastTask();
+	PWR_BackupAccessCmd(DISABLE);
+
+  /* Enable the RTC Interrupt */
+//	NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQChannel;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	//使能闹钟中断
+	NVIC_InitStructure.NVIC_IRQChannel = RTCAlarm_IRQn;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
 void init_rtc(void)
 {
   	NVIC_InitTypeDef NVIC_InitStructure;
@@ -33,7 +102,7 @@ void init_rtc(void)
    
 	PWR_BackupAccessCmd(ENABLE);
 	
-	//BKP_DeInit();
+//	BKP_DeInit();
 	//修改启动程序
 #ifdef USE_LSE				 	 
 	RCC_LSEConfig(RCC_LSE_ON);
@@ -49,11 +118,11 @@ void init_rtc(void)
 #endif
 	RCC_RTCCLKCmd(ENABLE);
 	RTC_WaitForSynchro();
-		 
 	RTC_WaitForLastTask();
-			
 	RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
 	RTC_WaitForLastTask();
+
+	
 	 
   	Rtc_time = RTC_GetCounter();
 	RTC_WaitForLastTask();
@@ -369,7 +438,7 @@ void WriteBatInitFlash(void)
 #endif
 }
 
-u16 ReadBatRecalFlash(void)
+u16 ReadBatRecal(void)
 {
 #ifndef DS1307
 #if 0					//使用内部FLASH
@@ -391,28 +460,12 @@ u16 ReadBatRecalFlash(void)
 #endif
 }
 
-void WriteBatRecalFlash(u16 data)
+void WriteBatRecal(u16 data)
 {
 #ifndef DS1307
-#if 0					//使用内部FLASH
-	u32 addr=BAT_RECAL_ADDR;
-	FLASH_Unlock();
-	FLASH_ErasePage(BAT_RECAL_ADDR);
-		
-	if(FLASH_ProgramWord(addr,(u32)(data))!=FLASH_COMPLETE)
-		{
-			TRACE("BAT_RECAL FLASH Write Fail!\r\n");
-		}
-	else
-		{
-			TRACE("BAT_RECAL FLASH Write Complete!\r\n");
-		}
-	FLASH_Lock();
-#else					//使用BKP
 	PWR_BackupAccessCmd(ENABLE);
 	BKP_WriteBackupRegister(BKP_DR9,data);
 	PWR_BackupAccessCmd(DISABLE);
-#endif
 #else					//使用DS1307
 	DS1307_Write_Backup(BAT_RECAL_ADDR, (u8)(data));
 #endif

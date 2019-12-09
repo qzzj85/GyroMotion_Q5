@@ -86,14 +86,14 @@ u16 full_power=VOL_16_8V;
 void init_power (void)
 {
 ////////////  battery_temp = account_current(BATTERY_TEMP);
-  power.voltage = account_current(BATTERY_VOLTAGE);
+  power.voltage = account_current(ADC_BAT_VOL);
 
 
   battery_voltage = power.voltage;
   battery_voltage_10s=power.voltage;
   //battery_temp = power.temp;
  #if 1//shftemp   
-  jt_chargecurrent = account_current(CHARGE_CURRENT);
+  jt_chargecurrent = account_current(ADC_BAT_CHGCURR);
    #else
  jt_chargecurrent = 800;
  #endif
@@ -145,6 +145,79 @@ void Battery_Reinit(void)
 			WriteFDCap();
 			Battery.reinit=false;
 		}		
+}
+
+void Reinit_Battery(void)
+{
+	PWR_BackupAccessCmd(ENABLE);
+
+	BKP_WriteBackupRegister(BAT_REINIT_BKP, 0xAA55);		//备份域标志
+	BKP_WriteBackupRegister(VOICE_BACKUP_BKP, 0x00EC);		//音量备份(默认第13级）。预约时间为没有
+	BKP_WriteBackupRegister(PREEN_BACKUP_BKP, 0x0000);		//预约天数为没有
+	BKP_WriteBackupRegister(MODE_BACKUP_BKP, 0x0101);		//BKP_DR4用于模式保存，高16位为主模式，低16位为子模式。
+	BKP_WriteBackupRegister(BATCAP_HADDR_BKP, 0x0); 		//BKP_DR5用于电池容量的高16位
+	BKP_WriteBackupRegister(BATCAP_LADDR_BKP, 0x0); 		//BKP_DR6用于电池容量的低16位
+	BKP_WriteBackupRegister(BATFDCAP_HADDR_BKP, 0x0);			//BKP_DR7用于电池放电量的高16位
+	BKP_WriteBackupRegister(BATFDCAP_LADDR_BKP, 0x0);			//BKP_DR8用于电池放电量的低16位
+	BKP_WriteBackupRegister(BATRECAL_BACKUP_BKP, 0X0);			//BKP_DR9用于电池RECAL标志,qz add 20181101
+	Battery.BatteryCapability=0;
+	Battery.BatteryFDCap=0;
+	Battery.bat_recal=0;
+#ifdef DEBUG_INIT
+	TRACE("BKP Data Reinit!\r\n");
+#endif
+}
+
+void Reinit_Battery_Data(void)
+{
+  	s8 temp_data;
+#ifdef NEW_PWR_CAL
+	Battery.BatteryCapability=MAH2600;	//qz modify 20180801:原来为MAH2600//2400mAh
+#else	
+	Battery.BatteryCapability=MAH1800;
+#endif
+	temp_data=Get_APPBat();
+#ifdef NEW_PWR_CAL
+	Battery.BatteryFDCap=(100-temp_data)*MAH2600/100;
+#else
+	Battery.BatteryFDCap=(100-temp_data)*MAH1800/100;
+#endif
+	Battery.BatteryChargeForbid=0;
+	Battery.bat_recal=1;
+	WriteBatRecal(Battery.bat_recal);
+	WriteBatteryCapability();
+	WriteFDCap();
+}
+
+void Init_Battery_Data(void)
+{
+	Battery.BatteryCapability=ReadBatteryCapability();
+	Battery.BatteryFDCap=ReadFDCap();
+	if((Battery.BatteryFDCap & 0x80000000) != 0)
+		{
+			Battery.BatteryChargeForbid = 1;
+		}
+	else
+		{
+			Battery.BatteryChargeForbid = 0;   
+		}
+	Battery.BatteryFDCap &= 0x7fffffff;
+	if(Battery.BatteryCapability == 0)				//如果电池电量数据为0，表示需要根据电压重新初始化电量
+		{
+			Reinit_Battery_Data();
+		}
+		
+	Battery.bat_recal=(u8)(ReadBatRecal());
+	if((Battery.bat_recal!=0)&(Battery.bat_recal!=1))
+		{
+			Battery.bat_recal=0;
+			WriteBatRecal((u16)(Battery.bat_recal));
+		}
+	Battery.UsePowerTime = Rtc_time;
+	Battery.start_time=giv_sys_time;
+#ifdef DEBUG_INIT
+	TRACE("Battery.recal=%d\r\n",Battery.bat_recal);
+#endif
 }
 
 void Battery_Data_Init(void)
@@ -208,11 +281,11 @@ void Battery_Data_Init(void)
 				}
 		}
 		
-	Battery.bat_recal=(u8)(ReadBatRecalFlash());
+	Battery.bat_recal=(u8)(ReadBatRecal());
 	if((Battery.bat_recal!=0)&(Battery.bat_recal!=1))
 		{
 			Battery.bat_recal=0;
-			WriteBatRecalFlash((u16)(Battery.bat_recal));
+			WriteBatRecal((u16)(Battery.bat_recal));
 		}
 	Battery.UsePowerTime = Rtc_time;
 	Battery.start_time=giv_sys_time;
@@ -221,550 +294,14 @@ void Battery_Data_Init(void)
 #endif
 }
 
-#if 0
-/*************************************************************
-功能： 充电控制
-输入：无
-输出：无
-*************************************************************/
-void chargeing(void)
-{
-	if((power.charge_dc == 0)&&(power.charge_seat == 0))
-			{
-				 power.pwm = 0;
-				 power.step = 0;
-				 disable_pwm(CHARGE_PWM);
-				 return;
-			}
-	if( POWER_ready != true )
-			{
-				 return;
-			}
-	POWER_ready = false;
-	ChargeControl();	
-}
-/************************************************
-功能：充电控制
-************************************************/
-	void ChargeControl(void)
-	{
-	
-	 static uint8  flag_full = false;			//电池充满电标志		
-		//////////////////充电控制//////////////////////////////////////
-		
-		piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
-		piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
-		real_chg_current= (u32)(piv_current*CURR_CHG_CNT);
-		real_bat_voltage= (u32)(piv_voltage*VOLT_CHG_CNT);
-		
-		switch(power.step)
-		{
-			///////开始充电前的准备/////////////
-			case 0:
-				power.time = giv_sys_time;
-				power.step = 1;
-				disable_pwm(CHARGE_PWM);
-				return;
-			/////////////////////////接上电极10秒钟，察看电池是否接上
-			case 1:
-				if((giv_sys_time - power.time) > 20000)//接触上电2秒钟
-				{
-					//if( battery_temp_1s < 355)
-					if((battery_temp_1s<355)|(battery_temp_1s>3902))	//qz modify 20180515
-					{
-//						giv_sys_err = 25;			//qz mask 20180515
-
-						//qz add 20180515
-						error_code=ERROR_BAT;
-						//Send_Voice(VOICE_ERROR_BAT_FAIL);
-						//qz add end
-						
-						Init_Err();
-						return ;
-					}
-
-					#if 0	//qz mask 20180515
-					if(battery_temp_1s > 3902)
-					{
-//						giv_sys_err = 26;
-						Init_Err();
-						return ;
-					}
-					#endif
-					jt_chargecurrent = battery_chargecurrent;
-					power.step = 2;
-					power.temp = battery_temp;//Get_BatteryTemp();
-					power.time = giv_sys_time;
-					//如果电池充电标志为1，则直接进入第4步。
-	//				if(Battery.BatteryChargeForbid != 0)
-	//				{
-	//					power.step = 4;
-	//				}
-					if((Battery.BatteryChargeForbid != 0)&&(battery_voltage_1s > 1827)) //15.8V~1783   16.2V~1827
-					{
-						power.step = 4;
-					}
-					else//处理机器长时间放置不用，电池自放电造成电量严重减少时，需要进行大电流充电
-					{
-						Battery.BatteryChargeForbid = 0;	//允许大电流充电
-					}
-	
-					flag_full = false;					//
-				}
-				return; 
-				
-		//使用180ma充电10s并且电池温度低于40度，看电池是否允许大电流充电，不允许则进行涓流充电
-			case 2:
-			//充电电流大于150MA则降低PWM值
-				if((piv_current > jt_chargecurrent)&&((piv_current - jt_chargecurrent) > 372))
-				{
-					if(power.pwm > 0)
-					{
-						power.pwm --;						//电流大于设定电流
-					}
-				}
-				else
-				{
-					
-					if(power.pwm < (PWM_CHARGE_MAX-CHARGE_PWM_MASK))
-					{
-						power.pwm ++;						//电流小于设定电流
-					}
-				}
-				if(((giv_sys_time - power.time) > 100000)&&(battery_temp > temp[70])) //充电时间为5分钟并且电池温度低于40度
-				{
-					power.step = 3;
-					power.time = giv_sys_time;
-				}
-				if((giv_sys_time - power.time) > 72000000)
-				{
-					power.step = 3;
-					power.time = giv_sys_time;
-				}
-				break;	
-				
-		//电池限流限压的过程，判断电池转为涓流的条件是：
-		//1、电池充电电流小于360ma；
-		//2、电池的绝对温度大于50度
-		//3、在电池温度大于40度的情况下，滇池温度每分钟上升速度大于1.5度
-			case 3:
-			//充电电流大于设定电流则降低PWM值  
-				if(((piv_current > jt_chargecurrent)&&((piv_current - jt_chargecurrent) > 1986)))		 //800mA
-				{
-					if(power.pwm > 0)
-					{
-						power.pwm --;						//电流大于设定电流
-					}
-				}
-				else
-				{
-					
-					if(power.pwm < (PWM_CHARGE_MAX-CHARGE_PWM_MASK))
-					{
-						power.pwm ++;						//电流小于设定电流
-					}
-				}
-			//判断电池的绝对温度大于50度或者电池电压大于21伏,电池转为涓流充电	 2369
-				if((battery_temp < temp[80])|| (battery_voltage > 1919))  //17.1V~1929	 17.5V~1974 16.9V~1909	17.3~1952  16.8~1896  17~1919
-				{
-					power.step = 4;
-					power.time = giv_sys_time;
-				}
-			//电池的充电电流小于360ma认为电池已经充满
-				if(((battery_chargecurrent < jt_chargecurrent) 
-				|| ((battery_chargecurrent - jt_chargecurrent) < 894)) //电流小于360ma
-				&&((giv_sys_time - power.time) > 600000))
-				{
-					power.step = 4;
-					power.time = giv_sys_time;
-				}
-			//在大电流充电3小时以上，强制性将电池置为充饱状态。
-				if((giv_sys_time - power.time) > 180000000)
-				{
-					power.step = 4;
-					power.time = giv_sys_time;	  
-					Battery.BatteryFDCap = 0;
-					Battery.BatteryChargeForbid = 1;
-				}
-			////////每分钟判断一次////////////////////////
-				if(gbv_minute != false)
-				{
-					gbv_minute = false;
-					//piv_temp = Get_BatteryTemp();
-				//电池的绝对温度大于40度，
-					if(battery_temp < temp[70])
-					{
-				    //电池的温升速度大于1.5度
-						//if((piv_temp > power.temp)&&((piv_temp - power.temp) > 3))
-						if((battery_temp < power.temp)&&((power.temp - battery_temp) > 50))
-						{
-							power.step = 4;
-							power.time = giv_sys_time;
-						}
-					}
-					//power.temp = piv_temp;
-					power.temp = battery_temp;
-				}
-				break;	
-			case 4:
-			//充电电流大于180MA则降低PWM值
-	//			if((piv_current > jt_chargecurrent)&&((piv_current - jt_chargecurrent) > 372))
-				if((piv_voltage > 1909)|((piv_current > jt_chargecurrent)&&((piv_current - jt_chargecurrent) > 1986)))
-				{
-					if(power.pwm > 0)
-					{
-						power.pwm --;						//电流大于设定电流
-					}
-				}
-				else
-				{
-					
-					if(power.pwm < (PWM_CHARGE_MAX-CHARGE_PWM_MASK))
-					{
-						power.pwm ++;						//电流小于设定电流
-					}
-				}
-				////////每分钟判断一次////////////////////////
-				if(gbv_minute != false)
-				{
-					gbv_minute = false;
-	//				if((battery_temp > temp[70])//电池的绝对温度小于40度，充电电流大于100ma
-	//				&& ((battery_chargecurrent > jt_chargecurrent)&&((battery_chargecurrent - jt_chargecurrent) > 248))
-	//				&& (Battery.BatteryChargeForbid == 0))//电池电压小于15v
-	//				{
-	//					power.step = 3;
-	//					power.time = giv_sys_time; 
-	//				}
-	//				if(((giv_sys_time - power.time) > 12000000)
-	//				  && (battery_temp < temp[70]))
-	//				{
-	//					Battery.BatteryFDCap = 0;
-	//					Battery.BatteryChargeForbid = 1;
-	//				}
-	//				power.temp = battery_temp;
-	
-					if(((battery_chargecurrent > jt_chargecurrent)&&((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
-					&& ((giv_sys_time - power.time) > 100000)//10s  防止第1步直接到第4步时，刚开始因为充电PWM没开，充电电流为0，小于52mA 
-					&& (flag_full == false))
-	//				&& (Battery.BatteryChargeForbid == 0))		
-					{
-						flag_full = true;
-						
-						Battery.BatteryFDCap = 0;
-						Battery.BatteryChargeForbid = 1;
-					}
-				//涓充大于600分钟认为电池充满电
-					if(((giv_sys_time - power.time) > 360000000))		//600分钟
-					{
-						flag_full = true;
-	
-						Battery.BatteryFDCap = 0;
-						Battery.BatteryChargeForbid = 1;
-					}
-				//电池充满电，PWM关闭后，电池会自放电，长时间(比如一个月)后，电池需补充电量
-					if((flag_full == true)&&(battery_voltage_1s < 1783))		//15.8V
-					{
-						power.step = 3;
-						flag_full = false;
-						power.time = giv_sys_time;	
-					}
-				}
-	
-			//防止电池保护板坏时一直充电，而充坏电池  (2015.4.7)
-				if(flag_full == true)
-				{
-					power.pwm = 0;	
-				}
-	
-				break;
-			default :
-				power.step = 0; 	
-		}
-		//if((charge_dc.key == 0)&&(charge_seat.key == 0))		//qz mask 20180515
-		if(!(power.charge_dc)&&(!power.charge_seat))	//qz add 20180515
-		{
-			disable_pwm(CHARGE_PWM);
-			power.pwm = 0;
-		}
-		else
-		{
-			enable_pwm(CHARGE_PWM,power.pwm);	//执行pwm动作
-		}		
-	}
-//=======================================================================================================
-//=======================================================================================================
-
-
-//piv_current/4096*3.3/20/0.1R*1000=real_current(unit:mA)
-//piv_current*0.402832=real_current(unit:mA)
-void ChargeControl_My(void)
-{
-
-	//////////////////充电控制//////////////////////////////////////
-
-	piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
-	piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
-	charge_data.piv_current_sum+=piv_current;
-	charge_data.piv_current_count++;
-	charge_data.piv_voltage_sum+=piv_voltage;
-	charge_data.piv_voltage_count++;
-	switch(power.step)
-	{
-		///////开始充电前的准备/////////////
-		case 0:
-			power.time = giv_sys_time;
-			power.step = 10;
-			disable_pwm(CHARGE_PWM);
-			return;
-
-		///////为防止插电开机导致的静态电流计算错误,
-		///////特在此等待40s,用于导航板开机再行计算
-		///////qz add 20180625
-		case 10:
-			if(giv_sys_time-power.time>400000)
-				power.step=1;
-			break;
-		/////////////////////////接上电极10秒钟，察看电池是否接上
-		case 1:
-			if((giv_sys_time - power.time) > 20000)//接触上电2秒钟
-			{
-				//if( battery_temp_1s < 355)
-				if((battery_temp_1s<355)|(battery_temp_1s>3902))	//qz modify 20180515
-				{
-					error_code=ERROR_BAT;
-					Init_Err();
-					return ;
-				}
-
-			#if 0	//qz mask 20180515
-				if(battery_temp_1s > 3902)
-				{
-	//						giv_sys_err = 26;
-					Init_Err();
-					return ;
-				}
-			#endif
-				jt_chargecurrent = battery_chargecurrent;
-#ifdef DEBUG_CHARGE
-				TRACE("jt_cur=%dmA\r\n",(u32)(jt_chargecurrent*CURR_CHG_CNT));
-#endif
-				power.step = 2;
-				power.temp = battery_temp;//Get_BatteryTemp();
-				power.time = giv_sys_time;
-
-				//如果电池电压大于16.2V，且不允许进行大电流充电，则进入第四步——涓流充电
-				if((Battery.BatteryChargeForbid != 0)&&(battery_voltage_1s > 1827)) //15.8V~1783   16.2V~1827
-				{
-					power.step = 4;
-				}
-				else//处理机器长时间放置不用，电池自放电造成电量严重减少时，需要进行大电流充电
-				{
-					Battery.BatteryChargeForbid = 0;	//允许大电流充电
-				}
-
-				flag_full = false;					//电池未充满
-			}
-			return; 
-			
-	//使用180ma充电10s并且电池温度低于40度，看电池是否允许大电流充电，不允许则进行涓流充电
-		case 2:
-		//充电电流大于150MA则降低PWM值
-		Charge_PID_Ctr(360);		//qz modify 150->360:固定360mA
-			if(((giv_sys_time - power.time) > 100000)&&(battery_temp > temp[70])) //充电时间为5分钟并且电池温度低于40度
-			{
-				power.step = 3;
-				power.time = giv_sys_time;
-				power.step_time=giv_sys_time;
-			}
-			if((giv_sys_time - power.time) > 72000000)		//2 hour
-			{
-				power.step = 3;
-				power.time = giv_sys_time;
-				power.step_time=giv_sys_time;
-			}
-			break;	
-			
-			
-	//电池限流限压的过程，判断电池转为涓流的条件是：
-	//1、电池充电电流小于360ma；
-	//2、电池的绝对温度大于50度
-	//3、在电池温度大于40度的情况下，滇池温度每分钟上升速度大于1.5度
-		case 3:
-		//充电电流大于设定电流则降低PWM值
-		#if 1
-		Charge_PID_Ctr(800);
-		
-		#endif
-//		power.pwm=1625;	
-		//判断电池的绝对温度大于50度或者电池电压大于21伏,电池转为涓流充电	 2369
-			if((battery_temp < temp[80])|| (battery_voltage > 1861))	//qz modify 20180703:1805 16V 1861:16.5V
-			//if((battery_temp < temp[80])|| (battery_voltage > 1919))  //17.1V~1929	 17.5V~1974 16.9V~1909	17.3~1952  16.8~1896  17~1919
-			{
-				power.step = 4;
-				power.time = giv_sys_time;
-			}
-		//电池的充电电流小于360ma认为电池已经充满
-			if(((battery_chargecurrent < jt_chargecurrent) 
-			|| ((battery_chargecurrent - jt_chargecurrent) < 894)) //电流小于360ma
-			&&((giv_sys_time - power.time) > 600000))
-			{
-				power.step = 4;
-				power.time = giv_sys_time;
-			}
-		//在大电流充电3小时以上，强制性将电池置为充饱状态。
-			if((giv_sys_time - power.time) > 144000000)		//qz modify 144000000 4h
-			{
-				power.step = 4;
-				power.time = giv_sys_time;	  
-				//Battery.BatteryFDCap = 0;						//qz mask 20180625
-				Battery.BatteryChargeForbid = 1;
-			}
-		////////每分钟判断一次////////////////////////
-			if(gbv_minute != false)
-			{
-				gbv_minute = false;
-				//piv_temp = Get_BatteryTemp();
-			//电池的绝对温度大于40度，
-				if(battery_temp < temp[70])
-				{
-				//电池的温升速度大于1.5度
-					//if((piv_temp > power.temp)&&((piv_temp - power.temp) > 3))
-					if((battery_temp < power.temp)&&((power.temp - battery_temp) > 50))
-					{
-						power.step = 4;
-						power.time = giv_sys_time;
-					}
-				}
-				//power.temp = piv_temp;
-				power.temp = battery_temp;
-			}
-			break;	
-		case 4:
-			Init_Charge_Data();
-			power.step++;
-		break;
-		case 5:
-		//充电电流大于180MA则降低PWM值
-			Charge_PID_Ctr(360);	//qz modify 150->360:固定360mA
-			////////每分钟判断一次////////////////////////
-			if(gbv_minute != false)
-			{
-				gbv_minute = false;
-#ifdef DEBUG_CHARGE
-				TRACE("battery_chargecur=%d\r\n",(u32)(battery_chargecurrent*CURR_CHG_CNT));
-				TRACE("jt_chargecurrent=%d\r\n",(u32 )(jt_chargecurrent*CURR_CHG_CNT));
-#endif
-
-				if((((battery_chargecurrent - jt_chargecurrent) < 248)) //100mA(0.02C)
-				&& ((giv_sys_time - power.time) > 100000)//10s	防止第1步直接到第4步时，刚开始因为充电PWM没开，充电电流为0，小于52mA 
-				&& (flag_full == false))
-	//				&& (Battery.BatteryChargeForbid == 0))		
-				{
-
-#ifdef DEBUG_CHARGE
-					TRACE("because overcurrent out!\r\n");
-#endif
-					flag_full = true;
-
-					//qz add 20180710 
-					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
-					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
-						{
-							Battery.BatteryCapability-=Battery.BatteryFDCap;
-							WriteBatteryCapability();	
-						}
-					//qz add end
-					Battery.BatteryFDCap = 0;
-					Battery.BatteryChargeForbid = 1;
-					Send_Voice(VOICE_CHARGING_FULL);
-				}
-			//涓充大于600分钟认为电池充满电
-				if(((giv_sys_time - power.time) > 360000000))		//600分钟  
-				{
-					flag_full = true;
-#ifdef DEBUG_CHARGE
-					TRACE("because Time out!\r\n");
-#endif
-					//qz add 20180710 
-					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
-					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
-						{
-							Battery.BatteryCapability-=Battery.BatteryFDCap;
-							WriteBatteryCapability();	
-						}
-					//qz add end
-					Battery.BatteryFDCap = 0;
-					Battery.BatteryChargeForbid = 1;
-					Send_Voice(VOICE_CHARGING_FULL);
-				}
-
-			//涓流充电电压大于16.8V,认为充电已满
-			//qz add 20180710
-			//实测1882(16.67V)时,电池进入保护
-			if(((giv_sys_time-power.time>100000)&&(battery_voltage>1880)&&(!flag_full)))
-				{
-#ifdef DEBUG_CHARGE
-					TRACE("Because overvolt out!\r\n");
-#endif
-					flag_full = true;
-				
-					//qz add 20180710 
-					//如果电池充满时,电池放电量还大于1200(mAs),则当前电池电量和放电量明显偏大,需要调整
-					if((Battery.BatteryFDCap>=1200)&(Battery.BatteryCapability>(2*Battery.BatteryFDCap)))
-					{
-						Battery.BatteryCapability-=Battery.BatteryFDCap;
-						WriteBatteryCapability();	
-					}
-					//qz add end
-					Battery.BatteryFDCap = 0;
-					Battery.BatteryChargeForbid = 1;
-					Send_Voice(VOICE_CHARGING_FULL);
-				}
-			//qz add end
-			
-			//电池充满电，PWM关闭后，电池会自放电，长时间(比如一个月)后，电池需补充电量
-				if((flag_full == true)&&(battery_voltage_1s < 1783))		//15.8V
-				{
-					power.step = 3;
-					flag_full = false;
-					power.time = giv_sys_time;
-					Init_Charge_Data();		//qz add 20180522
-					Send_Voice(VOICE_CHARGING_START);
-				}
-			}
-
-		//防止电池保护板坏时一直充电，而充坏电池  (2015.4.7)
-			if(flag_full == true)
-			{
-				power.pwm = 0;
-				Init_Charge_Data();		//qz add 20180522
-			}
-
-			break;
-		default :
-			power.step = 0; 	
-	}
-	//if((charge_dc.key == 0)&&(charge_seat.key == 0))		//qz mask 20180515
-	if(!(power.charge_dc)&&(!power.charge_seat))	//qz add 20180515
-	{
-		disable_pwm(CHARGE_PWM);
-		power.pwm = 0;
-		Init_Charge_Data();
-	}
-	else
-	{
-		enable_pwm(CHARGE_PWM,power.pwm);	//执行pwm动作
-	}		
-}
-#endif
 
 void ChargeControl_Volt_My(void)
 {
 
 	//////////////////充电控制//////////////////////////////////////
 
-	piv_current = account_current(CHARGE_CURRENT);	 //采样当时的电流
-	piv_voltage = account_current(BATTERY_VOLTAGE);   //采样当时的电压
+	piv_current = account_current(ADC_BAT_CHGCURR);	 //采样当时的电流
+	piv_voltage = account_current(ADC_BAT_VOL);   //采样当时的电压
 	charge_data.piv_current_sum+=piv_current;
 	charge_data.piv_current_count++;
 	charge_data.piv_voltage_sum+=piv_voltage;
@@ -1164,7 +701,7 @@ u32 t;
    sb_temp_current+=t;
    sb_temp_current_1s+=t;
    
-   t =	account_current(BATTERY_VOLTAGE);
+   t =	account_current(ADC_BAT_VOL);
    battery_linshi_voltage += t;
    battery_linshi_voltage_1s += t;
    battery_linshi_chargecurrent_10s+=t;
@@ -1175,7 +712,7 @@ u32 t;
  #endif   
    battery_linshi_temp += t;
    battery_linshi_temp_1s += t;	
-   t =	 account_current(CHARGE_CURRENT);
+   t =	 account_current(ADC_BAT_CHGCURR);
    battery_linshi_chargecurrent += t;
    battery_linshi_chargecurrent_1s += t;
    if(sampling_number == 25000)			//5s
@@ -1268,157 +805,6 @@ u8 i;
 	}
 	return 0;
 }
-//===============================================================================================
-#if 0
-/****************************************************
-功能：根据电池电压判断显示电压
-输入：无
-输出：
-返回：无
-****************************************************/
-void Get_Dispower(void)
-{
-	//u32  t;
-	u8	display = 0;
-	if(!get_dispow_flag)
-		return;
-	get_dispow_flag=false;
-	
-#if 0	//qz mask
-	////////////	t = (Battery.BatteryFDCap *10)/Battery.BatteryCapability;
-	////////////	if(t > 7)
-	////////////				{display = 1;}
-	////////////		else if(t > 4)
-	////////////				{display = 2;}
-	////////////		else 
-	////////////				{display = 3;}
-	////////////				
-					
-				
-	//		if((display == 2)&&(battery_voltage_1s > 1680)) //1680	对应	14.86V	 3.71V		4节锂电池
-	//				{display = 3;}
-	//				
-	//		if((display == 1)&&(battery_voltage_1s > 1600)) //1680	对应	14.86V	 3.71V		4节锂电池	
-	//				{display = 2;}	
-	
-	
-	/////// //17.1V~1929   17.5V~1974	16.9V~1909	17.3~1952
-	//16.8~1896  17~1919
-#define		BAT_0_Point_1		451.4285			//(1896/16.8)*4
-	
-	
-		if(mode.mode == CHARGEING)
-			{
-				if((battery_voltage_1s > (BAT_0_Point_1 * 4.15)))	
-						{display = 4;}
-				if((battery_voltage_1s > (BAT_0_Point_1 * 3.95)))	
-						{display = 3;}	
-				else if((battery_voltage_1s > (BAT_0_Point_1 * 3.8)))	
-						{display = 2;}
-				else if((battery_voltage_1s > (BAT_0_Point_1 * 3.7)))		
-						{display = 1;}
-				else	
-						{display = 0;}
-						
-			}
-	else{
-		
-		
-			
-	//				t = (Battery.BatteryFDCap *10)/Battery.BatteryCapability;
-	//				if(t > 7)
-	//						{display = 1;}
-	//				else if(t > 4)
-	//						{display = 2;}
-	//				else 
-	//						{display = 3;}
-							
-				
-				if((battery_voltage_1s > (BAT_0_Point_1 * 3.9)))	
-						{display = 4;}	
-				if((battery_voltage_1s > (BAT_0_Point_1 * 3.8)))	
-						{display = 3;}	
-				else if((battery_voltage_1s > (BAT_0_Point_1 * 3.74)))	
-						{display = 2;}
-				else if((battery_voltage_1s > (BAT_0_Point_1 * 3.65)))		
-						{display = 1;}
-				else	
-						{display = 0;}
-	
-						
-						
-	
-			}
-#endif
-
-	//以电池电压采样AD：
-	//0x509	11.2V
-	//0x62A 13.5V
-	//0x662 14V
-	//0x6d6 15V
-	//0x743 16V
-	//0x77b 16.5V
-	//0x795 16.73V(MAX),
-	//以11V到16.5V为电池电压区间,以上数据分析,采样AD值比电压值计算的AD值大0x37~0x39左右
-	//插上充电时,比静态电压大0.36~0.38V左右，取0.37V----AD值0x2A。所以充电时,AD值需要大于静态AD约0x2A
-	
-#if 0
-			if(mode.mode==CHARGEING)
-				{ 
-					if((battery_voltage_1s>=0x790))		//充电电压达到16.73V,所有格亮
-						{
-							display=4;
-						}  
-					else if(battery_voltage_1s>=0x6d6)//0x743)	//充电电压16V。第一二三格亮，第四格闪烁
-						{
-							display=3;
-						}
-					else if(battery_voltage_1s>=0x600)//0x6d6)	//充电电压15V。第一二格亮，第三格闪烁
-						{
-							display=2;
-						}
-					else if(battery_voltage_1s>=0x500)//0x662)	//充电电压14V。第一个亮，第二格闪烁
-						{
-							display=1;
-						}
-					else
-						display=0;						//第一格闪烁
-				}
-			else
-				{
-					if(battery_voltage_1s>=0x743)
-						{
-							display=4;
-						}
-					else if(battery_voltage_1s>=0x6d6)	//电池电压15V
-						{
-							display=3;
-						}
-					else if(battery_voltage_1s>=0x600)//电池电压13.1V。 0x662) //电池电压14V
-						{
-							display=2;
-						}
-					else if(battery_voltage_1s>=0x500)//电池电压11V。0x62a)	//电池电压13.5V
-						{
-							display=1;
-						}
-					else
-						display=0;
-				}
-		#endif
-		if(Battery.bat_per<=25)
-			display=1;
-		else if(Battery.bat_per<=50)
-			display=2;
-		else if(Battery.bat_per<=75)
-			display=3;
-		else if(Battery.bat_per<100)
-			display=4;
-		else 
-			display=5;
-}
-//===============================================================================================
-#endif
 
 s8 Get_APPBat(void)
 {
@@ -1438,10 +824,14 @@ s8 Get_APPBat(void)
 	//新的专用惯导板，相关采样参数有改变
 	//12.8V的AD值为2647,充电状态满值电压为16.8V(3475),非充电状态满值为16.4V(3392)
 	float a,b;
+	u16 battery_vol;
+	//battery_vol=battery_voltage_1s;
+	delay_ms(500);
+	battery_vol=account_current(ADC_BAT_VOL);
 	if(mode.mode==CHARGEING)
-		a=(float)(battery_voltage_1s-VOL_12_8V)/(float)(full_power-VOL_12_8V);
+		a=(float)(battery_vol-VOL_12_8V)/(float)(full_power-VOL_12_8V);
 	else
-		a=(float)(battery_voltage_1s-VOL_12_8V)/(float)(VOL_16_5V-VOL_12_8V);
+		a=(float)(battery_vol-VOL_12_8V)/(float)(VOL_16_5V-VOL_12_8V);
 	b=a*100;
 	
 	if(a<0.0)	//qz add 20180625
@@ -1511,7 +901,7 @@ void APP_BAT_Handle(void)
 			WriteFDCap();
 			WriteBatteryCapability();
 			Battery.bat_recal=1;
-			WriteBatRecalFlash(Battery.bat_recal);
+			WriteBatRecal(Battery.bat_recal);
 
 		}
 	//电池电压低于NOPOWER,进入Dead模式,qz add 20180625
@@ -1584,7 +974,7 @@ void APP_BAT_Handle(void)
 	if((Battery.bat_recal)&(battery_voltage>VOL_14_6V))
 		{
 			Battery.bat_recal=0;
-			WriteBatRecalFlash(Battery.bat_recal);
+			WriteBatRecal(Battery.bat_recal);
 		}
 }
 
@@ -1616,7 +1006,6 @@ void AccountCapability(void)
 	  在电池电压低于13.2v时，电池认为已经放完电，并且将放电容量存入备份寄存器
 ****************************************************/
 
-#define MAIN_PCB_CURRENT		50
 
 void  AccountCapabilityReal(void)
 {
@@ -2255,3 +1644,14 @@ void Parse_LowPower2Dock(void)
 		mode.low_power=false;
 }
 
+
+void Reset_Bat_Data(void)
+{
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+   
+	PWR_BackupAccessCmd(ENABLE);
+	
+	BKP_DeInit();
+
+	PWR_BackupAccessCmd(DISABLE);
+}

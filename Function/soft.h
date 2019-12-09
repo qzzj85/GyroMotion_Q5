@@ -8,8 +8,8 @@
            // 在tuya的sdk 里面wifi.h 单独也需要定义以上内容 
 
 
-#define 	USE_HSE					1
-//#define		USE_LSE					1
+//#define 	USE_HSE					1
+#define		USE_LSE					1
 #define 	CPU_FREQ_64MHz 			1
 #define 	FLOAT_PID 				1
 //#define		FREE_SKID_ACTION		1					//万向轮打滑动作处理
@@ -112,7 +112,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			4
+#define		CORRECT_VERSION			5
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

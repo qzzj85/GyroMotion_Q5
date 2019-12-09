@@ -34,11 +34,13 @@ u8 		CleanPreengage(void);
 void 	ReadPreengage(void);
 void 	WriteBatInitFlash(void);
 u16  	ReadBatInitFlash(void);	
-u16 ReadBatRecalFlash(void);
-void WriteBatRecalFlash(u16 data);
+u16 ReadBatRecal(void);
+void WriteBatRecal(u16 data);
 u8 CleanPreenData(void);
 u32  ReadBatteryCapability(void);
 u8  WritePreenData(void);
 u32 ReadFDCap(void);
+void Reinit_Rtc(void);
+
 
 #endif

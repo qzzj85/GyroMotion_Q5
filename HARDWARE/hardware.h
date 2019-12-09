@@ -355,6 +355,7 @@ void Gyro_Rst(void);
 u8 Read_PwrSwitch_Status(void);
 void Enable_RingPWMCtrl(void);
 void Disable_RingPWMCtrl(void);
+void Init_BKP_Bat_Rtc(void);
 
 
 ///////////////////////È«¾Öº¯Êý////////////////////////////////////

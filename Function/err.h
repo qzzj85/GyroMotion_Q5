@@ -9,23 +9,28 @@
 
 #define	ERR_BASE_NUM		0
 
-#define	ERROR_GYRO				ERR_BASE_NUM+1			//惯导故障
-#define	ERROR_DANGER			ERR_BASE_NUM+2			//地检危险位置
-#define	ERROR_BUMPFIX			ERR_BASE_NUM+3			//碰撞故障
-#define	ERROR_FANOC				ERR_BASE_NUM+4			//风机过载
-#define	ERROR_MBOC				ERR_BASE_NUM+5			//中扫过载
-#define	ERROR_SBOC				ERR_BASE_NUM+6			//边扫过载
-#define	ERROR_LEFTRINGOC		ERR_BASE_NUM+7			//左轮过载
-#define	ERROR_RIGHTRINGOC		ERR_BASE_NUM+8			//右轮过载
-#define	ERROR_RINGOC			ERR_BASE_NUM+9			//双轮过载
-#define ERROR_DCEXIST			ERR_BASE_NUM+10			//未拔掉充电线
-#define	ERROR_DOCKFAIL			ERR_BASE_NUM+11			//回充失败
-#define	ERROR_SWEEPER_FIX		ERR_BASE_NUM+12			//机器卡住
-#define	ERROR_ROTATE_SKID		ERR_BASE_NUM+13			//旋转打滑故障
-#define	ERROR_GYRO_PITCH		ERR_BASE_NUM+14			//惯导俯仰角故障
-#define	ERROR_GYRO_ROLL			ERR_BASE_NUM+15			//惯导翻转角故障
-#define	ERROR_GYRO_PITCHROLL	ERR_BASE_NUM+16			//惯导俯仰，翻转角故障
-#define	ERROR_BAT				ERR_BASE_NUM+17			//电池故障
+
+#define	ERROR_DANGER			ERR_BASE_NUM+1			//地检危险位置
+#define	ERROR_BUMPFIX			ERR_BASE_NUM+2			//碰撞故障
+#define	ERROR_FANOC		        ERR_BASE_NUM+3			//风机过载
+#define	ERROR_MBOC				ERR_BASE_NUM+4			//中扫过载
+#define	ERROR_SBOC				ERR_BASE_NUM+5			//边扫过载
+#define	ERROR_LEFTRINGOC		ERR_BASE_NUM+6			//左轮过载
+#define	ERROR_RIGHTRINGOC		ERR_BASE_NUM+7			//右轮过载
+#define	ERROR_RINGOC			ERR_BASE_NUM+8			//双轮过载
+#define	ERROR_BAT				ERR_BASE_NUM+9			//电池故障
+#define	ERROR_GYRO			 	ERR_BASE_NUM+10			//惯导故障
+
+
+#define	ERROR_SWEEPER_FIX		ERR_BASE_NUM+11			//机器卡住
+#define	ERROR_ROTATE_SKID		ERR_BASE_NUM+12			//旋转打滑故障
+#define	ERROR_GYRO_PITCH		ERR_BASE_NUM+13			//惯导俯仰角故障
+#define	ERROR_GYRO_ROLL			ERR_BASE_NUM+14			//惯导翻转角故障
+#define	ERROR_GYRO_PITCHROLL	ERR_BASE_NUM+15			//惯导俯仰，翻转角故障
+
+#define  ERROR_DCEXIST			ERR_BASE_NUM+16			//未拔掉充电线
+#define	ERROR_DOCKFAIL			ERR_BASE_NUM+17			//回充失败
+
 #define ERROR_NODEMALLOC		ERR_BASE_NUM+18			//内存分配失败
 #define ERROR_PATHMALLOC		ERR_BASE_NUM+19			//内存分配失败
 #define	ERROR_BACKMALLOC		ERR_BASE_NUM+20			//内存分配失败

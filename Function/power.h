@@ -31,6 +31,9 @@ FAN PWM					FAN CUR
 ////////////////////////////////////////////////
 */
 
+#define MAIN_PCB_CURRENT		50
+
+
 /////各种电流,单位：mA////////////
 #define	SLEEP_CUR			200
 #define	CEASE_CUR			220
@@ -180,5 +183,6 @@ u8 Check_Left_Ring_Cur(void);
 void Charge_PID_CtrPwr(u32 tgt_voltage);
 void ChargeControl_Volt_My(void);
 void Parse_LowPower2Dock(void);
+void Reset_Bat_Data(void);
 
 #endif

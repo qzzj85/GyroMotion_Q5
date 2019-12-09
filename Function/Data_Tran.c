@@ -113,7 +113,7 @@ void ADC_Send(void)
 			temp[2]=Wall_account_current(W_M);
 			temp[3]=Wall_account_current(W_RM);
 			temp[4]=Wall_account_current(W_R);
-			temp[5]=account_current(BATTERY_VOLTAGE);
+			temp[5]=account_current(ADC_BAT_VOL);
 
 //			for(int i=7,k=0;i<17;)
 //				{
@@ -170,7 +170,7 @@ void ADC_DMA_Send(void)
 				temp[2]=Wall_account_current(W_M);
 				temp[3]=Wall_account_current(W_RM);
 				temp[4]=Wall_account_current(W_R);
-				temp[5]=account_current(BATTERY_VOLTAGE);
+				temp[5]=account_current(ADC_BAT_VOL);
 				
 	
 	//			for(int i=7,k=0;i<17;)

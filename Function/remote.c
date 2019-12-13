@@ -156,7 +156,6 @@ void Remote_Handle(void)
 								}
 							motion1.force_dock=true;
 							stop_rap();
-							Send_Voice(VOICE_DOCK_START);
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 							Init_Docking();
 							break;
@@ -413,7 +412,6 @@ void Init_Remote_Move(void)
 	mode.step=0x00; 				//qz add
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time; 		//qz add 20180703
-	mode.init_mode_time=giv_sys_time;	//qz add 20180814
 	mode.bump=0;
 	mode.step_bp=0;
 	mode.bump_flag=false;

@@ -75,6 +75,7 @@ void Send_Voice(u8 data)
 	p->data=data;
 #endif
 #else						//不使用LIST，直接发语音
+	TRACE("vd=%d\r\n",data);
 	V_CLK_1;
 	delay_us(100);
 	V_CLK_0;
@@ -86,6 +87,9 @@ void Send_Voice(u8 data)
 			delay_100us(1);
 			V_DAT_0;	
 		}
+	V_CLK_0;
+	V_DAT_0;
+	delay_us(100);
 #endif
 }
 
@@ -356,7 +360,7 @@ void voice_usart(u8 data)
 			#if 1
 			if((mode.mode==CEASE)&(mode.sub_mode==CEASE)&(mode.last_mode==CHARGEING)&(mode.last_sub_mode==SEAT_CHARGING)&(!dc_nobat_run))
 				{
-					if(giv_sys_time-mode.init_mode_time<100000)
+					if(giv_sys_time-mode.time<100000)
 						{
 							Init_Quit_Charging(0);
 						}

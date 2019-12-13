@@ -411,7 +411,6 @@ void Do_FactoryTest(void)
 				test_data1=0;test_cnt=0;
 				TRACE("====================7，左前红外接收测试====================\r\n");
 				break;
-				break;
 			//////////////////左前红外接收测试/////////////////
 			case 9:
 				if(giv_sys_time-mode.time<10*10000)

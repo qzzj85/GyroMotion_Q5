@@ -20,9 +20,7 @@ void Init_Err(void)
     /******初始化显示***********/
 	/******初始化设置的值********************/
 	clr_ram();
-	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	stop_rap();						//停止轮子
-	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
 	//Disable_earth();				//关闭地检
 	Enable_earth();
 	Disable_wall();					//关闭墙检
@@ -37,7 +35,12 @@ void Init_Err(void)
 	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=0;					//非工作状态
 	mode.time=giv_sys_time;
+	
+	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
+	Sweep_Level_Set(SWEEP_LEVEL_STOP);		//关闭风机
+	
 	WriteWorkState();
+	
 
 	CHECK_STATUS_FLAG=false;		//无需进行异常检测
 

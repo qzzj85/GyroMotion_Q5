@@ -41,6 +41,7 @@ u8 REYBS_TIME=0;						//qz add 20180910,Ð¡»Ø³äÃ»ÕÒµ½ÐÅºÅ£¬ÖØÐÂÇëÇóÑØ±ß´ÎÊý£¬3´ÎÇ
 
 bool dock_rap_time=false;
 u32 dock_ybs_time=0;
+u32 delay_time=0;
 /******************************************************************
 »Ø³ä³ÌÐòµÄ³õÊ¼»¯
 ******************************************************************/
@@ -521,6 +522,7 @@ u32 ReadHwSign_My(void)
 
 void Do_Docking_My(void)
 {
+
 	u32 abnormal;
 		//ÏµÍ³ÓÐ´íÎó
 		if(giv_sys_err != 0)
@@ -710,7 +712,7 @@ void Do_Docking_My(void)
 	********************/	
 					case DOCKMODE_STEP_CHARGE:
 						stop_rap();
-						if(giv_sys_time-seat_time>30000)
+						if(giv_sys_time-seat_time>10000)
 							{
 #ifdef DOCK_DEBUG
 								TRACE("enter in charge mode!\r\n");
@@ -734,15 +736,19 @@ void Do_Docking_My(void)
 					break;
 					case DOCKMODE_STEP_RECHARGE:
 						Start_Recharge();
-						if((power.charge_seat)||(power.charge_dc))
+						if(((power.charge_seat)|(power.charge_dc))&(mode.step_mk<10))
 							{
 								stop_rap();
+#if 0
 								mode.step=DOCKMODE_STEP_CHARGE;
 								mode.step_mk=0;
 								seat_time=giv_sys_time;
 #ifdef DOCK_DEBUG
 								TRACE("power seat contact!,go to DOCKMODE_STEP_CHARGE!\r\n");
 #endif
+#endif
+								delay_time=giv_sys_time;
+								mode.step_mk=10;
 								return;
 							}
 					break;
@@ -2411,6 +2417,24 @@ void Start_Recharge(void)
 						mode.step_mk=4;
 					}
 			break;
+
+			case 10:
+				if(giv_sys_time-delay_time<10000)
+					return;
+				if(power.charge_dc|power.charge_seat)
+					{
+						mode.step=DOCKMODE_STEP_CHARGE;
+						mode.step_mk=0;
+						seat_time=giv_sys_time;
+#ifdef DOCK_DEBUG
+						TRACE("power seat contact!,go to DOCKMODE_STEP_CHARGE!\r\n");
+#endif
+					}
+				else
+					{
+						mode.step_mk=3;
+					}
+				break;
 		}
 }
 

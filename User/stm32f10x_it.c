@@ -257,7 +257,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		}
 
 	if((giv_sys_time %10) == 0)			//	1mS  1000HZ   实际500赫兹
-		{   
+		{   		
 			action_earth_time=true;
 		}
 	if((giv_sys_time%20)==0)			//2ms
@@ -269,6 +269,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 
 	if((giv_sys_time%30)==0)
 		{
+#ifdef FAST_WALL_DET
+			action_wall_time=true;
+#endif
 			earth_time=true;
 //			YBS_rap_time=true;
 		}
@@ -276,15 +279,12 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			
 	if((giv_sys_time%50)==0)			//5ms
 		{
-#ifdef FAST_WALL_DET
-			action_wall_time=true;
-#endif
 //			YBS_rap_time=true;
 //			rap_time=true;
 //			YBS_Check_Flag  		= true;	
-#ifndef  FAST_WALL_DET
+//#ifndef  FAST_WALL_DET
 			wall_time = true; 	
-#endif
+//#endif
 			gyro_bios.check_flag=true;
 		}
 				
@@ -292,9 +292,6 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //	if((giv_sys_time % 100) == 0)
 	if((giv_sys_time % 100) == 0)		//	10mS
 		{
-#ifdef  FAST_WALL_DET
-			wall_time =true;
-#endif			
 			YBS_Check_Flag=true;
 			key_time = true;          //按键时间	  
 			rap_time = true;          //左右轮速度调节时间
@@ -1563,6 +1560,10 @@ void EXTI9_5_IRQHandler(void)
 								break;
 							}
 						}
+					if(bump_value)
+						{
+							Close_Bump_Exit();
+						}
 #endif
 				}
 		}
@@ -1620,6 +1621,10 @@ void EXTI9_5_IRQHandler(void)
 							{
 								break;
 							}
+						}
+					if(bump_value)
+						{
+							Close_Bump_Exit();
 						}
 #endif
 				}

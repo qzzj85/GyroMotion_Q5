@@ -2161,7 +2161,7 @@ void Init_NormalSweep(short tgt_yaw)
 	TRACE("grid.x_straight_start=%d\r\n",grid.x_straight_start);
 	TRACE("grid.y_straight_start=%d\r\n",grid.y_straight_start);
 
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void Do_NormalSweep(void)
@@ -2384,7 +2384,7 @@ void Init_Back_Sweep(short tgt_yaw)
 			mode.step=2;
 		}
 
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void Do_BackSweep(void)
@@ -2789,7 +2789,7 @@ void Continue_Sweep(void)
 	mode.abnormity=0;
 	mode.step_abn=0;
 	mode.bump_flag=0;
-	delay_ms(500);
+	delay_ms(100);
 	TRACE("Continue SWEEP!\r\n");
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
@@ -2859,7 +2859,7 @@ void Init_Stop_BackSweep(void)
 
 	mode.status=1;
 	while(giv_sys_time-mode.time<5000);
-	delay_ms(500);
+	delay_ms(100);
 	TRACE("Init Stop Backsweep complete!!!\r\n");
 	Restore_Abort_Data();		//然后再装在中断之前的数据
 	grid.x_abort=grid.x;
@@ -4291,7 +4291,8 @@ u8 YBS_AbortFor_Sweep_II(void)
 				}
 		}
 #endif
-	if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
+	//if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
+	if(((mode.bump==BUMP_YMAX_OUT))|((mode.bump==BUMP_YMIN_OUT)))
 		{			
 			stop_rap();
 			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
@@ -4905,7 +4906,7 @@ void Init_PauseSweep(void)
 
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void Save_Pause_Data(void)
@@ -4997,6 +4998,7 @@ void Init_Sweep_Done(void)
 	Send_Voice(VOICE_SWEEP_DONE);
 	if((motion1.force_dock|motion1.start_seat)&(!mode.burning))
 		{
+			delay_ms(1000);
 			Init_Docking();
 			return;
 		}
@@ -5037,7 +5039,7 @@ void Init_Sweep_Done(void)
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
 	
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void SweepDone_Bump_Action(void)

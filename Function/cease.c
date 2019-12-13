@@ -122,7 +122,6 @@ void Do_Cease(void)
 				mode.step++;
 				break;
 			case 3:
-				Send_Voice(VOICE_DOCK_START);
 				motion1.start_seat=true;
 				Init_Docking();
 				break;
@@ -155,7 +154,7 @@ void Init_Cease(void)
 	//Disable_earth();				//关闭地检
 	Disable_wall();					//关闭墙检
 	Enable_earth();
-	//Enable_wall();
+	Enable_wall();
 	enable_hwincept();				//打开回充红外接收电源
 	Enable_Speed();					//待机状态将速度检测打开，是为了防止进入CEASE时关闭速度检测会导致惯性脉冲无法计算。
 		
@@ -167,7 +166,6 @@ void Init_Cease(void)
 	mode.step=0x00;					//qz add
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time;			//qz add 20180703
-	mode.init_mode_time=giv_sys_time;	//qz add 20180814
 	mode.burning=false;
 	mode.self_test=false;
 	motion1.start_seat=false;
@@ -788,7 +786,6 @@ void Init_VirtualSleep(void)
 	mode.step=0x00; 				//qz add
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time; 		//qz add 20180703
-	mode.init_mode_time=giv_sys_time;	//qz add 20180814
 		
 	WriteWorkState();
 	Disable_Free_Skid_Check();		//关闭万向轮检测

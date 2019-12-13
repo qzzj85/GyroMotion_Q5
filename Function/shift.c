@@ -8,6 +8,7 @@
 
 bool abort_shiftybs_flag=false;
 static u8 next_action=0;
+bool recal_ybsstart=false;	//重新设置沿边起始坐标标志位
 
 u8 Analysis_Reach_YAbort(void)
 {
@@ -767,7 +768,7 @@ void Init_Shift_Point1(u8 pre_action)
 	Logout_CheckPoint();
 	Delete_All_PathPoint();
 	pathpoint_inybs=false;
-	delay_ms(500);
+	delay_ms(100);
 }
 
 
@@ -1924,7 +1925,7 @@ void Init_Shift_Point2(void)
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
 	Delete_All_PathPoint();
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void Do_Shift_Point2(void)
@@ -2085,7 +2086,8 @@ void Do_Shift_Point2(void)
 				else if(temp_nextaction==CHECK_DOCK)
 					{
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-						Init_Docking();
+						//Init_Docking();
+						Init_Sweep_Done();
 						return;
 					}
 				else if(temp_nextaction==CHECK_NEWAREA)
@@ -2178,6 +2180,7 @@ void Init_Shift_RightYBS(u8 pre_action)
 	else
 		{
 			mode.step =0xa0;
+			recal_ybsstart=true;
 		}
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();			//打开万向轮检测 
@@ -2235,9 +2238,18 @@ void Init_Shift_LeftYBS(u8 pre_action)
 
 	mode.status=1;
 	if(pre_action==0)
-		mode.step = 0x40;//QZ:原来为0x88;
+		{
+			mode.step = 0x40;//QZ:原来为0x88;
+		}
+	else if(pre_action==1)
+		{
+			mode.step = 0x88;
+		}
 	else
-		mode.step=0x88;
+		{
+			mode.step =0xa0;
+			recal_ybsstart=true;
+		}
 #ifdef FREE_SKID_CHECK
 		Enable_Free_Skid_Check();			//打开万向轮检测 
 #endif
@@ -2475,7 +2487,8 @@ u8 Abort_ShiftYBS(void)
 							{
 								stop_rap();
 								TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-								Init_Docking();
+								//Init_Docking();
+								Init_Sweep_Done();
 								return 1;
 							}
 						else
@@ -2917,13 +2930,19 @@ void Do_ShiftYBS(void)
 				break;
 					
 			case 0:
+				if(giv_sys_time-mode.bump_time<200)
+					return;
+				if(recal_ybsstart)
+					{	
+						recal_ybsstart=false;
+						grid.x_ybs_start=grid.x;
+						grid.y_ybs_start=grid.y;
+					}
 				if(mode.sub_mode==YBS_SUB_LEFT)
 					{
 						mode.step=0x40;
 						return;
 					}
-				if(giv_sys_time-mode.bump_time<200)
-					return;
 				Speed=HIGH_MOVE_SPEED;		//800//2000
 				forward(0xFF812345);
 				mode.step = 1;
@@ -3078,6 +3097,13 @@ void Do_ShiftYBS(void)
 			case 0x40:	
 				if(giv_sys_time-mode.bump_time<200)
 					return;
+
+				if(recal_ybsstart)
+					{	
+						recal_ybsstart=false;
+						grid.x_ybs_start=grid.x;
+						grid.y_ybs_start=grid.y;
+					}
 				Speed=HIGH_MOVE_SPEED;	//2000
 				forward(0xFF812345);
 				mode.step = 0x41;				
@@ -3262,18 +3288,6 @@ void Do_ShiftYBS(void)
 				Speed=FAST_MOVE_SPEED;
 				do_action_my(3,FARAWAY*CM_PLUS,turn_angle);
 				break;
-			
-			//绕过障碍后的处理过程
-			case 0xD0:
-				if(giv_sys_time-mode.time<5000)
-					return;
-				mode.step++;
-				break;
-			case 0xD1:
-				//Area_Check(1);
-				break;
-				//	不停继续转圈
-
 			default:
 				mode.step=0x88;
 				break;
@@ -3289,7 +3303,8 @@ void Do_ExitAtion(void)
 	if(Read_Curr_AreaTree_NO()==0)
 		{
 			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-			Init_Docking();
+			//Init_Docking();
+			Init_Sweep_Done();
 			return;
 		}
 	Get_Curr_AreaTree_Info();
@@ -3425,7 +3440,7 @@ u8 Abort2Sweep(void)
 						if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
 							{
 
-								if((last_gridx==now_gridx)&(last_gridy==now_gridx))
+								if((last_gridx==now_gridx)&(last_gridy==now_gridy))
 									{
 										return 0;
 									}

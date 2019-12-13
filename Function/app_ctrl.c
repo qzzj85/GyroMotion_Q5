@@ -28,7 +28,6 @@ void Init_App_Ctrl(u8 move_dir)
 	mode.step=0x00; 				//qz add
 	mode.status=0;					//qz add 20180625
 	mode.time=giv_sys_time; 		//qz add 20180703
-	mode.init_mode_time=giv_sys_time;	//qz add 20180814
 	mode.bump=0;
 	mode.step_bp=0;
 	mode.bump_flag=false;

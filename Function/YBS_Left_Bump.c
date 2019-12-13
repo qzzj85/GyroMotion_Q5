@@ -152,7 +152,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 							stop_rap();
 							mode.bump=0;
 							mode.step_bp=0;
-							mode.step=0;
+							mode.step=0x40;
 							mode.bump_time=giv_sys_time;
 						}
 					if(bump_temp)
@@ -279,7 +279,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 					case 0xF1:
 						mode.bump=0;
 						mode.step_bp=0;
-						mode.step=0;
+						mode.step=0x40;
 						mode.bump_time=giv_sys_time;
 						return;
 				}
@@ -411,7 +411,7 @@ void LYBS_Cliff_Action(u8 bump_temp)
 					case 0xF1:
 						mode.bump=0;
 						mode.step_bp=0;
-						mode.step=0;
+						mode.step=0x40;
 						mode.bump_time=giv_sys_time;
 						return;
 				}
@@ -872,7 +872,7 @@ void YBS_Left_Bump(u8 out_enable)
 								stop_rap();
 								mode.bump=0;
 								mode.step_bp=0;
-								mode.step=0;
+								mode.step=0x40;
 							}
 						if((m!=mode.bump)&(m>0))
 							{
@@ -1014,10 +1014,9 @@ void YBS_Left_Bump(u8 out_enable)
 						if(do_action_my(3,FARAWAY*CM_PLUS,tgt_angle))
 							{
 								stop_rap();
-								mode.last_outbump=mode.bump;
 								mode.bump=0;
 								mode.step_bp=0;
-								mode.step=0;
+								mode.step=0x40;
 								mode.bump_flag=false;
 								return;
 							}
@@ -1029,7 +1028,6 @@ void YBS_Left_Bump(u8 out_enable)
 						if((m!=mode.bump)&(m>=BUMP_OUTRANGE))
 							{
 								stop_rap();
-								mode.last_outbump=mode.bump;
 								mode.bump=m;
 								mode.step_bp=0;
 							}
@@ -1114,7 +1112,6 @@ void YBS_Left_Bump(u8 out_enable)
 						if((m!=mode.bump)&(m>=BUMP_OUTRANGE))
 							{
 								stop_rap();
-								mode.last_outbump=mode.bump;
 								mode.bump=m;
 								mode.step_bp=0;
 								return;
@@ -1122,7 +1119,6 @@ void YBS_Left_Bump(u8 out_enable)
 						if(m==0)
 							{
 								mode.step=0x40;
-								mode.last_outbump=mode.bump;
 								mode.bump=0;
 								mode.step_bp=0;
 								mode.bump_flag=0;

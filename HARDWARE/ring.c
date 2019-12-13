@@ -958,7 +958,6 @@ void stop_rap(void)
 	action.sign		=	0;	
 	mode.action = 0; 
 	Gyro_Data.straight=false;
-//	delay_ms(500);
 #ifdef GYRO_CAL
 	if(mode.status)
 		{

@@ -317,6 +317,7 @@ void Cliff_Bump_Action(u8 bump_temp)
 							}
 						else
 							{
+								stop_rap();
 								error_code=ERROR_DANGER;
 								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Send_Voice(VOICE_ERROR_DANGER);
@@ -447,6 +448,7 @@ void Cliff_Bump_Action(u8 bump_temp)
 							}
 						else
 							{
+								stop_rap();
 								error_code=ERROR_DANGER;
 								mode.wifi_err_code|=WIFI_ERR_EARTH;
 								Send_Voice(VOICE_ERROR_DANGER);
@@ -575,6 +577,7 @@ void Cliff_Bump_Action(u8 bump_temp)
 						}
 					else
 						{
+							stop_rap();
 							error_code=ERROR_DANGER;
 							mode.wifi_err_code|=WIFI_ERR_EARTH;
 							r_cliff_time=0;						//qz add 20180927

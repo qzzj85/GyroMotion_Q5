@@ -155,7 +155,7 @@ void Init_LeakSweep(short tgt_yaw)
 			mode.step=0xF0;
 		}
 
-	delay_ms(500);
+	delay_ms(100);
 	
 }
 
@@ -403,7 +403,7 @@ void Init_Leak_BackSweep(short tgt_yaw)
 		{
 			mode.step=2;
 		}
-	delay_ms(500);
+	delay_ms(100);
 }
 
 void Do_Leak_BackSweep(void)

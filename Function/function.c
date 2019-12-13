@@ -771,6 +771,7 @@ u8 Read_Protect(void)
 				
 					if((mode.abnormity==0)&(mode.sub_mode!=SUBMODE_SPOT))
 						{
+							stop_rap();
 							mode.abnormity=ABNORMAL_GYROBIOS_L;
 							mode.step_abn=0;
 							abnormal_gyrobios_cnt=0;
@@ -789,6 +790,7 @@ u8 Read_Protect(void)
 					
 					if((mode.abnormity==0)&(mode.sub_mode!=SUBMODE_SPOT))
 						{
+							stop_rap();
 							mode.abnormity=ABNORMAL_GYROBIOS_R;
 							mode.step_abn=0;
 							abnormal_gyrobios_cnt=0;
@@ -1304,39 +1306,19 @@ u8 Action_Protect_My(u8 abnoraml)
 				switch (mode.step_abn)
 					{
 						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
+							mode.step_abn++;
+							break;
+						case 1:
 							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,10*CM_PLUS))
 								{
 									stop_rap();
 									mode.step_abn++;
 									mode.abn_time=giv_sys_time;
-								}
-							break;
-						case 1:
-							Speed=TURN_SPEED;
-							if(giv_sys_time-mode.abn_time<10000)
-								return 0;
-							if(do_action(2,360*Angle_1))
-								{
-									stop_rap();
-									mode.step_abn=0xf0;
-								}
-							if(abnoraml==ABNORMAL_ROTATE_SKID)
-								{
-									stop_rap();
-									mode.step_abn++;
 								}
 							break;
 						case 2:
-							Speed=HIGH_MOVE_SPEED;
-							if(do_action(4,10*CM_PLUS))
-								{
-									stop_rap();
-									mode.step_abn++;
-									mode.abn_time=giv_sys_time;
-								}
-							break;
-						case 3:
 							Speed=TURN_SPEED;
 							if(giv_sys_time-mode.abn_time<10000)
 								return 0;
@@ -1351,43 +1333,40 @@ u8 Action_Protect_My(u8 abnoraml)
 									mode.step_abn++;
 								}
 							break;
-						case 4:
-							Rotate_Skid.fail=true;
+						case 3:
+							Speed=HIGH_MOVE_SPEED;
+							if(do_action(4,10*CM_PLUS))
+								{
+									stop_rap();
+									mode.step_abn++;
+									mode.abn_time=giv_sys_time;
+								}
 							break;
-#if 0
 						case 4:
 							Speed=TURN_SPEED;
-							if(do_action(1,180*Angle_1))
+							if(giv_sys_time-mode.abn_time<10000)
+								return 0;
+							if(do_action(2,360*Angle_1))
+								{
+									stop_rap();
+									mode.step_abn=0xf0;
+								}
+							if(abnoraml==ABNORMAL_ROTATE_SKID)
 								{
 									stop_rap();
 									mode.step_abn++;
 								}
-						case 5:
-							Speed=TURN_SPEED;
-							if(do_action(2,180*Angle_1))
-								{
-									stop_rap();
-									mode.step_abn=0;
-									Rotate_Skid.resuce_time++;
-									if(Rotate_Skid.resuce_time>=3)
-										{
-											Rotate_Skid.resuce_time=0;
-											if((n>0)&&(n!=ABNORMAL_ROTATE_SKID))
-												{
-													mode.abnormity=n;
-													mode.step_abn=0;
-													return 0;
-												}
-											else
-												{
-													Rotate_Skid.fail=true;
-													return 0;
-												}												
-										}
-								}
 							break;
-#endif
+						case 5:
+							Rotate_Skid.fail=true;
+							break;
+						
 						case 7:
+							if(giv_sys_time-mode.abn_time<500)
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									return 0;
+								}
 							Speed=BUMP_BACK_SPEED;
 							if(do_action(4,4*CM_PLUS))
 								{
@@ -1612,6 +1591,7 @@ u8 Action_Protect_My(u8 abnoraml)
 				switch (mode.step_abn)
 					{
 						case 0:
+							Set_Coordinate_Wall(now_gridx,now_gridy);
 							mode.abn_time=giv_sys_time; //qz add 20181011
 							mode.step_abn++;
 							break;
@@ -1714,7 +1694,10 @@ u8 Action_Protect_My(u8 abnoraml)
 							break;
 						case 7:
 							if(giv_sys_time-mode.abn_time<BUMP_TIME_DELAY)	//qz add 20181011
-								return 0;
+								{
+									Set_Coordinate_Wall(now_gridx,now_gridy);
+									return 0;
+								}
 							Speed=HIGH_MOVE_SPEED;
 							if(do_action(4,4*CM_PLUS))			//Åö×²ºóÍË
 								{
@@ -2020,8 +2003,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
-								break;
+							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								//break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -2095,8 +2078,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
-								break;
+							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								//break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -2294,8 +2277,8 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
-								break;
+							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+								//break;
 #ifdef EFFICENT_DEBUG
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
@@ -2391,8 +2374,8 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 7:
 							if(giv_sys_time-mode.abn_time<1000)
 								return 0;
-							Speed=MID_MOVE_SPEED;
-							if(do_action(2,2*CM_PLUS))
+							Speed=BUMP_BACK_SPEED;
+							if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
 								{
 									stop_rap();
 									if(n)

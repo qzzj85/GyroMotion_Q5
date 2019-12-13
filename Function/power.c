@@ -1610,10 +1610,11 @@ void Parse_LowPower2Dock(void)
 					case EXIT:
 					case SHIFT:
 						if(motion1.start_seat)
-							{
+							{								
+								stop_rap();
+								delay_ms(1000);
 								Send_Voice(VOICE_DOCK_START);
 								motion1.force_dock=true;
-								stop_rap();
 								Force_Dock();
 							}
 						else

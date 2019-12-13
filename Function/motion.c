@@ -886,7 +886,8 @@ u8 Analysis_Check_Dock(void)
 				{
 					stop_rap();
 					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-					Init_Docking();
+					//Init_Docking();
+					Init_Sweep_Done();
 					return 1;
 				}
 		}
@@ -895,7 +896,8 @@ u8 Analysis_Check_Dock(void)
 		{
 			stop_rap();
 			TRACE("Motion in seat area!!!\r\n");
-			Init_Docking();
+			//Init_Docking();
+			Init_Sweep_Done();
 			return 1;
 		}
 	return 0;

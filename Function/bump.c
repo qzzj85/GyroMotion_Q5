@@ -91,7 +91,7 @@ void back_speed(void)
 
 void Close_Bump_Exit(void)
 {
-	if((!bump_exiton)&(GPIO_ReadInputDataBit(GPIOB,RING_PWM_CTL_PIN)))
+	if((!bump_exiton))//&(GPIO_ReadInputDataBit(GPIOB,RING_PWM_CTL_PIN)))
 		return;
 	EXTI->IMR&=0XFFFFFDBF;			//ÆÁ±ÎÅö×²ÖÐ¶Ï
 	EXTI->PR&=0x00000240;			//Çå³ýÅö×²ÖÐ¶Ï
@@ -113,7 +113,7 @@ void Close_Bump_Exit(void)
 void Open_Bump_Exit(void)
 {
 
-	if((bump_exiton)&(!GPIO_ReadInputDataBit(GPIOB,RING_PWM_CTL_PIN)))
+	if((bump_exiton))//&(!GPIO_ReadInputDataBit(GPIOB,RING_PWM_CTL_PIN)))
 		return;
 	EXTI->IMR|=0x00000240;			//¿ª·ÅÅö×²ÖÐ¶Ï
 	bump_exiton=true;
@@ -171,12 +171,12 @@ void Clear_BumpValue(void)
 						}
 				}
 		}
-#ifdef RING_PWM_CTL
+//#ifdef RING_PWM_CTL
 	if((bump_value==0))
 		{
 			Open_Bump_Exit();
 		}
-#endif
+//#endif
 }
 
 u8 Parse_BumpValue(void)

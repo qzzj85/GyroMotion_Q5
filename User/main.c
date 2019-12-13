@@ -186,7 +186,7 @@ int main(void)
 #endif
 
 #ifdef PWRCAP_CAL
-		Battery_Reinit();
+		//Battery_Reinit();
 #endif
 
 #ifdef REMOTE

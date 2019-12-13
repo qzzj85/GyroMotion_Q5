@@ -2796,19 +2796,19 @@ u8 Area_Check(u8 avoid_ybs)
 			Find_ExitArea_Entry();
 			if(curr_areanum==1)		//是否是第一打扫区域,是则打扫完成
 				{
-					TRACE("This area is first sweep area!!");
+					TRACE("This area is first sweep area!!Sweep Done!!\r\n");
 					TRACE("Goto original point and prepare to Dock!!\r\n");
 					if(!motion1.force_dock)
 						{
-							Send_Voice(VOICE_VOLUME_3);
-							Send_Voice(VOICE_SWEEP_DONE);
+							//Send_Voice(VOICE_VOLUME_3);
+							//Send_Voice(VOICE_SWEEP_DONE);
 						}
-					//while(1);
 					if(motion1.start_seat)
 						{
 							Set_CheckPoint_NextAction(CHECK_DOCK);
-							Send_Voice(VOICE_VOLUME_3);
-							Send_Voice(VOICE_DOCK_START);
+							//Send_Voice(VOICE_VOLUME_3);
+							//Send_Voice(VOICE_SWEEP_DONE);
+							//Send_Voice(VOICE_DOCK_START);
 						}
 							
 					return_data=3;

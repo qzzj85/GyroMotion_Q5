@@ -92,7 +92,7 @@
 #define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
 #define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
-#define		RING_PWM_CTL			1					//轮子PWM切断控制
+//#define		RING_PWM_CTL			1					//轮子PWM切断控制
 #define		GYRO_CAL				1				//惯导校准代码
 //#define		GYRO_COMPENSATION		1					//惯导角度补偿
 
@@ -105,14 +105,14 @@
 #define		EARTH_IN_TIM2			1
 //#define		OUT_8MHZ				1
 //#define		YIS055					1
-//#define	FAST_WALL_DET			1
+#define	FAST_WALL_DET			1
 //#define		IR_CORRECT				1
 #define		NEW_VOICE_IC			1
 //#define		USE_AREA_TREE			1
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			5
+#define		CORRECT_VERSION			6
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -939,12 +939,10 @@ typedef struct		//机器系统的工作状态
 	u16 		wifi_err_code;
 	u32 		action;		//动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线	
 	u32 		time;       //动作的起始时间
-	u32 		init_mode_time;	//qz add 20180814
 	u32  		abnormity;  //异常号码  0表示没有异常 //QZ:16:中扫电流过大,19:左轮不动,20:右轮不动,22:左轮离地,23:右轮离地,31:右轮电流,32:左轮电流
 	u32 		bump ;      //碰撞的标志 //QZ:1:左地检,2:左中地检,3:右中地检,4:右地检,5:左碰撞,6:右碰撞,7:左墙检靠近墙,
  									//8:左中墙检靠近墙,9:中墙检,10:顶红外或虚拟,14:右墙检,15:右中墙检,90:双碰撞,
 
-	u32 		last_outbump;
 	u32 		bump_time;
 	u32 		abn_time;			//qz add 20181011
 	u32			self_test_time;

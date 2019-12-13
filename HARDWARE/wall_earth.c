@@ -538,6 +538,8 @@ void Read_Wall_My(void)
 	if(!action_wall) 
 		return ;
 //-  action_wall_time = 1ms , 占空比  = 10% 
+//wall_time 10ms触发一次,频率100Hz
+//action_wall_time 1ms触发,占空比10%
 	if((action_wall_time) &&(ligth_wall)&&(!wall_time))
 		{
 			 action_wall_time=false;	
@@ -594,6 +596,9 @@ void Read_Wall_My(void)
 			ligth_wall=true;
 		}
 #else
+
+//wall_time 5ms触发,action_wall_time 100ms触发
+//红外灯关闭5ms，打开95ms。
 	if(!wall_time)
 		return;
 	wall_time=false;

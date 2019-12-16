@@ -51,7 +51,7 @@ void Init_Docking(void)
     Dis_PowerOn = true; 		//电池图标亮
 //    Dis_AllFlagOn=true;
 	/******初始化设置的值********************/
-	mode.mode = DOCKING;
+	mode.mode = MODE_DOCK;
 	clr_ram();
 	
 	Enable_earth();

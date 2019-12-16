@@ -2,12 +2,11 @@
 #include "AAA-include.h"
 ////////////////////////私有定义//////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
+u16 error_code=0;					//底盘检测的异常代码，两字节，
 ///////////////////////私有变量////////////////////////////////////
 static u8 cliff_step=0;
 
 ///////////////////////全局函数////////////////////////////////////	  
-void Init_Err(void); 
-void Do_Err(void);
 ///////////////////////私有函数////////////////////////////////////	
 ///////////////////////函数实体////////////////////////////////////
 /******************************************************************
@@ -29,7 +28,7 @@ void Init_Err(void)
 	enable_hwincept();
 	Reset_Speed_Send();  			//关闭速度检测
 	disable_pwm(CHARGE_PWM);		//禁止充电
-	mode.mode = CEASE;				//主模式为CEASE
+	mode.mode = MODE_CEASE;				//主模式为CEASE
 	mode.sub_mode=ERR;				//子模式为ERR
 	mode.Info_Abort =0;				//允许SLAM通信
 	mode.All_Info_Abort=0;			//qz add 20180919
@@ -153,7 +152,6 @@ void Do_Err(void)
 
   if(giv_sys_time-mode.time>6000000)
   	{
-//	  	Slam_Data.dipan_req=DIPAN_REQ_TURNOFFSLAM;
 	  	Init_ShutDown();
   	}
   //qz add end

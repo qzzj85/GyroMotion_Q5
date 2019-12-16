@@ -14,16 +14,14 @@
 #define		BATFDCAP_LADDR_BKP	BKP_DR8
 #define		BATRECAL_BACKUP_BKP	BKP_DR9
 
-extern u16  PreengageTime;
-extern u32  Rtc_time;
-extern u16  PreengageDate;
-extern u32  giv_BatteryCapability;  //电池的容量
-extern u32  giv_BatteryFDCap;//电池放电的电量
-extern u32  giv_UsePowerTime;// 用电时间。
-extern u8   giv_BatteryChargeForbid; //允许电池大电流充电标志，0为允许，1为不允许。
-extern bool watchdog_time;
-extern bool PREEN_TIME_UP;
+#define	PREEN_LENGTH				1		//预约时间的组数，目前为1组预约
 
+
+extern u32  Rtc_time;
+extern bool watchdog_time;
+#ifdef PREEN_SWEEP
+extern PREEN_DATA	Preen_Data[PREEN_LENGTH];
+#endif
 void init_rtc(void);
 void  	WriteRtcTime(void);//写实时时钟
 void  	WriteWorkState(void);
@@ -41,6 +39,7 @@ u32  ReadBatteryCapability(void);
 u8  WritePreenData(void);
 u32 ReadFDCap(void);
 void Reinit_Rtc(void);
+u8 	Check_PreengageTime(void);
 
 
 #endif

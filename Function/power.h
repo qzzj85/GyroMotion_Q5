@@ -133,14 +133,10 @@ void Battery_Reinit(void);
 u8 Check_Return_Pwr(void);
 void Battery_Data_Init(void);
 
-extern bool POWER_ready;
 extern bool VOL_TEMP_ready;
-extern bool VOL_TEMP_READY_MY;
-extern bool get_dispow_flag;
 extern u16  jt_chargecurrent;   //静态时主板所耗电流
 extern u16  battery_chargecurrent;//电池5秒内的平均电流
 extern u16  battery_voltage;    //电池1秒的电压
-extern unsigned char battery_low_beep_flag;
 extern u16  battery_temp;       //电池1秒的温度
 extern u16  l_current;          //左轮电流
 extern u16  r_current;          //右轮电流
@@ -159,8 +155,6 @@ extern u16  sb_current_1s;
 
 extern u16  battery_voltage_10s;
 
-extern u16 l_current_50ms;
-extern u16 r_current_50ms;
 
 extern u16 full_power;
 
@@ -171,10 +165,7 @@ extern const u16 temp[];
 
 extern bool CHARGE_READY;
 extern bool  flag_full;
-extern u32 l_curr_buf[10];
-extern u32 r_curr_buf[10];
 extern bool dc_nobat_run;	//无电池,DC直插标志位
-extern u8 	bat_recal;		//底盘主动请求回冲标志
 void Init_Charge_Data(void);
 void Charge_PID_Ctr(u32 tgt_current);
 void ChargeControl_My(void);

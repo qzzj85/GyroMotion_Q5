@@ -14,7 +14,6 @@
 #define DMA_UART3_RX			DMA1_Channel3		//QZ:UART3_RX DMA通道定义
 #define DMA_UART2_TX    		DMA1_Channel7		//UART2_TX DMA通道定义
 #define DMA_UART2_RX    		DMA1_Channel6		//UART2_RX DMA通道定义
-#define	PREEN_LENGTH				1		//预约时间的组数，目前为1组预约
 
 #define	REPORT_DOCK_FAIL		0XF001
 #define	REPORT_NO_DUST			0XE052
@@ -108,21 +107,11 @@
 extern UART UART1;			//串口数据结构
 extern UART UART2;
 extern UART UART3;
-extern bool Mileage_report_time,sensor_report_time;// 数据上报标志位
 extern MOTION motion1;			//qz add
 extern bool 	Bump_report_time;	//qz add
-extern bool 	STANDBY_FLAG;		//qz add
-extern u8 		IR_RECE_FLAG;
-extern bool	SLAM_DOCK;
-extern bool DOCK_SWEEP;
-extern u16 	error_code;
 
 extern UNIX_TIME 	Unix_Time;
-extern PREEN_DATA	Preen_Data[PREEN_LENGTH];
-extern APP_DATA		App_Data;
-extern SLAM_DATA	Slam_Data;
 extern GYRO_DATA	Gyro_Data;
-
 
 extern u8 USART1_TX_BUF[USART1_TX_SIZE];
 extern u8 USART1_RX_BUF[USART1_RX_SIZE];
@@ -172,9 +161,7 @@ void DMA_USART1_TX_Length(u32 length);
 void USART2_Putc(u8 c);
 void USART2_Send_Enter(void);
 void USART2_Send_Str(char *s);
-void Init_SLAM_DATA(void);
 void Init_Gyro_Data(void);
-void Mile_Gyro_Report(void);
 
 #endif
 

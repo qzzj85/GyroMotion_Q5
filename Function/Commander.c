@@ -730,7 +730,6 @@ void Commander_Bump_Action(u8 temp_bump)
 								mode.step_bp=0;
 								mode.Info_Abort=0;
 								mode.step=0xF0;
-								Slam_Data.skid_flag=0;	//打滑处理完毕，打滑上传标志清零（其实不需要，在sensor_report中会清零）
 								return;
 						}
 					break;
@@ -785,7 +784,7 @@ void Commander_Yes_Sir(void)
 									 //Init_Chargeing(CHARGEING);
 
 									//qz add 20180901
-									 Init_Chargeing(DC_CHARGING);
+									 Init_Chargeing(SUBMODE_CHARGE_DC);
 									 return;
 							 }					
 			}

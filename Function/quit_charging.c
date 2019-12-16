@@ -5,7 +5,7 @@ void Init_Quit_Charging(u8 sweep_method)
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
-	mode.mode=CEASE;
+	mode.mode=MODE_CEASE;
 	mode.sub_mode=QUIT_CHARGING;
 
 	Enable_wall();

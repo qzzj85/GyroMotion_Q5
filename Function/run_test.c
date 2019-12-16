@@ -87,7 +87,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_ONLY_LEFT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -99,7 +98,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_ONLY_LEFTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -111,7 +109,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_LEFT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -123,7 +120,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_ONLY_RIGHT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -135,7 +131,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_ONLY_RIGHTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -147,7 +142,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_RIGHT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }
@@ -159,7 +153,6 @@ u8 Read_RunTest_Bump(void)
 					 mode.bump=BUMP_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.m_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 					 test_bump_time++;
 				 }

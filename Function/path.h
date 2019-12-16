@@ -17,7 +17,6 @@
 
 extern POINT_GRID turn_grid;
 extern u32 path_length;
-extern bool pathpoint_inybs;
 
 u8 Init_PathPoint(void);
 u8 Delete_All_PathPoint(void);

@@ -15,7 +15,6 @@
 bool gyro_comm_flag=true;
 bool spd_acc_flag=true;
 
-uint32_t Acc_Dec_length;
 //==================================================================================================================================================================
 //==================================================================================================================================================================
 
@@ -104,7 +103,7 @@ void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r)
 
 	if(r_ring.odds>2000)		//Լ3s qz modify 20180515
 		{
-#if 1
+#if DEBUG_EFFICENT
 			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
 			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
 #endif
@@ -113,7 +112,7 @@ void Check_Speed_My(unsigned int *speed_l,unsigned int *speed_r)
 	if(l_ring.odds>2000)
 		{
 			l_ring.state=BAD;
-#if 1
+#if DEBUG_EFFICENT
 			TRACE("l_rap=%d r_rap=%d\r\n",l_rap.rap,r_rap.rap);
 			TRACE("l_pwm=%d r_pwm=%d\r\n",l_rap.pwm,r_rap.pwm);
 #endif
@@ -241,18 +240,6 @@ void ACC_DEC_Comm_rap_My (void)
 				{
 					disable_pwm(R_BACK);
 					disable_pwm(R_FRONT); 
-					if((l_rap.sign)&(l_rap.length==r_rap.length))
-						{
-							disable_pwm(L_BACK);
-							disable_pwm(L_FRONT);
-#ifdef MILE_COMPENSATION
-
-#endif					
-							l_rap.sign		= 0;
-							l_rap.pwm			= 0;
-							l_rap.rap		= 0;
-							l_rap.rap_run=0;
-						}
 #ifdef MILE_COMPENSATION
 					Close_Ring_Cnt();
 					back_speed();
@@ -262,6 +249,16 @@ void ACC_DEC_Comm_rap_My (void)
 					r_rap.pwm			= 0;
 					r_rap.rap		= 0;
 					r_rap.rap_run=0;
+					
+					if((l_rap.sign)&(l_rap.length==r_rap.length))
+						{
+							disable_pwm(L_BACK);
+							disable_pwm(L_FRONT);
+							l_rap.sign		= 0;
+							l_rap.pwm			= 0;
+							l_rap.rap		= 0;
+							l_rap.rap_run=0;
+						}
 				}	
 		}
 
@@ -281,18 +278,6 @@ void ACC_DEC_Comm_rap_My (void)
 				{
 					disable_pwm(L_FRONT);
 					disable_pwm(L_BACK);
-					if((r_rap.sign)&(r_rap.length==l_rap.length))
-						{
-							disable_pwm(R_FRONT);
-							disable_pwm(R_BACK);
-#ifdef MILE_COMPENSATION
-
-#endif					
-							r_rap.sign		= 0;
-							r_rap.pwm			= 0;
-							r_rap.rap		= 0;
-							r_rap.rap_run=0;
-						}
 #ifdef MILE_COMPENSATION
 					Close_Ring_Cnt();
 					back_speed();
@@ -302,6 +287,16 @@ void ACC_DEC_Comm_rap_My (void)
 					l_rap.pwm			= 0;
 					l_rap.rap		= 0;
 					l_rap.rap_run=0;
+					
+					if((r_rap.sign)&(r_rap.length==l_rap.length))
+						{
+							disable_pwm(R_FRONT);
+							disable_pwm(R_BACK);
+							r_rap.sign		= 0;
+							r_rap.pwm			= 0;
+							r_rap.rap		= 0;
+							r_rap.rap_run=0;
+						}
 				}
 		}
 }
@@ -364,7 +359,6 @@ void Gyro_Comm_rap(void)
 	Gyro_Data.g_ek[0]=Cal_Gyro_Angle();
 
 	data1=(Gyro_Data.g_ek[0]-Gyro_Data.g_ek[1])*G_KP+Gyro_Data.g_ek[0]*G_KI+(Gyro_Data.g_ek[0]+Gyro_Data.g_ek[2]-2*Gyro_Data.g_ek[1])*G_KD;
-//	TRACE("data1=%d\r\n",data1);
 
 #if 1
 	if(data1>10)
@@ -395,7 +389,7 @@ void Wall_Comm_Rap(void)
 	static int wall_ek[3];
 	int data1=0;
 	
-	if(mode.sub_mode==YBS_SUB_LEFT)
+	if(mode.sub_mode==SUBMODE_YBS_LEFT)
 		{
 			wall_ek[2]=wall_ek[1];
 			wall_ek[1]=wall_ek[0];
@@ -421,7 +415,7 @@ void Wall_Comm_Rap(void)
 				if(l_rap.rap_run<l_rap.rap-WALL_SPEED_MAX)
 					l_rap.rap_run=l_rap.rap-WALL_SPEED_MAX;
 		}
-	else if(mode.sub_mode==YBS_SUB_RIGHT)
+	else if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		{
 			wall_ek[2]=wall_ek[1];
 			wall_ek[1]=wall_ek[0];

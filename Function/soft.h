@@ -14,24 +14,30 @@
 #define 	FLOAT_PID 				1
 //#define		FREE_SKID_ACTION		1					//万向轮打滑动作处理
 //#define		ROTATE_SKID_ACTION		1				//旋转打滑动作处理
-#define		ROTATE_SKID_DEBUG		1					//旋转打滑DEBUG
 #define		SKID_REPORT_TIME		1
 #define 	HW_INT_REC 				1					//红外中断接收
 
 #define		DEBUG					1
 #ifdef 		DEBUG
-#define 	QZ_DEBUG_DOCK 			1
-#define 	DOCK_DEBUG				1
-#define 	PREEN_DEBUG				1
-#define		YBS_DEBUG				1
-#define		REMOTE_DEBUG			1
+#define 	DEBUG_DOCK				1
+#define 	DEBUG_PREEN				1
+#define		DEBUG_REMOTE			1
 #define 	DEBUG_Enter_Mode		1
 #define     DEBUG_INIT				1
-#define		EFFICENT_DEBUG			1
-#define		TEST_DEBUG				1
+#define		DEBUG_EFFICENT			1
 //#define	DEBUG_SPEED				1
 #define		DEBUG_CHARGE			1
-#define		DEBUG_POWER				1
+#define		DEBUG_COOR				1
+#define		DEBUG_BUMP				1
+#define		DEBUG_TREE				1
+#define		DEBUG_BACKLIST			1
+#define		DEBUG_ROTATE_SKID		1					//旋转打滑DEBUG
+#define		DEBUG_SWEEP				1
+#define		DEBUG_MOTION			1
+#define		DEBUG_AREALIST			1
+#define		DEBUG_PATH				1
+#define 	DEBUG_SHIFT				1
+#define		DEBUG_AREA				1
 #endif
 
 #if 1
@@ -53,42 +59,30 @@
 #endif
 #define		CLIFF_ENABLE			1					//地检悬崖检查
 
-#define 	SLAM_CTL_FAN			1
 #define 	YBS_BLACK				1					//沿边时黑色墙体处理
 #define		PWRCAP_CAL				1					//电流计电量计算
 //#define 	OBSTACLE_CURRENT_CHECK	1					//过障时,电流会增加,过去不处理
 #define	 	YBS_AVOID_SEAT			1				//沿边充电座避障
-#define		YBS_SEAT_REPROT			1					//延边时发现充电座上报标志
-#define		YBS_DIS_RESTORE			1					//沿边固定距离增大以后自动回复
-//define	COMMANDER_SEAT_REPORT	1					//命令模式下发现充电座上报标志
 #define		SWITCHOFF_SUBMODE		1					//船型开关未打开模式
 #define		SLEEP_SUBMODE			1				//底盘休眠模式
 //#define		DOCK_NEAR				1				//充电座近信号
-//#define		WALL_DARK_FIX			1				//墙检暗数据固定
-#define		WALL_DARK_CAL			1					//墙检暗数据校正,500ms打开一次
-#define		DOCK_GOBACK_STRAIGHT	1					//回充首次收到左右信号后直走
 #define		YBS_START_RIGHT_ANGLE	1					//沿边起始动作直行1m,右转90度,直行5m
 #define		DC_NOBAT_RUN			1					//无电池,DC直插的直行
 #define		FREE_SKID_INDEP_ACC		1					//使用直行时间累加的方法判断独立万向轮打滑
 #define		NEW_PWR_CAL				1					//使用2600MAH初始化电池及电量计算方法
 //#define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
-#define		COMMAND_CLIFF_ACTION	1					//新悬崖规避动作
 #define		REMOTE					1				//使用遥控器功能
 #define		REPEAT_DOCK				1					//再接续回充功能
 #define		SHUTDOWN_MODE			1					//关机功能
 #define		INTERFERENCE_ACTION		1					//红外信号抗干扰
-//#define		UV						1				//UV灯功能
 #define 	REYBS2DOCK				1					//小回充信号丢失再次请求沿边
-#define		DUMMY_WALL				1					//虚拟墙，沿边模式下能够接受非00速度指令，进入速度模式
 //#define		NARROW_PASS				1				//沿边窄通道处理,主要是与左碰撞相关。
 #define		GYRO_ROLL_CHECK			1					//惯导俯仰角检测（阈值5度）
 //#define		FREE_FIRST_BAD_CHECK	1					//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
-//#define 	DS1307					1					//使用DS1307 RTC及后备寄存器
 #define  	USE_VOICE_BUSY			1					//使用语音芯片BUSY引脚
 #define		USE_BITBAND				1					//GPIO读写使用BITBAND操作
 #define		STOP_WEEKUP				1					//可以从STOP模式中唤醒
 #define		SPEED_EXTI				1					//速度使用外部中断来计数
-//#define		MHW_CAPTURE				1
 #define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
 #define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
@@ -98,6 +92,7 @@
 
 #define		MILE_COMPENSATION		1					//里程计补偿
 #define		STOP_SPD_CNT			1
+#define		RING_MIL_RECAL			1
 
 //#define		NEW_Q55_BOARD_1113		1
 
@@ -112,59 +107,10 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			6
+#define		CORRECT_VERSION			7
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
-
-////////////显示错误代码//////////////////////
-#define		DIS_ERROR_BOX_NONE			0XE000
-#define		DIS_ERROR_DANGER			0XE001
-#define		DIS_ERROR_BUMP_FIX			0XE002
-#define		DIS_ERROR_LEFT_LIFT			0XE004
-#define		DIS_ERROR_RIGHT_LIFT		0XE005
-#define		DIS_ERROR_LEFTRING_OC		0XE006
-#define		DIS_ERROR_RIGHTRING_OC		0XE007
-#define		DIS_ERROR_LEFTSB_OC			0XE008
-#define		DIS_ERROR_RIGHTSB_OC		0XE009
-#define		DIS_ERROR_MB_OC				0XE010
-#define		DIS_ERROR_GYRO				0XE011
-#define		DIS_ERROR_LEFTWALL			0XE012
-#define		DIS_ERROR_MIDWALL			0XE013
-#define		DIS_ERROR_RIGHTWALL			0XE014
-#define		DIS_ERROR_LEFTEARTH			0XE015
-#define		DIS_ERROR_MIDEARTH			0XE016
-#define		DIS_ERROR_RIGHTEARTH		0XE017
-#define		DIS_ERROR_FAN_OC			0XE018
-#define		DIS_ERROR_SLAM_DOWN			0XE019
-#define		DIS_ERROR_DIPAN_TICK		0XE020
-#define		DIS_ERROR_BAT_DOWN			0XE021
-#define		DIS_ERROR_VIDEO_DOWN		0XE022
-#define		DIS_ERROR_BIRD_DOWN			0XE023
-#define		DIS_ERROR_SWEEPER_FIX		0XE024
-#define		DIS_ERROR_SWEEPER_LIFT		0XF001
-#define		DIS_ERROR_DOCK_FAIL			0XF002
-#define		DIS_ERROR_DC_EXSIT			0XF003
-
-
-////////////底盘上报导航板请求///////////////
-#define 	DIPAN_REQ_NONE			0
-#define		DIPAN_REQ_SWEEP			1
-#define 	DIPAN_REQ_DOCK			2
-#define 	DIPAN_REQ_WIFI			3
-#define 	DIPAN_REQ_YBS			4
-#define 	DIPAN_REQ_SPOT			5
-#define 	DIPAN_REQ_PREEN			6
-#define		DIPAN_REQ_TURNOFFSLAM	7
-#define		DIPAN_REQ_BURNNING		8
-#define		DIPAN_REQ_FORWORD		9
-#define		DIPAN_REQ_BACK			0X0A
-#define		DIPAN_REQ_LEFT			0X0B
-#define		DIPAN_REQ_RIGHT			0X0C
-#define		DIPAN_REQ_STOP			0X0D
-#define		DIPAN_REQ_SLEEP			0X0E
-#define		DIPAN_REQ_DOCKYBS		0X0F	//底盘进入小回充以后又丢失信号，请求再次进入沿边
-#define		DIPAN_REQ_FACTORY		0X10
 
 #define		SWEEP_METHOD_GUIHUA		0
 #define		SWEEP_METHOD_YBS		1
@@ -260,83 +206,61 @@
 #define    POWER_CHARGE     0X007        //电池正在充电
 #define    CHARGE_ERR       0X009        //充电错误
 
-/////////////////工作模式/////////////////////////
-#if 0
-#define     CEASE            0X00                //待机模式
-#define     SWEEP            0X01                //扫地模式
-#define     SPOT             0X02                //定点清扫
-#define     TELE             0X03                //遥控模式
-#define     DOCKING          0X04                //自动回充模式
-#define     CHARGEING        0X05				 //充电模式
-#define     SLEEP            0X06                //睡眠模式 
-#define     ERR              0X07				 //出错模式
-#define 	SWEEP_GONG       0X80				 //工型清扫
-#endif
 //qz add 自有协议
 //////////////////////主模式///////////////////////////////
-#define CEASE 				0x01
-#define	MODE_CTRL			0X02
-#define YBS 				0x03
-#define SPOT 				0x06
-#define LUOXUAN 			0X06
-//#define SLAM_DOCK_MODE	0x04	//qz 20180417:大回充
-#define DOCKING 			0X04		//qz 20180416:小回充
-#define	SWEEP				0X07		//清扫及清扫子模式
-#define	SHIFT				0X08		//转移及转移子模式
-#define EXIT				0X09		//退出区域模式
-#define CHARGEING 			0x0D
-#define SLEEP 				0x0E
-#define TEST				0x0F
-#define PASS2INIT			0X10
-#define ERR 				0xFF
+#define MODE_CEASE 						0x10
+#define	SUBMODE_CEASE				0X10
+#define	SUBMODE_SLEEP				0X11
+#define	SUBMODE_QUITCHARGE			0X12
+#define	SUBMODE_ERR					0X13
+#define	SUBMODE_SHUTDOWN			0X14
+#define	SUBMODE_DEAD				0X15
+#define	SUBMODE_PAUSESWEEP			0X16
+#define	SUBMODE_VIRTUAL_SLEEP		0X17
+#define	SUBMODE_SELF_TEST			0X18
+#define	SUBMODE_BURN_TEST			0X19
+#define	SUBMODE_FACT_TEST			0X1A
 
-//////////////////////子模式/////////////////////////////////
-#define QUIT_CHARGING 		0XFE		//退出充电座子模式，主模式：CEASE
-#define	SELF_TEST			0xFD		//自测子模式,主模式：CEASE
-#define	BURNIN_TEST			0xFC		//老化子模式,主模式：TEST
-#define	DEAD				0xFB		//低功耗子模式,主模式：CEASE
-#define	SWITCHOFF			0XFA		//开关未打开子模式,主模式：CHARGE
-#define	YBS_SUB_RIGHT		0XF9
-#define	YBS_SUB_LEFT		0XF8
-#define	DC_CHARGING			0XF7		//DC直充充电模式，主模式：CHARGING
-#define	SEAT_CHARGING		0XF6		//充电座充电模式, 主模式: CHARGING
-#define SHUTDOWN			0XF5		//关机模式，主模式：CEASE
-#define FACTORY_TEST		0XF4		//厂测子模式,主模式：CEASE
-#define	YBS_SUB_EXCHANGE 	0XF3
+#define	MODE_SWEEP					0X20
+#define	SUBMODE_SWEEP_NORMAL		0X21
+#define	SUBMODE_SWEEP_BACK			0X22
+#define	SUBMODE_SWEEP_LEAK			0X23
+#define	SUBMODE_SWEEP_LEAKBACK		0X24
+#define	SUBMODE_SWEEP_STOPBACK		0X25
+#define	SUBMODE_SWEEP_PASS2			0X26
+#define	SUBMODE_SWEEP_FIRST			0X27
+#define	SUBMODE_SWEEP_DONE			0X28
 
-#define	NORMAL_SWEEP		0XF3
-#define	PASS2SWEEP			0XF2
-#define	BACK2YBSSTART		0XF1
-#define	BACK_SWEEP			0XF0
-#define	STOP_BACKSWEEP 		0XEF
-#define	SWEEP_FIRST_INIT	0XED
-#define SUBMODE_PAUSESWEEP	0XEC
+#define	MODE_SHIFT					0X30
+#define	SUBMODE_SHIFTPOINT1			0X31
+#define	SUBMODE_SHIFTPOINT2			0X32
 
-#define SHIFTPOINT1			0XD0
-#define	SHIFTPOINT2			0XD1
-#define LEAK_SWEEP			0XD2
-#define PASS2LEAKSWEEP  	0XD3
-#define SHIFT_LEFT_YBS  	0XD4
-#define SHIFT_RIGHT_YBS 	0XD5
-#define	LEAK_BACKSWEEP		0XD6
-#define	STOP_LEAKBACK		0XD7
+#define	MODE_EXIT					0X40
 
-#define	RUN_TEST			0xC0
+#define	MODE_PASS2INIT				0X50
+#define	SUBMODE_PASS2INIT			0X51
 
-#define	SUBMODE_REMOTE_CTRL			0XB0
-#define	SUBMODE_APP_CTRL			0XB1
-#define	SUBMODE_VIRTUAL_SLEEP		0XB2
-#define	SUBMODE_SPOT				0XB3
-#define	SUBMODE_SELF_TEST			0XB4
-#define	SUBMODE_BURN_TEST			0XB5
-#define	SUBMODE_FACT_TEST			0XB6
-#define	SUBMODE_SWEEP_DONE			0XB7
-//#define     COMMANDER_x10           0X10         //  指令模式
+#define	MODE_YBS					0X60
+#define	SUBMODE_YBS_LEFT			0X61
+#define	SUBMODE_YBS_RIGHT			0X62
 
-//#define     YBS           0X20    	     //  沿墙模式
-//#define     YBS_YBS_x21           0X21        
-#define     YBS_YBS_x22_FAST      0X22
-#define     YBS_YBS_x23_FAST      0X23
+#define	MODE_SPOT					0X70
+#define	SUBMODE_SPOT				0X71
+
+#define	MODE_CTRL					0X80
+#define	SUBMODE_APP_CTRL			0X81
+#define	SUBMODE_REMOTE_CTRL			0x82
+
+#define	MODE_DOCK					0X90
+#define	SUBMODE_DOCK				0X91
+
+#define	MODE_CHARGE					0XA0
+#define	SUBMODE_CHARGE_SEAT			0XA1
+#define	SUBMODE_CHARGE_DC			0XA2
+#define	SUBMODE_CHARGE_SWITCHOFF	0XA3
+
+#define	TEST						0XB0
+#define	RUN_TEST					0XB1
 
 ////////////////下面是速度的定义//////////////////
 #define     HIGHSPEED      4000//2400//1200  			//	  2400       //	高速的速度
@@ -640,6 +564,7 @@ typedef struct 			  //光敏电阻值的结构
  unsigned char work_mode;	 
  unsigned char speed;
 }WORK_MODE;
+
 typedef struct
 {
  unsigned int time;//采样垃圾检测的时间    
@@ -735,6 +660,7 @@ typedef struct             //墙检地检的数据结构	//红外数据结构?  QZ
 
 	u8 rece_cnt;
 }INFR_DATA;
+
 typedef struct             //车轮速度的数据结构
 { 
   int  ek[3];       //最近的三次系统速度偏差

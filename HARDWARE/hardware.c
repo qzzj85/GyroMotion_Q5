@@ -42,60 +42,44 @@ void  Init_System(void)
 	URAT1_init(115200);
 
 #ifdef   NEW_Q55_BOARD_1113   
-         USART2_Init();
+	USART2_Init();
 #ifdef TUYA_WIFI
-         USART2_DMA_TX_Init(USART1_TX_SIZE);
+	USART2_DMA_TX_Init(USART1_TX_SIZE);
 #ifdef DMA_IRQ 
-        USART2_DMA_RX_Init(USART1_RX_SIZE);
+	USART2_DMA_RX_Init(USART1_RX_SIZE);
 #endif
 	wifi_protocol_init();
-#else			
+#else	//TUYA_WIFI			
 	USART2_DMA_TX_Init(16);
 	USART2_DMA_RX_Init(128);	
 #endif		
-	 URAT1_init(115200);
-         DMA_Uart1Tx_Config(USART1_TX_SIZE);
-         DMA_Uart1Rx_Config(USART1_RX_SIZE);
+	URAT1_init(115200);
+	DMA_Uart1Tx_Config(USART1_TX_SIZE);
+	DMA_Uart1Rx_Config(USART1_RX_SIZE);
+		 
 #else //NEW_Q55_BOARD_1113  
-
-        URAT1_init(115200);
+    URAT1_init(115200);
 #ifdef TUYA_WIFI
 	DMA_Uart1Tx_Config(USART1_TX_SIZE);
 #ifdef DMA_IRQ 
 	DMA_Uart1Rx_Config(USART1_RX_SIZE);
 #endif
 	wifi_protocol_init();
-#else			
+#else //TUYA_WIFI			
 	DMA_Uart1Tx_Config(16);
 	DMA_Uart1Rx_Config(128);
-#endif		
-	USART2_Init();
-	USART2_DMA_TX_Init(16);
-	USART2_DMA_RX_Init(USART2_RX_SIZE);
-#endif// NEW_Q55_BOARD_1113   
-
-
-#if 0
-	
-#ifdef TUYA_WIFI
-	DMA_Uart1Tx_Config(USART1_TX_SIZE);
-#ifdef DMA_IRQ 
-	DMA_Uart1Rx_Config(USART1_RX_SIZE);
-#endif
-	wifi_protocol_init();
-#else			
-	DMA_Uart1Tx_Config(16);
-	DMA_Uart1Rx_Config(128);
-#endif		
-	USART2_Init();
-	USART2_DMA_TX_Init(16);
-	USART2_DMA_RX_Init(USART2_RX_SIZE);
 #endif	
+	USART2_Init();
+	USART2_DMA_TX_Init(16);
+	USART2_DMA_RX_Init(USART2_RX_SIZE);
+#endif// NEW_Q55_BOARD_1113  
+
 	USART3_Init();
 	USART3_DMA_TX_Init(USART3_TX_SIZE);
 	USART3_DMA_RX_Init(USART3_RX_SIZE);
-	
+#ifdef VOICE_LIST
 	Init_Voice();						//初始化语音芯片，包括音量设置
+#endif
 	Init_WatchDog();					//初始化看门狗
 //	Reset_Bat_Data();
 	Init_BKP_Bat_Rtc();
@@ -113,10 +97,11 @@ void  Init_System(void)
 	init_key();							//初始化按键类信息，如：按键、开关等
 	Init_Ring();
 	init_wallearth();	
-	Init_SLAM_DATA();					//初始化与导航板通信数据
 	Init_Gyro_Data();
 	Gyro_Rst();							//qz add 20180927
+#ifdef PREEN_SWEEP
 	ReadPreengage();					//获取预约
+#endif
 
 	Init_Mode();
 	Init_Check_Status();				//初始化异常检测
@@ -960,7 +945,7 @@ u8 Read_Last_Is_Dead(void)
 	DS1307_Read_Backup(MODE_BACKUP_ADDR, &temp_mode);
 	DS1307_Read_Backup(SUBMODE_BACKUP_ADDR, &temp_submode);
 #endif
-	if((temp_mode==CEASE)&(temp_submode==DEAD))
+	if((temp_mode==MODE_CEASE)&(temp_submode==SUBMODE_DEAD))
 		{
 #ifdef DEBUG_INIT
 			TRACE("Last mode is DEAD!\r\n");
@@ -986,33 +971,6 @@ void Gyro_Rst(void)
 	
 	//qz add end
 #endif
-}
-
-//qz add 2090126
-void HoldPwrCheck(void)
-{
-	u32 start_time,end_time;
-	start_time=giv_sys_time;
-	while(giv_sys_time-start_time<2000)		//qz modify 20190218
-		{
-			if(!Read_Key2())
-				//Slam_Data.pwrswitch_on=true;
-			Uart1_Comunication();						//串口数据解析函数
-		}
-	LED_GREEN_ON;	
-	HOLDPWR_ON;
-	while(!Read_Key2())
-		{
-			Uart1_Comunication();						//串口数据解析函数
-		}
-	end_time=giv_sys_time;
-	if(end_time-start_time<12000)		//qz modify 20190218
-		{
-			while(giv_sys_time-end_time<10000) 	//qz modify 20190218
-				{
-					Uart1_Comunication();						//串口数据解析函数
-				}
-		}
 }
 
 void Check_MideBrush2Suck(void)

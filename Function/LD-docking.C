@@ -3,16 +3,14 @@
 ////////////////////////私有定义//////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
 ///////////////////////私有变量////////////////////////////////////
-u8 Docking_YaoKong_Manage(void) ;
 ///////////////////////全局函数////////////////////////////////////
 ///////////////////////私有函数////////////////////////////////////	
 u8 		MID_TURN			=1;
 u8		BUMP_TURN_DIR		=1;
-u8 		DOCK_IN_SIGHT		=0;
 bool	TOP_FLAG			=false;
 bool 	FIND_SEAT_FAIL;
 bool 	TOP_DIR				=false;		//false向右偏转,true向左偏转
-u32 	top_l_length,top_r_length,find_home,seat_time;
+u32 	find_home,seat_time;
 u8 		top_piv_left,top_piv_done,top_piv_out,top_bump_turn=0,top_turn_cnt;
 #define ADDANGLE				15					//qz add 20180615
 #define	BACK_LENGTH				40					//qz add 20180717后退40cm
@@ -28,7 +26,6 @@ u8 		WHICH_TO_MID			=0;				//表示从哪个方向找到的中信号，左或者右
 //qz add 20180418
 u8 		dock_fail_count			=0;		//qz modify V2.3.8
 u32 	dock_fail_time;					//qz add V2.3.8
-u32     first_find_result		=0;
 //qz add 20180428
 #define	M_IR_CHOOSE				=1;
 
@@ -39,7 +36,6 @@ u32 findseat_skid_check_length;
 
 u8 REYBS_TIME=0;						//qz add 20180910,小回充没找到信号，重新请求沿边次数，3次强制失败
 
-bool dock_rap_time=false;
 u32 dock_ybs_time=0;
 u32 delay_time=0;
 /******************************************************************
@@ -49,7 +45,9 @@ void Init_Docking(void)
 {
 	if((!motion1.force_dock)&(!motion1.start_seat))
 		{
+#ifdef DEBUG_DOCK
 			TRACE("No force dock,No seat start!!\r\n");
+#endif
 			Init_Cease();
 			return;
 		}
@@ -60,8 +58,8 @@ void Init_Docking(void)
 	mode.last_mode=mode.mode;
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化设置的值********************/
-	mode.mode = DOCKING;
-	mode.sub_mode=DOCKING;
+	mode.mode = MODE_DOCK;
+	mode.sub_mode=SUBMODE_DOCK;
 	mode.step=DOCKMODE_STEP_START;
 	mode.step_mk=0;				//qz add 20180910
 	//qz add 20180418	
@@ -82,8 +80,6 @@ void Init_Docking(void)
 	WriteWorkState();
 //	ReInitAd();
 
-	SLAM_DOCK=false;
-	DOCK_SWEEP=false;		//qz add 20180803
 	FIND_SEAT_FAIL=false;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Little Docking Mode Complete!\r\n");
@@ -117,7 +113,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_ONLY_LEFT;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.l_bump_flag=true;
 						mode.bump_time=giv_sys_time;
 					}
 				return BUMP_ONLY_LEFT;
@@ -128,7 +123,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_ONLY_LEFTMID;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.l_bump_flag=true;
 					}
 				return BUMP_ONLY_LEFTMID;
 			case BUMP_LEFT_MID:
@@ -138,7 +132,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_LEFT_MID;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.l_bump_flag=true;
 					}
 				return BUMP_LEFT_MID;
 			case BUMP_ONLY_RIGHT:
@@ -148,7 +141,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_ONLY_RIGHT;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.r_bump_flag=true;
 					}
 				return BUMP_ONLY_RIGHT;
 			case BUMP_ONLY_RIGHTMID:
@@ -158,7 +150,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_ONLY_RIGHTMID;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.r_bump_flag=true;
 					}
 				return BUMP_ONLY_RIGHTMID;
 			case BUMP_RIGHT_MID:
@@ -168,7 +159,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_RIGHT_MID;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.r_bump_flag=true;
 					}
 				return BUMP_RIGHT_MID;
 			case BUMP_MID:
@@ -178,7 +168,6 @@ u8 Dock_read_bump(void)
 						mode.bump=BUMP_MID;
 						mode.bump_flag=true;
 						mode.step_bp=0;
-						Slam_Data.m_bump_flag=true;
 					}
 				return BUMP_MID;
 			default:
@@ -200,214 +189,6 @@ u8 Dock_read_bump(void)
 #endif	
 	return 0;
 	
-}
-
-void Dock_Comm_rap_My (void)
-{
-#ifndef FLOAT_PID
-	int ec;
-#else
-	float f_ec;
-#endif
-	
-	if(dock_rap_time==false)
-		return;
-	dock_rap_time=false;
-
-	Check_Speed_My(&(l_ring.real_speed), &(r_ring.real_speed));
-/////////////////////////////////右轮/////////////////////////// 
-	if(r_rap.sign)
-		{
-#ifndef FLOAT_PID
-			r_ring.ek[2] = r_ring.ek[1];
-			r_ring.ek[1] = r_ring.ek[0];
-			r_ring.ek[0] = r_rap.rap-r_ring.real_speed;
-			ec = (r_ring.ek[0]-r_ring.ek[1])/KP + r_ring.ek[0]/KI +(r_ring.ek[0]+r_ring.ek[2]-2*r_ring.ek[1])/KD;
-			r_rap.pwm+=ec;
-#else
-			r_ring.f_ek[2]=r_ring.f_ek[1];
-			r_ring.f_ek[1]=r_ring.f_ek[0];
-			r_ring.f_ek[0]=(float)(r_rap.rap)-(float)(r_ring.real_speed);
-			f_ec = ((r_ring.f_ek[0]-r_ring.f_ek[1])*D_KP + r_ring.f_ek[0]*D_KI +(r_ring.f_ek[0]+r_ring.f_ek[2]-2*r_ring.f_ek[1])*D_KD);
-			r_rap.pwm=(int)(r_rap.pwm+f_ec);
-#endif
-#if 0
-			if (r_rap.pwm > 400 )
-				{
-					if( abs(ec) > 20 )	
-							{
-								if(ec > 0)
-									ec = 20 ;
-								else
-									ec = -20;
-							}
-				}
-			else
-				{
-					if(ec >0)
-						ec = 150;
-					else
-						ec = -150;
-				}
-		
-			ec = ec + r_rap.pwm;	  
-			if(ec<0  ||  r_rap.rap == 0)
-				{
-					r_rap.pwm = 0;
-				}
-			else
-				{ 
-					if(ec > 1000)
-						ec = 1000;
-					r_rap.pwm = (u16)ec; 
-				}
-
-//					printf("ec r:%d\r\n",ec);
-#endif
-//			r_rap.pwm+=ec;
-//			r_rap.pwm=(int)(r_rap.pwm+f_ec);
-			if(r_rap.pwm>PWM_RING_MAX)
-				r_rap.pwm=PWM_RING_MAX;
-			else if(r_rap.pwm<=0)
-				r_rap.pwm=0;
-				
-				
-			if(r_rap.ori == FRONT)
-				{enable_pwm(R_FRONT,r_rap.pwm);}
-			else
-				{enable_pwm(R_BACK,r_rap.pwm);}
-
-			if(r_rap.length  <=  (r_ring.length+10) )
-				{
-					r_rap.sign		= 0;
-					r_rap.pwm			= 0;
-					r_rap.rap		= 0;
-					disable_pwm(R_BACK);
-					disable_pwm(R_FRONT); 
-					r_rap.rap_run=0;
-				}
-#if 0		//qz mask 20181018
-			else if(r_rap.length  <=  (r_ring.length+50) )	//QZ:减速过程
-			{
-				if(r_rap.rap > 500)
-					{	r_rap.rap -= 15;} 
-			}
-			else if(r_rap.length  <=  (r_ring.length+300) )
-			{
-				if(r_rap.rap > 800)
-					{	r_rap.rap -= 30;} 
-			}
-			else if(r_rap.length  <=  (r_ring.length+600) )
-			{
-				if(r_rap.rap > 1200)
-					{	r_rap.rap -= 50;} 
-			}
-#else
-		
-#endif
-				
-		}
-////////////////////////////////////////////////////////////////
-	
-	
-	
-	
-//////////////////////////////////////////////////////////////// 
-/////////////左轮脉冲所走时间////////////////////
-	
-	if(l_rap.sign)
-		{
-#ifndef FLOAT_PID		
-			l_ring.ek[2] = l_ring.ek[1];
-			l_ring.ek[1] = l_ring.ek[0];
-			l_ring.ek[0] = l_rap.rap-l_ring.real_speed; 				
-
-					
-			ec = (l_ring.ek[0]-l_ring.ek[1])/KP 
-					+l_ring.ek[0]/KI
-					+(l_ring.ek[0]+l_ring.ek[2]-2*l_ring.ek[1])/KD;
-			l_rap.pwm+=ec;			
-#else
-			l_ring.f_ek[2]=l_ring.f_ek[1];
-			l_ring.f_ek[1]=l_ring.f_ek[0];
-			l_ring.f_ek[0]=(float)(l_rap.rap)-(float)(l_ring.real_speed);
-			f_ec = ((l_ring.f_ek[0]-l_ring.f_ek[1])*D_KP + l_ring.f_ek[0]*D_KI +(l_ring.f_ek[0]+l_ring.f_ek[2]-2*l_ring.f_ek[1])*D_KD);
-			
-			l_rap.pwm=(int)(l_rap.pwm+f_ec);
-#endif
-#if 0		
-			if (l_rap.pwm > 400 )
-				{
-					if( abs(ec) > 20 )
-					{
-						if(ec > 0)
-							ec = 20 ;
-						else
-							ec = -20;
-					}
-				}
-			else
-				{
-					if(ec >0)
-						ec = 150;
-					else
-						ec = -150;
-				}
-				
-				
-			ec = ec + l_rap.pwm;
-			if(ec<0||l_rap.rap == 0)
-				{
-					l_rap.pwm = 0;
-				}
-			else
-				{ 
-					if(ec > 1000)
-						ec = 1000;
-					l_rap.pwm = (u16)ec; 
-				}
-#endif
-//						l_rap.pwm+=ec;
-//							l_rap.pwm=(int)(l_rap.pwm+f_ec);
-			if(l_rap.pwm>PWM_RING_MAX)
-				l_rap.pwm=PWM_RING_MAX;
-			else if(l_rap.pwm<=0)
-				l_rap.pwm=0;
-			
-		
-			if(l_rap.ori == FRONT)
-				{enable_pwm(L_FRONT,l_rap.pwm);}
-			else
-				{enable_pwm(L_BACK,l_rap.pwm);}
-
-			if(l_rap.length  <=  (l_ring.length+10) )
-				{
-					l_rap.sign		= 0;
-					l_rap.pwm			= 0;
-					l_rap.rap		= 0;
-					disable_pwm(L_FRONT);
-					disable_pwm(L_BACK);
-					l_rap.rap_run=0;
-				}
-#if 0		//qz mask 20181018
-			else if(l_rap.length  <=  (l_ring.length+50) )
-			{
-				if(l_rap.rap > 500)
-					{	l_rap.rap -= 15;} 
-			}
-			else if(l_rap.length  <=  (l_ring.length+300) )
-			{
-				if(l_rap.rap > 800)
-					{	l_rap.rap -= 30;} 
-			}
-			else if(l_rap.length  <=  (l_ring.length+600) )
-			{
-				if(l_rap.rap > 1200)
-					{	l_rap.rap -= 50;} 
-			}
-#endif		
-				
-	}
 }
 
 u32 ReadHwSign_My(void)
@@ -524,13 +305,6 @@ void Do_Docking_My(void)
 {
 
 	u32 abnormal;
-		//系统有错误
-		if(giv_sys_err != 0)
-		{
-		  Init_Err();
-		  return ;
-		}
-
 	  /////充电管理
 		
       //充电失败判断
@@ -538,7 +312,7 @@ void Do_Docking_My(void)
 	  if((giv_sys_time-mode.time>6000000)||(dock_fail_count>=5)||(FIND_SEAT_FAIL))		
 	  	{
 
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 			TRACE("dock_fail_count=%d\r\n",dock_fail_count);
 			TRACE("time=%d\r\n",giv_sys_time-mode.time);
 			TRACE("FIND_SEAT_FAIL=%d\r\n",FIND_SEAT_FAIL);
@@ -565,7 +339,7 @@ void Do_Docking_My(void)
 				mode.step_mk=0;				
 				mode.bump_flag=false;
 				seat_time=giv_sys_time;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 				TRACE("enter in DOCKMODE_STEP_CHARGE!\r\n");
 #endif
 				
@@ -584,7 +358,7 @@ void Do_Docking_My(void)
 			//Init_Chargeing(CHARGEING);
 
 			//qz add 20180901
-			Init_Chargeing(DC_CHARGING);
+			Init_Chargeing(SUBMODE_CHARGE_DC);
 	  	}
 #endif
 
@@ -714,13 +488,13 @@ void Do_Docking_My(void)
 						stop_rap();
 						if(giv_sys_time-seat_time>10000)
 							{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("enter in charge mode!\r\n");
 #endif
 								//Init_Chargeing(CHARGEING);
 
 								//qz add 2018091
-								Init_Chargeing(SEAT_CHARGING);
+								Init_Chargeing(SUBMODE_CHARGE_SEAT);
 								return;
 							}
 						if((!power.charge_seat))
@@ -728,7 +502,7 @@ void Do_Docking_My(void)
 								mode.step=DOCKMODE_STEP_RECHARGE;
 								mode.step_mk=0;								
 								dock_fail_count++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("power seat contact fail,go to DOCKMODE_STEP_RECHARGE!\r\n");
 #endif
 								Set_BS_Level(60);
@@ -743,7 +517,7 @@ void Do_Docking_My(void)
 								mode.step=DOCKMODE_STEP_CHARGE;
 								mode.step_mk=0;
 								seat_time=giv_sys_time;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("power seat contact!,go to DOCKMODE_STEP_CHARGE!\r\n");
 #endif
 #endif
@@ -791,7 +565,7 @@ void ReYBS2Dock(void)
 		{
 			case 0:
 				REYBS_TIME++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 				TRACE("REYSB_TIME=%d\r\n",REYBS_TIME);
 #endif
 				if(REYBS_TIME>2)
@@ -803,11 +577,9 @@ void ReYBS2Dock(void)
 					mode.step_mk++;
 				break;
 			case 1:
-				DOCK_SWEEP=true;
-//				Init_Commander();
 				delay_100us(100);		//延时10ms
 				Init_Dock_RightYBS(1);
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 				TRACE("Dipan Request Dock ReYBS!\r\n");
 #endif
 				mode.step_mk++;
@@ -840,7 +612,7 @@ static void Left_Bump_Action(void)
 			if((l_hw.effectLeft))
 				{
 					stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("l_hw find LEFT in %s, go to DOCKMODE_STEP_LEFT!\r\n",__func__);
 #endif
 					mode.bump=0;
@@ -862,7 +634,7 @@ static void Left_Bump_Action(void)
 			if((l_hw.effectMid))
 				{
 					stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("l_hw find MID or MIDRIGHT in %s!\r\n",__func__);
 #endif
 					mode.step_bp++;
@@ -873,7 +645,7 @@ static void Left_Bump_Action(void)
 			if(do_action(1,360*Angle_1))	//原来为90:qz modify 20180428,原来为120:qz modify 20180615
 				{
 					stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw can't get MID in %s\r\n",__func__);
 #endif
 				#if 0
@@ -894,7 +666,7 @@ static void Left_Bump_Action(void)
 					mode.step=DOCKMODE_STEP_FINDSEAT;			//qz modify 20180422:原来为0x60,修改为此值
 					mode.step_mk=4;
 					mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw get MID,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 				}
@@ -903,7 +675,7 @@ static void Left_Bump_Action(void)
 				{
 					stop_rap();
 					mode.step_bp++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw can't get MID in %s\r\n",__func__);
 #endif
 				}
@@ -918,7 +690,7 @@ static void Left_Bump_Action(void)
 			if((lm_hw.effectMid)|(rm_hw.effectMid))
 				{
 					stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw get MIDL or MIDR,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 					mode.bump=0;
@@ -935,7 +707,7 @@ static void Left_Bump_Action(void)
 			mode.step=DOCKMODE_STEP_START;			//qz modify 20180422:原来为0x60,修改为此值
 			mode.step_mk=0;
 			mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 			TRACE("rm_hw can't get MIDL or MIDR,go to DOCKMODE_STEP_START!\r\n");
 #endif
 			break;
@@ -972,7 +744,7 @@ static void Right_Bump_Action(void)
 					mode.bump_flag=false;
 					mode.step=DOCKMODE_STEP_RIGHT;
 					mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("r_hw find RIGHT in %s, go to DOCKMODE_STEP_RIGHT!\r\n",__func__);
 #endif
 				}
@@ -989,7 +761,7 @@ static void Right_Bump_Action(void)
 				{
 					stop_rap();
 					mode.step_bp++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("r_hw find MID or MIDLEFT in %s!\r\n",__func__);
 #endif
 				}
@@ -1007,7 +779,7 @@ static void Right_Bump_Action(void)
 					mode.step_mk=4;
 					mode.bump_flag=false;
 					#endif
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw can't get MID in %s\r\n",__func__);
 #endif
 				}
@@ -1020,7 +792,7 @@ static void Right_Bump_Action(void)
 					mode.step=DOCKMODE_STEP_FINDSEAT;			//qz modify 20180422:原来为0x60,修改为此值
 					mode.step_mk=4;
 					mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw get MID!,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 				}
@@ -1030,7 +802,7 @@ static void Right_Bump_Action(void)
 				{
 					stop_rap();
 					mode.step_bp++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw can't get MID in %s\r\n",__func__);
 #endif
 				}
@@ -1057,7 +829,7 @@ static void Right_Bump_Action(void)
 					mode.step=DOCKMODE_STEP_FINDSEAT;			//qz modify 20180422:原来为0x60,修改为此值
 					mode.step_mk=4;
 					mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw get MIDL or MIDR,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 				}
@@ -1069,7 +841,7 @@ static void Right_Bump_Action(void)
 			mode.step=DOCKMODE_STEP_START;			//qz modify 20180422:原来为0x60,修改为此值
 			mode.step_mk=0;
 			mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 			TRACE("rm_hw can't get MIDL or MIDR,go to DOCKMODE_STEP_START!\r\n");
 #endif
 			break;
@@ -1180,7 +952,7 @@ void Docking_Bump_My(void)
 										mode.step=DOCKMODE_STEP_FINDSEAT;		//从头再来
 										mode.step_mk=4;
 										mode.bump_flag=false;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("MidBump action complete!,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 									}
@@ -2024,7 +1796,7 @@ void Start_Mid(void)
 							case 0:
 								if(TOP_FLAG)
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("b_hw can't find LEFT&RIGHT signal!\r\n");
 										TRACE("but TOP signal still exist!Go to top_start!\r\n");
 #endif
@@ -2035,7 +1807,7 @@ void Start_Mid(void)
 									}
 								else
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("lost all signal!  Enter Cease Mode!\r\n");
 #endif
 										TOP_FLAG=false;
@@ -2044,7 +1816,7 @@ void Start_Mid(void)
 									}
 ///								break;
 							case 1:
-#ifdef DOCK_DEBUG	
+#ifdef DEBUG_DOCK	
 								TRACE("b_hw only can find LEFT signal!Go to Start_Left!\r\n");
 #endif
 								mode.step=DOCKMODE_STEP_LEFT;
@@ -2053,7 +1825,7 @@ void Start_Mid(void)
 								TOP_FLAG=false;
 								return;
 							case 2:
-#ifdef DOCK_DEBUG				
+#ifdef DEBUG_DOCK				
 								TRACE("b_hw only can find RIGHT signal!Go to Start_Right\r\n");
 #endif
 								mode.step=DOCKMODE_STEP_RIGHT;
@@ -2085,7 +1857,7 @@ void Start_Mid(void)
 				if(do_action(1,360*Angle_1))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw lost left and right signal! goto mode_step_start\r\n");
 #endif
 						mode.step=0;
@@ -2094,7 +1866,7 @@ void Start_Mid(void)
 				if((rm_hw.effectLeft)||(rm_hw.effectRight))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG		
+#ifdef DEBUG_DOCK		
 						TRACE("rm_hw find right or left signal!  goto mode_step_findseat!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -2123,7 +1895,7 @@ void Start_Top_Spot_My(void)
 					//FIND_SEAT_FAIL=true;			//qz mask 20180910
 					mode.step=DOCKMODE_STEP_START;		//qz add 20180910
 					mode.step_mk=0;					//qz add 20180910
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("all hw lost TOP in %s\r\n",__func__);
 					TRACE("go back to mode_step_start!\r\n");
 #endif								
@@ -2142,7 +1914,7 @@ void Start_Top_Spot_My(void)
 						stop_l_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH);
 						last_l_length=l_ring.all_length;
 						mode.step_mk++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("radius=%f\r\n",radius);
 						TRACE("stop_l_length=%d\r\n",stop_l_length);
 #endif
@@ -2155,7 +1927,7 @@ void Start_Top_Spot_My(void)
 						stop_r_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH);
 						last_r_length=r_ring.all_length;
 						mode.step_mk++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("radius=%f\r\n",radius);
 						TRACE("stop_r_length=%d\r\n",stop_r_length);
 #endif
@@ -2426,7 +2198,7 @@ void Start_Recharge(void)
 						mode.step=DOCKMODE_STEP_CHARGE;
 						mode.step_mk=0;
 						seat_time=giv_sys_time;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("power seat contact!,go to DOCKMODE_STEP_CHARGE!\r\n");
 #endif
 					}
@@ -2436,17 +2208,6 @@ void Start_Recharge(void)
 					}
 				break;
 		}
-}
-
-
-s16 Cal_Angle(s16 angle_1,s16 angle_2)
-{
-
-	s16 temp_angle;
-	temp_angle=angle_2-angle_1;
-	if(temp_angle<0)
-		temp_angle+=360;
-	return (temp_angle);
 }
 
 void Start_Right_Deflect_Turn(void)
@@ -2464,7 +2225,7 @@ void Start_Right_Deflect_Turn(void)
 				if(do_action(2,360*Angle_1))					//右转
 					{
 						stop_rap();
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("r_hw can't catch RIGHT\r\n");
 #endif
 //						mode.step=DOCKMODE_STEP_TOP;
@@ -2483,7 +2244,7 @@ void Start_Right_Deflect_Turn(void)
 				//if((r_hw.effectRight|r_hw.effectMidRight)&(!rm_hw.effect)&(!l_hw.effect))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw get R or RM!\r\n");
 #endif
 						mode.step_mk=40;
@@ -2519,19 +2280,19 @@ void Start_Right_Deflect_Turn(void)
 				if(do_action(2,480*Angle_1))
 					{
 						stop_rap(); 					//qz add 20181210
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw can't get R&T!\r\n");
 #endif
 						if(lm_r_flag)
 							{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("go to step_mk 50!\r\n");
 #endif
 								mode.step_mk=50;
 							}
 						else
 							{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("goto DOCKMODE_STEP_START!\r\n");
 #endif
 								mode.step=DOCKMODE_STEP_START;
@@ -2544,7 +2305,7 @@ void Start_Right_Deflect_Turn(void)
 				if(r_hw.effectRight&r_hw.effectTop)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r hw get R&T!\r\n");
 #endif
 						mode.step_mk=1;
@@ -2563,7 +2324,7 @@ void Start_Right_Deflect_Turn(void)
 				if(do_action(3,100*CM_PLUS))					//qz modify 20180910:400--->100
 					{
 						stop_rap();
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("r_hw or b_hw can't find any LEFT,go to start!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_START;
@@ -2574,7 +2335,7 @@ void Start_Right_Deflect_Turn(void)
 				if(r_hw.effectLeft)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("find_home=0x%x\r\n",find_home);
 						TRACE("get L signal!\r\n");
 #endif
@@ -2591,7 +2352,7 @@ void Start_Right_Deflect_Turn(void)
 				if(r_hw.effectLeft)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw get L signal!\r\n");
 						TRACE("go to step_mk 4\r\n");
 #endif
@@ -2605,7 +2366,7 @@ void Start_Right_Deflect_Turn(void)
 				enable_rap_no_length(FRONT,l_speed,FRONT, r_speed);
 				if(r_ring.all_length>start_length+8*CM_PLUS)
 					{
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("go forward ok!\r\n");
 #endif
 						mode.step_mk=2;
@@ -2631,7 +2392,7 @@ void Start_Right_Deflect_Turn(void)
 				if(l_ring.all_length-start_length>stop_length)			//偏转一周完成，还没有找到左信号，从头再来
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw can't get signal!go back to DOCKMODE_STEP_START!\r\n");
 						TRACE("mode.step_mk=%d\r\n",mode.step_mk);
 #endif
@@ -2644,7 +2405,7 @@ void Start_Right_Deflect_Turn(void)
 				if(r_hw.effectLeft)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG		
+#ifdef DEBUG_DOCK		
 						TRACE("r_hw get L in step_mk 2!\r\n");
 						TRACE("goto step_mk 4!\r\n");
 #endif
@@ -2655,7 +2416,7 @@ void Start_Right_Deflect_Turn(void)
 				if(l_hw.effectLeft)								//左红外发现左信号，机器姿态：其实已经右偏
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG		
+#ifdef DEBUG_DOCK		
 						TRACE("l_hw get L|LM signal in DOCKMODE_STEP_RIGHT!\r\n");
 						TRACE("Goto DOCKMODE_STEP_LEFT!\r\n");
 #endif
@@ -2667,7 +2428,7 @@ void Start_Right_Deflect_Turn(void)
 				if((rm_hw.effectMid)|(lm_hw.effectMid))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw get M signal!go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -2677,7 +2438,7 @@ void Start_Right_Deflect_Turn(void)
 				if(l_hw.effectRight)			//中左红外发现右信号，机器姿态：其实已经严重右偏
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG		
+#ifdef DEBUG_DOCK		
 						TRACE("l_hw get R|RM in step_mk 2!\r\n");
 						TRACE("goto step_mk 0!\r\n");
 #endif
@@ -2695,7 +2456,7 @@ void Start_Right_Deflect_Turn(void)
 				if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("lm_hw get L|R|M &T goto findseat!!!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -2725,7 +2486,7 @@ void Start_Right_Deflect_Turn(void)
 						stop_rap();
 						mode.step=DOCKMODE_STEP_START;
 						mode.step_mk=0;						
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw can't get M siganl! l_hw can't get R\r\n");
 						TRACE("go back to DOCKMODE_STEP_START!r\n");
 #endif
@@ -2736,7 +2497,7 @@ void Start_Right_Deflect_Turn(void)
 						stop_rap();
 						mode.step=DOCKMODE_STEP_FINDSEAT;
 						mode.step_mk=4;						
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw get M!go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif						
 						return;
@@ -2745,7 +2506,7 @@ void Start_Right_Deflect_Turn(void)
 				if(l_hw.effectLeft)						//qz add 20181225
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("l_hw get L in RIGHT step_mk 5!\r\n");
 						TRACE("go to step_mk 6,Perpare LEFT Turn!");
 #endif
@@ -2760,7 +2521,7 @@ void Start_Right_Deflect_Turn(void)
 						stop_rap();
 						mode.step=DOCKMODE_STEP_START;
 						mode.step_mk=0;						
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw can't get M&RM siganl!R\r\n");
 						TRACE("go back to DOCKMODE_STEP_START!r\n");
 #endif
@@ -2770,7 +2531,7 @@ void Start_Right_Deflect_Turn(void)
 				if(lm_hw.effectMid|lm_hw.effectLeft|lm_hw.effectRight)	//qz modify 20181225
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -2803,7 +2564,7 @@ void Start_Right_Deflect_Turn(void)
 				if((rm_hw.effectMid)&(lm_hw.effectMid))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -2827,7 +2588,7 @@ void Start_Right_Deflect_Turn(void)
 				if((lm_hw.effectMidRight)|lm_hw.effectMidLeft)					//中红外发现LEFT|RIGHT,go to DOCKMODE_STEP_FINDSEAT
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -2881,7 +2642,7 @@ void Start_Right_Deflect_Turn(void)
 						stop_rap();
 						mode.step=DOCKMODE_STEP_LEFT;
 						mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("L_HW can get left signal in DOCKMODE_STEP_LEFT!\r\n");
 						TRACE("go to DOCKMODE_STEP_LEFT\r\n");
 #endif
@@ -3014,7 +2775,7 @@ void Start_Left_Deflect_Turn(void)
 				if(do_action(1,360*Angle_1))
 					{
 						stop_rap();
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("l_hw can't catch LEFT\r\n");
 #endif
 //							mode.step=DOCKMODE_STEP_TOP;
@@ -3025,7 +2786,7 @@ void Start_Left_Deflect_Turn(void)
 				if((rm_hw.effectMid)|(lm_hw.effectMid))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG	
+#ifdef DEBUG_DOCK	
 						TRACE("rm_hw get M signal!go to mode_step_findseat!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -3067,19 +2828,19 @@ void Start_Left_Deflect_Turn(void)
 				if(do_action(1,480*Angle_1))
 					{
 						stop_rap(); 					//qz add 20181210
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("l_hw can't get L&T!\r\n");
 #endif
 						if(lm_l_flag)
 							{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("go to step_mk 50!\r\n");
 #endif
 								mode.step_mk=50;
 							}
 						else
 							{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 								TRACE("goto DOCKMODE_STEP_START!\r\n");
 #endif
 								mode.step=DOCKMODE_STEP_START;
@@ -3091,7 +2852,7 @@ void Start_Left_Deflect_Turn(void)
 				if((l_hw.effectLeft)&(l_hw.effectTop))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("l_hw get L&T!\r\n");
 #endif
 						mode.step_mk=1;
@@ -3107,7 +2868,7 @@ void Start_Left_Deflect_Turn(void)
 				if(do_action(3,100*CM_PLUS))		//qz modify 20180910:400--->100
 					{
 						stop_rap();
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("r_hw or b_hw can't find any LEFT,go to start!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_START;
@@ -3118,7 +2879,7 @@ void Start_Left_Deflect_Turn(void)
 				if(l_hw.effectRight)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("find_home=0x%x\r\n",find_home);
 						TRACE("get R signal!\r\n");
 #endif
@@ -3134,7 +2895,7 @@ void Start_Left_Deflect_Turn(void)
 				if(l_hw.effectRight)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("l_hw get R signal!\r\n");
 						TRACE("go to step_mk 4\r\n");
 #endif
@@ -3149,7 +2910,7 @@ void Start_Left_Deflect_Turn(void)
 				enable_rap_no_length(FRONT,l_speed,FRONT, r_speed);
 				if(l_ring.all_length>start_length+8*CM_PLUS)
 					{
-#ifdef	DOCK_DEBUG
+#ifdef	DEBUG_DOCK
 						TRACE("go forward ok!\r\n");
 #endif
 						mode.step_mk=2;
@@ -3174,7 +2935,7 @@ void Start_Left_Deflect_Turn(void)
 				if(r_ring.all_length-start_length>stop_length)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("l_hw can't get signal!go back to DOCKMODE_STEP_START!\r\n");
 						TRACE("mode.step_mk=%d\r\n",mode.step_mk);
 #endif
@@ -3186,7 +2947,7 @@ void Start_Left_Deflect_Turn(void)
 				if(l_hw.effectRight)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG	
+#ifdef DEBUG_DOCK	
 						TRACE("l_hw get R!goto step_mk 4!\r\n");
 #endif
 						mode.step_mk=4;
@@ -3196,7 +2957,7 @@ void Start_Left_Deflect_Turn(void)
 					{
 						stop_rap();
 						//mode.step_mk=7;				//qz mask 20181225
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw get R signal!Goto DOCKMODE_STEP_RIGHT!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_RIGHT;		//qz add 20181225
@@ -3206,7 +2967,7 @@ void Start_Left_Deflect_Turn(void)
 				if((rm_hw.effectMid)|(lm_hw.effectMid))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("lm_hw get MID!go to DOCKMODE_STEP_FINDSEAT!\r\n");
 						TRACE("mode.step_mk=%d\r\n",mode.step_mk);
 #endif
@@ -3217,7 +2978,7 @@ void Start_Left_Deflect_Turn(void)
 				if(r_hw.effectLeft)				//中右红外发现LEFT信号，机器姿态：其实已经严重左偏
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw get L signal,motion is right avertence!\r\n");
 						TRACE("go back to step_mk 0!\r\n");
 #endif
@@ -3235,7 +2996,7 @@ void Start_Left_Deflect_Turn(void)
 				if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("lm_hw get L|R|M &T goto findseat!!!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -3270,7 +3031,7 @@ void Start_Left_Deflect_Turn(void)
 				if(do_action(1,360*Angle_1))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw can't get M siganl! l_hw can't get R\r\n");
 						TRACE("go back to DOCKMODE_STEP_START!r\n");
 #endif
@@ -3283,7 +3044,7 @@ void Start_Left_Deflect_Turn(void)
 				if(r_hw.effectRight)		//qz modify 20181225
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("r_hw get L|LM in LEFT step_mk 5!\r\n");
 						TRACE("go to step_mk 6,Perpare Right Turn!");
 #endif
@@ -3293,7 +3054,7 @@ void Start_Left_Deflect_Turn(void)
 				if(lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("lm_hw get L|R|M!go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 						mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -3307,7 +3068,7 @@ void Start_Left_Deflect_Turn(void)
 				if(do_action(2,360*Angle_1))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw can't get M&RM siganl!R\r\n");
 						TRACE("go back to DOCKMODE_STEP_START!r\n");
 #endif
@@ -3319,7 +3080,7 @@ void Start_Left_Deflect_Turn(void)
 				if(lm_hw.effectMid|lm_hw.effectLeft|lm_hw.effectRight)		//qz modify 20181225
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -3352,7 +3113,7 @@ void Start_Left_Deflect_Turn(void)
 				if((rm_hw.effectMid)&(lm_hw.effectMid))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -3376,7 +3137,7 @@ void Start_Left_Deflect_Turn(void)
 				if((rm_hw.effectMid&lm_hw.effectMid))					//中红外发现LEFT|RIGHT,go to DOCKMODE_STEP_FINDSEAT
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("rm_hw.effectMid=%d\r\n",rm_hw.effectMid);
 						TRACE("lm_hw.effectMid=%d\r\n",lm_hw.effectMid);
 						TRACE("lm_hw.effectMidRight=%d\r\n",lm_hw.effectMidRight);
@@ -3430,7 +3191,7 @@ void Start_Left_Deflect_Turn(void)
 						stop_rap();
 						mode.step=DOCKMODE_STEP_RIGHT;
 						mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("R_HW can get RIGHT signal in DOCKMODE_STEP_RIGHT!\r\n");
 						TRACE("go to DOCKMODE_STEP_RIGHT\r\n");
 #endif
@@ -3538,28 +3299,6 @@ void Start_Left_Deflect_Turn(void)
 		}
 }
 
-void YBS_Find_Seat(void)
-{
-	u32 data1=0;
-	if(SLAM_DOCK)
-		{
-			find_home=ReadHwSign_My();
-			if(find_home)			//有NEAR|RIGHT|LEFT|MID|M_TOP信号
-			{
-				{
-					stop_rap();
-#ifdef DOCK_DEBUG						
-					TRACE("find_home=0x%x\r\n",data1);
-					TRACE("goto Little Dock\r\n"); 
-#endif
-					Init_Docking();
-					return;
-				}
-			}
-		}
-}
-
-
 //qz add 20180814
 //在冠唯现场发现骑上充电座，没接触电极，也没动，也没触发碰撞
 //采用万向轮方法避免情况的发生。
@@ -3598,49 +3337,13 @@ u8 Find_Seat_Skid_Check(void)
 	return 0;
 }
 
-#ifdef SLAM_FIND_SEAT
-void Slam_Find_Seat(void)
-{
-	static u8 check_step=0;
-	u32 data1=0;
-	if(SLAM_DOCK)
-		{
-			data1=ReadHwSign_My();
-			if((data1&=0X0AAAA)&(!check_step))
-				{
-					mode.Info_Abort=1;
-					stop_rap();
-					check_step++;
-				}
-			switch (check_step)
-				{
-					case 0:
-						break;
-					case 1:
-						Speed=1500;
-						if(do_action(2,360*Angle_1))
-							{
-								stop_rap();
-								check_step++;
-							}
-						if(l_hw.effectLeft|r_hw.effectRight);
-				}
-
-
-			clr_hw_effect(&l_hw);
-			clr_hw_effect(&rm_hw);
-			clr_hw_effect(&r_hw);
-		}
-}
-#endif
-
 u8 Find_Seat_My(void)
 {
 		static int l_speed,r_speed;
 		switch (mode.step_mk)
 		{
 		case 4:
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 			TRACE("enter in DOCKMODE_STEP_FINDSEAT\r\n");
 #endif
 			if((lm_hw.effectMid))
@@ -3661,7 +3364,7 @@ u8 Find_Seat_My(void)
 #if 0
 					mode.step=DOCKMODE_STEP_START;
 					mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("lost LEFT&RIGHT!,go to DOCKMODE_STEP_START!\r\n");
 #endif
 #endif
@@ -3676,7 +3379,7 @@ u8 Find_Seat_My(void)
 					stop_rap();
 					mode.step=DOCKMODE_STEP_START;
 					mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("lost LEFT&RIGHT!,go to DOCKMODE_STEP_START!\r\n");
 #endif
 				}
@@ -3814,7 +3517,7 @@ u8 Find_Seat_My(void)
 					stop_rap();
 					mode.step=DOCKMODE_STEP_FINDSEAT;
 					mode.step_mk=4;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw lost LEFT in findseat left,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 	
@@ -3946,7 +3649,7 @@ u8 Find_Seat_My(void)
 					stop_rap();
 					mode.step=DOCKMODE_STEP_FINDSEAT;
 					mode.step_mk=4;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw lost RIGHT in findseat right,go to DOCKMODE_STEP_FINDSEAT!\r\n");
 #endif
 				}
@@ -4013,7 +3716,7 @@ u8 Find_Seat_My(void)
 				{
 					stop_rap();
 					mode.step_mk++;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("lost all Mid Signal!\r\n");
 #endif
 					return 0;
@@ -4026,7 +3729,7 @@ u8 Find_Seat_My(void)
 					stop_rap();
 					mode.step=0;
 					mode.step_mk=0;
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("rm_hw lost r/l/m signal,go to DOCKMODE_STEP_START!\r\n");
 #endif
 					return 0;
@@ -4046,7 +3749,7 @@ u8 Find_Seat_My(void)
 			if((rm_hw.effectMid)&(lm_hw.effectMid))
 				{
 					stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 					TRACE("Reget mid signal,keep going!\r\n");
 #endif
 					mode.step_mk=0x50;
@@ -4056,410 +3759,6 @@ u8 Find_Seat_My(void)
 		}
 		return 0;
 }
-
-void Start_Start_IV(void)
-{
-	static bool l_flag=false,r_flag=false,m_flag=false,t_flag=false;
-	static bool rr_flag=false,lr_flag=false,rmr_flag=false,lmr_flag=false;
-	static bool rl_flag=false,ll_flag=false,rml_flag=false,lml_flag=false;
-	static u8 l_count=0,r_count=0;
-//	static int l_length_start,r_length_start;
-	switch(mode.step_mk)
-	{
-	case 0:
-		l_flag=false;r_flag=false;m_flag=false;t_flag=false;
-		lr_flag=false;rr_flag=false;rmr_flag=false;lmr_flag=false;
-		ll_flag=false;rl_flag=false;rml_flag=false;lml_flag=false;
-		l_count=0;r_count=0;
-		mode.step_mk++;
-		break;
-	case 1:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-#ifdef DOCK_DEBUG
-				TRACE("l_count=%d\r\n",l_count);
-				TRACE("r_count=%d\r\n",r_count);
-#endif
-				stop_rap();
-				if(m_flag)
-					{
-#ifdef DOCK_DEBUG
-						TRACE("get M in %s\r\n",__func__);
-						TRACE("go to DOCKMODE_STEP_FINDSEAT!\r\n");
-#endif
-						mode.step_mk=91;
-						rr_flag=false;
-						lr_flag=false;
-					}
-				else
-					{
-//						if(l_flag|lm_flag)												//无近信号且只有左信号
-						//if(ll_flag&rl_flag&rml_flag&lml_flag)
-						if((l_count)>(r_count))
-						//if((l_count)&(!r_count))
-							{
-#ifdef DOCK_DEBUG
-								TRACE("l_flag=%d\r\n",l_flag);
-								TRACE("get L or LM in %s\r\n",__func__);
-								TRACE("go to DOCKMODE_STEP_LEFT!\r\n");
-#endif
-								if(ll_flag)
-								{	
-									mode.step_mk=10;
-									ll_flag=false;
-									return;
-								}
-							}
-						//if((r_flag)|(rm_flag))												//无近信号且只有右信号
-						//if(rr_flag&lr_flag&rmr_flag&lmr_flag)
-						if((r_count)>(l_count))
-						//if((r_count)&(!l_count))
-							{
-#ifdef DOCK_DEBUG
-								TRACE("r_flag=%d\r\n",r_flag);
-								TRACE("get R in %s\r\n",__func__);
-								TRACE("go to DOCKMODE_STEP_RIGHT!\r\n");
-#endif
-								if(rr_flag)
-								{
-									mode.step_mk=30;
-									rr_flag=false;
-									return;
-								}
-							}
-						else if(((l_count)==(r_count))&(l_count>0)&(r_count>0))
-						//else if((l_count)&(r_count))
-							{
-#ifdef DOCK_DEBUG
-								TRACE("L signal cnt = R signal cnt!\r\n");
-								TRACE("Prepare to ajust!\r\n");
-#endif
-								//mode.step_mk++;
-								if(lml_flag|lmr_flag)
-									{
-										mode.step=DOCKMODE_STEP_FINDSEAT;
-										mode.step_mk=4;
-										return;
-									}
-							}
-
-						if(t_flag)
-							{
-								TRACE("only get TOP signal!!!\r\n");
-								TRACE("go to MODE_STEP_TOP!!!\\r\n");
-								mode.step=DOCKMODE_STEP_TOP_SPOT;
-								mode.step_mk=0;
-								return;
-							}
-#ifdef REYBS2DOCK
-						else
-							{
-#ifdef DOCK_DEBUG
-								TRACE("can't find any signal! go back YBS!\r\n");
-#endif
-								mode.step=DOCKMODE_STEP_REYBS;
-								mode.step_mk=0;
-								return;
-							}
-#endif
-						}
-			}
-		//if(lm_hw.effectMidLeft|rm_hw.effectMidLeft)
-			//lm_flag=true;
-		//if(lm_hw.effectMidRight|rm_hw.effectMidRight)
-			//rm_flag=true;
-		//if(r_hw.effectMid|l_hw.effectMid|rm_hw.effectMid|lm_hw.effectMid)		//qz mask 20181215
-			//m_flag=true;
-		///////以下的代码作用是防反射/////
-		if((l_hw.effectLeft)&(!ll_flag))
-			{
-				ll_flag=true;
-				l_count++;
-#if 0
-				stop_rap();
-				mode.step=DOCKMODE_STEP_LEFT;
-				mode.step_mk=40;
-#ifdef DOCK_DEBUG
-				TRACE("l_hw get L signal directly!");
-				TRACE("go to DOCKMODE_STEP_LEFT step_mk 40!\r\n");
-#endif
-#endif
-				return;
-			}
-		if((l_hw.effectRight)&(!lr_flag))
-			{
-				lr_flag=true;
-				r_count++;
-			}
-		
-		if((rm_hw.effectLeft)&(!rml_flag))
-			{
-				rml_flag=true;
-				l_count++;
-			}
-		if((rm_hw.effectRight)&(!rmr_flag))
-			{
-				rmr_flag=true;
-				r_count++;
-			}
-		
-		if((lm_hw.effectLeft)&(!lml_flag))
-			{
-				lml_flag=true;
-				l_count++;
-			}
-		if((lm_hw.effectRight)&(!lmr_flag))
-			{
-				lmr_flag=true;
-				r_count++;
-			}
-		
-		if((r_hw.effectLeft)&(!rl_flag))
-			{
-				rl_flag=true;
-				l_count++;
-			}
-		if((r_hw.effectRight)&(!rr_flag))
-			{
-				rr_flag=true;
-				r_count++;
-#if 0
-				stop_rap();
-				mode.step=DOCKMODE_STEP_RIGHT;
-				mode.step_mk=40;
-#ifdef DOCK_DEBUG
-				TRACE("r_hw get RM signal directly!");
-				TRACE("go to DOCKMODE_STEP_RIGHT step_mk 40!\r\n");
-#endif
-#endif
-				return;
-			}
-		if(find_home&ALL_TOP_ONLY)
-			{
-				t_flag=true;
-			}
-		////////防反射///////////////
-		
-		if(lm_hw.effectMid&rm_hw.effectMid)
-			{
-				stop_rap();
-#ifdef DOCK_DEBUG
-				TRACE("rm_hw&lm_hw get M signal in %s!\r\n",__func__);
-				TRACE("go to DOCKMODE_STEP_FINDSEAT!\r\n");
-#endif
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-	case 2:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_REYBS;
-				mode.step_mk=0;
-				return;
-			}
-		if(rm_hw.effectLeft|rm_hw.effectRight/
-			lm_hw.effectLeft|lm_hw.effectRight)
-			{
-				stop_rap();
-				mode.step_mk++;
-			}
-		if(rm_hw.effectMid&lm_hw.effectMid)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-	case 3:
-		Speed=HIGH_MOVE_SPEED;
-		if(do_action(3,10*CM_PLUS))
-			{
-				stop_rap();
-				mode.step_mk=0;
-			}
-		break;
-		
-	case 10:
-		Speed=TURN_SPEED;
-		if(do_action(1,360*Angle_1))
-			{
-				mode.step=DOCKMODE_STEP_REYBS;
-				mode.step_mk=0;
-				rl_flag=false;
-				return;
-			}
-		if(rm_hw.effectLeft|lm_hw.effectLeft)
-			{
-				stop_rap();
-				mode.step_mk++;
-			}
-		if(l_hw.effectLeft)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_LEFT;
-				mode.step_mk=40;
-				return;
-			}
-		if(rm_hw.effectMid&lm_hw.effectMid)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-	case 11:
-		Speed=MID_MOVE_SPEED;
-		if(do_action(3,10*CM_PLUS))
-			{
-				stop_rap();
-				mode.step_mk++;
-			}
-		break;
-	case 12:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-
-				stop_rap();
-				mode.step=DOCKMODE_STEP_START;
-				mode.step_mk=0;
-				return;
-			}
-		if(l_hw.effectLeft)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_LEFT;
-				mode.step_mk=40;
-				return;
-			}
-		if(rm_hw.effectMid&lm_hw.effectMid)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-	case 30:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-				mode.step=DOCKMODE_STEP_REYBS;
-				mode.step_mk=0;
-				return;
-			}
-		if(rm_hw.effectRight|lm_hw.effectRight)
-			{
-				stop_rap();
-				mode.step_mk++;
-			}
-		if(r_hw.effectRight)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_RIGHT;
-				mode.step_mk=40;
-				return;
-			}
-		if(rm_hw.effectMid&lm_hw.effectMid)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-	case 31:
-		Speed=HIGH_MOVE_SPEED;
-		if(do_action(3,10*CM_PLUS))
-			{
-				stop_rap();
-				mode.step_mk++;
-			}
-		break;
-	case 32:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-
-				stop_rap();
-				mode.step=DOCKMODE_STEP_START;
-				mode.step_mk=0;
-				return;
-			}
-		if(r_hw.effectRight)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_RIGHT;
-				mode.step_mk=40;
-				return;
-			}
-		if(rm_hw.effectMid&lm_hw.effectMid)
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-				return;
-			}
-		break;
-		
-	case 91:
-		Speed=TURN_SPEED;
-		if(do_action(2,360*Angle_1))
-			{
-#if 0
-#ifdef DOCK_DEBUG
-				TRACE("rm_hw&lm_hw can't get M signal!\r\n");
-#endif
-				stop_rap();
-				if(l_flag)
-					{
-#ifdef DOCK_DEBUG
-						TRACE("can get L,go to DOCKMODE_STEP_LEFT!\r\n");
-#endif
-						mode.step=DOCKMODE_STEP_LEFT;
-					}
-				else if(r_flag)
-					{
-#ifdef DOCK_DEBUG
-						TRACE("can get R,go to DOCKMODE_STEP_LEFT!\r\n");
-#endif
-						mode.step=DOCKMODE_STEP_RIGHT;
-					}
-				else
-					{
-#ifdef DOCK_DEBUG
-						TRACE("can't find any signal! go back YBS!\r\n");
-#endif
-						mode.step=DOCKMODE_STEP_REYBS;
-					}
-#endif
-				mode.step=DOCKMODE_STEP_TOP_SPOT;
-				mode.step_mk=0;
-				return;
-			}
-
-		if(find_home&LEFTMIDLEFT_ONLY)
-			l_flag=true;
-		if(find_home&RIGHTMIDRIGHT_ONLY)
-			r_flag=true;
-		
-		if((lm_hw.effectMid))
-			{
-				stop_rap();
-				mode.step=DOCKMODE_STEP_FINDSEAT;
-				mode.step_mk=4;
-			}
-		break;
-	}
-}
-
 
 void Start_Start_V(void)
 {
@@ -4483,14 +3782,14 @@ void Start_Start_V(void)
 				if(do_action(2,380*Angle_1))
 					{
 						stop_rap();
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 						TRACE("t_count=%d in %s\r\n",t_count,__func__);
 #endif
 						if(t_count>=2)
 							{
 								if(lmm_flag|lml_flag|lmr_flag)
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("lm_hw get Signal,goto step_mk 10!!\r\n");
 #endif
 										mode.step_mk=10;
@@ -4498,14 +3797,14 @@ void Start_Start_V(void)
 									}
 								else if(rr_flag|ll_flag)
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("r_hw|l_hw get Signal,goto step_mk 20!!\r\n");
 #endif
 										mode.step_mk=20;
 									}
 								else
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("r_hw|l_hw|lm_hw can't get Signal goto step TOP!!\r\n");
 #endif
 										mode.step=DOCKMODE_STEP_TOP_SPOT;
@@ -4524,7 +3823,7 @@ void Start_Start_V(void)
 								else
 #endif
 									{
-#ifdef DOCK_DEBUG
+#ifdef DEBUG_DOCK
 										TRACE("Top signal is not good, goto step TOP!!\r\n");
 #endif
 										mode.step=DOCKMODE_STEP_REYBS;
@@ -4724,7 +4023,9 @@ u8 Abort_Dock_YBS(void)
 			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
 				{
 					stop_rap();
+#ifdef DEBUG_DOCK
 					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 					Init_Docking();
 					return 1;
 				}
@@ -4749,8 +4050,8 @@ void Init_Dock_RightYBS(u8 direct_first)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = DOCKING;			
-	mode.sub_mode = YBS_SUB_RIGHT;		
+	mode.mode = MODE_DOCK;			
+	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -4784,8 +4085,8 @@ void Init_Dock_RightYBS(u8 direct_first)
 	mode.time=giv_sys_time;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Right YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	Delete_All_PathPoint();
 	dock_ybs_time=giv_sys_time;
 }
@@ -4808,8 +4109,8 @@ void Init_Dock_LeftYBS(u8 temp_data)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = DOCKING;			
-	mode.sub_mode = YBS_SUB_LEFT;		
+	mode.mode = MODE_DOCK;			
+	mode.sub_mode = SUBMODE_YBS_LEFT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.bump_flag=false;
@@ -4839,8 +4140,8 @@ void Init_Dock_LeftYBS(u8 temp_data)
 	grid.y_ybs_start=grid.y;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Left YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	dock_ybs_time=giv_sys_time;
 }
 
@@ -4873,7 +4174,7 @@ void Do_Docking_YBS(void)
 			if(power.charge_dc)
 #endif
 				{
-					 Init_Chargeing(DC_CHARGING);
+					 Init_Chargeing(SUBMODE_CHARGE_DC);
 					 return;
 				}					
 		}
@@ -4882,7 +4183,7 @@ void Do_Docking_YBS(void)
 
 	clr_all_hw_effect();			//qz add 20181210
 
-	if(mode.sub_mode==YBS_SUB_RIGHT)
+	if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		YBS_Check_corner();
 	else
 		YBS_Left_Check_corner();
@@ -4896,12 +4197,6 @@ void Do_Docking_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
@@ -4912,11 +4207,11 @@ void Do_Docking_YBS(void)
 		return;
 	
 	
-	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+	if((mode.sub_mode==SUBMODE_YBS_RIGHT))				//	RIGHT
 		{
 			YBS_Right_Bump(0);
 		}		
-	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+	else if((mode.sub_mode == SUBMODE_YBS_LEFT))		//	LEFT
 		{
 			YBS_Left_Bump(0);
 		}
@@ -4928,19 +4223,13 @@ void Do_Docking_YBS(void)
 				//Wall_lost_counter = 0;
 				if(mode.step>=0x88)
 					{
-						if(mode.sub_mode==YBS_SUB_RIGHT)
+						if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 						{
 							//mode.step=0x00;			//qz mask 20180910
 						}
 						else
 							mode.step=0x40;
 					}
-
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
@@ -4951,10 +4240,6 @@ void Do_Docking_YBS(void)
 #ifdef	FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.step=0xB0;
@@ -4989,7 +4274,7 @@ void Do_Docking_YBS(void)
 				Free_Skid_Indep.check_flag=false;
 #endif
 				Speed=FAST_MOVE_SPEED;
-				if(mode.sub_mode==YBS_SUB_RIGHT)
+				if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					temp_data1=2;
 				else
 					temp_data1=1;
@@ -5013,7 +4298,7 @@ void Do_Docking_YBS(void)
 				break;
 					
 			case 0:
-				if(mode.sub_mode==YBS_SUB_LEFT)
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
 						return;
@@ -5041,10 +4326,6 @@ void Do_Docking_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-
-#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 						return;
 					}
 				//QZ ADD
@@ -5067,21 +4348,7 @@ void Do_Docking_YBS(void)
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
 						mode.step = 3;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-						Disable_Rotate_Angle();
-#endif
 					}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -5193,11 +4460,7 @@ void Do_Docking_YBS(void)
 						mode.step = 0x42;
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
-#endif
-			
-#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
+#endif			
 					}
 					//QZ ADD
 				if(YBS_Wall_Distance>140)	//140
@@ -5218,22 +4481,7 @@ void Do_Docking_YBS(void)
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-							Disable_Rotate_Angle();
-#endif
-
 						}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif

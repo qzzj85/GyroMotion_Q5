@@ -11,7 +11,5 @@
 void Init_Switchoff(void);
 void Init_Chargeing(u8 temp_sub_mode);
 void Do_Chargeing(void);
-extern bool Quit_Charge_Button;
-extern bool CHG_STA;
 
 #endif

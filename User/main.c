@@ -37,7 +37,7 @@ void log_out(void)
 	TRACE("batfd=%d\r\n",Battery.BatteryFDCap);
 	TRACE("batper=%d\r\n",Battery.bat_per);
 //	TRACE("w_ring.leth=%d\r\n",w_ring.length);
-  	if(mode.mode==CEASE)
+  	if(mode.mode==MODE_CEASE)
 		{
 			TRACE("w_l.dis=%d w_lm.dis=%d  w_m.dis=%d  w_rm.dis=%d  w_r.dis=%d\r\n",w_l.dis,w_lm.dis,\
 			w_m.dis,w_rm.dis,w_r.dis);
@@ -46,13 +46,13 @@ void log_out(void)
 			TRACE("e_l.dif=%d e_m.dif=%d e_r.dif=%d\r\n",e_l.difference,e_m.difference,e_r.difference);
 	//		TRACE("batcap=%d\r\n",Battery.BatteryCapability);
 	//		TRACE("batfd=%d\r\n",Battery.BatteryFDCap);
-			if(mode.sub_mode==ERR)
+			if(mode.sub_mode==SUBMODE_ERR)
 				{
 					TRACE("errcode=0x%x\r\n",error_code);
 					TRACE("m.wifi_err_code=%d\r\n",mode.wifi_err_code);
 				}
 		}
-	else if(mode.mode==DOCKING)
+	else if(mode.mode==MODE_DOCK)
 		{
 			TRACE("m.s_mk=%d\r\n",mode.step_mk);
 			if(power.charge_seat)
@@ -62,15 +62,14 @@ void log_out(void)
 			TRACE("m.bump=%d\r\n",mode.bump);
 			TRACE("m.step_bp=%d\r\n",mode.step_bp);
 		}
-	else if(mode.mode==CHARGEING)
+	else if(mode.mode==MODE_CHARGE)
 		{	
 			TRACE("p.step=%d\r\n",power.step);
 			TRACE("p.pwm=%d\r\n",power.pwm);
 			TRACE("c.cur=%d\r\n",(u32)(charge_data.real_current));
 			TRACE("c.vol=%f\r\n",charge_data.real_voltage*VOLT_CHG_CNT);
-			TRACE("slam_tick=%d\r\n",Slam_Data.tick_flag);
 		}
-	else if(mode.mode==SWEEP)
+	else if(mode.mode==MODE_SWEEP)
 		{
 			//TRACE("m.bump=%d\r\n",mode.bump);
 			//TRACE("m.st_bp=%d\r\n",mode.step_bp);
@@ -145,7 +144,6 @@ int main(void)
 //	enable_pwm(L_FRONT,1000);
 //	Set_BS_Level(500);
 //	delay_ms(5000);
-//	TRACE("angle=%d\r\n",(int)(atan2(fabs(-31),fabs(-26))*57.295));
 //	while(1);
 
 #ifdef DEBUG_Enter_Mode
@@ -163,12 +161,9 @@ int main(void)
 //						Sensor_status_report();
 //						Mile_Gyro_Report();
 		Action_Mode();								//	工作的模式
-#ifdef PWRCAP_CAL
 		AccountCapability();						//	每相隔1秒计算电池剩余容量
-#endif							
 		ReadRealTime();
 		AutoReadKey(); 								//	自动读取按键	
-//		AutoDisplay(); 								//	自动显示				
 		judge_charge(); 							//	自动判断是否有充电信号
 		sampling_temp_voltage();					//	AD采样数据处理  
 		//read_wallearth();		 					//	自动采样墙检和地检数据
@@ -179,7 +174,6 @@ int main(void)
 		Read_Wall_My();								//	读取墙检
 		APP_BAT_Handle();
 		Check_Status();
-		//Get_Dispower(); 
 
 #ifdef VOICE_LIST		//使用语音LIST发出语音
 		Voice_Handle();

@@ -111,7 +111,7 @@ KEY3(回充)
 void AutoReadKey(void)
 {  
    //key_time 10ms一次进入
-	if((key_time != false)&(mode.sub_mode!=SWITCHOFF))			//当子模式处于SWITCHOFF时,不处理按键
+	if((key_time != false)&(mode.sub_mode!=SUBMODE_CHARGE_SWITCHOFF))			//当子模式处于SWITCHOFF时,不处理按键
 	{
 		key_time = false;
 		//read_key(&key1);		//&key1   取得变量key1的指针				 
@@ -131,12 +131,12 @@ void AutoReadKey(void)
 				case 1:
 					key2.press=false;
 
-					//if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
+					//if((mode.mode==MODE_CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
 					//	break;
 					switch(mode.mode)
 						{
-							case CHARGEING:
-								if(mode.sub_mode==SWITCHOFF)
+							case MODE_CHARGE:
+								if(mode.sub_mode==SUBMODE_CHARGE_SWITCHOFF)
 									break;
 								else if(power.charge_dc)
 									{
@@ -148,10 +148,10 @@ void AutoReadKey(void)
 										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 									}
 								break;
-							case CEASE:
+							case MODE_CEASE:
 								switch(mode.sub_mode)
 									{
-										case CEASE:
+										case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 											Reset_Map();
 #endif	
@@ -162,28 +162,28 @@ void AutoReadKey(void)
 											//Init_SweepTest();
 											//Init_Docking();
 											break;
-										case ERR:
+										case SUBMODE_ERR:
 										case SUBMODE_VIRTUAL_SLEEP:
-										case SLEEP:
+										case SUBMODE_SLEEP:
 											Init_Cease();
 											break;
 										default:
 											break;
 									}
 								break;
-							case SWEEP:
-							case YBS:
-							case SHIFT:
-							case PASS2INIT:
-							case EXIT:
-							case SPOT:
+							case MODE_SWEEP:
+							case MODE_YBS:
+							case MODE_SHIFT:
+							case MODE_PASS2INIT:
+							case MODE_EXIT:
+							case MODE_SPOT:
 								Init_Cease();
 								Send_Voice(VOICE_SWEEP_STOP);
 #ifdef TUYA_WIFI  
 								stream_stop(0,256);// 停止地图    WIFI_STREAM_ENABLE
 #endif	
 								break;
-							case DOCKING:
+							case MODE_DOCK:
 								Send_Voice(VOICE_DOCK_STOP);
 								Init_Cease();
 								break;
@@ -197,14 +197,12 @@ void AutoReadKey(void)
 						}
 					 break;
 				case 2:
-					if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
+					if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_FACT_TEST)&(!mode.factory_burnning))		//qz add 20181107
 						break;
 
 						if(wifi_clean)
 							{
-								Slam_Data.dipan_req=DIPAN_REQ_WIFI;	 //重置WIFI
 								wifi_clean=false;
-								Slam_Data.wifi_ok=false;			//重置WIFI时,熄灭网络灯	//qz modify 20181110
 							}
 						key2.long_press=false;
 				break;
@@ -227,26 +225,26 @@ void AutoReadKey(void)
 		 {
 			 case 1:
 				 key3.press=false;
-			 	if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
+			 	if((mode.mode==MODE_CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))		//qz add 20181107
 					 break;
 				 
 			 	 //qz mask 20180902
-			 	 if((mode.sub_mode==ERR)|(mode.sub_mode==QUIT_CHARGING)|(mode.sub_mode==SELF_TEST)) //错误模式，不进入
+			 	 if((mode.sub_mode==SUBMODE_ERR)|(mode.sub_mode==SUBMODE_QUITCHARGE)|(mode.sub_mode==SELF_TEST)) //错误模式，不进入
 				 	break;
-				 if(mode.mode==CHARGEING)					 //充电中，无需发送
+				 if(mode.mode==MODE_CHARGE)					 //充电中，无需发送
 				 	break;
 				 Slam_Data.dipan_req_pre=DIPAN_REQ_DOCK;
 				 Slam_Data.dipan_req=Slam_Data.dipan_req_pre;		 //回充按键,不需要经过启/停按键,按键后直接进入回充
 				 if(!Dis_AllFlagOn)
 					 Dis_AllFlagOn=true;
 #ifdef SLEEP_SUBMODE
-				 if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))	 //qz add 20180725:如果处于休眠子模式,进入待机
+				 if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_SLEEP))	 //qz add 20180725:如果处于休眠子模式,进入待机
 					 {
 						 Init_Cease();
 						 return;
 					 }
 #endif
-				 if(mode.mode!=DOCKING)
+				 if(mode.mode!=MODE_DOCK)
 				 	{
 						Send_Voice(VOICE_DOCK_START);
 						Init_Docking();
@@ -259,7 +257,7 @@ void AutoReadKey(void)
 				 break;
 			case 2:
 				key3.long_press=false;
-				if((mode.mode==CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))	   //qz add 20181107
+				if((mode.mode==MODE_CEASE)&(mode.sub_mode==FACTORY_TEST)&(!mode.factory_burnning))	   //qz add 20181107
 					break;
 				if((!key1.press)&(!key2.press)&(!key1.long_press)&(!key1.long_long_press)&(!key2.long_press)&(!key2.long_long_press))
 					{
@@ -361,7 +359,7 @@ u8 Read_Button_Key(KEY *key)
 {
 	u8 result=0;
 //	static bool long_press=0;
-	if((mode.mode==CHARGEING)&(mode.sub_mode==SWITCHOFF))	//qz add 20180814
+	if((mode.mode==MODE_CHARGE)&(mode.sub_mode==SUBMODE_CHARGE_SWITCHOFF))	//qz add 20180814
 		return 0;
 	switch(key->check_step)
 		{
@@ -411,18 +409,18 @@ u8 Read_Button_Key(KEY *key)
 									//进入老化模式
 									switch(mode.mode)
 										{
-											case CHARGEING:
+											case MODE_CHARGE:
 												switch(mode.sub_mode)
 													{
-														case DC_CHARGING:
+														case SUBMODE_CHARGE_DC:
 															Send_Voice(VOICE_ERROR_DC_EXIST);
 															break;
-														case SEAT_CHARGING:
+														case SUBMODE_CHARGE_SEAT:
 															mode.burning=true;
 															Send_Voice(VOICE_VOLUME_2);
 															Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 															break;
-														case SWITCHOFF:
+														case SUBMODE_CHARGE_SWITCHOFF:
 															break;
 													}
 												break;

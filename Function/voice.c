@@ -4,7 +4,7 @@
 #define	VOICELIST_START 		1
 #define VOICE_LEN sizeof(struct node)
 
-
+#ifdef VOICE_LIST
 u32 voice_time=0;
 u8 voice_level;
 bool voice_ok=true;
@@ -17,12 +17,13 @@ struct node
 
 struct node *voice_head;
 
-
 u8 Init_Voice_Head(void)
 {	
 	if(voice_head!=NULL)
 		{
+#ifdef DEBUG_VOICE
 			TRACE("voice head is exist!!\r\n");
+#endif
 			if(voice_head->next!=NULL)
 				{
 					Del_All_VoiceNode();
@@ -32,66 +33,18 @@ u8 Init_Voice_Head(void)
 	voice_head=(struct node*)malloc(VOICE_LEN);
 	if(voice_head==NULL)
 		{
+#ifdef DEBUG_VOICE
 			TRACE("voice head malloc fail!!\r\n");
+#endif
 			return 1;
 		}
+#ifdef DEBUG_VOICE
 	TRACE("voice head init ok!!\r\n");
+#endif
 	voice_head->next=NULL;
 	return 0;
 }
 
-void Send_Voice(u8 data)
-{
-#ifdef NEW_VOICE_IC
-	if(data>13)
-		return;
-#endif
-
-#ifdef VOICE_LIST						//使用语音LIST发出语音
-	if(!voice_ok)
-		return;
-#ifndef VOICELIST_START		//将新添加的语音放在语音list的最后
-	struct node *p,*q;
-	p=(struct node*)malloc(VOICE_LEN);
-	
-	if(p==NULL)
-		return;
-	
-	q=voice_head;
-	while(q->next!=NULL)
-		q=q->next;
-	q->next=p;
-	p->data=data;
-	p->next=NULL;
-#else						//将新添加的语音放在语音list的最前（voice_head后面）
-	struct node *p=NULL;
-	p=(struct node*)malloc(VOICE_LEN);
-
-	if(p==NULL)
-		return;
-
-	p->next=voice_head->next;
-	voice_head->next=p;
-	p->data=data;
-#endif
-#else						//不使用LIST，直接发语音
-	TRACE("vd=%d\r\n",data);
-	V_CLK_1;
-	delay_us(100);
-	V_CLK_0;
-	delay_us(100);
-	for(int i=0;i<data;i++)
-		{
-			delay_100us(1);
-			V_DAT_1;
-			delay_100us(1);
-			V_DAT_0;	
-		}
-	V_CLK_0;
-	V_DAT_0;
-	delay_us(100);
-#endif
-}
 
 void Del_Node(void)
 {
@@ -131,7 +84,9 @@ void Del_All_VoiceNode(void)
 			free(p);
 			q->next=NULL;
 		}
+#ifdef DEBUG_VOICE
 	TRACE("Del all voicenode success!!!\r\n");	
+#endif
 }
 
 #ifdef ONE_LINE_VOICE
@@ -328,135 +283,6 @@ void Voice_Handle(void)
 		return;
 }
 
-
-void voice_usart(u8 data)
-{
-	u8 addr=0;
-	switch (data)
-		{
-			case 0x01:
-				addr=VOICE_SWEEPER_OK;
-				Slam_Data.slam_ok=true;
-				if(mode.mode!=CHARGEING)
-					Open_Led(1,0,0);
-			break;
-			case 0x02:
-				addr=VOICE_WIFI_OK;			//网络连接成功
-				Slam_Data.wifi_ok=true;
-			break;
-			case 0x03:
-				addr=(VOICE_WIFI_FAIL);		//网络连接失败
-				Slam_Data.wifi_ok=false;
-			break;
-			case 0x04:			//规划打扫
-			case 0x05:			//沿边
-			case 0x06:			//区域
-			case 0x07:			//重点
-				addr=(VOICE_SWEEP_START);
-
-			//防止在充电座按启动键，时机器脱离充电极先进入CEASE状态了，
-			//这时就会在充电座打转，不允许。
-			//qz add 20180814
-			#if 1
-			if((mode.mode==CEASE)&(mode.sub_mode==CEASE)&(mode.last_mode==CHARGEING)&(mode.last_sub_mode==SEAT_CHARGING)&(!dc_nobat_run))
-				{
-					if(giv_sys_time-mode.time<100000)
-						{
-							Init_Quit_Charging(0);
-						}
-				}
-			#endif
-			//qz add end
-			
-			break;
-			case 0x08:			//预约
-				return;
-			case 0x09:			//停止清扫
-				addr=VOICE_SWEEP_STOP;
-			break;
-			case 0x0A:			//开始回充
-				addr=VOICE_DOCK_START;
-			break;
-			case 0x0B:			//停止回充
-				addr=VOICE_DOCK_STOP;
-			break;
-			case 0x0C:			//回充失败
-				addr=VOICE_DOCK_FAIL;
-			break;
-			case 0x0D:			//我在这里
-				addr=VOICE_I_AM_HERE;
-				Open_Led(0,50000,1);
-			break;
-			case 0x0E:			//升级开始
-				addr=VOICE_UPGRADE_START;
-			break;
-			case 0x0F:			//升级成功
-				addr=VOICE_UPGRADE_OK;
-			break;
-			case 0x10:			//升级失败
-				addr=VOICE_UPGRADE_FAIL;
-			break;
-			case 0x11:			//激光测距值固定
-				addr=VOICE_ERROR_BIRD_FAIL;
-				error_code=ERROR_BIRD;				//qz add V2.3.9
-				
-			break;
-			case 0x12:			//激光头损坏,不能通讯
-				addr=VOICE_ERROR_BIRD_FAIL;
-				error_code=ERROR_BIRDCOM;			//qz add V2.3.9
-			break;
-			case 0x13:			//视频板异常
-				addr=VOICE_ERROR_VIDEO_FAIL;
-				error_code=ERROR_VIDEO;				//qz add V2.3.9
-			break;
-			case 0x14:			//gyro板异常
-				addr=VOICE_ERROR_GYRO;
-				error_code=ERROR_GYRO;				//qz add V2.3.9
-			break;
-			case 0x15:			//底盘发送数据异常
-				addr=VOICE_ERROR_DIPAN_TICK;
-				error_code=ERROR_MOTION_TICK;			//qz add V2.3.9
-			break;
-		}
-
-#ifdef SLEEP_SUBMODE
-		if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
-			{
-				switch(data)
-					{
-						case 0x01:
-						case 0x04:			//规划打扫
-						case 0x05:			//沿边
-						case 0x06:			//区域
-						case 0x07:			//重点
-						case 0x08:			//预约
-						case 0x0A:			//开始回充
-						case 0x0D:			//我在这里
-						case 0x0E:			//升级开始
-						case 0x0F:			//升级成功
-							Init_Cease();
-						break;
-						default:
-							break;
-					}
-			}
-#endif
-	if((addr==VOICE_DOCK_START)&(Battery.bat_per<20))
-		{
-			Send_Voice(VOICE_POWER_LOW);
-		}
-	if(addr)
-		Send_Voice(addr);
-
-}
-
-
-void delay_100us(u32 delay_time)
-{
-	u32 time=giv_sys_time;
-	while(giv_sys_time-time<delay_time);
-}
-
 void Init_Voice(void)
 {
 	if(Init_Voice_Head())
@@ -521,4 +347,66 @@ u8 Read_Voice_Level(void)
 #endif
 	return data;
 }
+#endif
+
+void delay_100us(u32 delay_time)
+{
+	u32 time=giv_sys_time;
+	while(giv_sys_time-time<delay_time);
+}
+void Send_Voice(u8 data)
+{
+#ifdef NEW_VOICE_IC
+	if(data>13)
+		return;
+#endif
+
+#ifdef VOICE_LIST						//使用语音LIST发出语音
+	if(!voice_ok)
+		return;
+#ifndef VOICELIST_START		//将新添加的语音放在语音list的最后
+	struct node *p,*q;
+	p=(struct node*)malloc(VOICE_LEN);
+	
+	if(p==NULL)
+		return;
+	
+	q=voice_head;
+	while(q->next!=NULL)
+		q=q->next;
+	q->next=p;
+	p->data=data;
+	p->next=NULL;
+#else						//将新添加的语音放在语音list的最前（voice_head后面）
+	struct node *p=NULL;
+	p=(struct node*)malloc(VOICE_LEN);
+
+	if(p==NULL)
+		return;
+
+	p->next=voice_head->next;
+	voice_head->next=p;
+	p->data=data;
+#endif
+#else						//不使用LIST，直接发语音
+#ifdef DEBUG_VOICE
+	TRACE("vd=%d\r\n",data);
+#endif
+	V_CLK_1;
+	delay_us(100);
+	V_CLK_0;
+	delay_us(100);
+	for(int i=0;i<data;i++)
+		{
+			delay_100us(1);
+			V_DAT_1;
+			delay_100us(1);
+			V_DAT_0;	
+		}
+	V_CLK_0;
+	V_DAT_0;
+	delay_us(100);
+#endif
+}
+
 

@@ -58,8 +58,9 @@
 
 extern u8 bump_value;
 extern bool bump_exiton;
-extern u32 bump_exitoff_time;
 extern bool ring_cnt_flag;
+extern u8 ring_mil_recal;
+
 void Init_Bump_Interrupt(void);
 void Clear_BumpValue(void);
 u8 Parse_BumpValue(void);

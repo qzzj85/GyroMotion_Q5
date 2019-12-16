@@ -27,21 +27,11 @@
 
 ////////////////////////全局变量//////////////////////////////////	 
 extern MODE mode;		 //当前机器所在的状态 
-extern WORK_MODE gsv_work_mode;	 //当前机器所在的工作状态，其取值范围为SWEEP、
-                             //SPOT,当机器在其他状态时不能改变，只有在进入SWEE或者PSPOT
-							 //才会变为SWEEP或者SPOT
-							 
-							 	
 extern u8 sweep_level;
-
-
-
-							 
 extern  u8 zhulujing[];
 extern  u32 zhulujinglong[];
 extern  u32 angle[52];
 extern  ACTION action;
-extern u8 giv_sys_err;         //系统的错误代码
 
 //qz add 20180316
 extern ROTATE_SKID	Rotate_Skid;
@@ -53,10 +43,6 @@ extern FREE_SKID	Free_Skid_Indep;
 extern FREE_SKID	Free_Skid_First;
 #endif
 
-#ifdef YBS_DIS_RESTORE
-extern ROTATE_ANGLE	rotate_angle;
-#endif
-
 extern bool BS_NO_TIME_FLAG;
 extern bool CHECK_STATUS_TIME;
 extern bool CHECK_STATUS_FLAG;
@@ -65,8 +51,6 @@ extern bool GET_DISPLAY_TIME;
 void Init_Mode(void);
 void Action_Mode(void);
 u8 Action_Protect(void);
-void Turn_UV(void);
-void Change_Speed(void);
 void Display_Work_Mode(void);
 void  Enable_Sweep(void);
 void  Disable_Sweep(void);
@@ -81,20 +65,16 @@ void clr_ram(void);
 u8 do_action(u8 dm,u32 length);
 u8 z_road(void);
 u8 louxuan(  u8  f);
-u8 read_earth(void);
 void yanqiangzou(void);
 u8 ybs(void);
 u8 ybs_randrm(void);
 u8 action_bump(void);
-u8 		Check_PreengageTime(void);
 void	Init_Action(void);
 u8 		CheckMDustMotor(void);
 
 
-u8 read_sideearth(void);	
 
 u8 		Check_Free_Sikd(void);	//qz add 20180123
-u8 SLAM_Tick_Check(void);
 void YBS_Comm_Rap_My(void);				//qz add 20180203
 
 void Enable_Free_Skid_Check(void);
@@ -119,17 +99,9 @@ u8 Lift_Check(void);
 u8 Bump_Fix_Check(void);
 u8 Ring_Fix_Check(void);
 u8 Action_Protect_My(u8 abnoraml);
-void Dust_Level_Check(void);
 void Set_FJ_Level(u16 level);
 void Set_BS_Level(u16 level);
 void Set_ZS_Level(u16 level);
-
-#ifdef YBS_DIS_RESTORE
-void Init_Rotate_Angle(void);
-void Enable_Rotate_Angle(void);
-void Disable_Rotate_Angle(void);
-void Check_Rotate_Angle(void);
-#endif
 
 #ifdef FREE_FIRST_BAD_CHECK
 void Enable_Free_First_Check(void);

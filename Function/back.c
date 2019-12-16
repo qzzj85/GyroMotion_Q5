@@ -7,14 +7,18 @@ u8 Init_BackHead(void)
 {
 	if(back_head!=NULL)
 		{
+#ifdef DEBUG_BACKLIST
 			TRACE("back head is exist!!\r\n");
+#endif
 			if(back_head->last_info!=NULL);
 				back_head->last_info=NULL;
 			if(back_head->next_info!=NULL)
 				{
 					if(Del_All_BackInfo())
 						{
+#ifdef DEBUG_BACKLIST
 							TRACE("Del all back info fail !!!\r\n");
+#endif
 							return 1;
 						}
 				}
@@ -26,18 +30,21 @@ u8 Init_BackHead(void)
 	back_head->last_info=NULL;
 	back_head->next_info=NULL;
 	curr_back=back_head;
+#ifdef DEBUG_BACKLIST
 	TRACE("back head malloc success!!\r\n");
+#endif
 	return 0;
 }
 
 u8 Add_BackInfo(void)
 {
 	struct BACK_INFO *p,*q;
-	p=(struct BACK_INFO*)malloc(BACK_INFO_LEN
-);
+	p=(struct BACK_INFO*)malloc(BACK_INFO_LEN);
 	if(p==NULL)
 		{
+#ifdef DEBUG_BACKLIST
 			TRACE("BackInfo malloc fail!!!\r\n");
+#endif
 			return 1;
 		}
 	p->tgt_yaw=motion1.tgt_yaw;
@@ -58,8 +65,9 @@ u8 Add_BackInfo(void)
 	p->last_info=q;
 	p->next_info=NULL;
 	curr_back=p;
-
+#ifdef DEBUG_BACKLIST
 	TRACE("BacInfo Add success!!!\r\n");
+#endif
 	return 0;
 }
 
@@ -80,7 +88,9 @@ u8 Delete_CurrBackInfo(void)
 	q->next_info=NULL;
 	free(p);
 	curr_back=q;
+#ifdef DEBUG_BACKLIST
 	TRACE("delete curr back success!!!\r\n");
+#endif
 	return 0;
 }
 
@@ -101,7 +111,6 @@ u8 Del_All_BackInfo(void)
 {
 	struct BACK_INFO *p,*q;
 	p=back_head;
-//	TRACE("Enter in Delete All PathPoint!!\r\n");
 	while(p->next_info!=NULL)			//先去到最后一个节点
 		{
 			p=p->next_info;
@@ -115,11 +124,15 @@ u8 Del_All_BackInfo(void)
 		}
 	if(p!=back_head)
 		{
+#ifdef DEBUG_BACKLIST
 			TRACE("Delete All BackInfo fail!\r\n");
+#endif
 			return 1;
 		}
 	back_head->next_info=NULL;				//现在p是head_point，将其next设置为空
+#ifdef DEBUG_BACKLIST
 	TRACE("Delete All BackInfo success!\r\n");
+#endif
 	return 0;
 }
 

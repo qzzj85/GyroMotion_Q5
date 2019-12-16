@@ -42,15 +42,12 @@
 #include "spot.h"
 #include "tele.h"
 #include "chargeing.h"
-#include "err.h"
 #include "Commander.h"
 
 
 
 #include "Sweep_Gong.h"
 #include "usart.h"
-#include "quit_charging.h"
-#include "sleep.h"
 
 #include <stdio.h>
 #include "YYBBSS.h"

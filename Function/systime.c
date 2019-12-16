@@ -11,25 +11,10 @@
 #include   "systime.h"
 #include "AAA-include.h"
 volatile  unsigned int  giv_sys_time;     //定义为整个系统的系统时钟
-volatile  unsigned int  time_tmp[10];
-unsigned int time_stemp;	//QZ ADD
-
-bool app_bat_min;
-
 volatile bool Sec;												//秒标志
-volatile bool Sec_Two;		    						//两秒的标志
-bool Half_Min;											//30s標志
 bool gbv_minute;   												//分钟标志，用于定时采样电池的电压。
 bool Five_Sec;
-bool Ten_Sec;
-bool Half_Sec;
-bool MiliSec_50;	//50ms
-vu16 CCR1_Val = 1200;//定时器的计数脉冲。
-bool time_speed=false;
 bool gyro_check_time=false;
-
-bool coordinate_show=false;
-
 
 void Init_Time_1(void)
 {

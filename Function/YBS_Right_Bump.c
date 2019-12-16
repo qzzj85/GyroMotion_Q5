@@ -1179,8 +1179,6 @@ void YBS_Right_Bump(u8 out_enable)
 							mode.step_bp=0;
 							mode.bump=0;
 							mode.step=0;
-							clr_curr_buf(l_curr_buf);
-							clr_curr_buf(r_curr_buf);
 						}
 					break;
 			#endif
@@ -1266,7 +1264,7 @@ void YBS_Right_Bump(u8 out_enable)
 							mode.step_bp=0;
 							return;
 						}
-					if(mode.mode==DOCKING)
+					if(mode.mode==MODE_DOCK)
 						{
 							if(l_ring.all_length-start_length>(end_length/2))
 							{

@@ -10,8 +10,6 @@ struct PATH_POINT *path_end;
 POINT_GRID turn_grid;							//YBS分析到可行路径后的中转点
 u32 path_length=0;								//路径分析的行走点个数
 u32 last_path_length=0;
-//POINT_GRID last_grid[100];
-bool pathpoint_inybs=false;
 
 void Init_LastPointGrid(POINT_GRID *p)
 {
@@ -35,7 +33,9 @@ u8 Compare_PointGrid(POINT_GRID *p,POINT_GRID *q)
 	int i=0;
 	if(last_path_length==0)
 		{
+#ifdef DEBUG_PATH
 			TRACE("last point grid is empty,return 0!!!\r\n");
+#endif
 			return 0;
 		}
 	if((path_length!=last_path_length))
@@ -67,14 +67,18 @@ u8 Path_Repeat_Check(PATH_STARTEND *last,PATH_STARTEND *now)
 {
 	if(path_length==0)
 		{
+#ifdef DEBUG_PATH
 			TRACE("This is the first use path_point,no need compare!!\r\n");
+#endif
 			return 0;
 		}
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("last start grid.x=%d y=%d\r\n",last->start_grid.gridx,last->start_grid.gridy);
 	TRACE("now start grid.x=%d y=%d\r\n",now->start_grid.gridx,now->start_grid.gridy);
 	TRACE("last tgt grid.x=%d y=%d\r\n",last->tgt_grid.gridx,last->tgt_grid.gridy);
 	TRACE("now tgt grid.x=%d y=%d\r\n",now->tgt_grid.gridx,now->tgt_grid.gridy);
+#endif
 	if((last->start_grid.gridx==now->start_grid.gridx)&(last->start_grid.gridy==now->start_grid.gridy))
 		{
 			if((last->tgt_grid.gridx==now->tgt_grid.gridx)&(last->tgt_grid.gridy==now->tgt_grid.gridy))
@@ -99,14 +103,18 @@ u8 Init_PathPoint(void)
 {
 	if(path_head!=NULL)
 		{
+#ifdef DEBUG_PATH
 			TRACE("path head is exist!!!\r\n");
+#endif
 			if(path_head->last_point!=NULL)
 				path_head->last_point=NULL;
 			if(path_head->next_point!=NULL)
 				{
 					if(Delete_All_PathPoint())
 						{
+#ifdef DEBUG_PATH
 							TRACE("fail in %s!!,Do not use pathpoint!!!\r\n",__func__);
+#endif
 							motion1.pathpoint_ok=false;
 							return 1;
 						}
@@ -117,14 +125,18 @@ u8 Init_PathPoint(void)
 	path_head=(struct PATH_POINT*)malloc(LEN_PATHPOINT);
 	if(path_head==NULL)
 		{
+#ifdef DEBUG_PATH
 			TRACE("path head malloc fail!!\r\n");
+#endif
 			motion1.pathpoint_ok=false;
 			return 1;
 		}
 	path_head->last_point=NULL;
 	path_head->next_point=NULL;
 	path_head->path_grid.data=0;
+#ifdef DEBUG_PATH
 	TRACE("path head malloc success!!\r\n");
+#endif
 //	Init_LastPointGrid();
 	return 0;
 }
@@ -133,7 +145,6 @@ u8 Delete_All_PathPoint(void)
 {
 	struct PATH_POINT *p,*q;
 	p=path_head;
-//	TRACE("Enter in Delete All PathPoint!!\r\n");
 	while(p->next_point!=NULL)			//先去到最后一个节点
 		{
 			p=p->next_point;
@@ -147,11 +158,15 @@ u8 Delete_All_PathPoint(void)
 		}
 	if(p!=path_head)
 		{
+#ifdef DEBUG_PATH
 			TRACE("Delete All PathPoint fail!\r\n");
+#endif
 			return 1;
 		}
 	path_head->next_point=NULL;					//现在p是head_point，将其next设置为空
+#ifdef DEBUG_PATH
 	TRACE("Delete All PathPoint success!\r\n");
+#endif
 	return 0;
 }
 
@@ -171,7 +186,9 @@ u8 Add_PathPoint(s8 gridx,s8 gridy,u8 data)
 	q=(struct PATH_POINT*)malloc(LEN_PATHPOINT);
 	if(q==NULL)
 		{
+#ifdef DEBUG_PATH
 			TRACE("PATH POINT malloc fail in %s\r\n",__func__);
+#endif
 			return 1;
 		}
 	p->next_point=q;					//最后一个节点的next指针指向新分配单元
@@ -207,8 +224,9 @@ u8 IS_Can_ReachPointX_NoWall(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 	s8 temp_gridx,temp_gridy;
 	s8 temp_xmin,temp_xmax;
 	temp_gridy=now_gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("enter in %s\r\n",__func__);
+#endif
 	if(now_gridx==tgt_gridx)
 		return 1;
 
@@ -230,10 +248,14 @@ u8 IS_Can_ReachPointX_NoWall(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 				{
 					temp_xmax=Return_MaxClean_GridX(temp_gridy,0);			//当前Y坐标下最大X清扫点
 					temp_xmin=Return_MinClean_GridX(temp_gridy,0);			//当前Y坐标小最小X清扫点
+#ifdef DEBUG_PATH
 					TRACE("girdy=%d Xmax Clean=%d Xmin Clean=%d\r\n",temp_gridy,temp_xmax,temp_xmin);
+#endif
 					for(temp_gridx=temp_xmin;temp_gridx<=temp_xmax;temp_gridx++)
 						{
+#ifdef DEBUG_PATH
 							TRACE("grid[%d][%d]=%d\r\n",temp_gridy,temp_gridx,Read_Coordinate_Clean(temp_gridx,temp_gridy));
+#endif
 						}
 					break;
 				}
@@ -241,13 +263,16 @@ u8 IS_Can_ReachPointX_NoWall(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 
 	if(temp_gridx==tgt_gridx)
 		{
-	
+#ifdef DEBUG_PATH
 			TRACE("return 1 in %s\r\n",__func__);
+#endif
 			return 1;
 		}
 	else
 		{
+#ifdef DEBUG_PATH
 			TRACE("return 0 in %s\r\n",__func__);
+#endif
 			return 0;
 		}
 }
@@ -301,8 +326,9 @@ s8 Find_PathPoint_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to max checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1>=min_cleanx1;temp_gridx1--)
 		{
 			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx1,gridy2)))
@@ -312,10 +338,12 @@ s8 Find_PathPoint_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to min checkout!!!\r\n");
 	TRACE("gridx1=%d gridy1=%d gridy2=%d\r\n",gridx1,gridy1,gridy2);
 	TRACE("gridy1 can't to gridy2,No comman point!!!\r\n");
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return (0x7f);	
 }
 
@@ -329,7 +357,6 @@ u8 IS_Can_ReachPoint_X(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 	s8 temp_gridx,temp_gridy;
 	temp_gridx=now_gridx;temp_gridy=now_gridy;
 
-//	TRACE("enter in %s\r\n",__func__);
 	if(temp_gridx==tgt_gridx)
 		return 1;
 
@@ -351,12 +378,10 @@ u8 IS_Can_ReachPoint_X(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 	if(temp_gridx==tgt_gridx)
 		{
 	
-			//TRACE("return 1 in %s\r\n",__func__);
 			return 1;
 		}
 	else
 		{
-			//TRACE("return 0 in %s\r\n",__func__);
 			return 0;
 		}
 }
@@ -372,10 +397,11 @@ s8 Find_Adjoin_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 
 	max_cleanx1=Return_MaxClean_GridX(gridy1,0);
 	min_cleanx1=Return_MinClean_GridX(gridy1,0);
+#ifdef DEBUG_PATH
 	TRACE("enter in %s...\r\n",__func__);
 	TRACE("gridx1=%d gridy1=%d gridy2=%d\r\n",gridx1,gridy1,gridy2);
 	TRACE("gridy1 Xmax=%d Xmin=%d\r\n",max_cleanx1,min_cleanx1);
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1<max_cleanx1;temp_gridx1++)
 		{
 			if(Read_Coordinate_Clean(temp_gridx1,gridy1)&(Read_Coordinate_Clean(temp_gridx1+1,gridy1)))
@@ -383,14 +409,17 @@ s8 Find_Adjoin_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 					if(Read_Coordinate_Clean(temp_gridx1,gridy2)&(Read_Coordinate_Clean(temp_gridx1+1,gridy2)))
 						{
 							//return temp_gridx1;
+#ifdef DEBUG_PATH
 							TRACE("comm point x=%d\r\n",temp_gridx1);
+#endif
 							if(IS_Can_ReachPoint_X(gridx1, temp_gridx1, gridy1))
 								return temp_gridx1;
 						}
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now&now+1 point to max checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1>min_cleanx1;temp_gridx1--)
 		{
 			if(Read_Coordinate_Clean(temp_gridx1,gridy1)&(Read_Coordinate_Clean(temp_gridx1-1,gridy1)))
@@ -403,8 +432,9 @@ s8 Find_Adjoin_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 						}
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now&now-1 point to min checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1<=max_cleanx1;temp_gridx1++)
 		{
 			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_Clean(temp_gridx1,gridy2)))
@@ -413,8 +443,9 @@ s8 Find_Adjoin_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to max checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1>=min_cleanx1;temp_gridx1--)
 		{
 			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_Clean(temp_gridx1,gridy2)))
@@ -423,10 +454,11 @@ s8 Find_Adjoin_Gap(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to min checkout!!!\r\n");
-
 	TRACE("gridy1 can't to gridy2,No comman point!!!\r\n");
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return (0x7f);	
 }
 
@@ -436,8 +468,9 @@ s8 Find_MaxApproch_Y(s8 tgt_gridy)
 {
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
-	
+#endif
 	if(now_gridy>tgt_gridy)
 		now_gridy--;
 	else if(now_gridy<tgt_gridy)
@@ -458,8 +491,10 @@ s8 Find_MaxApproch_Y(s8 tgt_gridy)
 					break;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("cal result_girdy=%d tgt_girdy=%d\r\n",now_gridy,tgt_gridy);
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return now_gridy;
 }
 
@@ -469,8 +504,9 @@ s8 Find_MaxApproch_X(s8 tgt_gridx)
 {
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
-	
+#endif
 	if(now_gridx>tgt_gridx)
 		now_gridx--;
 	else if(now_gridx<tgt_gridx)
@@ -491,8 +527,10 @@ s8 Find_MaxApproch_X(s8 tgt_gridx)
 					break;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("cal result_girdx=%d tgt_girdx=%d\r\n",now_gridx,tgt_gridx);
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return now_gridx;
 	
 }
@@ -502,10 +540,11 @@ u8 Analysis_Directly(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 	s8 temp_gridx,temp_gridy,tgt_gridx,tgt_gridy,now_gridx,now_gridy;
 	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;
 	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;
+#ifdef DEBUG_PATH
 	TRACE("enter in %s...\r\n",__func__);
 	TRACE("now_point.x=%d y=%d\r\n",now_gridx,now_gridy);
 	TRACE("tgt_point.x=%d y=%d\r\n",tgt_gridx,tgt_gridy);
-
+#endif
 	if((now_gridy!=tgt_gridy)&(now_gridy<tgt_gridy))
 		{
 			temp_gridy=now_gridy+1;
@@ -615,7 +654,9 @@ u8 Find_Directly_Way(s8 tgt_gridx,s8 tgt_gridy)
 {
 	u8 result=0;
 	POINT_GRID now_grid,tgt_grid;
+#ifdef DEBUG_PATH
 	TRACE("enter in %s...\r\n",__func__);
+#endif
 	now_grid.gridx=grid.x;now_grid.gridy=grid.y;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 
@@ -634,7 +675,9 @@ u8 Find_Indirectly_Way(s8 tgt_gridx,s8 tgt_gridy)
 	s8 now_gridx,now_gridy,temp_gridx,temp_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
 
-	TRACE("Enter %s ...\r\n",__func__);
+#ifdef DEBUG_PATH
+	TRACE("enter in %s...\r\n",__func__);
+#endif
 
 	temp_gridx=now_gridx;temp_gridy=now_gridy;
 	if(temp_gridy<tgt_gridy)						//当当前点Y坐标小于目标点Y坐标时						
@@ -645,8 +688,10 @@ u8 Find_Indirectly_Way(s8 tgt_gridx,s8 tgt_gridy)
 //					TRACE("temp_gridy=%d in %s\r\n",temp_gridy,__func__);
 					while(temp_gridy!=tgt_gridy)	//从当前Y坐标开始寻找
 						{
+#ifdef DEBUG_PATH
 							TRACE("temp_gridx=%d in %s\r\n",temp_gridx,__func__);
 							TRACE("temp_gridy=%d in %s\r\n",temp_gridy,__func__);
+#endif
 #if 0
 							result1=Find_Adjoin_Gap(temp_gridx,temp_gridy,temp_gridy+1);	//寻找两点之间是否有公共通道
 							if(result1==0x7f)											
@@ -704,7 +749,9 @@ u8 Find_Indirectly_Way(s8 tgt_gridx,s8 tgt_gridy)
 //					TRACE("temp_gridy=%d in %s\r\n",temp_gridy,__func__);
 					while(temp_gridy!=tgt_gridy)
 						{
+#ifdef DEBUG_PATH
 							TRACE("temp_gridy=%d in %s\r\n",temp_gridy,__func__);
+#endif
 #if 0
 							result1=Find_Adjoin_Gap(temp_gridx,temp_gridy,temp_gridy-1);
 							if(result1==0x7f)
@@ -767,10 +814,11 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 	s8 now_gridx,now_gridy,temp_gridx,temp_gridy,tgt_gridx,tgt_gridy;
 	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;
 	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("now_gridx=%d gridy=%d\r\n",now_gridx,now_gridy);
 	TRACE("tgt_gridx=%d gridy=%d\r\n",tgt_gridx,tgt_gridy);
+#endif
 	if(Delete_All_PathPoint())
 		{
 			motion1.pathpoint_ok=false;
@@ -792,7 +840,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界,最多100个path point点
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 								
@@ -810,13 +860,17 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 #if 0
 							i=Compare_PointGrid(last_grid,pointgrid);
 							if(i)
-								{	
+								{
+#ifdef DEBUG_PATH
 									TRACE("Last PointGrid is equ Now PointGrid,Return !!!\r\n");
+#endif
 									return 0;
 								}							
 							stop_rap();
+#ifdef DEBUG_PATH
 							TRACE("Last PointGrid is not equ Now PointGrid,Return !!!\r\n");
 							TRACE("Reset&Load last PointGrid!!!\r\n");
+#endif
 							Init_LastPointGrid();
 							Load_LastPoinGrid(last_grid,pointgrid);
 #else
@@ -825,7 +879,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							i=Path_Repeat_Check(&startend_last,&startend_now);
 							if(i)
 								{
+#ifdef DEBUG_PATH
 									TRACE("The same PathPoint Start!!! No use PathPoint!!!\r\n");
+#endif
 									return 0;
 								}
 							startend_last.start_grid.gridx=startend_now.start_grid.gridx;startend_last.start_grid.gridy=startend_now.start_grid.gridy;
@@ -837,7 +893,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -868,7 +926,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 						}
@@ -886,12 +946,16 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							i=Compare_PointGrid(last_grid,pointgrid);
 							if(i)
 								{	
+#ifdef DEBUG_PATH
 									TRACE("Last PointGrid is equ Now PointGrid,Return !!!\r\n");
+#endif
 									return 0;
 								}							
 							stop_rap();
+#ifdef DEBUG_PATH
 							TRACE("Last PointGrid is not equ Now PointGrid,Return !!!\r\n");
 							TRACE("Reset&Load last PointGrid!!!\r\n");
+#endif
 							Init_LastPointGrid();
 							Load_LastPoinGrid(last_grid,pointgrid);
 #else
@@ -900,7 +964,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							i=Path_Repeat_Check(&startend_last,&startend_now);
 							if(i)
 								{
+#ifdef DEBUG_PATH
 									TRACE("The same PathPoint Start!!! No use PathPoint!!!\r\n");
+#endif
 									return 0;
 								}
 							startend_last.start_grid.gridx=startend_now.start_grid.gridx;startend_last.start_grid.gridy=startend_now.start_grid.gridy;
@@ -912,7 +978,9 @@ u8 Analysis_PathPoint(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -942,16 +1010,21 @@ u8 Find_PathPoint_Way(s8 tgt_gridx,s8 tgt_gridy)
 	POINT_GRID now_grid,tgt_grid;
 	now_grid.gridx=grid.x;now_grid.gridy=grid.y;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	if(!motion1.pathpoint_ok)
 		{
+#ifdef DEBUG_PATH
 			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+#endif
 			return 0;
 		}
 	result=Analysis_PathPoint(&now_grid,&tgt_grid);
+#ifdef DEBUG_PATH
 	TRACE("result=%d\r\n",result);
 	TRACE("Out %s!\r\n",__func__);
+#endif
 	return result;
 }
 
@@ -1098,7 +1171,7 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 		}
 #else
 	short now_angle=Gyro_Data.yaw;
-	if(mode.sub_mode==YBS_SUB_LEFT)
+	if(mode.sub_mode==SUBMODE_YBS_LEFT)
 		{
 			if(abs((abs(now_angle))-(abs(F_Angle_Const)))<4500)					//机器角度朝向上半球
 				{
@@ -1118,11 +1191,13 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 				}
 			else
 				{
+#ifdef DEBUG_PATH
 					TRACE("motion not match special angle in %s!!!\r\n",__func__);
+#endif
 					return 0;
 				}
 		}
-	else if(mode.sub_mode==YBS_SUB_RIGHT)
+	else if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		{
 			if(abs((abs(now_angle))-(abs(F_Angle_Const)))<4500) 				//机器角度朝向上半球
 				{
@@ -1142,14 +1217,18 @@ u8 Find_DirectlyWay_YBS(s8 tgt_gridx,s8 tgt_gridy)
 				}
 			else
 				{
+#ifdef DEBUG_PATH
 					TRACE("motion not match special angle in %s!!!\r\n",__func__);
+#endif
 					return 0;
 				}
 		}
 	
 	if((last_turn_grid.gridx==now_grid.gridx)&(last_turn_grid.gridy==now_grid.gridy))
 		{
+#ifdef DEBUG_PATH
 			TRACE("last turn grid is match now grid!!\r\n");
+#endif
 			return 0;
 		}
 	result=Analysis_Directly_YBS(&now_grid,&tgt_grid);
@@ -1172,17 +1251,17 @@ u8 Find_PathPoint_NoWall_YBS(s8 tgt_gridx,s8 tgt_gridy)
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
 
-//	if(pathpoint_inybs)
-//		return 0;
-//	pathpoint_inybs=true;
 	if((last_tgt_gridx==tgt_gridx)&(last_tgt_gridy==tgt_gridy))
 		return 0;
 	last_tgt_gridx=tgt_gridx;last_tgt_gridy=tgt_gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter %s..\r\n",__func__);
+#endif
 	if(!motion1.pathpoint_ok)
 		{
+#ifdef DEBUG_PATH
 			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+#endif
 			return 0;
 		}
 
@@ -1248,12 +1327,12 @@ u8 Locate_AreaDir(s8 gridx,s8 gridy)
 	xmin_clean=Return_MinClean_GridX(gridy,0);
 	ymax_clean=Return_MaxClean_GridY(gridx,0);
 	ymin_clean=Return_MinClean_GridY(gridx,0);
-
+#ifdef DEBUG_PATH
 	TRACE("xmax_clean=%d in %s\r\n",xmax_clean,__func__);
 	TRACE("xmin_clean=%d\r\n",xmin_clean);
 	TRACE("ymax_clean=%d\r\n",ymax_clean);
 	TRACE("ymin_clean=%d in %s\r\n",ymin_clean,__func__);
-
+#endif
 	x_median=(xmax_clean+xmin_clean)/2;	
 	y_median=(ymax_clean+ymin_clean)/2;
 
@@ -1289,12 +1368,12 @@ u8 Locate_BoundaryDir(s8 gridx,s8 gridy)
 	xmin_clean=Return_MinClean_GridX(gridy,0);
 	ymax_clean=Return_MaxClean_GridY(gridx,0);
 	ymin_clean=Return_MinClean_GridY(gridx,0);
-	
+#ifdef DEBUG_PATH
 	TRACE("xmax_clean=%d in %s\r\n",xmax_clean,__func__);
 	TRACE("xmin_clean=%d\r\n",xmin_clean);
 	TRACE("ymax_clean=%d\r\n",ymax_clean);
 	TRACE("ymin_clean=%d in %s\r\n",ymin_clean,__func__);
-
+#endif
 	x_median=(xmax_clean+xmin_clean)/2;	
 	y_median=(ymax_clean+ymin_clean)/2;
 
@@ -1517,13 +1596,15 @@ u8 Judge_YBS_Dir(void)
 	POINT_GRID now_grid,tgt_grid;
 	now_gridx=grid.x;now_gridy=grid.y;
 	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
-	
+#endif	
 	if((abs(now_gridx-tgt_gridx1)<=3)&(abs(now_gridy-tgt_gridy1)<=3))
 		{
+#ifdef DEBUG_PATH
 			TRACE("now grid is in 60cm to new1!!!\r\n");
 			TRACE("return 0!!!\r\n");
+#endif
 			return 0;
 		}
 
@@ -1536,13 +1617,17 @@ u8 Judge_YBS_Dir(void)
 				tgt_area_dir=Locate_BoundaryDir(tgt_gridx1, tgt_gridy1);
 				now_grid.gridx=now_gridx;now_grid.gridy=now_gridy;now_grid.area_dir=now_area_dir;
 				tgt_grid.gridx=tgt_gridx1;tgt_grid.gridy=tgt_gridy1;tgt_grid.area_dir=tgt_area_dir;
+#ifdef DEBUG_PATH
 				TRACE("now gridx=%d now_gridy=%d\r\n",now_gridx,now_gridy);
 				TRACE("tgt_gridx=%d tgt_gridy=%d\r\n",tgt_gridx1,tgt_gridy1);
 				TRACE("now_area_dir=%d\r\n",now_area_dir);
 				TRACE("tgt_boundary_dir=%d\r\n",tgt_area_dir);
+#endif
 				if(tgt_area_dir==0)
 					{
+#ifdef DEBUG_PATH
 						TRACE("tgt is not boundary!!! return 0!!!\r\n");
+#endif
 						return 0;
 					}
 				ybs_dir=Judge_YBSDir_Area(&now_grid,&tgt_grid);
@@ -1550,7 +1635,9 @@ u8 Judge_YBS_Dir(void)
 			default:
 				break;
 		}
+#ifdef DEBUG_PATH
 	TRACE("ybs_dir=%d in %s\r\n",ybs_dir,__func__);
+#endif
 	return ybs_dir;
 }
 
@@ -1560,16 +1647,21 @@ u8 Find_PathPoint_WayAll(s8 tgt_gridx,s8 tgt_gridy)
 	POINT_GRID now_grid,tgt_grid;
 	now_grid.gridx=grid.x;now_grid.gridy=grid.y;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	if(!motion1.pathpoint_ok)
 		{
+#ifdef DEBUG_PATH
 			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+#endif
 			return 0;
 		}
 	result=Analysis_PathPoint_GridAll(&now_grid,&tgt_grid);
+#ifdef DEBUG_PATH
 	TRACE("result=%d\r\n",result);
 	TRACE("Out %s!\r\n",__func__);
+#endif
 	return result;
 }
 
@@ -1589,8 +1681,9 @@ s8 Find_Adjoin_GapAll(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to max checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1>=min_cleanx1;temp_gridx1--)
 		{
 			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx1,gridy2)))
@@ -1600,10 +1693,12 @@ s8 Find_Adjoin_GapAll(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to min checkout!!!\r\n");
 	TRACE("gridx1=%d gridy1=%d gridy2=%d\r\n",gridx1,gridy1,gridy2);
 	TRACE("gridy1 can't to gridy2,No comman point!!!\r\n");
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return (0x7f);	
 }
 
@@ -1619,10 +1714,11 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 	s8 now_gridx,now_gridy,temp_gridx,temp_gridy,tgt_gridx,tgt_gridy;
 	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;
 	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("now_gridx=%d gridy=%d\r\n",now_gridx,now_gridy);
 	TRACE("tgt_gridx=%d gridy=%d\r\n",tgt_gridx,tgt_gridy);
+#endif
 	if(Delete_All_PathPoint())
 		{
 			motion1.pathpoint_ok=false;
@@ -1644,7 +1740,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 								
@@ -1659,7 +1757,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							i=Path_Repeat_Check(&startend_last,&startend_now);
 							if(i)
 								{
+#ifdef DEBUG_PATH
 									TRACE("The same PathPoint Start!!! No use PathPoint!!!\r\n");
+#endif
 									return 0;
 								}
 							startend_last.start_grid.gridx=startend_now.start_grid.gridx;startend_last.start_grid.gridy=startend_now.start_grid.gridy;
@@ -1670,7 +1770,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -1701,7 +1803,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 						}
@@ -1715,7 +1819,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							i=Path_Repeat_Check(&startend_last,&startend_now);
 							if(i)
 								{
+#ifdef DEBUG_PATH
 									TRACE("The same PathPoint Start!!! No use PathPoint!!!\r\n");
+#endif
 									return 0;
 								}
 							startend_last.start_grid.gridx=startend_now.start_grid.gridx;startend_last.start_grid.gridy=startend_now.start_grid.gridy;
@@ -1726,7 +1832,9 @@ u8 Analysis_PathPoint_GridAll(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -1750,7 +1858,6 @@ u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 	s8 temp_gridx,temp_gridy;
 	temp_gridx=now_gridx;temp_gridy=now_gridy;
 
-//	TRACE("enter in %s\r\n",__func__);
 	if(temp_gridx==tgt_gridx)
 		return 1;
 
@@ -1772,12 +1879,10 @@ u8 IS_Can_ReachPointX_All(s8 now_gridx,s8 tgt_gridx,s8 now_gridy)
 	if(temp_gridx==tgt_gridx)
 		{
 	
-			//TRACE("return 1 in %s\r\n",__func__);
 			return 1;
 		}
 	else
 		{
-			//TRACE("return 0 in %s\r\n",__func__);
 			return 0;
 		}
 }
@@ -1798,8 +1903,9 @@ s8 Find_PathPoint_Gap_NoWall(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to max checkout!!!\r\n");
-
+#endif
 	for(temp_gridx1=gridx1;temp_gridx1>=min_cleanx1;temp_gridx1--)
 		{
 			if((Read_Coordinate_Clean(temp_gridx1,gridy1))&(Read_Coordinate_CleanNoWall(temp_gridx1,gridy2)))
@@ -1809,10 +1915,12 @@ s8 Find_PathPoint_Gap_NoWall(s8 gridx1,s8 gridy1,s8 gridy2)
 						return temp_gridx1;
 				}
 		}
+#ifdef DEBUG_PATH
 	TRACE("now point to min checkout!!!\r\n");
 	TRACE("gridx1=%d gridy1=%d gridy2=%d\r\n",gridx1,gridy1,gridy2);
 	TRACE("gridy1 can't to gridy2,No comman point!!!\r\n");
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return (0x7f);	
 }
 
@@ -1828,10 +1936,11 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 	s8 now_gridx,now_gridy,temp_gridx,temp_gridy,tgt_gridx,tgt_gridy,temp_gridx2,temp_gridy2;
 	now_gridx=now_grid->gridx;now_gridy=now_grid->gridy;
 	tgt_gridx=tgt_grid->gridx;tgt_gridy=tgt_grid->gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("now_gridx=%d gridy=%d\r\n",now_gridx,now_gridy);
 	TRACE("tgt_gridx=%d gridy=%d\r\n",tgt_gridx,tgt_gridy);
+#endif
 	if(Delete_All_PathPoint())
 		{
 			motion1.pathpoint_ok=false;
@@ -1856,7 +1965,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界,最多100个path point点,准备尝试Y减少方向分析
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									break;
 								}
 								
@@ -1876,7 +1987,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -1898,7 +2011,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									break;
 								}
 
@@ -1915,7 +2030,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									point_num2++;
 									if(point_num2>99)		//越界,最多100个path point点
 										{
+#ifdef DEBUG_PATH
 											TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 											break;
 										}
 								}
@@ -1938,7 +2055,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 											if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 												{
 													motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 													Delete_All_PathPoint();
 													return 0;
 												}
@@ -1948,7 +2067,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 											if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
 												{
 													motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 													Delete_All_PathPoint();
 													return 0;
 												}
@@ -1987,7 +2108,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))		//可以直接到达，则开始添加pathpoint
 								{
 									motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 									TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 									Delete_All_PathPoint();
 									return 0;
 								}
@@ -2007,7 +2130,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 					point_num2++;
 					if(point_num2>99)				//越界,最多100个path point点，直接结束
 						{
+#ifdef DEBUG_PATH
 							TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 							return 0;
 						}
 
@@ -2024,7 +2149,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)						//越界,最多100个path point点
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 						}
@@ -2047,7 +2174,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -2057,7 +2186,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -2086,7 +2217,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 						}
@@ -2105,7 +2238,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -2127,7 +2262,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									break;
 								}
 					
@@ -2144,7 +2281,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									point_num2++;
 									if(point_num2>99)		//越界,最多100个path point点
 										{
+#ifdef DEBUG_PATH
 											TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 											break;
 										}
 								}
@@ -2167,7 +2306,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 											if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 												{
 													motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 													Delete_All_PathPoint();
 													return 0;
 												}
@@ -2177,7 +2318,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 											if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
 												{
 													motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 													TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 													Delete_All_PathPoint();
 													return 0;
 												}
@@ -2215,7 +2358,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
 								{
 									motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 									TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 									Delete_All_PathPoint();
 									return 0;
 								}
@@ -2235,7 +2380,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 					point_num2++;
 					if(point_num2>99)				//越界,最多100个path point点，准备尝试Y减少方向分析
 						{
+#ifdef DEBUG_PATH
 							TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 							return 0;
 						}
 
@@ -2252,7 +2399,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 							point_num++;
 							if(point_num>99)		//越界,最多100个path point点
 								{
+#ifdef DEBUG_PATH
 									TRACE("Analysis PathPoint has more 100,return 0!!!\r\n");
+#endif
 									return 0;
 								}
 						}
@@ -2276,7 +2425,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid[i].gridx,pointgrid[i].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -2286,7 +2437,9 @@ u8 Analysis_PathPoint_NoWall(POINT_GRID *now_grid,POINT_GRID *tgt_grid)
 									if(Add_PathPoint(pointgrid2[k].gridx,pointgrid2[k].gridy,i+1))
 										{
 											motion1.pathpoint_ok=false;
+#ifdef DEBUG_PATH
 											TRACE("PATHPOINT malloc fail,return 0!!!\r\n");
+#endif
 											Delete_All_PathPoint();
 											return 0;
 										}
@@ -2307,17 +2460,22 @@ u8 Find_PathPoint_NoWall_Way(s8 tgt_gridx,s8 tgt_gridy)
 	POINT_GRID now_grid,tgt_grid;
 	now_grid.gridx=grid.x;now_grid.gridy=grid.y;
 	tgt_grid.gridx=tgt_gridx;tgt_grid.gridy=tgt_gridy;
-
+#ifdef DEBUG_PATH
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	if(!motion1.pathpoint_ok)
 		{
+#ifdef DEBUG_PATH
 			TRACE("pathpoint ok=%d\r\n",motion1.pathpoint_ok);
+#endif
 			return 0;
 		}
 	result=Analysis_PathPoint_NoWall(&now_grid,&tgt_grid);
 	if(!result)
 		Delete_All_PathPoint();
+#ifdef DEBUG_PATH
 	TRACE("result=%d\r\n",result);
 	TRACE("Out %s!\r\n",__func__);
+#endif
 	return result;
 }

@@ -21,7 +21,6 @@
 u8 sweep_level=0x01;//清扫吸力等级,//qz add 默认清扫吸力等级为标准
 bool CHECK_STATUS_FLAG=false;
 bool CHECK_STATUS_TIME=false;
-const uint16 BATTERY_PREOTECTTEMP = 815;  //电池保护温度  60度
 ////////////////////////全局变量//////////////////////////////////
 
 //qz add 20180316
@@ -33,17 +32,11 @@ FREE_SKID 	Free_Skid_Indep;
 #ifdef FREE_FIRST_BAD_CHECK		//qz add 20181011
 FREE_SKID	Free_Skid_First;
 #endif
-#ifdef YBS_DIS_RESTORE
-ROTATE_ANGLE rotate_angle;
-#endif
 
 
 MODE mode;
-WORK_MODE gsv_work_mode;	
-u8 giv_sys_err;         //系统的错误代码
 int abnormal_gyrobios_cnt=0;
 
-u8 read_sideearth(void);	
 //动作   0:停止  1:原地左转  2原地右转 3前进   4后退   5旋转1  6：旋转2  。。。18旋转14	，19走螺旋线
 /***********************************************************
 在正常工作时的主路径：
@@ -72,10 +65,10 @@ u8 read_sideearth(void);
 void Init_Mode(void)
 {
 	u8 lastisdead=0;
-	mode.mode=CEASE;
-	mode.sub_mode=CEASE;
-	mode.last_mode=CEASE;
-	mode.last_sub_mode=CEASE;
+	mode.mode=MODE_CEASE;
+	mode.sub_mode=SUBMODE_CEASE;
+	mode.last_mode=MODE_CEASE;
+	mode.last_sub_mode=SUBMODE_CEASE;
 	mode.step=0;
 	mode.bump=0;
 	mode.bump_time=giv_sys_time;
@@ -120,63 +113,6 @@ void Init_Mode(void)
 		
 	Init_Action();
 }
-//==================================================================================================
-//==================================================================================================
-
-
-
-
-
-
-
-
-
-
-//==================================================================================================
-//==================================================================================================
-///////////*****************************************************************
-//////////功能: 运行工作模式
-//////////*****************************************************************/
-//////////void Action_Mode(void)
-//////////{
-//////////  switch (mode.mode)
-//////////  {    
-//////////      /*********************开机待机状态*******************/
-//////////      case CEASE: 
-//////////	      Do_Cease();   
-//////////	      break;
-//////////	  
-//////////	  /*********************遥控器控制状态*****************/
-//////////	  case TELE:
-//////////	     // Do_Tele();
-//////////	  break;
-//////////	  
-//////////	  /*********************找回充座状态*******************/
-//////////	  case DOCKING:
-//////////	     // Do_Docking();
-//////////	  break;
-//////////	  
-//////////	  /*********************找回充座状态*******************/
-//////////	  case CHARGEING:
-//////////	      Do_Chargeing();
-//////////	  break;
-//////////	  
-//////////	  /*********************找回充座状态*******************/
-//////////	  case SLEEP:
-//////////	      Do_Sleep();
-//////////	  break;
-//////////	  
-//////////	  /*********************找回充座状态*******************/
-//////////	  case ERR:
-//////////	      //Do_Err();
-//////////	  break;
-//////////	  
-//////////	  /*********************默认状态***********************/
-//////////	  default :
-//////////	      Init_Cease();	  
-//////////  }
-//////////}
-
 
 
 /*****************************************************************
@@ -187,23 +123,23 @@ void Action_Mode(void)
 	switch (mode.mode)
 		{    
 /*********************开机待机状态*******************/
-			case CEASE: 
+			case MODE_CEASE: 
 				switch(mode.sub_mode)
 					{
-						case CEASE:
+						case SUBMODE_CEASE:
 							Do_Cease();
 							break;
-						case QUIT_CHARGING:
+						case SUBMODE_QUITCHARGE:
 							Do_Quit_Chargeing();
 							break;
-						case ERR:
+						case SUBMODE_ERR:
 							Do_Err();
 							break;
-						case SHUTDOWN:		//qz add 20180901
-						case DEAD:
+						case SUBMODE_SHUTDOWN:		//qz add 20180901
+						case SUBMODE_DEAD:
 							Do_Dead();
 							break;
-						case SLEEP:
+						case SUBMODE_SLEEP:
 							Do_Sleep_My();
 							break;
 						case SUBMODE_PAUSESWEEP:
@@ -226,52 +162,52 @@ void Action_Mode(void)
 			break;
 	  
 	  /*********************找回充座状态*******************/
-			case DOCKING:
+			case MODE_DOCK:
 				switch(mode.sub_mode)
 					{
-						case DOCKING:
+						case SUBMODE_DOCK:
 							Do_Docking_My();
 							break;
-						case YBS_SUB_RIGHT:
-						case YBS_SUB_LEFT:
+						case SUBMODE_YBS_RIGHT:
+						case SUBMODE_YBS_LEFT:
 							Do_Docking_YBS();
 							break;
 					}
 			break;
 	  /*********************充电状态*******************/
-			case CHARGEING:
+			case MODE_CHARGE:
 				Do_Chargeing();
 			break;
 	  /*********************沿边状态*******************/
-			case YBS:
+			case MODE_YBS:
 				   YBS_YBS();        
 			break;
 	  /*********************速度控制状态*******************/
 		/*********************自主清扫状态********************/
-			case SWEEP:
+			case MODE_SWEEP:
 				switch (mode.sub_mode)
 					{
-						case SWEEP_FIRST_INIT:
+						case SUBMODE_SWEEP_FIRST:
 							Do_FirstInit_Sweep();
 							break;
-						case NORMAL_SWEEP:					//正常直行清扫
+						case SUBMODE_SWEEP_NORMAL:					//正常直行清扫
 							Do_NormalSweep();
 							break;
-						case PASS2SWEEP:					//过度到清扫
+						case SUBMODE_SWEEP_PASS2:					//过度到清扫
 							Do_Pass2Sweep();
 							break;
 //						case BACK2YBSSTART:
 //							Do_Back2YbsStart();
 //							break;
-						case BACK_SWEEP:					//回扫直行清扫
+						case SUBMODE_SWEEP_BACK:					//回扫直行清扫
 							Do_BackSweep();
 							break;
-						case STOP_BACKSWEEP:
+						case SUBMODE_SWEEP_STOPBACK:
 				//停止直行清扫
 							//Do_Stop_BackSweep();							
 							Do_Stop_BackSweep();
 							break;
-						case LEAK_SWEEP:					//漏扫直行清扫
+						case SUBMODE_SWEEP_LEAK:					//漏扫直行清扫
 							Do_LeakSweep();
 							break;
 						//case PASS2LEAKSWEEP:				//过度到漏扫直行清扫
@@ -280,11 +216,11 @@ void Action_Mode(void)
 						//case STOP_LEAKBACK:
 							//Do_Stop_LeakBack();
 							//break;
-						case LEAK_BACKSWEEP:
+						case SUBMODE_SWEEP_LEAKBACK:
 							Do_Leak_BackSweep();
 							break;
-						case YBS_SUB_RIGHT:
-						case YBS_SUB_LEFT:
+						case SUBMODE_YBS_RIGHT:
+						case SUBMODE_YBS_LEFT:
 							Sweep_YBS();
 							break;
 						case SUBMODE_SPOT:
@@ -295,25 +231,25 @@ void Action_Mode(void)
 							break;
 					}
 			break;
-			case SHIFT:
+			case MODE_SHIFT:
 				switch(mode.sub_mode)
 					{
-						case SHIFTPOINT1:
+						case SUBMODE_SHIFTPOINT1:
 							Do_Shift_Point1();
 							break;
-						case SHIFTPOINT2:
+						case SUBMODE_SHIFTPOINT2:
 							Do_Shift_Point2();
 							break;
-						case YBS_SUB_LEFT:
-						case YBS_SUB_RIGHT:
+						case SUBMODE_YBS_LEFT:
+						case SUBMODE_YBS_RIGHT:
 							Do_ShiftYBS();
 							break;
 					}
 				break;
-			case PASS2INIT:
+			case MODE_PASS2INIT:
 				Do_Pass2Init();
 				break;
-			case EXIT:
+			case MODE_EXIT:
 				Do_ShiftExit_YBS();
 				break;
 			case TEST:
@@ -330,7 +266,7 @@ void Action_Mode(void)
 							break;
 					}
 				break;
-			case SPOT:
+			case MODE_SPOT:
 				//Do_Spot();
 				Do_Spot_My();
 				break;
@@ -340,215 +276,6 @@ void Action_Mode(void)
 			break;
   }
 }
-
-
-/**************************************************************************
-功能：取反uv灯
-**************************************************************************/
-void Turn_UV(void)
-{
-    if(gsv_work_mode.uv == false)
-	{
-	    gsv_work_mode.uv = true;  
-	}
-	else
-	{
-	    gsv_work_mode.uv = false;
-	}
-	WriteWorkState();
-}
- 
-/**************************************************** 
-功能：改变机器行走速度
-输入：无
-输出：Wheel_State = 1;
-返回：无
-****************************************************/
-void Change_Speed(void)
-{
-    if( gsv_work_mode.speed == 1)
-	{
-	    gsv_work_mode.speed = 2;
-		Speed = LOWSPEED;//750;
-		l_rap.rap /= (HIGHSPEED/LOWSPEED);//2;	   
-		r_rap.rap /= (HIGHSPEED/LOWSPEED);//2;
-
-	}
-	else
-	{
-	    gsv_work_mode.speed = 1; 
-		Speed = HIGHSPEED;//1500;
-		l_rap.rap *= (HIGHSPEED/LOWSPEED);//2;	   
-		r_rap.rap *= (HIGHSPEED/LOWSPEED);//2;
-	}
-	WriteWorkState();
-}
-
-/******************************************
-读取碰撞信息
-*******************************************/
-//QZ注意:按照程序编写，调用read_bump()函数时，返回值可以和mode.bump不一样
-//QZ返回的值肯定是当前碰撞信息,但mode.bump只有上次为0时，才与返回的值一样,且mode.step_bp才会重新置0
-u32  read_bump(void)
-{
-
-#if 0			//ZDK屏蔽
-
-   if((e_l.sign == FARN))
-   {
-	  if((mode.bump > 4) || (mode.bump == 0))	    //左地检悬空
-       { 
-					mode.bump = 1;// E_L;
-					mode.step_bp=0;
-					stop_rap();
-	    }
-		return 1;//E_L;
-   }   
-   if((e_lm.sign==FARN))
-   {
-			if((mode.bump > 4) || (mode.bump == 0))	    
-				 {
-						mode.bump= 2;//E_LM;
-						mode.step_bp=0;
-						stop_rap();
-				 }
-			return 2;//E_LM;
-    }
-  if((e_rm.sign==FARN))
-  {
-	  if((mode.bump > 4) || (mode.bump == 0))	    
-			 { 
-				mode.bump=3;//E_RM;
-				mode.step_bp=0;
-				stop_rap();
-			 }
-	  return 3;//E_RM;
-  }	 
-	
-   if((e_r.sign==FARN))
-   {
-	  if((mode.bump > 4) || (mode.bump == 0))	   
-			{	
-				mode.bump=4;//E_R;
-				mode.step_bp=0;
-				stop_rap();
-			}
-			return 4;//E_R;
-   }
-   
-#endif	 
-
-
-
-	
-     if (0 == l_bump.key)
-     {
-		 if((mode.bump == 0))	 //左撞
-			 {
-						mode.bump=5;//L_BUMP;
-						mode.step_bp=0;
-						stop_rap();
-				}
-			return 5;//L_BUMP;
-	 }
-     if (0 == r_bump.key)
-     {
-			if((mode.bump == 0))	 //右撞
-					{
-							mode.bump=6;//R_BUMP;
-							mode.step_bp=0;
-							stop_rap();
-					}
-			return 6;//R_BUMP;
-	 }  
-
-	 if(0==m_bump.key)
-		 {
-				if((mode.bump == 0))	 //前撞
-						{
-								mode.bump=90;//R_BUMP;
-								mode.step_bp=0;
-								stop_rap();
-						}
-				return 90;//R_BUMP;
-
-	 }	
-		 
-#if 1		 
-    if((w_l.sign==NEAR)&&(w_l.on==1))
-    {
-		if((mode.bump == 0))	    //左墙检靠近墙
-     	{
-				mode.bump=7;//W_L;
-				mode.step_bp=0;
-				stop_rap();
-		 }	  
-	  return 7;//W_L;
-	}
-    if((w_lm.sign==NEAR)&&(w_lm.on==1))
-    {
-         if((mode.bump == 0))		 //左中墙检靠近墙
-         {
-				mode.bump=8;//W_LM;
-				mode.step_bp=0;
-				stop_rap();
-		 }
-	  
-	  return 8;//W_LM;
-   }
-  if((w_m.sign==NEAR)&&(w_m.on==1))
-   {
-   		if((mode.bump == 0))	   //中墙检靠近墙
-     	{
-				mode.bump=9;//W_M;
-				mode.step_bp=0;
-				stop_rap();
-		 }
-	  return 9;//W_M;
-   }
-
-  if((w_rm.sign==NEAR)&&(w_rm.on==1))
-  {
-   		if((mode.bump == 0))		//右中墙检靠近墙
-     	{
-				mode.bump=15;//W_RM;
-				mode.step_bp=0;
-				stop_rap();
-		 }
-	  return 15;//W_RM;
-   }
-
-  if((w_r.sign==NEAR)&&(w_r.on==1))
-  {
-  		if((mode.bump == 0))		//右墙检靠近墙		
-     	{
-				mode.bump=14;//W_R;
-				mode.step_bp=0;
-				stop_rap();
-		 }	
-	     return 14;//W_R;
-  }
-
-
-//	if(mode.action == 3)
-//	{
-//		if((Ultra.Distance[0] < 90) & (Ultra.Distance[0]  > 1))
-//		{
-//			mode.bump = 99;			//	超声停止
-//			mode.step_bp=0;
-//			stop_rap();
-//			return 6;
-//		}
-//	}
-	#endif
-					
-	return 0;
-
-
-}
-
-
-
 
 /****************************************************************
 是否有保护的内容，有则处理并返回1，否则返回0
@@ -657,6 +384,7 @@ u8 Read_Protect(void)
 		{
 			if(mode.abnormity==0)
 				{
+					ring_mil_recal=1;
 					stop_rap();
 					mode.abnormity=ABNORMAL_ROTATE_SKID;
 					mode.step_abn=0;
@@ -713,18 +441,19 @@ u8 Read_Protect(void)
 		{
 			if(mode.abnormity<ABNORMAL_PITCH_RISE)
 				{
+					ring_mil_recal=2;
 					stop_rap();
 					if(data1==1)
 						{
 							mode.abnormity=ABNORMAL_PITCH_RISE;							
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("Gyro Pitch rise up!\r\n");
 #endif
 						}
 					else
 						{
 							mode.abnormity=ABNORMAL_PITCH_DOWN;							
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("Gyro Pitch down!\r\n");
 #endif
 						}
@@ -746,11 +475,12 @@ u8 Read_Protect(void)
 		{
 			if(mode.abnormity==0)
 				{
+					ring_mil_recal=2;
 					stop_rap();
 					mode.abnormity=ABNORMAL_PITCHROLL;
 					mode.step_abn=0;
 					Gyro_Data.pitchroll_fail_cnt=0;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 					TRACE("Gyro PitchRoll!\r\n");
 #endif
 				}
@@ -759,7 +489,7 @@ u8 Read_Protect(void)
 #endif
 
 #ifdef GYRO_BIOS_CHECK
-	if((mode.mode==DOCKING)&((mode.sub_mode!=YBS_SUB_LEFT)&(mode.sub_mode!=YBS_SUB_RIGHT)))
+	if((mode.mode==MODE_DOCK)&((mode.sub_mode!=SUBMODE_YBS_LEFT)&(mode.sub_mode!=SUBMODE_YBS_RIGHT)))
 		return return_data;
 	data1=Gyro_Bios_Check();
 	if(data1)
@@ -803,8 +533,10 @@ u8 Read_Protect(void)
 				}
 		}
 #endif
+#ifdef DEBUG_EFFICENT
 	if(return_data)
 		TRACE("return_data=%d\r\n",return_data);
+#endif
 	return return_data;
 	
 }
@@ -898,7 +630,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time>SB_CHECK_TIME)	//观察1s qz modify 20181201 1s--->3s
 							{
 								data1=Read_SB_Status();
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 								TRACE("SB_data=%d\r\n",data1);
 #endif
 								if(data1)
@@ -1052,7 +784,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time>SB_CHECK_TIME)	//观察1s qz modify 20181201 1s--->3s
 							{
 								data1=Read_SB_Status();
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 								TRACE("SB_data=%d\r\n",data1);
 #endif
 								if(data1)
@@ -1194,7 +926,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							if(giv_sys_time-mode.abn_time>SB_CHECK_TIME)	//观察1s qz modify 20181201 1s--->3s
 							{
 								data1=Read_SB_Status();
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 								TRACE("SB_data=%d\r\n",data1);
 #endif
 								if(data1)
@@ -1282,14 +1014,14 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step=0;				//恢复模式步骤qz add 20180801
 							mode.step_mk=0; 			//qz add 20180919
 							Sweep_Level_Set(sweep_level);	//重新打开清扫等级
-							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+							if((mode.sub_mode==SUBMODE_YBS_LEFT)|(mode.sub_mode==SUBMODE_YBS_RIGHT))
 								break;
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -1420,10 +1152,10 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_mk=0; 		//qz add 20180919
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -1728,10 +1460,10 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.bump_flag=false;	//qz add 20181210
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -1935,10 +1667,10 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_mk=0;			//qz add 20180919
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -2003,17 +1735,17 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+							//if((mode.sub_mode==SUBMODE_YBS_LEFT)|(mode.sub_mode==SUBMODE_YBS_RIGHT))
 								//break;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -2078,17 +1810,17 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+							//if((mode.sub_mode==SUBMODE_YBS_LEFT)|(mode.sub_mode==SUBMODE_YBS_RIGHT))
 								//break;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -2277,17 +2009,17 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
 							Gyro_Data.pitch_fail_cnt=0;
-							//if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+							//if((mode.sub_mode==SUBMODE_YBS_LEFT)|(mode.sub_mode==SUBMODE_YBS_RIGHT))
 								//break;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("Gyro Pitch bump complete!\r\n");
 #endif
 							switch(mode.mode)
 								{
-									case SWEEP:
-									case PASS2INIT:
-									case EXIT:
-									case SHIFT:
+									case MODE_SWEEP:
+									case MODE_PASS2INIT:
+									case MODE_EXIT:
+									case MODE_SHIFT:
 										Area_Check(0);
 										Init_Shift_Point1(0);
 									break;
@@ -2357,7 +2089,7 @@ u8 Action_Protect_My(u8 abnoraml)
 							mode.bump=0;
 							mode.step_bp=0;
 							mode.bump_flag=false;	//qz add 20181210
-							if((mode.sub_mode==YBS_SUB_LEFT)|(mode.sub_mode==YBS_SUB_RIGHT))
+							if((mode.sub_mode==SUBMODE_YBS_LEFT)|(mode.sub_mode==SUBMODE_YBS_RIGHT))
 								{
 									if(gyro_bios.island)
 										mode.step=0x88;
@@ -2366,7 +2098,7 @@ u8 Action_Protect_My(u8 abnoraml)
 									gyro_bios.island=false;
 								}
 
-							else if((mode.sub_mode==NORMAL_SWEEP)|(mode.sub_mode==BACK_SWEEP)|(mode.sub_mode==LEAK_SWEEP)|(mode.sub_mode==LEAK_BACKSWEEP))
+							else if((mode.sub_mode==SUBMODE_SWEEP_NORMAL)|(mode.sub_mode==SUBMODE_SWEEP_BACK)|(mode.sub_mode==SUBMODE_SWEEP_LEAK)|(mode.sub_mode==SUBMODE_SWEEP_LEAKBACK))
 								{
 									mode.step=0;
 								}
@@ -2390,460 +2122,6 @@ u8 Action_Protect_My(u8 abnoraml)
 	return 0;
 }
 
-/*****************************************************************
-功能：对保护信号进行处理
-*****************************************************************/   
-#if 0
-uint8 Action_Protect(void)
-{
-uint8 m;  
-uint32 n;
-static uint32 piv_abntime;
-    m = Read_Protect();
-	if(m == 1)
-	{
-	    return 1;
-	}
-	if(mode.abnormity != 0)
-	{
-	    n = read_bump();
-	    if((((e_l.sign == FARN))
-		 &&((e_m.sign == FARN)&&(e_r.sign == FARN)))
-		 &&((l_lidi.key == 0)&&(l_lidi.key == 0)))  //在轮子离地并且地检离地时机器停机
-		{
-		    Init_Cease();
-			return 1;    
-		}
-		if(( m == 0) && (mode.step_abn != 1))
-		{
-		    stop_rap();
-		    mode.step_abn = 1;
-			gbv_action_m_fangxiang = false;
-		} 
-		if((n != 0)&&(mode.step_abn != 1)&&(mode.step_abn < 7))
-		{ 
-		    stop_rap();
-			mode.step_abn = 7;
-		}
-		if(mode.abnormity == 16)
-		{
-		    /*if(m_current > M_STOPCURRENT)
-			{		   
-				 giv_sys_err = mode.abnormity;
-				 gbv_action_m_fangxiang = false;
-				 Init_Err();
-			     return 1;
-			}	*/
-	 	    switch (mode.step_abn)
-		    {
-		        case  0:		   
-			        piv_abntime = giv_sys_time;
-					gbv_action_m_fangxiang = true;
-				    mode.step_abn = 3;
-			        return 1;
-			    case  1:
-				    if(do_action(1, angle15 * (giv_sys_time % 10)))			//左转
-			        {
-				        mode.abnormity = 0;	   
-						mode.step = 0;
-					    return 0;					
-				    }
-				    if((giv_sys_time - action.time) > 100000)		//保护动作超过10s还处于step_abn为1状态,
-				    {  				   
-				        stop_rap();
-				        mode.step_abn = 3;
-				    }
-				    return 1;
-			    case 3:	   
-				    if(do_action(1,angle45))					//左转
-					{
-				        mode.step_abn = 4; 
-					    gbv_action_m_fangxiang = true;			//中扫向后
-					} 
-				    if((giv_sys_time - action.time) > 30000)	//3s
-				    {  				   
-				        stop_rap();
-				        mode.step_abn = 4;	  
-					    gbv_action_m_fangxiang = true;
-				    }
-				    break;
-
-			    case 4:	  
-				    if(do_action(3,angle360))					//前进
-					{
-				        mode.step_abn = 3; 
-					} 
-				    if((giv_sys_time - action.time) > 100000)	//10s
-				    {  				     
-				        stop_rap();
-				        giv_sys_err = mode.abnormity;
-					    Init_Err(); 
-				    }
-				    break; 
-				case 7:	
-				    if(do_action(4,angle90))		  
-				    {
-					    mode.step_abn++;
-			            break;
-				    }
-					if( n == 0)
-					{
-					    stop_rap();
-						mode.bump = 0;
-						mode.step_abn = 3;
-					}
-				    if((giv_sys_time - action.time) > 100000)
-				    {  				  
-				        stop_rap();
-				        giv_sys_err = mode.abnormity;
-					    Init_Err();
-				    }
-				    break;  
-				case 8:	
-				    if(do_action(1,angle90))		  
-				    {
-					    mode.step_abn++;
-			            break;
-				    } 
-					if( n == 0)
-					{
-					    stop_rap();
-						mode.bump = 0;
-						mode.step_abn = 4;
-					}
-				    if((giv_sys_time - action.time) > 100000)
-				    {  				  
-				        stop_rap();
-				        giv_sys_err = mode.abnormity;
-					    Init_Err();
-				    }
-				    break;  
-				case 9:	
-				    if(do_action(4,angle90))		  
-				    {
-				        giv_sys_err = mode.abnormity;
-					    Init_Err();
-			            return 1;
-				    }  
-					if( n == 0)
-					{
-					    stop_rap();
-						mode.bump = 0;
-						mode.step_abn = 3;
-					}
-				    if((giv_sys_time - action.time) > 100000)
-				    {  				  
-				        stop_rap();
-				        giv_sys_err = mode.abnormity;
-					    Init_Err();
-				    }
-				    break;
-				default :
-				    mode.step_abn = 0;
-					return 0;				   
-		    }
-			if((giv_sys_time - piv_abntime) > 150000)
-			{
-			    stop_rap();
-			    giv_sys_err = mode.abnormity;
-			    gbv_action_m_fangxiang = false;
-				Init_Err();
-			}
-			return 1;
-		}
-		else
-		{	
-		    if(mode.abnormity == 21)
-			{	
-	 	        switch (mode.step_abn)
-		    	{
-		        	case  0:	
-			        	piv_abntime = giv_sys_time;
-				    	mode.step_abn = 2;
-			        	return 1;
-			    	case  1:		//case 1为m=0,即故障消失的情况
-				    	if(do_action(1, angle15 * (giv_sys_time % 10)))			//左转
-			        	{
-				        	mode.abnormity = 0;
-							mode.step = 0;
-					    	return 0;					
-				    	}
-				    	if((giv_sys_time - action.time) > 100000)				//10s
-				    	{  				   
-				        	stop_rap();
-				        	mode.step_abn = 3;
-				    	}
-				    	return 1;
-					case 2:
-			        	if(do_action(4,angle360))								//后退
-		            	{
-				        	mode.step_abn = 3;
-			            	return 1;
-			        	}
-				    	if((giv_sys_time - action.time) > 100000)				//10s
-				    	{  
-				        	stop_rap();
-				        	mode.step_abn = 3;
-				    	}
-						break;
-			    	case 3:
-				    	if(do_action(1,angle45))								//左转
-				    	{
-					    	mode.step_abn = 4;
-				    	}
-				    	if((giv_sys_time - action.time) > 30000)				//3s
-				    	{  					
-				        	stop_rap();
-				        	mode.step_abn = 4;
-				    	}
-				    	break;
-
-			    	case 4:	 		
-			        	if(do_action(3,angle360))								//前进
-				    	{
-					    	mode.step_abn = 5;
-				    	}
-				    	if((giv_sys_time - action.time) > 100000)				//10s
-				    	{  					 
-				        	stop_rap();
-				        	mode.step_abn = 5;
-				    	}
-				    	break;
-			    	case 5:
-				    	if(do_action(2,angle90))								//右转
-						{
-					   		mode.step_abn = 6;
-						} 	 
-				    	if((giv_sys_time - action.time) > 30000)				//3s
-				    	{  					 
-				        	stop_rap();
-				        	mode.step_abn = 6;
-				    	}
-						break; 
-					case 6:	
-				    	if(do_action(4,angle180))								//后退		  
-				    	{
-				        	//frontwheelon = 0;
-							mode.abnormity = 0;
-							mode.step = 0;
-			            	return 0;
-				    	}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				  
-				        	stop_rap();
-				        	//frontwheelon = 0;
-							mode.abnormity = 0;
-			            	return 0;
-				    	}
-				    	break;	 
-					case 7:	
-				    	if(do_action(4,angle90))		  
-				    	{
-					    	mode.step_abn++;
-			            	return 1;
-				    	}
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 3;
-						}
-				    	break;  
-					case 8:	
-				    	if(do_action(1,angle90))		  
-				    	{
-					    	mode.step_abn++;
-			            	return 1;
-				    	} 
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 4;
-						}
-				    	break;  
-					case 9:	
-				    	if(do_action(4,angle90))		  
-				    	{
-				        	//frontwheelon = 0;
-							mode.abnormity = 0;
-							mode.step = 0;
-			            	return 0;
-				    	}  
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 3;
-						}
-				    	break;
-		    	}  
-				if((giv_sys_time - piv_abntime) > 250000)
-				{
-			    	stop_rap();	
-//				    frontwheelon = 0;
-					mode.abnormity = 0;
-					mode.step = 0;
-			        return 0;
-				}
-				return 1;
-			}
-			else
-			{  
-	 	        switch (mode.step_abn)
-		    	{
-		        	case  0:	
-			        	piv_abntime = giv_sys_time;
-				    	mode.step_abn = 2;
-			        	return 1;
-			    	case  1:
-				    	if(do_action(1, angle15 * (giv_sys_time % 10)))
-			        	{
-				        	mode.abnormity = 0;
-							mode.step = 0;
-					    	return 0;					
-				    	}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				   
-				        	stop_rap();
-				        	mode.step_abn = 3;
-				    	}
-				    	return 1;
-					case 2:
-			        	if(do_action(4,angle60))
-		            	{
-				        	mode.step_abn = 3;
-			            	return 1;
-			        	}
-				    	if((giv_sys_time - action.time) > 30000)
-				    	{  
-				        	stop_rap();
-				        	mode.step_abn = 3;
-				    	}
-						break;
-			    	case 3:
-				    	if(do_action(1,angle45))
-				    	{
-					    	mode.step_abn = 4;
-				    	}
-				    	if((giv_sys_time - action.time) > 30000)
-				    	{  					
-				        	stop_rap();
-				        	mode.step_abn = 4;
-				    	}
-				    	break;
-
-			    	case 4:	 		
-			        	if(do_action(3,angle60))
-				    	{
-					    	mode.step_abn = 5;
-				    	}
-				    	if((giv_sys_time - action.time) > 30000)
-				    	{  					 
-				        	stop_rap();
-				        	mode.step_abn = 5;
-				    	}
-				    	break;
-			    	case 5:
-				    	if(do_action(2,angle90))
-						{
-					   	mode.step_abn = 6;
-						} 	 
-				    	if((giv_sys_time - action.time) > 30000)
-				    	{  					 
-				        	stop_rap();
-				        	mode.step_abn = 6;
-				    	}
-						break; 
-					case 6:	
-				    	if(do_action(4,angle90))		  
-				    	{
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-			            	return 1;
-				    	}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				  
-				        	stop_rap();
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-				    	}
-				    	break;	 
-					case 7:	
-				    	if(do_action(4,angle90))		  
-				    	{
-					    	mode.step_abn++;
-			            	return 1;
-				    	}
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 3;
-						}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				  
-				        	stop_rap();
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-				    	}
-				    	break;  
-					case 8:	
-				    	if(do_action(1,angle90))		  
-				    	{
-					    	mode.step_abn++;
-			            	return 1;
-				    	} 
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 4;
-						}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				  
-				        	stop_rap();
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-				    	}
-				    	break;  
-					case 9:	
-				    	if(do_action(4,angle90))		  
-				    	{
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-			            	return 1;
-				    	}  
-						if( n == 0)
-						{
-					    	stop_rap();
-							mode.bump = 0;
-							mode.step_abn = 3;
-						}
-				    	if((giv_sys_time - action.time) > 100000)
-				    	{  				  
-				        	stop_rap();
-				        	giv_sys_err = mode.abnormity;
-					    	Init_Err();
-				    	}
-				    	break;
-		    	}  
-				if((giv_sys_time - piv_abntime) > 150000)
-				{
-			    	stop_rap();
-			    	giv_sys_err = mode.abnormity;
-			    	gbv_action_m_fangxiang = false;
-					Init_Err();
-				}
-				return 1;
-			}
-		}
-
-	}
-    mode.abnormity=0;
-    return 0;
-}
-#endif
 /**************************************
 左转
 输入参数    longth    所转的脉冲数
@@ -3339,149 +2617,7 @@ u8 louxuan(  u8  f)
   }
   return 1;
 }
-/***********************************************
-程序名：read_earth
-程序说明：读取地检信号
-返回：在有地检信号时停止动作，将 mode.bump置为其
-      地检的值。
-***********************************************/
-u8 read_earth(void)
-{						   
-				if(read_sideearth())
-				  {
-				    return 1;
-				  } 
-//				if(e_lm.sign == FARN)
-//				  {
-//				    stop_rap();
-//						mode.step_bp = 0;
-//						mode.bump = 2;
-//				    return 1;
-//				  }   
-//				if(e_rm.sign == FARN)
-//				  {
-//				    stop_rap();
-//						mode.step_bp = 0;
-//						mode.bump = 3;
-//				    return 1;
-//				  } 
-		return 0;		  
-}
-/***********************************************
-程序名：read_earth
-程序说明：读取地检信号
-返回：在有地检信号时停止动作，将 mode.bump置为其
-      地检的值。
-***********************************************/
-u8 read_sideearth(void)
-{						   
-		if(e_r.sign == FARN)
-				  {
-				    stop_rap();
-						mode.step_bp = 0;
-						mode.bump = 4;
-				    return 1;
-				  } 
-					
-		if(e_l.sign == FARN)
-				  {
-				    stop_rap();
-						mode.step_bp = 0;
-						mode.bump = 1;
-				    return 1;
-				  } 
 
-		return 0;		  
-}
-
-
-
-//====================================================================================================================
-//====================================================================================================================
-//====================================================================================================================
-/************************************************************
-核对当前时间是否与预约时间一致，如果是则返回1；否则返回0
-************************************************************/
-u8 Check_PreengageTime(void)
-{
-#if 0
-u16 piv_t;
-u8  piv_hour;
-u8  piv_minute;
-static u8 piv_preengage;
-    piv_minute = (u8)((Rtc_time % 3600) / 60);
-    piv_hour = (u8)((Rtc_time % 86400) / 3600) ;  
-    piv_t = (piv_hour << 8)	+ piv_minute;
-	if(piv_t == PreengageTime)
-	{
-	    if(piv_preengage == 1)
-		{
-		    piv_preengage = 0;
-	        if((((1<<(Rtc_time/86400))& PreengageDate) != 0))
-	        {
-		        return 1;
-		    }
-		}
-	}
-	else
-	{
-	    piv_preengage = 1;
-	} 
-	return 0;  
-#endif
-
-	#if 1	//qz add
-	u8 week_day,piv_hour,piv_min;
-	week_day=(Rtc_time)/86400;
-    piv_hour = (u8)((Rtc_time % 86400) / 3600); 
-    piv_min = (u8)((Rtc_time % 3600) / 60);
-	if(week_day==0)
-		week_day=(1<<6);			//周日为0100 0000b
-	else
-		week_day=1<<(week_day-1);
-	for(int i=0;i<PREEN_LENGTH;i++)
-		{
-			if(Preen_Data[i].Flag)											//7个预约时间，每个的标记是否ENABLE,从第一个预约开始检查
-				{															//预约时间标记有效
-
-#if 0
-					if(week_day&Preen_Data[i].Preen_Week_Num)				//检查预约周几时间是否到达
-						{													//预约周几时间到达
-							if((Preen_Data[i].Preen_Hour==piv_hour)&(Preen_Data[i].Preen_Min==piv_min))		//预约小时分钟时间是否到达
-								{
-									if(!Preen_Data[i].Cycle)
-										Preen_Data[i].Flag=0;				//如果没有循环，则取消标记ENABLE，下一次不需要打扫
-									Preen_Data[i].Hour_done=1;
-									return 1;								//即刻中断此函数，返回1，开始准备打扫
-
-								}
-							else
-								Preen_Data[i].Hour_done=0;
-						}
-#endif
-					if((Preen_Data[i].Preen_Hour==piv_hour)&(Preen_Data[i].Preen_Min==piv_min))
-						{
-							if(!Preen_Data[i].Cycle)
-								{
-									Preen_Data[i].Flag=0;
-									CleanPreenData();			//qz add 20180428:Flag被清零，表示单次的预约完成，Flag被更改，需要重新保存，
-																//不保存的话，如果中途被关机了，重新开机时，读到的预约数据Flag仍然为1，时间到后，又会开始。
-									return 1;
-								}
-							else if(week_day&Preen_Data[i].Preen_Week_Num)
-								{
-									Preen_Data[i].Hour_done=1;
-									return 1;
-								}
-						}
-					return 0;
-				}
-		}
-
-	return 0;																//一个预约时间都没有到，返回0
-	#endif
-	
-}
 /************************************************************
 初始化碰撞以及保护
 ************************************************************/
@@ -3589,8 +2725,7 @@ u8 Check_Free_Sikd(void)
 						Free_Skid.check_start_time=giv_sys_time;			//重新加载时间，准备进入检测
 						Free_Skid.length=w_ring.length; 	//重新加载脉冲，准备进入检测
 						Free_Skid.check_step=0; 				//万向轮打滑检测本轮FAIL,action_flag=0,准备重新下一轮检测
-#ifdef EFFICENT_DEBUG
-
+#ifdef DEBUG_EFFICENT
 						TRACE("SKID OCCURE!!!\r\n");		//qz add 20180323:actiong_flag再本轮检测为打滑的情况下，表明之前是收到脉冲了，可以继续测试
 #endif
 						return 1;
@@ -3639,10 +2774,9 @@ u8 Check_Free_Sikd(void)
 						if(w_ring.length<=(Free_Skid.length+3))
 						{
 							data=1;					//打滑
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 							TRACE("W_R.leth=%d\r\n",w_ring.length);
-							TRACE("f_sk.leth=%d\r\n",Free_Skid.length);
-							
+							TRACE("f_sk.leth=%d\r\n",Free_Skid.length);						
 							TRACE("Free Skid Occure!\r\n");
 #endif
 						}
@@ -3667,7 +2801,7 @@ bool Check_Free_Skid_Indep(void)
 			Free_Skid_Indep.check_step=0;
 			return false;
 		}
-	if(mode.mode==DOCKING)					//机器处于回充模式时,无需检查
+	if(mode.mode==MODE_DOCK)					//机器处于回充模式时,无需检查
 		{
 
 			Free_Skid_Indep.check_step=0;
@@ -3728,7 +2862,7 @@ void Free_First_Check(void)
 					case 0:
 						Free_Skid_First.check_start_time=giv_sys_time;
 						Free_Skid_First.length=w_ring.length;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 						TRACE("First_fk.len=%d\r\n",Free_Skid_First.length);
 #endif
 						Free_Skid_First.check_step++;
@@ -3737,21 +2871,21 @@ void Free_First_Check(void)
 						if(giv_sys_time-Free_Skid_First.check_start_time>600000)		//1min
 							{
 
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 								TRACE("First_fk.len=%d\r\n",Free_Skid_First.length);
 								TRACE("w_ring.len=%d\r\n",w_ring.length);
 #endif
 								if((Free_Skid_First.length+9)>=w_ring.length)			//9为经验值qz modify 20181110
 									{
 										Free_Skid_First.fail=true;		//万向轮状态BAD
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 										TRACE("Free Bad!\r\n");
 #endif
 									}
 								else
 									{
 										Free_Skid_First.fail=false;		//万向轮状态BAD
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 										TRACE("Free Good!\r\n");
 #endif
 									}
@@ -3773,7 +2907,7 @@ void Enable_Rotate_Skid_Check(u8 dir)
 	Rotate_Skid.start_time=giv_sys_time;
 	Rotate_Skid.skid_time=giv_sys_time;
 	Rotate_Skid.start_angle=Gyro_Data.yaw;
-#ifdef ROTATE_SKID_DEBUG
+#ifdef DEBUG_ROTATE_SKID
 	TRACE("a.s=%d\r\n",Rotate_Skid.start_angle);
 #endif
 	Rotate_Skid.l_lenght=l_ring.all_length;
@@ -4084,11 +3218,12 @@ u8 Gyro_PitchRoll_Check(void)
 }
 
 u8 Check_Rotate_Skid(void)
-{
+{	//Rotate_Skid.time_flag在TIM2中SET，每10ms
+	//Rotate_Skid.check_time<70，意思是检查时间为700ms
 	int rota_angle_change=0,gyro_angle_change=0;
 	if(Rotate_Skid.check_flag)
 		{
-			if(Rotate_Skid.check_time<70 )
+			if(Rotate_Skid.check_time<70 )			//700ms
 				{
 					if(Rotate_Skid.time_flag)
 						{
@@ -4128,7 +3263,7 @@ u8 Check_Rotate_Skid(void)
 						{
 							rota_angle_change=rota_angle_change/360;
 						}
-#ifdef ROTATE_SKID_DEBUG
+#ifdef DEBUG_ROTATE_SKID
 					TRACE("a_c=%d\r\n",gyro_angle_change);
 					TRACE("r_c=%d\r\n",rota_angle_change);
 #endif
@@ -4144,7 +3279,7 @@ u8 Check_Rotate_Skid(void)
 							{
 //								stop_rap();
 								Rotate_Skid.skid_time=giv_sys_time;
-#ifdef ROTATE_SKID_DEBUG
+#ifdef DEBUG_ROTATE_SKID
 								TRACE("Rotate Skid Occure!\r\n");
 #endif
 								return 1;
@@ -4155,242 +3290,6 @@ u8 Check_Rotate_Skid(void)
 				}
 		}
 	return 0;
-}
-
-#ifdef YBS_DIS_RESTORE
-void Init_Rotate_Angle(void)
-{
-	rotate_angle.l_length=l_ring.all_length;
-	rotate_angle.r_length=r_ring.all_length;
-	rotate_angle.l_last_length=rotate_angle.l_length;
-	rotate_angle.r_last_length=rotate_angle.r_length;
-	rotate_angle.l_sum_length=0;
-	rotate_angle.r_sum_length=0;
-	rotate_angle.check_time=0;
-	rotate_angle.start_time=giv_sys_time;
-	rotate_angle.check_step=0;
-}
-
-void Enable_Rotate_Angle(void)
-{
-	rotate_angle.check_flag=true;
-	Init_Rotate_Angle();
-}
-void Disable_Rotate_Angle(void)
-{
-	rotate_angle.check_flag=false;
-}
-void Check_Rotate_Angle(void)
-{
-	if(rotate_angle.check_flag)
-		{
-			switch(rotate_angle.check_step)
-				{
-					case 0:
-						//Init_Rotate_Angle();
-						//rotate_angle.rot_angle=0.0;
-						rotate_angle.check_step++;
-					break;
-					case 1:
-						if(rotate_angle.time_flag)
-						{
-							rotate_angle.time_flag=false;
-							//获取增量
-							rotate_angle.l_sum_length+=(l_ring.all_length-rotate_angle.l_length);
-							rotate_angle.l_length=l_ring.all_length;
-							rotate_angle.r_sum_length+=(r_ring.all_length-rotate_angle.r_length);
-							rotate_angle.r_length=r_ring.all_length;
-							rotate_angle.check_time++;
-							if(rotate_angle.check_time>=70)	//700ms
-								{
-									rotate_angle.check_step++;
-								}
-						}
-					break;
-					case 2:
-							//计算角度
-						rotate_angle.rot_angle=(((float)(rotate_angle.r_sum_length-rotate_angle.l_sum_length))*PULSE_LENGTH*360/(2*3.141592*RING_RANGE));
-						Init_Rotate_Angle();
-					break;
-				}
-		}
-}
-#endif
-
-//qz add在非休眠模式下检查SLAM心跳通信
-//SLAM一分钟之内没有发送心跳，返回1，否则返回0
-u8 SLAM_Tick_Check(void)
-{
-#if 0
-	if(((giv_sys_time-Slam_Data.tick_time)>600000)&&(mode.mode!=SLEEP)&&(mode.mode!=DOCKING))
-		{
-			Slam_Data.tick_flag=0;
-			return 1;
-		}
-	else
-		return 0;
-#endif
-
-	//qz add 20180814
-	if((mode.Info_Abort)|(mode.All_Info_Abort))
-		{
-			Slam_Data.tick_check_step=0;
-			return 0;
-		}
-	//qz add end
-	
-	switch (Slam_Data.tick_check_step)
-		{
-  			case 0:
-				Slam_Data.tick_time=giv_sys_time;
-				Slam_Data.tick_check_step++;
-				break;
-			case 1:
-				if(((giv_sys_time-Slam_Data.tick_time)>600000))
-					{
-						Slam_Data.tick_flag=false;
-						Slam_Data.tick_check_step=0;
-						return 1;
-					}
-				break;
-		}
-	return 0;
-}
-
-//u8 Retern_Wall_Dis(*WALL_DATA w_d)
-//{
-//	
-//}
-
-u8 Return_M_Dis(u16 data)
-
-{
-	#if 0
-	u8 Distance=0;
-	if(data < 0x20)
-		{Distance = 200;}
-		
-	else if(data<0x40)
-		{
-			Distance=200-((data-0x20)*50/(0x40-0x20));
-		}
-	else if(data<0x50)
-		{
-			Distance=150-((data-0x40)*50/(0x50-0x40));
-		}
-	else if(data<0x80)
-		{
-			Distance=100-((data-0x60)*50/(0x80-0x60));
-		}
-	else if(data<0xC0)
-		{
-			Distance=50-((data-0x80)*10/(0xC0-0x80));
-		}
-	else if(data<0x1B0)
-		{
-			Distance=40-((data-0x1B0)*10/(0x1B0-0xC0));
-		}
-	else if(data<0x420)
-		{
-			Distance=30-((data-0x1B0)*10/(0x420-0x1B0));
-		}
-	else
-		Distance=20;
-	return(Distance);
-	#endif
-
-
-	u8 Distance=0;
-	if(data < 0x20)
-		{Distance = 200;}
-		
-	else if(data<0x40)
-		{
-			Distance=200-((data-0x20)*50/(0x40-0x20));
-		}
-	else if(data<0x50)
-		{
-			Distance=150-((data-0x40)*50/(0x50-0x40));
-		}
-	else if(data<0x80)
-		{
-			Distance=100-((data-0x60)*50/(0x80-0x60));
-		}
-	else if(data<0xC0)
-		{
-			Distance=50-((data-0x80)*10/(0xC0-0x80));
-		}
-	else if(data<0x1B0)
-		{
-			Distance=40-((data-0x1B0)*10/(0x1B0-0xC0));
-		}
-	else if(data<0x420)
-		{
-			Distance=30-((data-0x1B0)*10/(0x420-0x1B0));
-		}
-	else
-		Distance=20;
-	return(Distance);
-}
-
-u8 Return_LM_Dis(u16 data)
-
-{
-	u8 Distance=0;
-	if(data < 0x50)
-		{Distance = 200;}
-		
-	else if(data < 0x70)	//QZ:30<=DATA<40
-		{
-			Distance = 200 - (uint16_t)( ( (float)((data-0x50) * (200-120) / (0x70-0x50)) ) );	//QZ: 50<DISTANCE<=200
-		}
-	else if(data < 0x90)	//QZ:40<=DATA<63
-		{
-			Distance = 120 - (uint16_t)( ( (float)((data-0x70) * (120-100) / (0x90-0x70) )) 		);	//QZ: 70<DISTANCE<=100;
-		}
-	else if(data < 0xb0)	//QZ:63<=DATA<98
-		{
-			Distance = 100 - (uint16_t)( ( (float)((data-0x90) * (100-90) / (0xb0-0x90) )) 		);	//QZ:  58<DISTANCE<=70
-		}
-	else if(data < 0xc0)	//QZ:98<=DATA<167
-		{
-			Distance = 90 - (uint16_t)( ( (float)((data-0xb0) * (90-80) / (0xc0-0xb0) )) 		);	//QZ:  48<DISTANCE<=58
-		}
-	else if(data < 0xff)	//QZ:167<=DATA<220
-		{
-			Distance = 80 - (uint16_t)( ( (float)((data-0xc0) * (80-70) / (0xff-0xc0) )) 	);		//QZ:  45<DISTANCE<=48
-		}
-	else if(data < 0x140)	//QZ:220<=DATA<361
-		{
-			Distance = 70 - (uint16_t)( ( (float)((data-0xff) * (70-60) / (0x140-0xff) )) 	);		//QZ:  38<DISTANCE<=45
-		}
-	else if(data < 0x1b0)	//QZ:361<=DATA<470
-		{
-			Distance = 60 - (uint16_t)( ( (float)((data-0x140) * (60-50) / (0x1b0-0x140) ))	);		//QZ:  35<DISTANCE<=38
-		}
-	else if(data < 0x280)	//QZ:470<=DATA<830
-		{
-			Distance = 50 - (uint16_t)( ( (float)((data-0x1b0) * (50-60) / (0x280-0x1b0) )	) );	//QZ:  30<DISTANCE<=35
-		}
-	else if(data < 0x410)//QZ:830<=DATA<2050
-		{
-			Distance = 40 -  (uint16_t)( ( (float)((data-0x280) * (40-30)/ (0x410-0x280) ) )		);	//QZ:22<DISTANCE<=30
-		}
-	else if(data < 0x7a0)//QZ:830<=DATA<2050
-		{
-			Distance = 30 -  (uint16_t)( ( (float)((data-0x410) * (30-20)/ (0x7a0-0x410) ) )		);	//QZ:22<DISTANCE<=30
-		}
-	else if(data < 0xd60)//QZ:830<=DATA<2050
-		{
-			Distance = 20 -  (uint16_t)( ( (float)((data-0x7a0) * (20-10)/ (0xd60-0x7a0) ) )		);	//QZ:22<DISTANCE<=30
-		}
-
-	
-	else		//QZ:DATA>=2025
-		{
-			Distance = 10; 
-		}
-		return Distance;
 }
 
 void Write_Mode_Backup(void)
@@ -4475,7 +3374,7 @@ void Set_ZS_Level(u16 level)
 
 void Sweep_Level_Set(u16 sweep_level)
 {
-	if(mode.mode==DOCKING)
+	if(mode.mode==MODE_DOCK)
 		sweep_level=SWEEP_LEVEL_DOCK;
 
 	switch (sweep_level)
@@ -4561,7 +3460,7 @@ u8 SB_OC_Check(void)
 						if(giv_sys_time-SideBrush.check_time>SB_CHECK_TIME)
 							{
 								SideBrush.check_step=0;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 								TRACE("SB OC Ocurr!\r\n");
 #endif
 								return 1;
@@ -4657,7 +3556,7 @@ u8 Bump_Fix_Check(void)
 
 u8 Dust_Box_Check(void)
 {
-	if(mode.mode==CHARGEING)		//qz add 20180902充电机器，不检查集尘盒
+	if(mode.mode==MODE_CHARGE)		//qz add 20180902充电机器，不检查集尘盒
 		return 0;
 	if((Key_Status_Check_High(&dust_box))&(!dust_box.fail))
 		{
@@ -4666,25 +3565,6 @@ u8 Dust_Box_Check(void)
 		}	
 	else
 		return 0;		//qz add 20180515
-}
-
-//qz add 20180725
-void Dust_Level_Check(void)
-{
-	static u8 high_times=0;
-	static u32 check_time;
-	if(dust_sta.key)
-		{
-			if(!high_times)
-				check_time=giv_sys_time;
-			high_times++;
-			if(giv_sys_time-check_time>12000)
-				{
-					if(high_times>=3)
-						Slam_Data.dust_level=3;
-					high_times=0;
-				}
-		}
 }
 
 u8 Dust_Full_Check(void)
@@ -4779,7 +3659,7 @@ u8 Wall_Earth_Check_Error(WALL_DATA *wall)
 
 u8 Wall_Earth_Check(void)
 {
-	if((mode.mode==CEASE)|(mode.mode==CHARGEING)|(mode.mode==DOCKING))
+	if((mode.mode==MODE_CEASE)|(mode.mode==MODE_CHARGE)|(mode.mode==MODE_DOCK))
 		return 0;
 	if(Wall_Earth_Check_Error(&w_l))
 		return 1;
@@ -4856,16 +3736,6 @@ void Check_Status(void)
 				{
 					error_code=ERROR_DANGER;
 					voice_addr=VOICE_ERROR_DANGER;
-				}
-#endif
-
-
-#ifdef 		SLAM_CHECK
-			////////SLAM_TICK异常检测/////////
-			if(SLAM_Tick_Check())
-				{
-					error_code=ERROR_SLAMCOM;
-					voice_addr=VOICE_ERROR_SLAM_TICK;		//无需发送语音
 				}
 #endif
 
@@ -5010,7 +3880,7 @@ void Check_Status(void)
 			if(Gyro_Roll_Check())
 				{
 					error_code=ERROR_GYRO_ROLL;
-#ifdef EFFICENT_DEBUG
+#ifdef DEBUG_EFFICENT
 					TRACE("Gyro_Roll_Check Fail!\r\n");
 #endif
 				}
@@ -5070,7 +3940,6 @@ void Check_Status(void)
 void Init_Check_Status(void)
 {
 	//SLAM_TICK检测初始化
-	Slam_Data.tick_check_step=0;
 
 	//风机检测初始化
 	Fan.check_step=0;

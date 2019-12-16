@@ -252,16 +252,16 @@ void all_data_update(void)
 	///////////////DPID_CLEAN_AREA/////////////////
 	switch(mode.mode)
 		{
-			case CEASE:
+			case MODE_CEASE:
 				sweep_switch=0;
 				switch(mode.sub_mode)
 					{
-						case CEASE:
-						case QUIT_CHARGING:
+						case SUBMODE_CEASE:
+						case SUBMODE_QUITCHARGE:
 							//sweep_mode=0;
 							work_sta=WIFI_STA_CEASE;
 							break;
-						case ERR:
+						case SUBMODE_ERR:
 							//sweep_mode=0;
 							work_sta=WIFI_STA_ERR;
 							break;
@@ -271,43 +271,43 @@ void all_data_update(void)
 							clean_size=0;
 							bat_per=0;
 							break;
-						case SLEEP:
-						case SHUTDOWN:
-						case DEAD:
+						case SUBMODE_SLEEP:
+						case SUBMODE_SHUTDOWN:
+						case SUBMODE_DEAD:
 							//sweep_mode=0;
 							power_switch=0;
 							work_sta=WIFI_STA_SLEEP;
 							break;
 					}
 				break;
-			case SWEEP:
-			case SHIFT:
-			case EXIT:
-			case PASS2INIT:
+			case MODE_SWEEP:
+			case MODE_SHIFT:
+			case MODE_EXIT:
+			case MODE_PASS2INIT:
 				sweep_switch=1;
 				sweep_mode=WIFI_MOD_SWEEP;
 				work_sta=WIFI_STA_WORKING;
 				clean_size=motion1.clean_size;
 				break;
-			case YBS:
+			case MODE_YBS:
 				sweep_switch=1;
 				sweep_mode=WIFI_MOD_YBS;
 				work_sta=WIFI_STA_WORKING;
 				clean_size=motion1.clean_size;
 				break;
-			case SPOT:
+			case MODE_SPOT:
 				sweep_switch=1;
 				sweep_mode=WIFI_MOD_SPOT;
 				work_sta=WIFI_STA_WORKING;
 				clean_size=motion1.clean_size;
 				break;
-			case DOCKING:
+			case MODE_DOCK:
 				sweep_switch=1;
 				sweep_mode=WIFI_MOD_DOCK;
 				work_sta=WIFI_STA_DOCK;
 				clean_size=motion1.clean_size;
 				break;
-			case CHARGEING:
+			case MODE_CHARGE:
 				sweep_switch=0;
 				if(flag_full)
 					work_sta=WIFI_STA_CHGDONE;

@@ -27,7 +27,7 @@ void Init_FactoryTest(void)
 
 	Init_Action();
 	
-	mode.mode 											= CEASE;
+	mode.mode 											= MODE_CEASE;
 	mode.sub_mode										= FACTORY_TEST;
 	mode.bump 											= 0;
 	mode.action 										= 0;
@@ -112,7 +112,6 @@ static void OC_Test(u8 test_item)
 							length1=l_ring.all_length;
 							start_time=giv_sys_time;
 							mode.test_step++;
-							TRACE("length1=%d  l_ring.all_length=%d\r\n",length1,l_ring.all_length);
 							break;
 						case FAC_TST_RRINGOC:
 							enable_pwm(R_FRONT,800);
@@ -175,7 +174,6 @@ static void OC_Test(u8 test_item)
 										{
 											length1=l_ring.all_length;
 											start_time=giv_sys_time;
-											TRACE("length1=%d  l_ring.all_length=%d\r\n",length1,l_ring.all_length);
 										}
 									else 
 										{
@@ -183,7 +181,6 @@ static void OC_Test(u8 test_item)
 											factory_data.oc_data=0x01;
 											mode.test_step++;
 											start_time=giv_sys_time;
-											TRACE("length1=%d  l_ring.all_length=%d\r\n",length1,l_ring.all_length);
 										}
 								}
 							break;

@@ -280,7 +280,6 @@ extern u8 voice_level;
 void Send_Voice(u8 addr);
 void delay_100us(u32 delay_time);
 void Voice_Handle(void);
-void voice_usart(u8 data);
 u8 Init_Voice_Head(void);
 void Init_Voice(void);
 void Del_AllNode(void);

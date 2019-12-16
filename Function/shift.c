@@ -28,8 +28,10 @@ u8 Analysis_Reach_YAbort(void)
 			if(Judge_GridYPOS_Reach(grid.y_abort,0))
 				{
 					stop_rap();
+#ifdef DEBUG_SHIFT
 					TRACE("Motion is on Grid.y_abort!!!\r\n");
 					TRACE("Cancle All BACKSWEEP,goto normal!!\r\n");
+#endif
 					Restore_Abort_Data();
 					Set_Motion_BackSweep(0);
 					Area_Check(0);
@@ -85,7 +87,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_ONLY_LEFT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFT;
@@ -96,7 +97,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_ONLY_LEFTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFTMID;
@@ -107,7 +107,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_LEFT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_LEFT_MID;
@@ -118,7 +117,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_ONLY_RIGHT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHT;
@@ -129,7 +127,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_ONLY_RIGHTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHTMID;
@@ -140,7 +137,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_RIGHT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_RIGHT_MID;
@@ -151,7 +147,6 @@ u8 Read_Shift_Bump(void)
 					 mode.bump=BUMP_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.m_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_MID;
@@ -174,10 +169,6 @@ u8 Read_Shift_Bump(void)
 #ifdef FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.bump=0xff;
@@ -187,29 +178,7 @@ u8 Read_Shift_Bump(void)
 		}
 #endif
 
-#ifdef COMMANDER_SEAT_REPORT						//qz add 20180814
-	if(r_hw.effectNear|r_hw.effectTopReal)
-		{
-			Slam_Data.ir_flag=true;
-		}
-#endif
 
-#ifdef SLAM_FIND_SEAT
-	if(SLAM_DOCK)
-		{
-			data1=ReadHwSign_My();
-			if(data1&0xD1111)						//only top signal
-				{
-					if(mode.bump==0)
-						{
-							stop_rap();
-							mode.bump=0xfe;
-							mode.step_bp=0;
-							mode.Info_Abort=1;
-						}
-				}
-		}
-#endif
 
 #if 0
 	if(Check_OutofRange())
@@ -245,8 +214,10 @@ void Shift_BumpAction(void)
 			if(Analysis_Reach_ExitArea())
 				{
 					stop_rap();
+#ifdef DEBUG_SHIFT
 					TRACE("now grid is in the exit area num!!!\r\n");
 					TRACE("Abort in %s!!!\r\n",__func__);
+#endif
 					stop_rap();
 					mode.step=0;
 					mode.bump=0;
@@ -300,20 +271,24 @@ void Shift_BumpAction(void)
 								{
 									case CHECK_NEWAREA:
 									case CHECK_GOEXIT:
+#ifdef DEBUG_SHIFT
 										TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 										TRACE("Goto Right Shift YBS!!\r\n");
+#endif
 										Init_Shift_RightYBS(2);
 										return;
 									case CHECK_DOCK:
+#ifdef DEBUG_SHIFT
 										TRACE("now is CHECK_DOCK!!!\r\n");
 										TRACE("Goto Rigth Dock YBS");
+#endif										
 										Init_Dock_RightYBS(0);
 										return;
 									default:
 										break;
 								}
 							
-							if(mode.sub_mode==SHIFTPOINT1)
+							if(mode.sub_mode==SUBMODE_SHIFTPOINT1)
 								{
 									temp_data=Judge_YBS_Dir();
 									if(temp_data==1)
@@ -341,7 +316,7 @@ void Shift_BumpAction(void)
 										}
 								}
 							
-							if(mode.sub_mode==SHIFTPOINT2)
+							if(mode.sub_mode==SUBMODE_SHIFTPOINT2)
 								{
 									if(nextaction<=CHECK_LEAKSWEEP)
 										{
@@ -448,13 +423,17 @@ void Shift_BumpAction(void)
 												{
 													case CHECK_NEWAREA:
 													case CHECK_GOEXIT:
+#ifdef DEBUG_SHIFT
 														TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 														TRACE("Goto Right Shift YBS!!\r\n");
+#endif														
 														Init_Shift_RightYBS(2);
 														return;
 													case CHECK_DOCK:
+#ifdef DEBUG_SHIFT
 														TRACE("now is CHECK_DOCK!!!\r\n");
 														TRACE("Goto Rigth Dock YBS");
+#endif
 														Init_Dock_RightYBS(0);
 														return;
 													default:
@@ -462,7 +441,7 @@ void Shift_BumpAction(void)
 												}
 
 									//////////以下为nextaction小于CHECK_NEWAREA////////////////
-											if(mode.sub_mode==SHIFTPOINT1)
+											if(mode.sub_mode==SUBMODE_SHIFTPOINT1)
 												{
 													temp_data=Judge_YBS_Dir();
 													if(temp_data==1)
@@ -491,7 +470,7 @@ void Shift_BumpAction(void)
 														}
 												}
 											
-											if(mode.sub_mode==SHIFTPOINT2)
+											if(mode.sub_mode==SUBMODE_SHIFTPOINT2)
 												{
 													if(nextaction<=CHECK_LEAKSWEEP)
 														{
@@ -625,7 +604,7 @@ void Shift_BumpAction(void)
 								{
 									stop_rap();
 									//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
-									if((mode.sub_mode==SHIFTPOINT2))
+									if((mode.sub_mode==SUBMODE_SHIFTPOINT2))
 										{
 											mode.step_bp++;
 											return;
@@ -658,7 +637,9 @@ void Shift_BumpAction(void)
 								}
 							else if(nextaction==CHECK_BACKSWEEP)
 								{
+#ifdef DEBUG_SHIFT
 									TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
+#endif
 									mode.bump=0;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -726,8 +707,8 @@ void Init_Shift_Point1(u8 pre_action)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SHIFT;			
-	mode.sub_mode = SHIFTPOINT1;
+	mode.mode = MODE_SHIFT;			
+	mode.sub_mode = SUBMODE_SHIFTPOINT1;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
 	mode.step_bp = 0;
@@ -759,15 +740,13 @@ void Init_Shift_Point1(u8 pre_action)
 #endif
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
-#endif
-	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
-	
-	
+#endif	
+#ifdef DEBUG_SHIFT	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
+#endif
 	Delete_All_PathPoint();
-	pathpoint_inybs=false;
 	delay_ms(100);
 }
 
@@ -792,7 +771,9 @@ void Do_Shift_Point1(void)
 	if((Analysis_Stop_StartArea())&((mode.bump)|(mode.abnormity)))
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT
 			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 			Delete_All_PathPoint();
 			//Init_Cease();
 			Init_Sweep_Done();
@@ -805,12 +786,6 @@ void Do_Shift_Point1(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	
@@ -823,7 +798,7 @@ void Do_Shift_Point1(void)
 	Shift_BumpAction();
 	if(mode.bump)
 		return;
-	if(mode.sub_mode!=SHIFTPOINT1)
+	if(mode.sub_mode!=SUBMODE_SHIFTPOINT1)
 		return;
 	switch(mode.step)
 		{
@@ -834,7 +809,7 @@ void Do_Shift_Point1(void)
 			case 1:
 				if(giv_sys_time-mode.time<1000)
 					return;
-				if(mode.last_sub_mode==YBS_SUB_LEFT)
+				if(mode.last_sub_mode==SUBMODE_YBS_LEFT)
 					turn_dir=2;
 				else
 					turn_dir=1;
@@ -872,12 +847,16 @@ void Do_Shift_Point1(void)
 					return;
 				if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))		//当前点刚好处于目标点
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_1!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 					}
 				else if((now_gridx==tgt_gridx2)&(now_gridy==tgt_gridy2))
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_2!!\r\n");
+#endif
 						Init_Shift_Point2();
 					}
 #if 1
@@ -888,30 +867,40 @@ void Do_Shift_Point1(void)
 #else
 				else if(grid.y==tgt_gridy1)						//当前点与目标点横坐标不一致，纵坐标重叠
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid Y is match the check_point new!!\r\n");
 						TRACE("but grid X is not match!!!\r\n");
+#endif
 						mode.step=80;
 					}
 				else if(grid.x==tgt_gridx1)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid X is match the check_point new!!\r\n");
 						TRACE("but grid Y is not match!!!\r\n");
+#endif
 						mode.step=100;
 					}
 				else
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid XY is not match the check_point new!!\r\n");
+#endif
 						mode.step++;							//当前点与目标点横纵坐标都不一致。
 					}
 #endif
 				break;
 			case 6:
 				temp_result=Find_Directly_Way(check_point.new_x1,check_point.new_y1);		//寻找是否能直接到的路径
+#ifdef DEBUG_SHIFT
 				TRACE("analysis direct way reuslt=%d\r\n",temp_result);
+#endif
 				switch(temp_result)
 					{
 						case 0:
+#ifdef DEBUG_SHIFT
 							TRACE("motion can't directly move!!\r\n");
+#endif
 //							TRACE("prepare indirect way!!\r\n");
 //							TRACE("Goto mode step 60\r\n");
 //							mode.step=60;
@@ -923,16 +912,22 @@ void Do_Shift_Point1(void)
 								}
 							break;
 						case 1:
+#ifdef DEBUG_SHIFT
 							TRACE("motion can directly move with Y-axis first,X-axis Second!!\r\n");
+#endif
 							mode.step=20;
 							break;
 						case 2:
+#ifdef DEBUG_SHIFT
 							TRACE("motion can directly move with X-axis first,Y-axis Second!!\r\n");
+#endif
 							mode.step=40;
 							break;
 						default:
+#ifdef DEBUG_SHIFT
 							TRACE("motion can't directly move!!\r\n");
 							TRACE("prepare indirect way!!\r\n");
+#endif
 							mode.step=60;
 							break;
 					}
@@ -943,13 +938,17 @@ void Do_Shift_Point1(void)
 					{
 						case CHECK_NEWAREA:
 						case CHECK_GOEXIT:
+#ifdef DEBUG_SHIFT
 							TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 							TRACE("Goto Right Shift YBS!!\r\n");
+#endif
 							Init_Shift_RightYBS(2);
 							return;
 						case CHECK_DOCK:
+#ifdef DEBUG_SHIFT
 							TRACE("now is CHECK_DOCK!!!\r\n");
 							TRACE("Goto Rigth Dock YBS");
+#endif
 							Init_Dock_RightYBS(0);
 							return;
 						default:
@@ -960,8 +959,10 @@ void Do_Shift_Point1(void)
 				temp_result=Find_PathPoint_NoWall_Way(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("motion can use pathpoint move!!!\r\n");
 						TRACE("go to PATHPOINT step!!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_PATHPOINT;
 					}
 				else if(temp_nextaction>=CHECK_NEWAREA)
@@ -971,13 +972,17 @@ void Do_Shift_Point1(void)
 							{
 								case CHECK_NEWAREA:
 								case CHECK_GOEXIT:
+#ifdef DEBUG_SHIFT
 									TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 									TRACE("Goto Right Shift YBS!!\r\n");
+#endif
 									Init_Shift_RightYBS(2);
 									return;
 								case CHECK_DOCK:
+#ifdef DEBUG_SHIFT
 									TRACE("now is CHECK_DOCK!!!\r\n");
 									TRACE("Goto Rigth Dock YBS");
+#endif
 									Init_Dock_RightYBS(0);
 									return;
 								default:
@@ -986,8 +991,10 @@ void Do_Shift_Point1(void)
 #else
 						if(temp_nextaction==CHECK_DOCK)
 							{
+#ifdef DEBUG_SHIFT
 								TRACE("now is CHECK_DOCK!!!\r\n");
 								TRACE("Goto Rigth Dock YBS");
+#endif
 								Init_Dock_RightYBS(0);
 								return;
 							}
@@ -995,15 +1002,19 @@ void Do_Shift_Point1(void)
 						temp_result=Judge_YBS_Dir();
 						if(temp_result==1)
 							{
+#ifdef DEBUG_SHIFT
 								TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 								TRACE("Goto Left Shift YBS!!\r\n");
+#endif
 								Init_Shift_LeftYBS(0);
 								return;
 							}
 						else
 							{
+#ifdef DEBUG_SHIFT
 								TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
 								TRACE("Goto Right Shift YBS!!\r\n");
+#endif
 								Init_Shift_RightYBS(2);
 								return;
 							}
@@ -1011,25 +1022,30 @@ void Do_Shift_Point1(void)
 					}
 				else
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("motion can't use pathpoint move!!!\r\n");
 						TRACE("prepare indirect way!!\r\n");
 						TRACE("Goto mode step 60\r\n");
+#endif
 						mode.step=60;
 					}
 				break;
 			case 10:
 				
-				//TRACE("motion need dock and area num=%d\r\n",Read_CurrNode_AreaNO());
 				temp_result=Find_PathPoint_WayAll(check_point.new_x1,check_point.new_y1);
 				if(temp_result)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("motion can use pathpoint move!!!\r\n");
 						TRACE("go to PATHPOINT step!!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_PATHPOINT;
 					}
 				else
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 						Init_Docking();
 					}
 				break;
@@ -1210,24 +1226,31 @@ void Do_Shift_Point1(void)
 			//不能直接到达，需要间接的找出路
 			case 60:
 				temp_result=Find_Indirectly_Way(tgt_gridx1,tgt_gridy1);
+#ifdef DEBUG_SHIFT
 				TRACE("analysis indirect way reuslt=%d\r\n",temp_result);
+#endif
 				if(temp_result==1)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("motion can indirectly move to tgt!!!\r\n");
+#endif
 						mode.step=70;
 					}
 				else if(temp_result==2)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("motion can indirectly move to tgt,but dir opposite!!!\r\n");
+#endif
 						mode.step++;
 					}
 				else
 					{
+#ifdef DEBUG_SHIFT
 						Logout_CheckPoint();
 						//Logout_Area_Coordinate();
 						TRACE("motion can't indirectly move to tgt!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_NO_REACH;
-						//while(1);
 					}
 				break;
 
@@ -1235,14 +1258,18 @@ void Do_Shift_Point1(void)
 			case 61:
 				if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))		//当前点刚好处于目标点
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_1!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 						return;
 					}
 				else if(now_gridy==tgt_gridy1) 					//当前点与目标点横坐标不一致，纵坐标重叠
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid Y is match the check_point new!!\r\n");
 						TRACE("but grid X is not match!!!\r\n");
+#endif
 						mode.step=80;
 						return;
 					}
@@ -1321,14 +1348,18 @@ void Do_Shift_Point1(void)
 			case 70:				
 				if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))		//当前点刚好处于目标点
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_1!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 						return;
 					}
 				else if(now_gridy==tgt_gridy1) 						//当前点与目标点Y坐标一致，X坐标不一致
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid Y is match the check_point new!!\r\n");
 						TRACE("but grid X is not match!!!\r\n");
+#endif
 						mode.step=80;
 						return;
 					}
@@ -1384,21 +1415,27 @@ void Do_Shift_Point1(void)
 			case 73:
 				if((now_gridx==tgt_gridx2)&(now_gridy==tgt_gridy2))
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_2!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT2;
 						Init_Shift_Point2();
 						return;
 					}
 				if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))		//当前点刚好处于目标点
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_1!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 						return;
 					}
 				else if(now_gridy==tgt_gridy1)						//当前点与目标点横坐标不一致，纵坐标重叠
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid Y is match the check_point new!!\r\n");
 						TRACE("but grid X is not match!!!\r\n");
+#endif
 						mode.step=80;
 						return;
 					}
@@ -1414,8 +1451,6 @@ void Do_Shift_Point1(void)
 #endif
 				if(temp_tgtx==0x7f)
 					{
-						//TRACE("hang at %s %d\r\n",__func__,__LINE__);
-						//while(1);
 						mode.step=SHIFTMODE_STEP_NO_REACH;
 						return;
 					}
@@ -1486,7 +1521,9 @@ void Do_Shift_Point1(void)
 			case 80:
 				if((now_gridx==tgt_gridx1)&(now_gridy==tgt_gridy1))		//当前点刚好处于目标点
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match the check_point new_1!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 						return;
 					}
@@ -1650,7 +1687,9 @@ void Do_Shift_Point1(void)
 			///////////////使用PATHPOINT路径行走////////////////////
 			case SHIFTMODE_STEP_PATHPOINT:
 				stop_rap();
+#ifdef DEBUG_SHIFT
 				TRACE("begin ShiftMode Step Pathpoint in %s!!!\r\n",__func__);
+#endif
 				temp_point=NULL;
 				path_num=1;
 				check_point.use_pathpoint=false;
@@ -1664,7 +1703,9 @@ void Do_Shift_Point1(void)
 						temp_point=Get_PathPoint(path_num+i);
 						if(temp_point==NULL)
 							{
+#ifdef DEBUG_SHIFT
 								TRACE("temp_point is NULL in %s!!!\r\n",__func__);
+#endif
 								mode.step=5;
 								return;
 							}
@@ -1683,7 +1724,9 @@ void Do_Shift_Point1(void)
 						temp_point=Get_PathPoint(path_num);
 						if(temp_point==NULL)
 							{
+#ifdef DEBUG_SHIFT
 								TRACE("temp_point is NULL in %s!!!\r\n",__func__);
+#endif
 								mode.step=5;
 								return;
 							}
@@ -1693,8 +1736,10 @@ void Do_Shift_Point1(void)
 					{
 						mode.step++;
 					}
+#ifdef DEBUG_SHIFT
 				TRACE("next path point gridx=%d gridy=%d\r\n",temp_point->path_grid.gridx,temp_point->path_grid.gridy);
 				TRACE("next m.step=%d in m.step 171\r\n",mode.step);
+#endif
 				break;
 			//当前X轴坐标与下一个PATH点（即公共点）的X轴坐标不相等处理
 			case 172:
@@ -1812,7 +1857,9 @@ void Do_Shift_Point1(void)
 				if((now_gridx==check_point.new_x1)&(now_gridy==check_point.new_y1))
 					{
 						stop_rap();
+#ifdef DEBUG_SHIFT
 						TRACE("now grid is match new1,out path point way!!!\r\n");
+#endif
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
 						if(Delete_All_PathPoint())
 							motion1.pathpoint_ok=false;
@@ -1822,7 +1869,9 @@ void Do_Shift_Point1(void)
 				mode.step=SHIFTMODE_STEP_PATHPOINT+1;
 				if(path_num>path_length)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("path num has out of range!!!\r\n");
+#endif
 						if(Delete_All_PathPoint())
 							motion1.pathpoint_ok=false;
 						mode.step=5;
@@ -1833,9 +1882,10 @@ void Do_Shift_Point1(void)
 			
 			//间接也无法到达new_1点的漏扫，的处理过程
 			case SHIFTMODE_STEP_NO_REACH:
+#ifdef DEBUG_SHIFT
 				TRACE("Enter mode step can't reach point1");
 				TRACE("Need YBS!!\r\n");
-
+#endif
 				temp_result=Judge_YBS_Dir();
 				if(temp_result==1)
 					{
@@ -1850,18 +1900,18 @@ void Do_Shift_Point1(void)
 
 				if(Read_CheckPoint_NextAction()==CHECK_GOEXIT)
 					{
-						if(mode.last_sub_mode==YBS_SUB_LEFT)
+						if(mode.last_sub_mode==SUBMODE_YBS_LEFT)
 							Init_ShiftExit_LeftYBS(1);
-						else if(mode.last_sub_mode==YBS_SUB_RIGHT)
+						else if(mode.last_sub_mode==SUBMODE_YBS_RIGHT)
 							Init_ShiftExit_RightYBS(1);
 						else
 							Init_ShiftExit_RightYBS(1);
 					}
 				else
 					{
-						if(mode.last_sub_mode==YBS_SUB_LEFT)
+						if(mode.last_sub_mode==SUBMODE_YBS_LEFT)
 							Init_Shift_LeftYBS(1);
-						else if(mode.last_sub_mode==YBS_SUB_RIGHT)
+						else if(mode.last_sub_mode==SUBMODE_YBS_RIGHT)
 							Init_Shift_RightYBS(1);
 						else
 							Init_Shift_RightYBS(1);
@@ -1878,8 +1928,10 @@ void Init_Shift_Point2(void)
 		{
 			if((grid.y!=check_point.new_y2)|(grid.x!=check_point.new_x2))				//如果当前坐标也不等于new_2坐标
 				{
+#ifdef DEBUG_SHIFT
 					TRACE("grid is not macth check_point new1|new2 in %s\r\n",__func__);
 					TRACE("Go back shiftpoint1 again!!\r\n");
+#endif
 					Init_Shift_Point1(0);
 					return;
 				}
@@ -1897,8 +1949,8 @@ void Init_Shift_Point2(void)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SHIFT;			
-	mode.sub_mode = SHIFTPOINT2;
+	mode.mode = MODE_SHIFT;			
+	mode.sub_mode = SUBMODE_SHIFTPOINT2;
 	mode.time=giv_sys_time;
 	mode.step=0;
 	mode.bump = 0;
@@ -1917,13 +1969,12 @@ void Init_Shift_Point2(void)
 #endif
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
-#endif
-	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
-	
-	
+#endif	
+#ifdef DEBUG_SHIFT	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	Logout_CheckPoint();
+#endif
 	Delete_All_PathPoint();
 	delay_ms(100);
 }
@@ -1943,7 +1994,9 @@ void Do_Shift_Point2(void)
 	if((Analysis_Stop_StartArea())&((mode.bump)|(mode.abnormity)))
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT
 			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 			Delete_All_PathPoint();
 			//Init_Cease();
 			Init_Sweep_Done();
@@ -1956,12 +2009,6 @@ void Do_Shift_Point2(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	
@@ -1974,7 +2021,7 @@ void Do_Shift_Point2(void)
 	Shift_BumpAction();
 	if(mode.bump)
 		return;
-	if(mode.sub_mode!=SHIFTPOINT2)
+	if(mode.sub_mode!=SUBMODE_SHIFTPOINT2)
 		return;
 	switch(mode.step)
 		{
@@ -1993,10 +2040,10 @@ void Do_Shift_Point2(void)
 					}
 				else
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("grid.x!=tgt_x2 grid.y!=tgt_y2!!!\r\n");
+#endif
 						mode.step=1;
-						//TRACE("hang at %s %d\r\n",__func__,__LINE__);
-						//while(1);
 					}
 				break;
 
@@ -2046,7 +2093,9 @@ void Do_Shift_Point2(void)
 					}
 //				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				length=abs(now_gridx-tgt_gridx2)*20;length+=20;
+#ifdef DEBUG_SHIFT
 				TRACE("length=%d in %s %d\r\n",length,__func__,__LINE__);
+#endif
 				mode.step++;
 				break;
 			case 5:
@@ -2073,9 +2122,10 @@ void Do_Shift_Point2(void)
 					}
 				break;
 			case 100:
-
+#ifdef DEBUG_SHIFT
 				TRACE("tgt_gridx2=%d tgt_gridy2=%d\r\n",tgt_gridx2,tgt_gridy2);
 				TRACE("grid.x =%d grid.y=%d\r\n",grid.x,grid.y);
+#endif
 //				if(check_point.go_exit)
 				if(temp_nextaction==CHECK_GOEXIT)
 					{
@@ -2085,17 +2135,21 @@ void Do_Shift_Point2(void)
 //				if(check_point.next_area)
 				else if(temp_nextaction==CHECK_DOCK)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 						//Init_Docking();
 						Init_Sweep_Done();
 						return;
 					}
 				else if(temp_nextaction==CHECK_NEWAREA)
 					{
+#ifdef DEBUG_SHIFT
 						TRACE("Prepare to next area sweep!!!\r\n");
 						TRACE("Next tgt_yaw=%d\r\n",check_point.next_tgtyaw);
 						TRACE("Next y_acc=%d\r\n",check_point.next_yacc);
 						TRACE("Next x_acc=%d\r\n",check_point.next_xacc);
+#endif
 						Init_Pass2Init(check_point.next_tgtyaw,check_point.next_yacc,check_point.next_xacc);
 //						check_point.next_area=false;
 						Reset_CheckPoint_NextAction();
@@ -2161,8 +2215,8 @@ void Init_Shift_RightYBS(u8 pre_action)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = SHIFT;			
-	mode.sub_mode = YBS_SUB_RIGHT;		
+	mode.mode = MODE_SHIFT;			
+	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -2203,8 +2257,8 @@ void Init_Shift_RightYBS(u8 pre_action)
 	abort_shiftybs_flag=false;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Right YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	Delete_All_PathPoint();
 }
 
@@ -2227,8 +2281,8 @@ void Init_Shift_LeftYBS(u8 pre_action)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = SHIFT;			
-	mode.sub_mode = YBS_SUB_LEFT;		
+	mode.mode = MODE_SHIFT;			
+	mode.sub_mode = SUBMODE_YBS_LEFT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.bump_flag=false;
@@ -2271,85 +2325,10 @@ void Init_Shift_LeftYBS(u8 pre_action)
 	abort_shiftybs_flag=false;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Left YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	Delete_All_PathPoint();
 }
-
-u8 CheckOutRange_Clean_inShift(u16 data)
-{
-	s8 now_gridx,now_gridy;
-	now_gridx=grid.x;now_gridy=grid.y;
-	u8 result=0;
-	switch (data)
-		{
-			case BUMP_XMAX_OUT:					//Xmax Out
-				if((!Read_Coordinate_AreaNo(grid.x_area_max+1,now_gridy-1))&(!Read_Coordinate_AreaNo(grid.x_area_max+1,now_gridy))&(!Read_Coordinate_AreaNo(grid.x_area_max+1,now_gridy+1)))
-					{
-						stop_rap();
-						check_point.new_x1=grid.x_area_max;
-						check_point.new_y1=now_gridy;
-						check_point.new_x2=grid.x_area_max+1;
-						check_point.new_y2=now_gridy;
-						check_point.next_xacc=1;
-						check_point.next_yacc=2;
-						Set_CheckPoint_NextAction(CHECK_NEWAREA);
-						check_point.next_tgtyaw=F_Angle_Const;
-						result=1;
-					}
-				break;
-			case BUMP_XMIN_OUT:					//Xmin Out
-				if((!Read_Coordinate_AreaNo(grid.x_area_min-1,now_gridy-1))&(!Read_Coordinate_AreaNo(grid.x_area_min-1,now_gridy))&(!Read_Coordinate_AreaNo(grid.x_area_min-1,now_gridy+1)))
-					{
-						stop_rap();
-						check_point.new_x1=grid.x_area_min;
-						check_point.new_y1=now_gridy;
-						check_point.new_x2=grid.x_area_min-1;
-						check_point.new_y2=now_gridy;
-						check_point.next_xacc=0;
-						check_point.next_yacc=2;
-						Set_CheckPoint_NextAction(CHECK_NEWAREA);
-						check_point.next_tgtyaw=B_Angle_Const;
-						result=1;
-					}
-				break;
-			case BUMP_YMAX_OUT:					//Ymax Out
-				if((!Read_Coordinate_AreaNo(now_gridx-1,grid.y_area_max+1))&(!Read_Coordinate_AreaNo(now_gridx,grid.y_area_max+1))&(!Read_Coordinate_AreaNo(now_gridx+1,grid.y_area_max+1)))
-					{
-						stop_rap();
-						check_point.new_x1=now_gridx;
-						check_point.new_y1=grid.y_area_max;
-						check_point.new_x2=now_gridx;
-						check_point.new_y2=grid.y_area_max+1;
-						check_point.next_xacc=2;
-						check_point.next_yacc=1;
-						Set_CheckPoint_NextAction(CHECK_NEWAREA);
-						check_point.next_tgtyaw=F_Angle_Const;
-						result=1;
-					}
-				break;
-			case BUMP_YMIN_OUT:					//Ymin Out
-				if((!Read_Coordinate_AreaNo(now_gridx-1,grid.y_area_min-1))&(!Read_Coordinate_AreaNo(now_gridx,grid.y_area_min=1))&(!Read_Coordinate_AreaNo(now_gridx+1,grid.y_area_min-1)))
-					{
-						stop_rap();
-						check_point.new_x1=now_gridx;
-						check_point.new_y1=grid.y_area_max;
-						check_point.new_x2=now_gridx;
-						check_point.new_y2=grid.y_area_min-1;
-						check_point.next_xacc=2;
-						check_point.next_yacc=0;
-						Set_CheckPoint_NextAction(CHECK_NEWAREA);
-						check_point.next_tgtyaw=F_Angle_Const;
-						result=1;
-					}
-				break;
-			default:				
-				result=0;
-				break;
-		}
-	return result;
-}
-
 
 u8 Abort_ShiftYBS(void)
 {
@@ -2365,6 +2344,7 @@ u8 Abort_ShiftYBS(void)
 		{
 			if(Check_OutRange_Clean_YBS(mode.bump))
 				{
+#ifdef DEBUG_SHIFT				
 					TRACE("Prepare to next area sweep in ShiftYBS!!!\r\n");
 					TRACE("check_point.new_x1=%d\r\n",check_point.new_x1);
 					TRACE("check_point.new_y1=%d\r\n",check_point.new_y1);
@@ -2373,6 +2353,7 @@ u8 Abort_ShiftYBS(void)
 					TRACE("Next tgt_yaw=%d\r\n",check_point.next_tgtyaw);
 					TRACE("Next y_acc=%d\r\n",check_point.next_yacc);
 					TRACE("Next x_acc=%d\r\n",check_point.next_xacc);
+#endif
 //					Init_Pass2Init(check_point.next_tgtyaw,check_point.next_yacc,check_point.next_xacc);
 					Init_Shift_Point1(0);
 					Reset_CheckPoint_NextAction();
@@ -2380,14 +2361,16 @@ u8 Abort_ShiftYBS(void)
 				}
 		}
 
-	if(mode.last_sub_mode==SHIFTPOINT1)
+	if(mode.last_sub_mode==SUBMODE_SHIFTPOINT1)
 		{
 			//if((now_gridy==tgt_gridy1)&(now_gridx==tgt_gridx1))
 			if((Judge_GridYPOS_Reach(tgt_gridy1,0))&(now_gridx==tgt_gridx1))
 				{
 					stop_rap();
+#ifdef DEBUG_SHIFT					
 					TRACE("Grid is match the checkpoint new1 in %s!!\r\n",__func__);
 					TRACE("Prepare to SHIFT POINT 2!!\r\n");
+#endif
 					Init_Shift_Point2();
 					return 1;
 				}
@@ -2395,27 +2378,30 @@ u8 Abort_ShiftYBS(void)
 			if((Judge_GridYPOS_Reach(tgt_gridy2,0))&(now_gridx==tgt_gridx2))
 				{
 					stop_rap();
+#ifdef DEBUG_SHIFT					
 					TRACE("Grid is match the checkpoint new2 in %s!!\r\n",__func__);
 					TRACE("Prepare to SHIFT POINT 2!!\r\n");
+#endif
 					Init_Shift_Point2();
 					return 1;
 				}
 		}
 	
-	if(mode.last_sub_mode==SHIFTPOINT2)
+	if(mode.last_sub_mode==SUBMODE_SHIFTPOINT2)
 		{
 			//if((now_gridy==tgt_gridy2)&(now_gridx==tgt_gridx2))
 			if((Judge_GridYPOS_Reach(tgt_gridy2,0))&(now_gridx==tgt_gridx2))
 				{
 					stop_rap();
+#ifdef DEBUG_SHIFT					
 					TRACE("Grid is match the checkpoint new2 in %s!!\r\n",__func__);
 					TRACE("Prepare to SHIFT POINT 2!!\r\n");
+#endif
 					Init_Shift_Point2();
 					return 1;
 				}
 		}
 
-#if 1
 	if(abort_shiftybs_flag)
 		{
 			abort_shiftybs_flag=false;
@@ -2426,7 +2412,9 @@ u8 Abort_ShiftYBS(void)
 					case CHECK_BACK2NORMAL:
 						break;
 					case CHECK_BACKSWEEP:
+#ifdef DEBUG_SHIFT					
 						TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
+#endif
 						if(Analysis_Back_Leak()==0)
 							Init_Stop_BackSweep();
 						else if((tgt_gridx1!=check_point.new_x1)&(tgt_gridy1!=check_point.new_y1))
@@ -2434,9 +2422,11 @@ u8 Abort_ShiftYBS(void)
 						else if(Find_PathPoint_NoWall_YBS(tgt_gridx1,tgt_gridy1))
 								{
 									stop_rap();
+#ifdef DEBUG_SHIFT					
 									TRACE("Find PathPoint nowallway in %s\r\n",__func__);
 									TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 									TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 									check_point.use_pathpoint=true;
 									Init_Shift_Point1(2);
 									return 1;													
@@ -2449,14 +2439,16 @@ u8 Abort_ShiftYBS(void)
 							{
 								if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
 									{
-										if(mode.last_sub_mode==SHIFTPOINT1)
+										if(mode.last_sub_mode==SUBMODE_SHIFTPOINT1)
 											{
 												if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
 													{
 														stop_rap();
+#ifdef DEBUG_SHIFT					
 														TRACE("Find directly Way in %s\r\n",__func__);
 														TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 														TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 														//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
 														//Init_Shift_Point2();
 														Init_Shift_Point1(2);
@@ -2466,9 +2458,11 @@ u8 Abort_ShiftYBS(void)
 												if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
 													{
 														stop_rap();
+#ifdef DEBUG_SHIFT					
 														TRACE("Find pathpoint nowallway in %s\r\n",__func__);
 														TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 														TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 														check_point.use_pathpoint=true;
 														Init_Shift_Point1(2);
 														return 1;													
@@ -2486,7 +2480,9 @@ u8 Abort_ShiftYBS(void)
 						else if(area_check==4)
 							{
 								stop_rap();
+#ifdef DEBUG_SHIFT					
 								TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 								//Init_Docking();
 								Init_Sweep_Done();
 								return 1;
@@ -2505,22 +2501,26 @@ u8 Abort_ShiftYBS(void)
 						if(!Can_Entry_NewArea(&check_point))
 							{
 								stop_rap();
+#ifdef DEBUG_SHIFT					
 								TRACE("The New Area Entry has Closed!!\r\n");
 								TRACE("Find Next New Area!!\r\n");
+#endif
 								Area_Check(1);
 								Init_Shift_Point1(1);
 								return 1;
 							}
 					case CHECK_GOEXIT:
 					case CHECK_DOCK:						
-						if(mode.last_sub_mode==SHIFTPOINT1)
+						if(mode.last_sub_mode==SUBMODE_SHIFTPOINT1)
 							{
 								if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
 									{
 										stop_rap();
+#ifdef DEBUG_SHIFT					
 										TRACE("Find directly Way in %s\r\n",__func__);
 										TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 										TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 										Init_Shift_Point1(2);
 										return 1;
 									}
@@ -2528,9 +2528,11 @@ u8 Abort_ShiftYBS(void)
 								else if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
 									{
 										stop_rap();
+#ifdef DEBUG_SHIFT					
 										TRACE("Find pathpoint Way in %s\r\n",__func__);
 										TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 										TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 										check_point.use_pathpoint=true;
 										Init_Shift_Point1(2);
 										return 1;
@@ -2539,7 +2541,7 @@ u8 Abort_ShiftYBS(void)
 								else
 									return 0;
 							}
-						else if(mode.last_sub_mode==SHIFTPOINT2)
+						else if(mode.last_sub_mode==SUBMODE_SHIFTPOINT2)
 							{
 								if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
 									{
@@ -2555,135 +2557,6 @@ u8 Abort_ShiftYBS(void)
 				}
 		}
 
-#else	
-	if((abort_shiftybs_flag)&(temp_nextaction!=CHECK_BACK2NORMAL))
-		{
-			abort_shiftybs_flag=false;
-			if(temp_nextaction<=CHECK_LEAKSWEEP)
-				{
-					if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)<=20)
-						return 0;
-
-					if(temp_nextaction==CHECK_BACKSWEEP)
-						{
-							TRACE("Abort for CHECK_BACKSWEEP in %s!!!\r\n",__func__);
-							if(Analysis_Back_Leak()==0)
-								Init_Stop_BackSweep();
-							else if((tgt_gridx1!=check_point.new_x1)&(tgt_gridy1!=check_point.new_y1))
-								Init_Shift_Point1(1);
-							return 1;
-							
-						}
-
-					area_check=Area_Check(1);
-					if(area_check==1)
-						{
-							if((tgt_gridx1==check_point.new_x1)&(tgt_gridx2==check_point.new_x2)&(tgt_gridy1==check_point.new_y1)&(tgt_gridy2==check_point.new_y2))
-								{
-									if(mode.last_sub_mode==SHIFTPOINT1)
-										{
-											if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
-												{
-													stop_rap();
-													TRACE("Find directly Way in %s\r\n",__func__);
-													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
-													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
-													//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
-													//Init_Shift_Point2();
-													Init_Shift_Point1(2);
-													return 1;
-												}
-											#if 0
-											if(Find_PathPoint_NoWall_YBS(check_point.new_x1,check_point.new_y1))
-												{
-													stop_rap();
-													TRACE("Find indirectly nowallway in %s\r\n",__func__);
-													TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
-													TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
-													check_point.use_pathpoint=true;
-													Init_Shift_Point1(2);
-													return 1;													
-												}
-											#endif
-										}
-								}
-							else
-								{
-									stop_rap();
-									Init_Shift_Point1(1);
-									return 1;
-								}
-						}
-					else if(area_check==4)
-						{
-							stop_rap();
-							TRACE("Call this in %s %d\r\n",__func__,__LINE__);
-							Init_Docking();
-							return 1;
-						}
-					else
-						{
-							if(area_check==3)
-							Set_AreaWorkTime(10);
-							stop_rap();
-							Init_Shift_Point1(1);
-//							Set_AreaWorkTime(5);
-							return 1;
-						}
-				}
-			else
-				{
-					if(temp_nextaction==CHECK_NEWAREA)
-						{
-							if(!Can_Entry_NewArea(&check_point))
-								{
-									stop_rap();
-									TRACE("The New Area Entry has Closed!!\r\n");
-									TRACE("Find Next New Area!!\r\n");
-									Area_Check(1);
-									Init_Shift_Point1(1);
-									return 1;
-								}
-						}
-					
-					if(mode.last_sub_mode==SHIFTPOINT1)
-						{
-							if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
-								{
-									stop_rap();
-									TRACE("Find directly Way in %s\r\n",__func__);
-									TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
-									TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
-									//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
-									//Init_Shift_Point2();
-									Init_Shift_Point1(2);
-									return 1;
-								}
-#if 0
-							else if(Find_Indirectly_Way(check_point.new_x1,check_point.new_y1))
-								{
-									stop_rap();
-									TRACE("Find indirectly Way in %s\r\n",__func__);
-									Init_Shift_Point1(1);
-									return 1;
-								}
-#endif
-							else
-								return 0;
-						}
-					else if(mode.last_sub_mode==SHIFTPOINT2)
-						{
-							if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)>20)
-								{
-									stop_rap();
-									Area_Check(1);
-									Init_Shift_Point1(1);
-									return 1;
-								}							
-						}
-				}
-		}
-#endif
 
 	if(giv_sys_time-mode.time>600000)				//原来是15s
 		{
@@ -2691,13 +2564,17 @@ u8 Abort_ShiftYBS(void)
 				{
 					if(temp_nextaction==next_action)
 						{
+#ifdef DEBUG_SHIFT					
 							TRACE("motion1 ybs has been complete one circle!!!\r\n:");
+#endif
 							switch (temp_nextaction)
 								{
 									case CHECK_BACKSWEEP:
 										stop_rap();
+#ifdef DEBUG_SHIFT					
 										TRACE("nextaction is CHECK_BACKSWEEP!!!\r\n");
 										TRACE("abort now action,prepare to Area Check!!!\r\n");
+#endif
 										Set_Motion_BackSweep(0);
 										Area_Check(1);
 										Init_Shift_Point1(1);
@@ -2705,8 +2582,10 @@ u8 Abort_ShiftYBS(void)
 									case CHECK_NORMALSWEEP:
 									case CHECK_LEAKSWEEP:
 										stop_rap();
+#ifdef DEBUG_SHIFT					
 										TRACE("next action is NORMALSWEEP or LEAKSWEEP!!!\r\n");
 										TRACE("abort now action,prepare to next action!!!\r\n");
+#endif
 										motion1.area_ok=true;
 #ifdef USE_AREA_TREE
 										Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
@@ -2718,8 +2597,10 @@ u8 Abort_ShiftYBS(void)
 										Init_Shift_Point1(1);
 										return 1;
 									case CHECK_NEWAREA:
+#ifdef DEBUG_SHIFT					
 										TRACE("next action is NEWAREA!!!\r\n");
 										TRACE("Area check again!!!\r\n");
+#endif
 #ifdef USE_AREA_TREE
 										Set_Curr_AreaTree_AllNewOK();
 #else
@@ -2731,8 +2612,10 @@ u8 Abort_ShiftYBS(void)
 										return 1;
 									case CHECK_GOEXIT:
 									case CHECK_DOCK:
+#ifdef DEBUG_SHIFT					
 										TRACE("now action is GOEXIT!!!\r\n");
 										TRACE("That means can't go back!!!\r\n");
+#endif
 										//Init_Docking();
 										Init_Sweep_Done();
 										break;											
@@ -2744,7 +2627,9 @@ u8 Abort_ShiftYBS(void)
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT					
 			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 			//Init_Cease();
 			Init_Sweep_Done();
 		}
@@ -2781,7 +2666,7 @@ void Do_ShiftYBS(void)
 			if(power.charge_dc)
 #endif
 				{
-					 Init_Chargeing(DC_CHARGING);
+					 Init_Chargeing(SUBMODE_CHARGE_DC);
 					 return;
 				}					
 		}
@@ -2795,7 +2680,7 @@ void Do_ShiftYBS(void)
 
 	clr_all_hw_effect();			//qz add 20181210
 
-	if(mode.sub_mode==YBS_SUB_RIGHT)
+	if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		YBS_Check_corner();
 	else
 		YBS_Left_Check_corner();
@@ -2809,12 +2694,6 @@ void Do_ShiftYBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
@@ -2830,11 +2709,11 @@ void Do_ShiftYBS(void)
 	if(Analysis_Check_Dock())
 		return;
 	
-	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+	if((mode.sub_mode==SUBMODE_YBS_RIGHT))				//	RIGHT
 		{
 			YBS_Right_Bump(1);
 		}		
-	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+	else if((mode.sub_mode == SUBMODE_YBS_LEFT))		//	LEFT
 		{
 			YBS_Left_Bump(1);
 		}
@@ -2846,19 +2725,13 @@ void Do_ShiftYBS(void)
 				//Wall_lost_counter = 0;
 				if(mode.step>=0x88)
 					{
-						if(mode.sub_mode==YBS_SUB_RIGHT)
+						if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 						{
 							//mode.step=0x00;			//qz mask 20180910
 						}
 						else
 							mode.step=0x40;
 					}
-
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
@@ -2869,10 +2742,6 @@ void Do_ShiftYBS(void)
 #ifdef	FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.step=0xB0;
@@ -2906,7 +2775,7 @@ void Do_ShiftYBS(void)
 				Free_Skid_Indep.check_flag=false;
 #endif
 				Speed=FAST_MOVE_SPEED;
-				if(mode.sub_mode==YBS_SUB_RIGHT)
+				if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					temp_data1=2;
 				else
 					temp_data1=1;
@@ -2938,7 +2807,7 @@ void Do_ShiftYBS(void)
 						grid.x_ybs_start=grid.x;
 						grid.y_ybs_start=grid.y;
 					}
-				if(mode.sub_mode==YBS_SUB_LEFT)
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
 						return;
@@ -2964,10 +2833,6 @@ void Do_ShiftYBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-
-#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 						return;
 					}
 				//QZ ADD
@@ -2990,21 +2855,7 @@ void Do_ShiftYBS(void)
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
 						mode.step = 3;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-						Disable_Rotate_Angle();
-#endif
 					}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -3124,10 +2975,6 @@ void Do_ShiftYBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-			
-#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 					}
 					//QZ ADD
 				if(YBS_Wall_Distance>140)	//140
@@ -3148,22 +2995,7 @@ void Do_ShiftYBS(void)
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-							Disable_Rotate_Angle();
-#endif
-
 						}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -3297,12 +3129,16 @@ void Do_ShiftYBS(void)
 //function:此函数被调用时，已经退出之前清扫的区域，返回到开始进入之前区域的上一个区域，然后直行一些处理动作
 void Do_ExitAtion(void)
 {		
+#ifdef DEBUG_SHIFT
 	TRACE("Enter in %s..\r\n");
+#endif
 #ifdef USE_AREA_TREE
 	Back_To_ParentTree();
 	if(Read_Curr_AreaTree_NO()==0)
 		{
+#ifdef DEBUG_SHIFT
 			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 			//Init_Docking();
 			Init_Sweep_Done();
 			return;
@@ -3312,7 +3148,9 @@ void Do_ExitAtion(void)
 	Del_AreaNode_End();							//删除上一清扫区域的节点
 	if(Read_CurrNode_AreaNO()==0)
 		{
+#ifdef DEBUG_SHIFT
 			TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 			//Init_Docking();
 			Init_Sweep_Done();
 			return;
@@ -3322,13 +3160,17 @@ void Do_ExitAtion(void)
 	Cal_PosArea_Max();							//获取当前区域的坐标信息
 	if(motion1.force_dock)
 		{
+#ifdef DEBUG_SHIFT
 			TRACE("Force Dock!!!\r\n");
+#endif
 			Force_Dock();
 			return;
 		}
 	Area_Check(0);
 	Init_Shift_Point1(0);
+#ifdef DEBUG_SHIFT
 	TRACE("set worktime_area 10!!\r\n");
+#endif
 	Set_AreaWorkTime(10);
 
 }
@@ -3359,7 +3201,7 @@ u8 Abort2Sweep(void)
 			case CHECK_LEAKSWEEP:
 				if(now_gridy!=tgt_gridy2)
 					return 0;
-				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)														//左沿边
 					{
 						if(check_point.ydir>0)
 							{
@@ -3447,9 +3289,11 @@ u8 Abort2Sweep(void)
 								last_gridx=now_gridx;last_gridy=now_gridy;
 
 								stop_rap();
+#ifdef DEBUG_SHIFT
 								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx1,temp_gridy1);
 								TRACE("girdx=%d gridy=%d not clean\r\n",temp_gridx2,temp_gridy2);
 								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
 								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
 								//Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
@@ -3472,7 +3316,7 @@ u8 Abort2Sweep(void)
 				if((now_gridx>=grid.x_area_max)|(now_gridx<=grid.x_area_min))
 					return 0;
 
-				if(mode.sub_mode==YBS_SUB_LEFT)														//左沿边
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)														//左沿边
 					{
 						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
 							{
@@ -3639,9 +3483,11 @@ u8 Abort2Sweep(void)
 						//if(!Read_Coordinate_Clean(temp_gridx2,temp_gridy2))
 							{
 								stop_rap();
+#ifdef DEBUG_SHIFT
 								TRACE("girdx1=%d gridy1=%d not clean\r\n",temp_gridx1,temp_gridy1);
 								TRACE("girdx2=%d gridy2=%d not clean\r\n",temp_gridx2,temp_gridy2);
 								TRACE("Abort in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 								check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
 								check_point.new_x2=now_gridx;check_point.new_y2=now_gridy;
 								Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
@@ -3682,8 +3528,8 @@ void Init_ShiftExit_RightYBS(u8 pre_action)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = EXIT;			
-	mode.sub_mode = YBS_SUB_RIGHT;		
+	mode.mode = MODE_EXIT;			
+	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -3719,8 +3565,8 @@ void Init_ShiftExit_RightYBS(u8 pre_action)
 	abort_shiftybs_flag=false;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Right YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 }
 
 void Init_ShiftExit_LeftYBS(u8 pre_action)
@@ -3741,8 +3587,8 @@ void Init_ShiftExit_LeftYBS(u8 pre_action)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = EXIT;			
-	mode.sub_mode = YBS_SUB_LEFT;		
+	mode.mode = MODE_EXIT;			
+	mode.sub_mode = SUBMODE_YBS_LEFT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.bump_flag=false;
@@ -3774,8 +3620,8 @@ void Init_ShiftExit_LeftYBS(u8 pre_action)
 	abort_shiftybs_flag=false;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Shift Left YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 }
 
 u8 Abort_ShiftExit_YBS(void)
@@ -3787,7 +3633,9 @@ u8 Abort_ShiftExit_YBS(void)
 	if(Analysis_Stop_StartArea())
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT
 			TRACE("motion is in start area in %s %d!!!\r\n",__func__,__LINE__);
+#endif
 			//Init_Cease();
 			Init_Sweep_Done();
 			return 1;
@@ -3804,9 +3652,11 @@ u8 Abort_ShiftExit_YBS(void)
 	
 	if(Analysis_Reach_ExitArea())
 		{
+#ifdef DEBUG_SHIFT
 			TRACE("now grid is in the exit area num!!!\r\n");
 			TRACE("now grid is in the exit area num!!!\r\n");
 			TRACE("Abort and recheck!!!\r\n");
+#endif
 			stop_rap();
 			Do_ExitAtion();
 			return 1;
@@ -3845,8 +3695,10 @@ u8 Abort_ShiftExit_YBS(void)
 	if((temp_areano!=0)&(temp_areano==motion1.exit_area_num))
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT
 			TRACE("Abort and recheck!!!\r\n");
 			TRACE("change check point exit!!!\r\n");
+#endif
 			check_point.new_x1=now_gridx;check_point.new_y1=now_gridy;
 			check_point.new_x2=temp_gridx1;check_point.new_y2=temp_gridy1;
 			Init_Shift_Point1(0);
@@ -3855,7 +3707,9 @@ u8 Abort_ShiftExit_YBS(void)
 
 	if((now_gridx==check_point.new_x1)&(now_gridy==check_point.new_y1))
 		{
+#ifdef DEBUG_SHIFT
 			TRACE("now grid is match checkpoint new1!!\r\n");
+#endif
 			stop_rap();
 			Init_Shift_Point1(0);
 			return 1;
@@ -3864,9 +3718,11 @@ u8 Abort_ShiftExit_YBS(void)
 	if(Find_DirectlyWay_YBS(check_point.new_x1,check_point.new_y1))
 		{
 			stop_rap();
+#ifdef DEBUG_SHIFT
 			TRACE("Find directly Way in %s\r\n",__func__);
 			TRACE("turn_grid x=%d y=%d can reach point1!!!\r\n",turn_grid.gridx,turn_grid.gridy);
 			TRACE("Prepare to Shift Point1 TurnGird!!!\r\n");
+#endif
 			//check_point.new_x2=turn_grid.gridx;check_point.new_y2=turn_grid.gridy;
 			//Init_Shift_Point2();
 			Init_Shift_Point1(2);
@@ -3903,7 +3759,7 @@ void Do_ShiftExit_YBS(void)
 			if(power.charge_dc)
 #endif
 				{
-					 Init_Chargeing(DC_CHARGING);
+					 Init_Chargeing(SUBMODE_CHARGE_DC);
 					 return;
 				}					
 		}
@@ -3917,7 +3773,7 @@ void Do_ShiftExit_YBS(void)
 
 	clr_all_hw_effect();			//qz add 20181210
 
-	if(mode.sub_mode==YBS_SUB_RIGHT)
+	if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		YBS_Check_corner();
 	else
 		YBS_Left_Check_corner();
@@ -3931,12 +3787,6 @@ void Do_ShiftExit_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
@@ -3949,11 +3799,11 @@ void Do_ShiftExit_YBS(void)
 	if(Analysis_Check_Dock())
 		return;
 	
-	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+	if((mode.sub_mode==SUBMODE_YBS_RIGHT))				//	RIGHT
 		{
 			YBS_Right_Bump(1);
 		}		
-	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+	else if((mode.sub_mode == SUBMODE_YBS_LEFT))		//	LEFT
 		{
 			YBS_Left_Bump(1);
 		}
@@ -3965,18 +3815,13 @@ void Do_ShiftExit_YBS(void)
 				//Wall_lost_counter = 0;
 				if(mode.step>=0x88)
 					{
-						if(mode.sub_mode==YBS_SUB_RIGHT)
+						if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 						{
 							//mode.step=0x00;			//qz mask 20180910
 						}
 						else
 							mode.step=0x40;
 					}
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
@@ -3987,10 +3832,6 @@ void Do_ShiftExit_YBS(void)
 #ifdef	FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.step=0xB0;
@@ -4023,7 +3864,7 @@ void Do_ShiftExit_YBS(void)
 				Free_Skid_Indep.check_flag=false;
 #endif
 				Speed=FAST_MOVE_SPEED;
-				if(mode.sub_mode==YBS_SUB_RIGHT)
+				if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					temp_data1=2;
 				else
 					temp_data1=1;
@@ -4047,7 +3888,7 @@ void Do_ShiftExit_YBS(void)
 				break;
 					
 			case 0:
-				if(mode.sub_mode==YBS_SUB_LEFT)
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
 						return;
@@ -4075,10 +3916,6 @@ void Do_ShiftExit_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-
-#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 						return;
 					}
 				//QZ ADD
@@ -4101,21 +3938,7 @@ void Do_ShiftExit_YBS(void)
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
 						mode.step = 3;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-						Disable_Rotate_Angle();
-#endif
 					}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -4227,10 +4050,6 @@ void Do_ShiftExit_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-			
-#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 					}
 					//QZ ADD
 				if(YBS_Wall_Distance>140)	//140
@@ -4251,22 +4070,7 @@ void Do_ShiftExit_YBS(void)
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-							Disable_Rotate_Angle();
-#endif
-
 						}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif

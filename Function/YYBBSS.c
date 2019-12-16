@@ -75,7 +75,7 @@ void YBS_YBS(void)
 			if(power.charge_dc)
 #endif
 				{
-					 Init_Chargeing(DC_CHARGING);
+					 Init_Chargeing(SUBMODE_CHARGE_DC);
 					 return;
 				}					
 		}
@@ -90,7 +90,7 @@ void YBS_YBS(void)
 
 	clr_all_hw_effect();			//qz add 20181210
 
-	if(mode.sub_mode==YBS_SUB_RIGHT)
+	if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		YBS_Check_corner();
 	else
 		YBS_Left_Check_corner();
@@ -113,20 +113,14 @@ void YBS_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	
-	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+	if((mode.sub_mode==SUBMODE_YBS_RIGHT))				//	RIGHT
 		{
 			YBS_Right_Bump(0);
 		}		
-	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+	else if((mode.sub_mode == SUBMODE_YBS_LEFT))		//	LEFT
 		{
 			YBS_Left_Bump(0);
 		}
@@ -139,11 +133,6 @@ void YBS_YBS(void)
 					grid.x_ybs_start=grid.x;
 					grid.y_ybs_start=grid.y;
 				}
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
@@ -154,10 +143,6 @@ void YBS_YBS(void)
 #ifdef	FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.step=0xB0;
@@ -192,7 +177,7 @@ void YBS_YBS(void)
 				Free_Skid_Indep.check_flag=false;
 #endif
 				Speed=FAST_MOVE_SPEED;
-				if(mode.sub_mode==YBS_SUB_RIGHT)
+				if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					temp_data1=2;
 				else
 					temp_data1=1;
@@ -216,7 +201,7 @@ void YBS_YBS(void)
 				break;
 					
 			case 0:
-				if(mode.sub_mode==YBS_SUB_LEFT)
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
 						return;
@@ -245,10 +230,6 @@ void YBS_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-
-#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 						return;
 					}
 				//QZ ADD
@@ -271,21 +252,7 @@ void YBS_YBS(void)
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
 						mode.step = 3;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-						Disable_Rotate_Angle();
-#endif
 					}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -397,10 +364,6 @@ void YBS_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-			
-#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 					}
 					//QZ ADD
 				if(YBS_Wall_Distance>140)	//140
@@ -421,22 +384,7 @@ void YBS_YBS(void)
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-							Disable_Rotate_Angle();
-#endif
-
 						}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -610,7 +558,7 @@ void YBS_YBS(void)
 *******************************************/
 u8 Check_Xmax_OutYBS(void)
 {
-	//if(mode.mode==EXIT)
+	//if(mode.mode==MODE_EXIT)
 		{
 			if((grid.x>grid.x_area_max)|(Gyro_Data.x_pos>motion1.xpos_start+RANGE_MAX))
 				return 1;
@@ -627,7 +575,7 @@ u8 Check_Xmax_OutYBS(void)
 
 u8 Check_Xmin_OutYBS(void)
 {
-	//if(mode.mode==EXIT)
+	//if(mode.mode==MODE_EXIT)
 		{
 			if((grid.x<grid.x_area_min)|(Gyro_Data.x_pos<motion1.xpos_start-RANGE_MAX))
 				return 1;
@@ -644,7 +592,7 @@ u8 Check_Xmin_OutYBS(void)
 
 u8 Check_Ymax_OutYBS(void)
 {
-	//if(mode.mode==EXIT)
+	//if(mode.mode==MODE_EXIT)
 		{
 			if((grid.y>grid.y_area_max)|(Gyro_Data.y_pos>motion1.ypos_start+RANGE_MAX))
 				return 1;
@@ -661,7 +609,7 @@ u8 Check_Ymax_OutYBS(void)
 
 u8 Check_Ymin_OutYBS(void)
 {
-	//if(mode.mode==EXIT)
+	//if(mode.mode==MODE_EXIT)
 
 		{
 			if((grid.y<grid.y_area_min)|(Gyro_Data.y_pos<motion1.ypos_start-RANGE_MAX))
@@ -760,16 +708,14 @@ u32 Check_OutofRange_YBS(u8 out_enable)
 	if(!out_enable)
 		return 0;
 #if 1
-	if(((mode.mode==SHIFT)|(mode.mode==EXIT))&(mode.bump==0))
+	if(((mode.mode==MODE_SHIFT)|(mode.mode==MODE_EXIT))&(mode.bump==0))
 		{
 			if((mode.step==0x10)|(mode.step==0x11)|(mode.step==0x50)|(mode.step==0x51))
 				{
-					//TRACE("outgrid!!\r\n");
 					return 0;
 				}
 			if((mode.step==0x4)|(mode.step==0x44))
 				{
-					//TRACE("outgrid!!\r\n");
 					return 0;
 				}
 		}
@@ -810,26 +756,6 @@ u32 Check_OutofRange_YBS(u8 out_enable)
 				result=0;
 				break;
 		}
-#if 0
-	if((data)&(Read_CheckPoint_NextAction()==CHECK_NEWAREA))	//(check_point.next_area))
-		{
-			if(Check_OutRange_Clean_YBS(data))
-				{
-					TRACE("Prepare to next area sweep in ShiftYBS!!!\r\n");
-					TRACE("check_point.new_x1=%d\r\n",check_point.new_x1);
-					TRACE("check_point.new_y1=%d\r\n",check_point.new_y1);
-					TRACE("check_point.new_x2=%d\r\n",check_point.new_x2);
-					TRACE("check_point.new_y2=%d\r\n",check_point.new_y2);
-					TRACE("Next tgt_yaw=%d\r\n",check_point.next_tgtyaw);
-					TRACE("Next y_acc=%d\r\n",check_point.next_yacc);
-					TRACE("Next x_acc=%d\r\n",check_point.next_xacc);
-					Init_Pass2Init(check_point.next_tgtyaw,check_point.next_yacc,check_point.next_xacc);
-		//			check_point.next_area=false;
-					Reset_CheckPoint_NextAction();
-					return 0;
-				}
-		}
-#endif
 	return result;
 }
 
@@ -873,7 +799,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_ONLY_LEFT;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.l_bump_flag=true;
 				}
 			return BUMP_ONLY_LEFT;
 		case BUMP_ONLY_LEFTMID:						//左中碰撞
@@ -883,7 +808,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_ONLY_LEFTMID;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.l_bump_flag=true;
 				}
 			return BUMP_ONLY_LEFTMID;
 		case BUMP_LEFT_MID:							//左左中碰撞
@@ -893,7 +817,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_LEFT_MID;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.l_bump_flag=true;
 				}
 			return BUMP_LEFT_MID;
 		case BUMP_ONLY_RIGHT:						//右碰撞
@@ -903,7 +826,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_ONLY_RIGHT;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.r_bump_flag=true;
 				}
 			return BUMP_ONLY_RIGHT;
 		case BUMP_ONLY_RIGHTMID:					//右中碰撞
@@ -913,7 +835,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_ONLY_RIGHTMID;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.r_bump_flag=true;
 				}
 			return BUMP_ONLY_RIGHTMID;
 		case BUMP_RIGHT_MID:						//右右中碰撞
@@ -923,7 +844,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_RIGHT_MID;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.r_bump_flag=true;
 				}
 			return BUMP_RIGHT_MID;
 		case BUMP_MID:								//中碰撞
@@ -933,7 +853,6 @@ u32  YBS_read_bump1(u8 out_enable)
 					mode.bump=BUMP_MID;
 					mode.bump_flag=true;
 					mode.step_bp=0;
-					Slam_Data.m_bump_flag=true;
 				}
 			return BUMP_MID;
 	}
@@ -944,7 +863,7 @@ u32  YBS_read_bump1(u8 out_enable)
 
 	if((w_lm.sign == NEAR)&(mode.step<0x90))
 		{
-			if((mode.sub_mode==YBS_SUB_LEFT))			//如果是左沿边,开启此检测
+			if((mode.sub_mode==SUBMODE_YBS_LEFT))			//如果是左沿边,开启此检测
 				{
 					if((mode.bump == 0))		 //左中墙检靠近墙
 						{
@@ -992,7 +911,7 @@ u32  YBS_read_bump1(u8 out_enable)
 
 	if((w_rm.sign == NEAR)&(mode.step<0x90))
 		{
-			if((mode.sub_mode==YBS_SUB_RIGHT))			//如果是右沿边,开启此检测
+			if((mode.sub_mode==SUBMODE_YBS_RIGHT))			//如果是右沿边,开启此检测
 				{
 					if((mode.bump == 0)|(mode.bump==BUMP_SEAT))		//右中墙检靠近墙
 						{
@@ -1031,31 +950,6 @@ u32  YBS_read_bump1(u8 out_enable)
 
 		last_Bump_Num = 0;
 
-		//if(r_hw.effectNear|r_hw.effectTopReal|rm_hw.effectTopReal)
-		//if(r_hw.effectNear|r_hw.effectTopReal)
-		//if((lm_hw.effectNear)|(rm_hw.effectNear)|r_hw.effectNear)
-#if 0
-	if((r_hw.effectTop)&((mode.step==1)|(mode.step==2)|(mode.step==0x41)|(mode.step==0x42))&(mode.bump==0))
-		{
-#ifdef YBS_AVOID_SEAT
-			if(mode.bump==0)
-				{
-					if(SLAM_DOCK)
-						disable_hwincept();
-					stop_rap();
-#ifdef YBS_DEBUG
-					TRACE("r_hw get NEAR in YBS mode!\r\n");
-#endif
-					mode.bump=BUMP_SEAT;
-					mode.step_bp=0;
-				}
-			return BUMP_SEAT;
-#endif
-#ifdef YBS_SEAT_REPROT
-			Slam_Data.ir_flag=true;
-#endif
-		}
-#endif
 	//if((r_hw.effectTop)&((mode.step==1)|(mode.step==2)|(mode.step==0x41)|(mode.step==0x42))&(mode.bump==0))
 	//if((rm_hw.effectTop|lm_hw.effectTop)&&(mode.bump==0))
 	if(top_time_sec>=9)
@@ -1605,8 +1499,8 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = YBS;			
-	mode.sub_mode = YBS_SUB_RIGHT;		
+	mode.mode = MODE_YBS;			
+	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.Info_Abort=0;				//qz add 20180919
 	mode.All_Info_Abort=0;			//qz add 20180919
@@ -1644,12 +1538,12 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	grid.y_ybs_start=grid.y;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Right YBS Mode Complete!\r\n");
+	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 #endif
 
 	Sweep_Level_Set(sweep_level);
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
-	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 	motion1.continue_checkstep=0;			//qz add 20190328
 	motion1.worktime=1;	
 	motion1.clean_size=0;
@@ -1677,8 +1571,8 @@ void Init_Left_YBS(u8 direct_first)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = YBS;			
-	mode.sub_mode = YBS_SUB_LEFT;		
+	mode.mode = MODE_YBS;			
+	mode.sub_mode = SUBMODE_YBS_LEFT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -1703,8 +1597,8 @@ void Init_Left_YBS(u8 direct_first)
 	grid.y_ybs_start=grid.y;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Left YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	Sweep_Level_Set(sweep_level);
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
@@ -1748,38 +1642,46 @@ u8 Analysis_NeedBack_YBS(s8 ygrid_abort)
 	s8 ygrid_analysis,now_gridx;//,now_gridy;
 	s8 ydir=Read_Motion_YDir();
 	now_gridx=grid.x;//now_gridy=grid.y;
-	
+#ifdef DEBUG_YBS	
 	TRACE("Analysis NeedBack in YBS...\r\n");
-
-	if((mode.last_sub_mode!=NORMAL_SWEEP)&(mode.last_sub_mode!=LEAK_SWEEP))
+#endif
+	if((mode.last_sub_mode!=SUBMODE_SWEEP_NORMAL)&(mode.last_sub_mode!=SUBMODE_SWEEP_LEAK))
 		return 0;
 
 	if(!Read_LeftRight())		//需要准备左沿边
 		{
-			if(mode.sub_mode==YBS_SUB_LEFT)		//确实在左沿边
-				{	
+			if(mode.sub_mode==SUBMODE_YBS_LEFT)		//确实在左沿边
+				{
+#ifdef DEBUG_YBS	
 					TRACE("motion is now left YBS and leftright=0!\r\n");
 					TRACE("No need analysis!!!\r\n");
+#endif
 					return 0;						//无需判断
 				}
 		}	
 	else										//需要右沿边
 		{
-			if(mode.sub_mode==YBS_SUB_RIGHT)	//确实在右沿边
+			if(mode.sub_mode==SUBMODE_YBS_RIGHT)	//确实在右沿边
 				{	
+#ifdef DEBUG_YBS	
 					TRACE("motion is now right YBS and leftright=1!\r\n");
 					TRACE("No need analysis!!!\r\n");
+#endif
 					return 0;						//无需判断
 				}
 		}
 	if(ygrid_abort==grid.y_area_start)
 		{
+#ifdef DEBUG_YBS	
 			TRACE("ygrid_abort is sweep start.No need analysis!!!\r\n");
+#endif
 			return 0;
 		}
 	if(Read_Motion_BackSweep())
 		{
+#ifdef DEBUG_YBS	
 			TRACE("Motion has in backsweep now! No need analysis!!\r\n");
+#endif
 			return 0;
 		}
 	
@@ -1798,7 +1700,9 @@ u8 Analysis_NeedBack_YBS(s8 ygrid_abort)
 				{
 					if((!Read_Coordinate_Wall(now_gridx,ygrid_abort))&(!Read_Coordinate_Wall(now_gridx-1,ygrid_abort)))
 						{
+#ifdef DEBUG_YBS	
 							TRACE("Need Back in YBS!!!\r\n");
+#endif
 							return 1;
 						}
 				}
@@ -1811,11 +1715,15 @@ u8 Analysis_NeedBack_YBS(s8 ygrid_abort)
 				{
 					if((!Read_Coordinate_Wall(now_gridx,ygrid_abort))&(!Read_Coordinate_Wall(now_gridx+1,ygrid_abort)))
 						{
+#ifdef DEBUG_YBS	
 							TRACE("Need Back in YBS!!!\r\n");
+#endif
 							return 1;
 						}
 				}
 		}
+#ifdef DEBUG_YBS	
 	TRACE("No Need Back!\r\n");
+#endif
 	return 0;
 }

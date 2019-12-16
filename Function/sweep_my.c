@@ -181,10 +181,12 @@ u8 Check_Already_YClean(void)
 			area_no=Read_Coordinate_AreaNo(now_gridx, check_gridy);
 			if((area_no!=0)&(area_no!=motion1.area_num))
 				{
+					grid.y_area_max=now_gridy;
+#ifdef DEBUG_SWEEP
 					TRACE("Change grid y_area_max!!!\r\n");
 					TRACE("grid.y_area_max=%d\r\n",grid.y_area_max);
-					grid.y_area_max=now_gridy;
 					TRACE("grid.y_area_max=%d after change\r\n",grid.y_area_max);
+#endif
 					return 1;
 				}
 		}
@@ -194,10 +196,12 @@ u8 Check_Already_YClean(void)
 			area_no=Read_Coordinate_AreaNo(now_gridx, check_gridy);
 			if((area_no!=0)&(area_no!=motion1.area_num))
 				{
+					grid.y_area_min=now_gridy;
+#ifdef DEBUG_SWEEP
 					TRACE("Change grid y_area_min!!!\r\n");
 					TRACE("grid.y_area_min=%d\r\n",grid.y_area_min);
-					grid.y_area_min=now_gridy;
 					TRACE("grid.y_area_min=%d after change\r\n",grid.y_area_min);
+#endif
 					return 1;
 				}
 		}
@@ -271,7 +275,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_ONLY_LEFT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFT;
@@ -282,7 +285,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_ONLY_LEFTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFTMID;
@@ -293,7 +295,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_LEFT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_LEFT_MID;
@@ -304,7 +305,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_ONLY_RIGHT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHT;
@@ -315,7 +315,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_ONLY_RIGHTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHTMID;
@@ -326,7 +325,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_RIGHT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_RIGHT_MID;
@@ -337,7 +335,6 @@ u8 Read_Only_Collide(void)
 					 mode.bump=BUMP_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.m_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_MID;
@@ -413,7 +410,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_ONLY_LEFT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFT;
@@ -424,7 +420,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_ONLY_LEFTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFTMID;
@@ -435,7 +430,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_LEFT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_LEFT_MID;
@@ -446,7 +440,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_ONLY_RIGHT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHT;
@@ -457,7 +450,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_ONLY_RIGHTMID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_RIGHTMID;
@@ -468,7 +460,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_RIGHT_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.r_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_RIGHT_MID;
@@ -479,7 +470,6 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 					 mode.bump=BUMP_MID;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.m_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_MID;
@@ -528,40 +518,12 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 #ifdef FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.bump=0xff;
 			mode.step_bp=0;
 			mode.Info_Abort=1;
 #endif
-		}
-#endif
-
-#ifdef COMMANDER_SEAT_REPORT						//qz add 20180814
-	if(r_hw.effectNear|r_hw.effectTopReal)
-		{
-			Slam_Data.ir_flag=true;
-		}
-#endif
-
-#ifdef SLAM_FIND_SEAT
-	if(SLAM_DOCK)
-		{
-			data1=ReadHwSign_My();
-			if(data1&0xD1111)						//only top signal
-				{
-					if(mode.bump==0)
-						{
-							stop_rap();
-							mode.bump=0xfe;
-							mode.step_bp=0;
-							mode.Info_Abort=1;
-						}
-				}
 		}
 #endif
 
@@ -591,9 +553,11 @@ u8 Read_Sweep_Bump(u8 ir_enable,u8 out_enable)
 			if(mode.bump==0)
 				{
 					stop_rap();
+#ifdef DEBUG_SWEEP
 					TRACE("Check Already Xclean!!!\r\n");
-					mode.bump=data1;
 					TRACE("Force mode.bump=%d\r\n",mode.bump);
+#endif
+					mode.bump=data1;
 					mode.step_bp=0;
 				}
 			return data1;
@@ -642,8 +606,8 @@ void Init_First_Sweep(u8 start_seat)
 	Enable_earth();
 	Enable_Speed();
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
-	mode.mode=SWEEP;
-	mode.sub_mode=SWEEP_FIRST_INIT;
+	mode.mode=MODE_SWEEP;
+	mode.sub_mode=SUBMODE_SWEEP_FIRST;
 	mode.step=0;
 	if(start_seat)
 		{
@@ -668,8 +632,9 @@ void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 	delay_ms(100);
 //	F_Angle=tgt_yaw;
 //	B_Angle=Get_Reverse_Angle(F_Angle);
+#ifdef DEBUG_SWEEP
 	TRACE("Enter Init_Init_Sweep!\r\n");
-
+#endif
 	Set_Motion_BackSweep(0);								//qz add 20190328
 	Set_Motion_Acc(x_acc,y_acc);
 	motion1.sweep_time++;
@@ -791,6 +756,7 @@ void Do_FirstInit_Sweep(void)
 				mode.status=1;
 				grid.x_start=grid.x;
 				grid.y_start=grid.y;
+#ifdef DEBUG_SWEEP
 				TRACE("Enter Init_First_Sweep!\r\n");
 				TRACE("F_Angle_Const=%d\r\n",F_Angle_Const);
 				TRACE("B_Angle_Const=%d\r\n",B_Angle_Const);
@@ -806,6 +772,7 @@ void Do_FirstInit_Sweep(void)
 				TRACE("GRID_MIN=%d\r\n",GRID_MIN);
 				TRACE("grid.x_start=%d\r\n",grid.x_start);
 				TRACE("grid.y_start=%d\r\n",grid.y_start);
+#endif
 				Cal_Grid_Pos();
 				Sweep_Level_Set(sweep_level);
 				Init_Init_Sweep(F_Angle_Const,2,1); 		//第一次清扫,X轴双方向,Y轴正向
@@ -880,7 +847,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 2:
 							if((motion1.repeat_sweep)&(!Read_Motion_BackSweep()))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 									return;
@@ -948,8 +917,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							
 							if(Check_Already_YClean())
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("next Y has clean!!!\r\n");
 									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 									if(motion1.repeat_sweep)
 										{
 											Init_Pass2Sweep();
@@ -982,8 +953,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 4:
 							if((motion1.repeat_sweep)&(!Read_Motion_BackSweep()))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("mode.bump=%d\r\n",mode.bump);
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 									return;
@@ -992,7 +965,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -1073,8 +1048,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 
 							if(Check_Already_YClean())
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("next Y has clean!!!\r\n");
 									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 									if(motion1.repeat_sweep)
 										{
 											Init_Pass2Sweep();
@@ -1101,7 +1078,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean())&(!motion1.first_leak_y))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("Last Y has clean,prepare to LeftYBS!!!\r\n");
+#endif
 									turn_dir=2;
 									if(mode.bump==BUMP_ONLY_LEFT)
 										turn_angle=20;
@@ -1118,7 +1097,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 4:
 							if(motion1.repeat_sweep&(!Read_Motion_BackSweep()))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 									return;
@@ -1128,7 +1109,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -1220,7 +1203,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("bump again at stepbp22\r\n");
+#endif
 //									mode.bump=m;
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
@@ -1229,7 +1214,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if(m>BUMP_OUTRANGE)
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("BUMP OUTRANGE!!\r\n");
+#endif
 									mode.bump=m;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -1237,6 +1224,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
+#ifdef DEBUG_SWEEP
 									if(now_gridy==last_gridy)
 										{
 											TRACE("last_gridy=%d now_gridy=%d at stepbp22\r\n",last_gridy,now_gridy,__func__);
@@ -1245,8 +1233,11 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										{
 											TRACE("next_gridy=%d now_gridy=%d at stepbp22\r\n",next_gridy,now_gridy,__func__);
 										}
+#endif
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("last_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy,__func__);
+#endif
 									motion1.tgt_yaw=motion1.anti_tgt_yaw;
 									motion1.repeat_sweep=false;
 									Init_Pass2Sweep();
@@ -1267,7 +1258,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									grid.x_straight_start=grid.x;
 									mode.bump_time=giv_sys_time;
 									motion1.repeat_sweep=false;
+#ifdef DEBUG_SWEEP
 									TRACE("Angle repeat at stepbp 23\r\n");
+#endif
 								}
 							
 							if(now_gridy==last_gridy)
@@ -1276,7 +1269,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
+#ifdef DEBUG_SWEEP
 											TRACE("last_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy,__func__);
+#endif
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=false;
@@ -1289,7 +1284,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
+#ifdef DEBUG_SWEEP
 											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",next_gridy,now_gridy);
+#endif
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=true;
@@ -1300,7 +1297,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("bump again at stepbp23\r\n");
+#endif
 //									mode.bump=m;
 //									mode.step_bp=0;
 									mode.step_bp=19;
@@ -1309,7 +1308,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if(m>BUMP_OUTRANGE)
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("BUMP OUTRANGE!!\r\n");
+#endif
 									mode.bump=m;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -1353,8 +1354,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 
 							if(Check_Already_YClean())
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("next Y has clean!!!\r\n");
 									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 									if(motion1.repeat_sweep)
 										{
 											Init_Pass2Sweep();
@@ -1381,7 +1384,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							else if((!Read_Motion_BackSweep())&(Analysis_LastYClean())&(!motion1.first_leak_y))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("Last Y has clean,prepare to RightYBS!!!\r\n");
+#endif
 									turn_dir=1;
 									if(mode.bump==BUMP_ONLY_RIGHT)
 										turn_angle=20;
@@ -1398,7 +1403,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 4:
 							if(motion1.repeat_sweep&(!Read_Motion_BackSweep()))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 									return;
@@ -1407,7 +1414,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -1498,7 +1507,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("bump again at stepbp22\r\n");
+#endif
 //									mode.bump=m;
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
@@ -1506,7 +1517,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if(m>BUMP_OUTRANGE)
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("BUMP OUTRANGE!!\r\n");
+#endif
 									mode.bump=m;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -1514,6 +1527,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 								{
+#ifdef DEBUG_SWEEP
 									if(now_gridy==last_gridy)
 										{
 											TRACE("last_gridy=%d now_gridy=%d at stepbp22\r\n",last_gridy,now_gridy,__func__);
@@ -1522,8 +1536,11 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										{
 											TRACE("next_gridy=%d now_gridy=%d at stepbp22\r\n",next_gridy,now_gridy,__func__);
 										}
+#endif
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("last_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy,__func__);
+#endif
 									//Init_Sweep_RightYBS(1);
 									motion1.tgt_yaw=motion1.anti_tgt_yaw;
 									motion1.repeat_sweep=false;
@@ -1538,7 +1555,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
 								{	
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("Angle repeat at stepbp 23\r\n");
+#endif
 									mode.bump=0;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -1554,7 +1573,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
+#ifdef DEBUG_SWEEP
 											TRACE("last_gridy=%d now_gridy=%d at stepbp23\r\n",last_gridy,now_gridy,__func__);
+#endif
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=false;
@@ -1567,7 +1588,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									if(Judge_GridYPOS_Nearby_Reach(bump_gridy))
 										{
 											stop_rap();
+#ifdef DEBUG_SWEEP
 											TRACE("next_gridy=%d now_gridy=%d at stepbp23\r\n",next_gridy,now_gridy);
+#endif
 											//Init_Sweep_RightYBS(1);
 											motion1.tgt_yaw=motion1.anti_tgt_yaw;
 											motion1.repeat_sweep=true;
@@ -1578,7 +1601,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if((m>=BUMP_ONLY_LEFT)&(m<=BUMP_MID))
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("bump again at stepbp23\r\n");
+#endif
 //									mode.bump=m;
 									mode.step_bp=19;
 									mode.bump_time=giv_sys_time;
@@ -1586,7 +1611,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							if(m>BUMP_OUTRANGE)
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("BUMP OUTRANGE!!\r\n");
+#endif
 									mode.bump=m;
 									mode.step_bp=0;
 									mode.bump_flag=false;
@@ -1621,8 +1648,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Check_Already_YClean())
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("next Y has clean!!!\r\n");
 											TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 											if(motion1.repeat_sweep)
 												{
 													Init_Pass2Sweep();
@@ -1723,7 +1752,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 3:
 							if(motion1.repeat_sweep&(!Read_Motion_BackSweep()))
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 									return;
@@ -1732,7 +1763,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -1759,7 +1792,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 										tgt_angle=R_Angle_Const;
 								}
 //							turn_dir=Get_TurnDir(tgt_angle);
+#ifdef DEBUG_SWEEP
 							TRACE("tgt_yaw=%d in %s %d \r\n",tgt_angle,__func__,__LINE__);
+#endif
 							mode.step_bp++;
 							break;
 						case 4:
@@ -1810,8 +1845,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									mode.step_bp=6;
 									return;
 								}
+#ifdef DEBUG_SWEEP
 							TRACE("Out of Range action complete!\r\n");
 							TRACE("Prepare to Pass to Sweep!\r\n");
+#endif
 							Init_Pass2Sweep();
 							break;
 						case 10:
@@ -1855,8 +1892,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 
 							if(Check_Already_YClean())
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("next Y has clean!!!\r\n");
 									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 									if(motion1.repeat_sweep)
 										{
 											Init_Pass2Sweep();
@@ -1879,7 +1918,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						
 							if(motion1.repeat_sweep)
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 								}
@@ -1893,7 +1934,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -1950,7 +1993,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							break;
 						case 4:
+#ifdef DEBUG_SWEEP
 							TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 							Init_Pass2Sweep();
 							break;
 						case 12:
@@ -1985,8 +2030,10 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 
 							if(Check_Already_YClean())
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("next Y has clean!!!\r\n");
 									TRACE("grid.y_area_max|y_area_min has change!!\r\n");
+#endif
 									if(motion1.repeat_sweep)
 										{
 											Init_Pass2Sweep();
@@ -2009,7 +2056,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						
 							if(motion1.repeat_sweep)
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 									Init_Pass2Sweep();
 									motion1.repeat_sweep=false;
 								}
@@ -2023,7 +2072,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								{
 									if(Analysis_StopBack_InBump(ydir,now_gridx,now_gridy))
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Stop Back in %d %s\r\n",__LINE__,__func__);
+#endif
 											Init_Stop_BackSweep();
 											return;
 										}
@@ -2074,7 +2125,9 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 								}
 							break;
 						case 4:
+#ifdef DEBUG_SWEEP
 							TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 							Init_Pass2Sweep();
 							break;
 						case 12:
@@ -2119,8 +2172,8 @@ void Init_NormalSweep(short tgt_yaw)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
-	mode.sub_mode = NORMAL_SWEEP;
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_NORMAL;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -2155,12 +2208,12 @@ void Init_NormalSweep(short tgt_yaw)
 	grid.y_straight_start=grid.y;
 
 //	Sweep_Level_Set(sweep_level);
-	
+#ifdef DEBUG_SWEEP
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
 	TRACE("grid.x_straight_start=%d\r\n",grid.x_straight_start);
 	TRACE("grid.y_straight_start=%d\r\n",grid.y_straight_start);
-
+#endif
 	delay_ms(100);
 }
 
@@ -2181,12 +2234,6 @@ void Do_NormalSweep(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	Sweep_Bump_Action(1,1);
@@ -2195,7 +2242,7 @@ void Do_NormalSweep(void)
 	
 	if(mode.bump)
 		return;
-	if((mode.sub_mode!=NORMAL_SWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
+	if((mode.sub_mode!=SUBMODE_SWEEP_NORMAL))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
 		return;
 	switch (mode.step)
 		{
@@ -2240,7 +2287,9 @@ void Do_NormalSweep(void)
 							{
 								stop_rap();
 								mode.step++;
+#ifdef DEBUG_SWEEP
 								TRACE("Motion in seat area!!!\r\n");
+#endif
 							}
 					}
 				break;
@@ -2267,7 +2316,9 @@ void Do_NormalSweep(void)
 					}
 				if(motion1.repeat_sweep)						//没有达到边界，且需要重扫
 					{
+#ifdef DEBUG_SWEEP
 						TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 						Init_Pass2Sweep();
 						motion1.repeat_sweep=false;
 						return;
@@ -2300,7 +2351,9 @@ void Do_NormalSweep(void)
 				break;
 			case 5:
 				//Init_Back_Sweep();
+#ifdef DEBUG_SWEEP
 				TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 				Init_Pass2Sweep();
 				break;
 			///////////角度修正//////////////////
@@ -2334,8 +2387,8 @@ void Init_Back_Sweep(short tgt_yaw)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
-	mode.sub_mode = BACK_SWEEP;
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_BACK;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -2368,14 +2421,18 @@ void Init_Back_Sweep(short tgt_yaw)
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
 	grid.y_back_last=grid.y;
+#ifdef DEBUG_SWEEP
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
+#endif
 	data1=Analysis_StopBack(motion1.tgt_yaw);
 	if(data1==1)
 		{
 			{
+#ifdef DEBUG_SWEEP
 				TRACE("Analysis Stop back sweep!\r\n");
 				TRACE("Quit Back Sweep in %s\r\n",__func__);
+#endif
 				Init_Stop_BackSweep();
 			}
 		}
@@ -2405,18 +2462,12 @@ void Do_BackSweep(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	Sweep_Bump_Action(0,1);
 	if(mode.bump)
 		return;
-	if((mode.sub_mode!=BACK_SWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
+	if((mode.sub_mode!=SUBMODE_SWEEP_BACK))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
 		return;
 	switch (mode.step)
 		{
@@ -2461,9 +2512,11 @@ void Do_BackSweep(void)
 						//if((Read_Coordinate_Clean(now_gridx+1,now_gridy))&(now_gridx+1<=GRID_MAX))
 							{
 								stop_rap();
+#ifdef DEBUG_SWEEP
 								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+2);
+#endif
 								mode.step++;
 								return;
 							}
@@ -2475,9 +2528,11 @@ void Do_BackSweep(void)
 						//if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=GRID_MIN))
 							{
 								stop_rap();
+#ifdef DEBUG_SWEEP
 								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+2);
+#endif
 								mode.step++;
 								return;
 							}
@@ -2489,14 +2544,18 @@ void Do_BackSweep(void)
 							{
 								stop_rap();
 								mode.step=20;
+#ifdef DEBUG_SWEEP
 								TRACE("Motion in seat area!!!\r\n");
+#endif
 							}
 					}
 				break;
 			case 20:
 				if(motion1.repeat_sweep)
 					{
+#ifdef DEBUG_SWEEP
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 						Init_Pass2Sweep();
 					}
 				else
@@ -2509,7 +2568,9 @@ void Do_BackSweep(void)
 					{
 						if(now_gridy+1>grid.y_area_max)				//已到达边界
 							{
+#ifdef DEBUG_SWEEP
 								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+#endif
 								Init_Stop_BackSweep();
 								return;
 							}
@@ -2518,7 +2579,9 @@ void Do_BackSweep(void)
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
+#ifdef DEBUG_SWEEP
 								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+#endif
 								Init_Stop_BackSweep();
 								return;
 							}
@@ -2552,7 +2615,9 @@ void Do_BackSweep(void)
 				break;
 			case 5:
 				//Init_Back_Sweep();
+#ifdef DEBUG_SWEEP
 				TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 				Init_Pass2Sweep();
 				break;
 			//qz add end
@@ -2625,8 +2690,8 @@ void Init_Pass2Sweep(void)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
-	mode.sub_mode = PASS2SWEEP;
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_PASS2;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -2643,7 +2708,7 @@ void Init_Pass2Sweep(void)
 	w_rm.on=0;
 	w_lm.on=0;
 #ifdef DEBUG_Enter_Mode
-	TRACE("Init PASS2SWEEP Mode Complete!\r\n");
+	TRACE("Init SUBMODE_SWEEP_PASS2 Mode Complete!\r\n");
 #endif
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
@@ -2666,19 +2731,13 @@ void Do_Pass2Sweep(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
 	Pass2Sweep_Bump_Action();
 	if(mode.bump)
 		return;
-	if(mode.sub_mode!=PASS2SWEEP)
+	if(mode.sub_mode!=SUBMODE_SWEEP_PASS2)
 		return;
 	switch (mode.step)
 		{
@@ -2710,8 +2769,10 @@ void Do_Pass2Sweep(void)
 				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
 					{
 						stop_rap();
+#ifdef DEBUG_SWEEP
 						TRACE("Gyro_Data.yaw=%d turn_angle=%d\r\n",Gyro_Data.yaw,tgt_angle);
 						TRACE("yaw Reach!\r\n");
+#endif
 						mode.step=0xF0;
 					}
 				break;
@@ -2774,14 +2835,16 @@ void Continue_Sweep(void)
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发
 	
-	mode.mode=SWEEP;
+	mode.mode=MODE_SWEEP;
 #if 0
 	if(Read_Motion_BackSweep())
-		mode.sub_mode=BACK_SWEEP;
+		mode.sub_mode=SUBMODE_SWEEP_BACK;
 	else
-		mode.sub_mode=NORMAL_SWEEP;
+		mode.sub_mode=SUBMODE_SWEEP_NORMAL;
 #endif
+#ifdef DEBUG_SWEEP
 	TRACE("mode.last_sub_mode=0x%x\r\n",mode.last_sub_mode);
+#endif
 	mode.sub_mode=mode.last_sub_mode;
 	mode.step=0;
 	mode.bump=0;
@@ -2790,19 +2853,25 @@ void Continue_Sweep(void)
 	mode.step_abn=0;
 	mode.bump_flag=0;
 	delay_ms(100);
+#ifdef DEBUG_SWEEP
 	TRACE("Continue SWEEP!\r\n");
+#endif
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
 }
 
 void Init_Stop_BackSweep(void)
 {
+#ifdef DEBUG_SWEEP
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 #if 1
 	if(Analysis_Back_Leak())
 		{
+#ifdef DEBUG_SWEEP
 			TRACE("find back leak!!\r\n");
 			TRACE("goto back leak!!\r\n");
+#endif
 			Init_Shift_Point1(0);
 			return;
 		}
@@ -2819,7 +2888,9 @@ void Init_Stop_BackSweep(void)
 	
 	if(grid.y!=grid.y_abort)
 		{
+#ifdef DEBUG_SWEEP
 			TRACE("use shift point!!\r\n");
+#endif
 			s8 tgt_gridx,tgt_xmin,tgt_xmax;
 			check_point.new_x1=grid.x_abort;check_point.new_y1=grid.y_abort;
 			check_point.new_x2=grid.x_abort;check_point.new_y2=grid.y_abort;
@@ -2830,8 +2901,10 @@ void Init_Stop_BackSweep(void)
 #endif
 	if(Analysis_Back_Leak())
 		{
+#ifdef DEBUG_SWEEP
 			TRACE("find back leak!!\r\n");
 			TRACE("goto back leak!!\r\n");
+#endif
 			Init_Shift_Point1(0);
 			return;
 		}
@@ -2847,8 +2920,8 @@ void Init_Stop_BackSweep(void)
 	enable_hwincept();				//允许红外接收电源
 	Enable_Speed(); 				//允许速度发
 	
-	mode.mode=SWEEP;
-	mode.sub_mode=STOP_BACKSWEEP;
+	mode.mode=MODE_SWEEP;
+	mode.sub_mode=SUBMODE_SWEEP_STOPBACK;
 	mode.step=0;
 	mode.bump=0;
 	mode.step_bp=0;
@@ -2860,10 +2933,13 @@ void Init_Stop_BackSweep(void)
 	mode.status=1;
 	while(giv_sys_time-mode.time<5000);
 	delay_ms(100);
-	TRACE("Init Stop Backsweep complete!!!\r\n");
+	
 	Restore_Abort_Data();		//然后再装在中断之前的数据
 	grid.x_abort=grid.x;
+#ifdef DEBUG_SWEEP
+	TRACE("Init Stop Backsweep complete!!!\r\n");
 	TRACE("grid.x_abort=%d y_abort=%d\r\n",grid.x_abort,grid.y_abort);
+#endif
 }
 
 void StopBack_Bump_Action(void)
@@ -2890,7 +2966,9 @@ void StopBack_Bump_Action(void)
 			//if(mode.step==3)
 				{
 					stop_rap();
+#ifdef DEBUG_SWEEP
 					TRACE("Approach Y in %s\r\n",__func__);
+#endif
 					mode.bump=0;
 					mode.bump_flag=false;
 					mode.step_bp=0;
@@ -3088,7 +3166,9 @@ void StopBack_Bump_Action_II(void)
 			//if(mode.step==3)
 				{
 					stop_rap();
+#ifdef DEBUG_SWEEP
 					TRACE("Approach Y in %s\r\n",__func__);
+#endif
 					mode.bump=0;
 					mode.bump_flag=false;
 					mode.step_bp=0;
@@ -3445,12 +3525,6 @@ void Do_Stop_BackSweep(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
@@ -3459,15 +3533,17 @@ void Do_Stop_BackSweep(void)
 	if((Judge_Pos_Reach(tgt_xpos,tgt_ypos))&(mode.step<4))
 		{
 			stop_rap();
+#ifdef DEBUG_SWEEP
 			TRACE("pos reached in %s\r\n",__func__);
 			TRACE("goto mode.step 4\r\n");
+#endif
 			mode.step=4;
 			mode.bump=0;
 			mode.step_bp=0;
 		}
 	if(mode.bump)
 		return;
-	if(mode.sub_mode!=STOP_BACKSWEEP)
+	if(mode.sub_mode!=SUBMODE_SWEEP_STOPBACK)
 		return;
 	
 	switch(mode.step)
@@ -3488,12 +3564,16 @@ void Do_Stop_BackSweep(void)
 					}
 				else
 					{
+#ifdef DEBUG_SWEEP
 						TRACE("now ypos=%d tgt_ypos=%d\r\n",ypos,tgt_ypos);
 						TRACE("goto mode step 4!!\r\n");
+#endif
 						mode.step=4;
 						return;
 					}
+#ifdef DEBUG_SWEEP
 				TRACE("tgt_yaw=%d\r\n",tgt_yaw);
+#endif
 				mode.step++;
 				break;
 			case 1:
@@ -3520,15 +3600,19 @@ void Do_Stop_BackSweep(void)
 					{
 						stop_rap();
 						mode.step++;
+#ifdef DEBUG_SWEEP
 						TRACE("Approch grid.y_abort in %s %d\r\n",__func__,__LINE__);
+#endif
 					}
 				break;
 			case 4:
 				Set_Motion_BackSweep(0);	//清空回扫标志
+#ifdef DEBUG_SWEEP
 				TRACE("grid.y_abort=%d x_abort=%d\r\n",grid.y_abort,grid.x_abort);
 				TRACE("grid.y=%d x=%d\r\n",grid.y,grid.x);
 				TRACE("Stop BackSweep action complete!\r\n");
 				TRACE("Prepare enter to Normal Sweep and then Load Data!\r\n");
+#endif
 				mode.step++;
 				break;
 			case 5:
@@ -3591,8 +3675,8 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = PASS2INIT;			
-	mode.sub_mode = PASS2INIT;
+	mode.mode = MODE_PASS2INIT;			
+	mode.sub_mode = SUBMODE_PASS2INIT;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -3614,9 +3698,6 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 #ifdef FREE_SKID_CHECK
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
-	memset(USART1_RX_BUF,0,sizeof(USART1_RX_BUF)/sizeof(USART1_RX_BUF[0])); 	//清除接收缓存qz add 20180703
-
-
 	motion1.tgt_yaw=tgt_yaw;
 	motion1.y_acc=y_acc;
 	motion1.x_acc=x_acc;
@@ -3635,12 +3716,6 @@ void Do_Pass2Init(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	
@@ -3686,8 +3761,8 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = SWEEP;			
-	mode.sub_mode = YBS_SUB_RIGHT;		
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -3716,12 +3791,10 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	grid.y_ybs_start=grid.y;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Sweep Right YBS Mode Complete!\r\n");
+	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 #endif
-
-
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
-	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
 	motion1.continue_checkstep=0;			//qz add 20190328
 	YBS_check_base=false;
 }
@@ -3744,8 +3817,8 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	WriteWorkState();					//功能：保存工作状态
 	
 
-	mode.mode = SWEEP;			
-	mode.sub_mode = YBS_SUB_LEFT;		
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_YBS_LEFT;		
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
@@ -3769,224 +3842,11 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	grid.y_ybs_start=grid.y;
 #ifdef DEBUG_Enter_Mode
 	TRACE("Init Sweep Left YBS Mode Complete!\r\n");
-#endif
 	TRACE("motion1.ybs_start_xpos=%d ypos=%d\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start);
+#endif
 	motion1.continue_checkstep=0;		//qz add 20190328
 	YBS_check_base=false;
 }
-
-u8 YBS_AbortFor_Sweep(void)
-{
-	s8 now_gridx,now_gridy;
-	short xpos,ypos;
-	s8 ydir=Read_Motion_YDir();
-	xpos=Gyro_Data.x_pos;ypos=Gyro_Data.y_pos;
-	now_gridx=grid.x;now_gridy=grid.y;	
-
-	//if(ypos+20<motion1.ypos_ybs_start)				//沿边y坐标小于起始沿边y坐标15cm
-	if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y<grid.y_straight_start))
-		{
-			if(ydir>0)		//沿Y轴正方向清扫
-				{
-					if(Read_Motion_BackSweep())
-						{
-							stop_rap();
-							TRACE("Quit Now backsweep in %s\r\n",__func__);
-							Init_Stop_BackSweep();
-							return 1;
-						}
-					else
-						{
-							stop_rap();
-							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
-							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
-							TRACE("Gyro.x_pos=%d\r\n",xpos);
-							TRACE("Gyro.y_pos=%d\r\n",ypos);
-							TRACE("back check!!!\r\n");
-							//Logout_Area_Coordinate();
-							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(0);
-							Init_Shift_Point1(0);
-							return 1;
-//							Logout_Area_Coordinate();
-							//while(1);
-						}
-				}
-			else if(ydir<0)							//沿Y坐标负向方向
-				{
-					if(abs(now_gridx-grid.x_straight_start)<=1)
-						{
-							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
-								{
-									return 0;
-								}
-							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
-								{
-									return 0;
-								}
-							YBS_check_base=true;
-						}
-					stop_rap();
-					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
-					TRACE("y_pos=%d\r\n",ypos);
-					TRACE("ypos<motion1_ypos+20!\r\n");
-					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
-					if(((mode.step==0x11)|(mode.step==0x51)))
-						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
-
-								{
-									TRACE("Need Repeat!\r\n");
-									//motion1.repeat_sweep=true;
-								}
-						}
-					else
-						{
-							TRACE("No Need Repeat!\r\n");
-							motion1.repeat_sweep=false;
-						}
-						Init_Pass2Sweep();
-					return 1;
-				}
-			else
-				{
-					Set_Motion_YDir(-1);
-					Init_Pass2Sweep();
-					return 1;
-				}
-		}
-	//else if(ypos>motion1.ypos_ybs_start+20)		//沿边y坐标大于起始沿边y坐标15cm
-	else if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y>grid.y_straight_start))
-		{
-			if(ydir>0)		//沿Y轴正方向清扫
-				{
-					if(abs(now_gridx-grid.x_straight_start)<=1)
-						{
-							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
-								{
-									return 0;
-								}
-							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
-								{
-									return 0;
-								}								
-							YBS_check_base=true;
-						}
-					stop_rap();
-					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
-					TRACE("y_pos=%d\r\n",ypos);
-					TRACE("ypos>motion1_ypos+20!\r\n");
-					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
-					if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
-						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
-
-								{
-									TRACE("Need Repeat!\r\n");
-									//motion1.repeat_sweep=true;
-								}
-						}
-					else
-						{
-							TRACE("No Need Repeat!\r\n");
-							motion1.repeat_sweep=false;
-						}
-						Init_Pass2Sweep();
-					return 1;
-				}
-			else if(ydir<0)
-				{
-					if(Read_Motion_BackSweep())
-						{
-							stop_rap();
-							TRACE("Quit Now backsweep in %s\r\n",__func__);
-							Init_Stop_BackSweep();
-							return 1;
-						}
-					else
-						{
-							stop_rap();
-							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
-							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
-							TRACE("Gyro.x_pos=%d\r\n",xpos);
-							TRACE("Gyro.y_pos=%d\r\n",ypos);
-							TRACE("back check!!!\r\n");
-							//Logout_Area_Coordinate();
-							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(1);
-							Init_Shift_Point1(1);
-							return 1;
-//							Logout_Area_Coordinate();
-							//while(1);
-						}
-				}
-			else
-				{
-					Set_Motion_YDir(1);
-						Init_Pass2Sweep();
-					return 1;
-				}
-		}
-
-	if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
-		{			
-			stop_rap();
-			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
-			TRACE("stop for Area Check!!!\r\n");
-			Area_Check(1);
-			Init_Shift_Point1(1);
-			return 1;
-		}
-
-	//判断沿边时是否绕过障碍，绕过则继续直行清扫
-	if((Parse_ContinueInYBS(now_gridx,now_gridy))&(mode.step<0xD0))		
-		{
-			stop_rap();
-			mode.step=0xD0;
-			TRACE("Gyro.yaw=%d motion.tgt_yaw=%d\r\n",Gyro_Data.yaw,motion1.tgt_yaw);	
-			TRACE("Round Obstacles!!!\r\n");
-			if((Read_Motion_BackSweep())&(mode.last_mode==NORMAL_SWEEP))					//如果刚刚判断需要回扫,当前还是正常直行状态
-				{
-					TRACE("It should be BackSweep,but Round Obstacles,");
-					TRACE("So temproray to NormalSweep!\r\n");
-					Set_Motion_BackSweep(0);										//绕过障碍后，先取消回扫，正常直行
-					Restore_Abort_Data();		//然后再装在中断之前的数据
-				}
-			return 1;
-		}
-
-	if(YBS_check_base)
-		{
-			if((now_gridx==grid.x_area_start)&(now_gridy==grid.y_area_start))
-				{
-					stop_rap();
-					TRACE("YBS check base!!!\r\n");
-					//y坐标回溯超过20cm时，开启左沿边
-					YBS_check_base=false;
-					Area_Check(1);
-					Init_Shift_Point1(1);
-					return 1;
-				}
-		}
-
-#if 0
-	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
-		{
-			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
-				{
-					stop_rap();
-					TRACE("The Motion ybs reach the orignal point!!!\r\n");
-					motion1.area_ok=true;
-					Set_CurrNode_LeakInfo(motion1.area_ok);
-					Area_Check(1);
-					Init_Shift_Point1(1);
-				}
-		}
-#endif
-
-	return 0;
-}
-
 
 u8 YBS_AbortFor_Sweep_II(void)
 {
@@ -4006,18 +3866,22 @@ u8 YBS_AbortFor_Sweep_II(void)
 							if(Read_Motion_BackSweep())
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("Quit Now backsweep in %s\r\n",__func__);
+#endif
 									Init_Stop_BackSweep();
 									return 1;
 								}
 							else
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
 									TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
 									TRACE("Gyro.x_pos=%d\r\n",xpos);
 									TRACE("Gyro.y_pos=%d\r\n",ypos);
 									TRACE("back check!!!\r\n");
+#endif
 									//Logout_Area_Coordinate();
 									//y坐标回溯超过20cm时，开启左沿边
 									Area_Check(0);
@@ -4042,22 +3906,28 @@ u8 YBS_AbortFor_Sweep_II(void)
 									YBS_check_base=true;
 								}
 							stop_rap();
+#ifdef DEBUG_SWEEP
 							TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
 							TRACE("y_pos=%d\r\n",ypos);
 							TRACE("ypos<motion1_ypos+20!\r\n");
+#endif
 							//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 							if(((mode.step==0x11)|(mode.step==0x51)))
 								{
 									if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
 		
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Need Repeat!\r\n");
+#endif
 											//motion1.repeat_sweep=true;
 										}
 								}
 							else
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("No Need Repeat!\r\n");
+#endif
 									motion1.repeat_sweep=false;
 								}
 								Init_Pass2Sweep();
@@ -4091,22 +3961,28 @@ u8 YBS_AbortFor_Sweep_II(void)
 									YBS_check_base=true;
 								}
 							stop_rap();
+#ifdef DEBUG_SWEEP
 							TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
 							TRACE("y_pos=%d\r\n",ypos);
 							TRACE("ypos>motion1_ypos+20!\r\n");
+#endif
 							//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
 							if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
 								{
 									if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
 		
 										{
+#ifdef DEBUG_SWEEP
 											TRACE("Need Repeat!\r\n");
+#endif
 											//motion1.repeat_sweep=true;
 										}
 								}
 							else
 								{
+#ifdef DEBUG_SWEEP
 									TRACE("No Need Repeat!\r\n");
+#endif
 									motion1.repeat_sweep=false;
 								}
 								Init_Pass2Sweep();
@@ -4117,18 +3993,22 @@ u8 YBS_AbortFor_Sweep_II(void)
 							if(Read_Motion_BackSweep())
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("Quit Now backsweep in %s\r\n",__func__);
+#endif
 									Init_Stop_BackSweep();
 									return 1;
 								}
 							else
 								{
 									stop_rap();
+#ifdef DEBUG_SWEEP
 									TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
 									TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
 									TRACE("Gyro.x_pos=%d\r\n",xpos);
 									TRACE("Gyro.y_pos=%d\r\n",ypos);
 									TRACE("back check!!!\r\n");
+#endif
 									//Logout_Area_Coordinate();
 									//y坐标回溯超过20cm时，开启左沿边
 									Area_Check(1);
@@ -4146,157 +4026,14 @@ u8 YBS_AbortFor_Sweep_II(void)
 						}
 				}
 		}
-#if 0
-	if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y<grid.y_straight_start))
-		{
-			if(ydir>0)		//沿Y轴正方向清扫
-				{
-					if(Read_Motion_BackSweep())
-						{
-							stop_rap();
-							TRACE("Quit Now backsweep in %s\r\n",__func__);
-							Init_Stop_BackSweep();
-							return 1;
-						}
-					else
-						{
-							stop_rap();
-							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
-							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
-							TRACE("Gyro.x_pos=%d\r\n",xpos);
-							TRACE("Gyro.y_pos=%d\r\n",ypos);
-							TRACE("back check!!!\r\n");
-							//Logout_Area_Coordinate();
-							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(0);
-							Init_Shift_Point1(0);
-							return 1;
-//							Logout_Area_Coordinate();
-							//while(1);
-						}
-				}
-			else if(ydir<0)							//沿Y坐标负向方向
-				{
-					if(abs(now_gridx-grid.x_straight_start)<=1)
-						{
-							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
-								{
-									return 0;
-								}
-							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
-								{
-									return 0;
-								}
-							YBS_check_base=true;
-						}
-					stop_rap();
-					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
-					TRACE("y_pos=%d\r\n",ypos);
-					TRACE("ypos<motion1_ypos+20!\r\n");
-					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
-					if(((mode.step==0x11)|(mode.step==0x51)))
-						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
-
-								{
-									TRACE("Need Repeat!\r\n");
-									//motion1.repeat_sweep=true;
-								}
-						}
-					else
-						{
-							TRACE("No Need Repeat!\r\n");
-							motion1.repeat_sweep=false;
-						}
-						Init_Pass2Sweep();
-					return 1;
-				}
-			else
-				{
-					Set_Motion_YDir(-1);
-					Init_Pass2Sweep();
-					return 1;
-				}
-		}
-	//else if(ypos>motion1.ypos_ybs_start+20)		//沿边y坐标大于起始沿边y坐标15cm
-	else if(Judge_GridYPOS_Nearby_Reach(grid.y_straight_start)&(grid.y>grid.y_straight_start))
-		{
-			if(ydir>0)		//沿Y轴正方向清扫
-				{
-					if(abs(now_gridx-grid.x_straight_start)<=1)
-						{
-							if((motion1.tgt_yaw==F_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_min)<=1))
-								{
-									return 0;
-								}
-							else if((motion1.tgt_yaw==B_Angle_Const)&(abs(grid.x_straight_start-grid.x_area_max)<=1))
-								{
-									return 0;
-								}								
-							YBS_check_base=true;
-						}
-					stop_rap();
-					TRACE("motion1.y_pos_ybs=%d\r\n",motion1.ypos_ybs_start);
-					TRACE("y_pos=%d\r\n",ypos);
-					TRACE("ypos>motion1_ypos+20!\r\n");
-					//if(((mode.step==0x11)|(mode.step==0x51))&(Judge_Yaw_Reach(motion1.tgt_yaw,6000)))
-					if(((mode.step==0x11)|(mode.step==0x51)))		//如果接近于最大区域，则不用考虑重扫
-						{
-							if((now_gridx>grid.x_area_min)&(now_gridx<grid.x_area_max))
-
-								{
-									TRACE("Need Repeat!\r\n");
-									//motion1.repeat_sweep=true;
-								}
-						}
-					else
-						{
-							TRACE("No Need Repeat!\r\n");
-							motion1.repeat_sweep=false;
-						}
-						Init_Pass2Sweep();
-					return 1;
-				}
-			else if(ydir<0)
-				{
-					if(Read_Motion_BackSweep())
-						{
-							stop_rap();
-							TRACE("Quit Now backsweep in %s\r\n",__func__);
-							Init_Stop_BackSweep();
-							return 1;
-						}
-					else
-						{
-							stop_rap();
-							TRACE("motion1.x_ybs=%d\r\n",motion1.xpos_ybs_start);
-							TRACE("motion1.y_ybs=%d\r\n",motion1.ypos_ybs_start);
-							TRACE("Gyro.x_pos=%d\r\n",xpos);
-							TRACE("Gyro.y_pos=%d\r\n",ypos);
-							TRACE("back check!!!\r\n");
-							//Logout_Area_Coordinate();
-							//y坐标回溯超过20cm时，开启左沿边
-							Area_Check(1);
-							Init_Shift_Point1(1);
-							return 1;
-//							Logout_Area_Coordinate();
-							//while(1);
-						}
-				}
-			else
-				{
-					Set_Motion_YDir(1);
-						Init_Pass2Sweep();
-					return 1;
-				}
-		}
-#endif
 	//if(((mode.bump==BUMP_YMAX_OUT)&(ydir>0))|((mode.bump==BUMP_YMIN_OUT)&(ydir<0)))
 	if(((mode.bump==BUMP_YMAX_OUT))|((mode.bump==BUMP_YMIN_OUT)))
 		{			
 			stop_rap();
+#ifdef DEBUG_SWEEP
 			TRACE("ydir=%d mode.bump=%d \r\n",ydir,mode.bump);
 			TRACE("stop for Area Check!!!\r\n");
+#endif
 			Area_Check(1);
 			Init_Shift_Point1(1);
 			return 1;
@@ -4307,12 +4044,16 @@ u8 YBS_AbortFor_Sweep_II(void)
 		{
 			stop_rap();
 			mode.step=0xD0;
+#ifdef DEBUG_SWEEP
 			TRACE("Gyro.yaw=%d motion.tgt_yaw=%d\r\n",Gyro_Data.yaw,motion1.tgt_yaw);	
 			TRACE("Round Obstacles!!!\r\n");
-			if((Read_Motion_BackSweep())&(mode.last_mode==NORMAL_SWEEP))					//如果刚刚判断需要回扫,当前还是正常直行状态
+#endif
+			if((Read_Motion_BackSweep())&(mode.last_mode==SUBMODE_SWEEP_NORMAL))					//如果刚刚判断需要回扫,当前还是正常直行状态
 				{
+#ifdef DEBUG_SWEEP
 					TRACE("It should be BackSweep,but Round Obstacles,");
 					TRACE("So temproray to NormalSweep!\r\n");
+#endif
 					Set_Motion_BackSweep(0);										//绕过障碍后，先取消回扫，正常直行
 					Restore_Abort_Data();		//然后再装在中断之前的数据
 				}
@@ -4324,7 +4065,9 @@ u8 YBS_AbortFor_Sweep_II(void)
 			if((now_gridx==grid.x_area_start)&(now_gridy==grid.y_area_start))
 				{
 					stop_rap();
+#ifdef DEBUG_SWEEP
 					TRACE("YBS check base!!!\r\n");
+#endif
 					//y坐标回溯超过20cm时，开启左沿边
 					YBS_check_base=false;
 					Area_Check(1);
@@ -4334,12 +4077,14 @@ u8 YBS_AbortFor_Sweep_II(void)
 		}
 
 #if 0
-	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=BACK_SWEEP)&(mode.last_sub_mode!=LEAK_BACKSWEEP))
+	if((giv_sys_time-mode.time>250000)&(mode.last_sub_mode!=SUBMODE_SWEEP_BACK)&(mode.last_sub_mode!=SUBMODE_SWEEP_LEAKBACK))
 		{
 			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
 				{
 					stop_rap();
+#ifdef DEBUG_SWEEP
 					TRACE("The Motion ybs reach the orignal point!!!\r\n");
+#endif
 					motion1.area_ok=true;
 					Set_CurrNode_LeakInfo(motion1.area_ok);
 					Area_Check(1);
@@ -4382,7 +4127,7 @@ void Sweep_YBS(void)
 			if(power.charge_dc)
 #endif
 				{
-					 Init_Chargeing(DC_CHARGING);
+					 Init_Chargeing(SUBMODE_CHARGE_DC);
 					 return;
 				}					
 		}
@@ -4397,7 +4142,7 @@ void Sweep_YBS(void)
 
 	clr_all_hw_effect();			//qz add 20181210
 
-	if(mode.sub_mode==YBS_SUB_RIGHT)
+	if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 		YBS_Check_corner();
 	else
 		YBS_Left_Check_corner();
@@ -4411,12 +4156,6 @@ void Sweep_YBS(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 
@@ -4424,11 +4163,11 @@ void Sweep_YBS(void)
 		return;
 	
 	
-	if((mode.sub_mode==YBS_SUB_RIGHT))				//	RIGHT
+	if((mode.sub_mode==SUBMODE_YBS_RIGHT))				//	RIGHT
 		{
 			YBS_Right_Bump(1);
 		}		
-	else if((mode.sub_mode == YBS_SUB_LEFT))		//	LEFT
+	else if((mode.sub_mode == SUBMODE_YBS_LEFT))		//	LEFT
 		{
 			YBS_Left_Bump(1);
 		}
@@ -4441,7 +4180,7 @@ void Sweep_YBS(void)
 			Wall_lost_counter = 0;
 			if(mode.step>=0x88)
 				{
-					if(mode.sub_mode==YBS_SUB_RIGHT)
+					if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					{
 						//mode.step=0x00;			//qz mask 20180910
 					}
@@ -4449,12 +4188,6 @@ void Sweep_YBS(void)
 						mode.step=0x40;
 				}
 #endif
-
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
@@ -4465,10 +4198,6 @@ void Sweep_YBS(void)
 #ifdef	FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.step=0xB0;
@@ -4502,7 +4231,7 @@ void Sweep_YBS(void)
 				Free_Skid_Indep.check_flag=false;
 #endif
 				Speed=FAST_MOVE_SPEED;
-				if(mode.sub_mode==YBS_SUB_RIGHT)
+				if(mode.sub_mode==SUBMODE_YBS_RIGHT)
 					temp_data1=2;
 				else
 					temp_data1=1;
@@ -4526,7 +4255,7 @@ void Sweep_YBS(void)
 				break;
 					
 			case 0:
-				if(mode.sub_mode==YBS_SUB_LEFT)
+				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
 						return;
@@ -4554,10 +4283,6 @@ void Sweep_YBS(void)
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
 #endif
-
-#ifdef YBS_DIS_RESTORE			//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
 						return;
 					}
 				//QZ ADD
@@ -4580,21 +4305,7 @@ void Sweep_YBS(void)
 				//if(YBS_Wall_Distance>=CONST_DIS+YBS_DISTANCE)
 					{
 						mode.step = 3;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-						Disable_Rotate_Angle();
-#endif
 					}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle>(12.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))	//qz modify 20180902:8.0-->6.0-->12.0
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -4705,11 +4416,7 @@ void Sweep_YBS(void)
 						mode.step = 0x42;
 #ifdef	YBS_Straight_FAST
 						YBS_Straight_Time=giv_sys_time;
-#endif
-			
-#ifdef YBS_DIS_RESTORE		//准备检查里程计算出的机器角度
-						Enable_Rotate_Angle();
-#endif
+#endif			
 					}
 					//QZ ADD
 				if(YBS_Wall_Distance>140)	//140
@@ -4730,22 +4437,7 @@ void Sweep_YBS(void)
 				if(YBS_Wall_Distance > 140) 			//	彻底丢失墙壁	  有可能出现拐角//80
 						{
 							mode.step = 0x43;
-
-#ifdef YBS_DIS_RESTORE		//出现空旷区域，停止检测里程计角度
-							Disable_Rotate_Angle();
-#endif
-
 						}
-
-#ifdef YBS_DIS_RESTORE		//检查里程计计算的角度，如果角度大于8度，恢复YBS_DISTANCE_CONST
-				Check_Rotate_Angle();
-				if((rotate_angle.rot_angle<(-8.0))&(YBS_DISTANCE>YBS_DISTANCE_CONST))
-					{
-						YBS_DISTANCE=YBS_DISTANCE_CONST;
-					}
-#endif
-
-
 #ifdef FREE_SKID_INDEP_CHECK
 				Free_Skid_Indep.check_flag=true;
 #endif
@@ -4840,7 +4532,9 @@ void Sweep_YBS(void)
 					return;
 				mode.step++;
 //				turn_dir=Get_TurnDir(motion1.tgt_yaw);
+#ifdef DEBUG_SWEEP
 				TRACE("now_angle=%d turn_dir=%d\r\n",Gyro_Data.yaw,turn_dir);
+#endif
 				break;
 			case 0xD1:
 				Speed=TURN_SPEED;
@@ -4880,7 +4574,7 @@ void Init_PauseSweep(void)
 	Disable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = CEASE;			
+	mode.mode = MODE_CEASE;			
 	mode.sub_mode = SUBMODE_PAUSESWEEP;
 	mode.step=0;
 	mode.time=giv_sys_time;
@@ -4970,7 +4664,7 @@ void Do_PauseSweep(void)
 				}
 			else
 				{
-					if((mode.mode!=YBS)&(mode.mode!=DOCKING)&(mode.mode!=SPOT))
+					if((mode.mode!=MODE_YBS)&(mode.mode!=MODE_DOCK)&(mode.mode!=MODE_SPOT))
 						{
 							Area_Check(0);
 							Init_Shift_Point1(0);
@@ -5015,7 +4709,7 @@ void Init_Sweep_Done(void)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
+	mode.mode = MODE_SWEEP;			
 	mode.sub_mode = SUBMODE_SWEEP_DONE;
 	mode.step=0;
 	mode.time=giv_sys_time;

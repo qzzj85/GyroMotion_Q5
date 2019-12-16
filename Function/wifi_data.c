@@ -114,7 +114,7 @@ void dp_download_power_handle_my(u8 power)
 	{
 	  //开关关
 		//proc_wifi_stop();
-		if(mode.mode!=CHARGEING)
+		if(mode.mode!=MODE_CHARGE)
 		  {
 			  if(mode.status)
 				  Send_Voice(VOICE_SWEEP_STOP);
@@ -176,13 +176,13 @@ void dp_download_suction_handle_my(u8 suction)
 	{
 		case 0:				//force
 			sweep_level=SWEEP_LEVEL_FORCE;
-			if((mode.status)&(mode.mode!=DOCKING))
+			if((mode.status)&(mode.mode!=MODE_DOCK))
 				Sweep_Level_Set(sweep_level);	  	
 		break;
 
 		case 1:				//standard
 			sweep_level=SWEEP_LEVEL_STANDARD;
-			if((mode.status)&(mode.mode!=DOCKING))
+			if((mode.status)&(mode.mode!=MODE_DOCK))
 				Sweep_Level_Set(sweep_level); 	  
 		break;
 
@@ -197,28 +197,28 @@ void dp_download_direction_control_handle_my(u8 direction_control)
 	switch(direction_control)
 		{
 			case 0:			  //forward
-			if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+			if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 				{
 					Init_App_Ctrl(direction_control);
 				}
 			break;
 
 			case 1:			  //back
-			if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+			if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 				{
 					Init_App_Ctrl(direction_control);
 				}
 			break;
 
 			case 2:			  //left
-			if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+			if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 				{
 					Init_App_Ctrl(direction_control);
 				}
 			break;
 
 			case 3:			  //right
-			if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+			if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 				{
 					Init_App_Ctrl(direction_control);
 				}
@@ -276,12 +276,6 @@ void mcu_wifi_proc_key(void)
 		{
 			wifi_key = 1;
 			wifi_clean=0;
-		}
-#else
-	if(Slam_Data.dipan_req==DIPAN_REQ_WIFI) 
-		{
-			wifi_key = 1;
-			Slam_Data.dipan_req=DIPAN_REQ_NONE;
 		}
 #endif		  
 	if (wifi_reset_begin == 0) 
@@ -432,10 +426,10 @@ void proc_wifi_ybs(void)
 {
 	switch(mode.mode)
 		{
-			case CEASE:
+			case MODE_CEASE:
 				switch(mode.sub_mode)
 					{
-						case CEASE:
+						case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 							Reset_Map();
 #endif
@@ -443,23 +437,23 @@ void proc_wifi_ybs(void)
 							delay_ms(3000);
 							Init_Right_YBS(1,0);
 						break;
-						case ERR:
-						case SLEEP:
+						case SUBMODE_ERR:
+						case SUBMODE_SLEEP:
 							Init_Cease();
 						break;
 						default:
 							break;
 					}
 				break;
-			case CHARGEING:
+			case MODE_CHARGE:
 				switch(mode.sub_mode)
 					{
-						case SWITCHOFF:
+						case SUBMODE_CHARGE_SWITCHOFF:
 							break;
-						case DC_CHARGING:
+						case SUBMODE_CHARGE_DC:
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
-						case SEAT_CHARGING:
+						case SUBMODE_CHARGE_SEAT:
 							Init_Quit_Charging(SWEEP_METHOD_YBS);
 							break;
 						default:
@@ -476,34 +470,34 @@ void proc_wifi_dock(void)
 	motion1.force_dock=true;
 	switch(mode.mode)
 		{
-			case CEASE:
+			case MODE_CEASE:
 				switch(mode.sub_mode)
 					{
-						case CEASE:
+						case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 							Reset_Map();
 #endif
 							Init_Docking();
 						break;
-						case ERR:
-						case SLEEP:
+						case SUBMODE_ERR:
+						case SUBMODE_SLEEP:
 							Init_Docking();
 						break;
 						default:
 							break;
 					}
 				break;
-			case SWEEP:
-			case SHIFT:
-			case PASS2INIT:
-			case EXIT:
+			case MODE_SWEEP:
+			case MODE_SHIFT:
+			case MODE_PASS2INIT:
+			case MODE_EXIT:
 				stop_rap();
 				Send_Voice(VOICE_DOCK_START);
 				Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 				Force_Dock();
 				break;
-			case YBS:
-			case SPOT:
+			case MODE_YBS:
+			case MODE_SPOT:
 				stop_rap();
 				Init_Docking();
 				break;
@@ -516,32 +510,32 @@ void proc_wifi_play(void)
 {
 	switch(mode.mode)
 		{
-			case CEASE:
+			case MODE_CEASE:
 				switch(mode.sub_mode)
 					{
-						case CEASE:
+						case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 							Reset_Map();
 #endif
 							Init_First_Sweep(0);
 						break;
-						case ERR:
-						case SLEEP:
+						case SUBMODE_ERR:
+						case SUBMODE_SLEEP:
 							Init_Cease();
 						break;
 						default:
 							break;
 					}
 				break;
-			case CHARGEING:
+			case MODE_CHARGE:
 				switch(mode.sub_mode)
 					{
-						case SWITCHOFF:
+						case SUBMODE_CHARGE_SWITCHOFF:
 							break;
-						case DC_CHARGING:
+						case SUBMODE_CHARGE_DC:
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
-						case SEAT_CHARGING:
+						case SUBMODE_CHARGE_SEAT:
 							Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 							break;
 						default:
@@ -557,15 +551,15 @@ void proc_wifi_stop(void)
 {
 	switch(mode.mode)
 		{
-			case SWEEP:
-			case SHIFT:
-			case YBS:
-			case EXIT:
-			case PASS2INIT:
+			case MODE_SWEEP:
+			case MODE_SHIFT:
+			case MODE_YBS:
+			case MODE_EXIT:
+			case MODE_PASS2INIT:
 				Send_Voice(VOICE_SWEEP_STOP);
 				Init_Cease();
 			break;
-			case DOCKING:
+			case MODE_DOCK:
 				Send_Voice(VOICE_DOCK_STOP);
 				Init_Cease();
 			break;
@@ -576,7 +570,7 @@ void proc_wifi_stop(void)
 				else
 					Init_Cease();
 			break;
-			case SPOT:
+			case MODE_SPOT:
 				Send_Voice(VOICE_SWEEP_STOP);
 				Init_Cease();
 			break;
@@ -592,10 +586,10 @@ void proc_wifi_spot(void)
 {
 	switch(mode.mode)
 		{
-			case CEASE:
+			case MODE_CEASE:
 				switch(mode.sub_mode)
 					{
-						case CEASE:
+						case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 							Reset_Map();
 #endif
@@ -605,26 +599,26 @@ void proc_wifi_spot(void)
 							break;
 					}
 				break;
-			case CHARGEING:
+			case MODE_CHARGE:
 				switch(mode.sub_mode)
 					{
-						case SWITCHOFF:
+						case SUBMODE_CHARGE_SWITCHOFF:
 							break;
-						case DC_CHARGING:
+						case SUBMODE_CHARGE_DC:
 							Send_Voice(VOICE_ERROR_DC_EXIST);
 							break;
-						case SEAT_CHARGING:
+						case SUBMODE_CHARGE_SEAT:
 							Init_Quit_Charging(SWEEP_METHOD_SPOT);
 							break;
 						default:
 							break;
 					}
 				break;
-			case SWEEP:
-			case YBS:
-			case SHIFT:
-			case EXIT:
-			case PASS2INIT:
+			case MODE_SWEEP:
+			case MODE_YBS:
+			case MODE_SHIFT:
+			case MODE_EXIT:
+			case MODE_PASS2INIT:
 				Send_Voice(VOICE_VOLUME_3);
 				stop_rap();
 				Init_Spot(SPOT_FROM_SWEEP);

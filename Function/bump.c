@@ -1,8 +1,8 @@
 #include "AAA-include.h"
 u8 bump_value=0;
 bool bump_exiton=true;
-u32 bump_exitoff_time=0;
 bool ring_cnt_flag=true;
+u8 ring_mil_recal=0;
 
 void Init_Bump_Interrupt(void)
 {
@@ -61,6 +61,53 @@ void back_speed(void)
     r_ring.stop_spd=r_ring.stop_spd*10;
     l_ring.stop_spd=l_ring.stop_spd*10;
 
+#ifdef RING_MIL_RECAL
+	int l_recal_legnth,r_recal_length;
+	if(ring_mil_recal)
+		{
+			switch (ring_mil_recal)		
+				{
+					case 1:			//Ðý×ª´ò»¬
+						#if 1
+						l_recal_legnth=l_ring.stop_spd*7/10;		//700ms
+						r_recal_length=r_ring.stop_spd*7/10;
+						#else
+						l_recal_legnth=l_rap.rap*7/10;r_recal_length=r_rap.rap*7/10;
+						if(l_rap.ori==BACK)
+							l_recal_legnth=0-l_recal_legnth;
+						if(r_rap.ori==BACK)
+							r_recal_length=0-r_recal_length;
+						#endif
+#ifdef DEBUG_BUMP
+						TRACE("l_recal_length=%d\r\n",l_recal_legnth);
+						TRACE("r_recal_length=%d\r\n",r_recal_length);
+#endif
+						l_ring.all_length-=l_recal_legnth;
+						r_ring.all_length-=r_recal_length;
+						break;
+					case 2:			//PITCH/PITCHROLL
+						#if 1
+						l_recal_legnth=l_ring.stop_spd;				//1s
+						r_recal_length=r_ring.stop_spd;
+						#else
+						l_recal_legnth=l_rap.rap;r_recal_length=r_rap.rap;
+						if(l_rap.ori==BACK)
+							l_recal_legnth=0-l_recal_legnth;
+						if(r_rap.ori==BACK)
+							r_recal_length=0-r_recal_length;
+						#endif
+#ifdef DEBUG_BUMP
+						TRACE("l_recal_length=%d\r\n",l_recal_legnth);
+						TRACE("r_recal_length=%d\r\n",r_recal_length);
+#endif
+						l_ring.all_length-=l_recal_legnth;
+						r_ring.all_length-=r_recal_length;
+						break;
+				}
+			ring_mil_recal=0;
+		}
+#endif
+
 	int l_spd,r_spd;
 	u8  l1=L_FRONT,r1=R_FRONT;
 	l_spd = 2000 * l_ring.stop_spd /1000;
@@ -98,14 +145,12 @@ void Close_Bump_Exit(void)
 	
 #ifdef MILE_COMPENSATION
 	bump_exiton=false;
-	bump_exitoff_time++;
 	Close_Ring_Cnt();		
     back_speed();
 	Disable_RingPWMCtrl();	
 #else
 	Disable_RingPWMCtrl();
 	bump_exiton=false;
-	bump_exitoff_time++;
 	Close_Ring_Cnt();
 #endif	
 }

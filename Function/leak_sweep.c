@@ -108,8 +108,8 @@ void Init_LeakSweep(short tgt_yaw)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
-	mode.sub_mode = LEAK_SWEEP;
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_LEAK;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -144,14 +144,16 @@ void Init_LeakSweep(short tgt_yaw)
 	motion1.leakon=true;
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
-	
+#ifdef DEBUG_SWEEP	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
-
+#endif
 	if(Analysis_StopLeak(motion1.tgt_yaw))
 		{	
+#ifdef DEBUG_SWEEP	
 			TRACE("Analysis Stop leak sweep!\r\n");
 			TRACE("goto mode step 0xF0,Check leak area again!\r\n");
+#endif
 			mode.step=0xF0;
 		}
 
@@ -175,7 +177,7 @@ void Do_LeakSweep(void)
 	
 	if(mode.bump)
 		return;
-	if((mode.sub_mode!=LEAK_SWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
+	if((mode.sub_mode!=SUBMODE_SWEEP_LEAK))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
 		return;
 	switch (mode.step)
 		{
@@ -218,7 +220,9 @@ void Do_LeakSweep(void)
 							{
 								stop_rap();
 								mode.step++;
+#ifdef DEBUG_SWEEP
 								TRACE("Motion in seat area!!!\r\n");
+#endif
 							}
 					}
 
@@ -229,7 +233,9 @@ void Do_LeakSweep(void)
 							{
 								stop_rap();
 								mode.step++;
+#ifdef DEBUG_SWEEP
 								TRACE("The next point has clean!!\r\n");
+#endif
 							}
 					}
 
@@ -239,7 +245,9 @@ void Do_LeakSweep(void)
 							{
 								stop_rap();
 								mode.step++;
+#ifdef DEBUG_SWEEP
 								TRACE("The next point has clean!!\r\n");
+#endif
 							}
 					}
 #endif
@@ -265,7 +273,9 @@ void Do_LeakSweep(void)
 					}
 				if(motion1.repeat_sweep)
 					{
+#ifdef DEBUG_SWEEP
 						TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 						Init_Pass2Sweep();
 						motion1.repeat_sweep=false;
 						return;
@@ -298,7 +308,9 @@ void Do_LeakSweep(void)
 				break;
 			case 5:
 				//Init_Back_Sweep();
+#ifdef DEBUG_SWEEP
 				TRACE("call this in %d %s\r\n",__LINE__,__func__);
+#endif
 				Init_Pass2Sweep();
 				break;
 			///////////角度修正//////////////////
@@ -338,8 +350,8 @@ void Init_Leak_BackSweep(short tgt_yaw)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = SWEEP;			
-	mode.sub_mode = LEAK_BACKSWEEP;
+	mode.mode = MODE_SWEEP;			
+	mode.sub_mode = SUBMODE_SWEEP_LEAKBACK;
 	mode.step=0;
 	mode.time=giv_sys_time;
 	mode.bump = 0;
@@ -388,14 +400,18 @@ void Init_Leak_BackSweep(short tgt_yaw)
 	grid.x_straight_start=grid.x;
 	grid.y_straight_start=grid.y;
 	grid.y_back_last=grid.y;
+#ifdef DEBUG_SWEEP	
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgt_yaw);
+#endif
 	data1=Analysis_StopBack(motion1.tgt_yaw);
 	if(data1==1)
 		{
 			{
+#ifdef DEBUG_SWEEP	
 				TRACE("Analysis Stop back sweep!\r\n");
 				TRACE("Quit Back Sweep in %s\r\n",__func__);
+#endif
 				Init_Stop_BackSweep();
 			}
 		}
@@ -424,18 +440,12 @@ void Do_Leak_BackSweep(void)
 #ifdef FREE_SKID_INDEP_CHECK
 			Free_Skid_Indep.check_flag=false;
 #endif
-
-#ifdef YBS_DIS_RESTORE
-			Disable_Rotate_Angle();
-#endif
-			//mode.speed_up=false;		//qz add 20181225
-
 			return;
 		}
 	Sweep_Bump_Action(0,1);
 	if(mode.bump)
 		return;
-	if((mode.sub_mode!=LEAK_BACKSWEEP))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
+	if((mode.sub_mode!=SUBMODE_SWEEP_LEAKBACK))		//因为在Sweep_Bump_Action()中可能会切换模式到PASS2SWEEP
 		return;
 	switch (mode.step)
 		{
@@ -477,8 +487,10 @@ void Do_Leak_BackSweep(void)
 						if((Read_Coordinate_Clean(now_gridx+1,now_gridy))&(now_gridx+1<=grid.x_area_max))
 							{
 								stop_rap();
+#ifdef DEBUG_SWEEP	
 								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
+#endif
 								mode.step++;
 							}
 					}
@@ -488,8 +500,10 @@ void Do_Leak_BackSweep(void)
 						if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=grid.x_area_min))
 							{
 								stop_rap();
+#ifdef DEBUG_SWEEP	
 								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
 								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx-1);
+#endif
 								mode.step++;
 							}
 					}
@@ -499,14 +513,18 @@ void Do_Leak_BackSweep(void)
 							{
 								stop_rap();
 								mode.step=20;
+#ifdef DEBUG_SWEEP	
 								TRACE("Motion in seat area!!!\r\n");
+#endif
 							}
 					}
 				break;
 			case 20:
 				if(motion1.repeat_sweep)
 					{
+#ifdef DEBUG_SWEEP	
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 						Init_Pass2Sweep();
 					}
 				else
@@ -519,7 +537,9 @@ void Do_Leak_BackSweep(void)
 					{
 						if(now_gridy+1>grid.y_area_max)
 							{
+#ifdef DEBUG_SWEEP	
 								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+#endif
 								Init_Stop_BackSweep();
 								return;
 							}
@@ -528,7 +548,9 @@ void Do_Leak_BackSweep(void)
 					{
 						if(now_gridy-1<grid.y_area_min)
 							{
+#ifdef DEBUG_SWEEP	
 								TRACE("STOP BACK in %s %d\r\n",__func__,__LINE__);
+#endif
 								Init_Stop_BackSweep();
 								return;
 							}

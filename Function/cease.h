@@ -1,30 +1,71 @@
 #ifndef  __CEASE_H
 #define  __CEASE_H
 ////////////////////////头文件////////////////////////////////////	   
-#include "stm32f10x.h"										
-#include "soft.h"
-
 ////////////////////////全局变量//////////////////////////////////	 
+extern bool ExitInput;     //有按键、外部电源外部输入
+extern bool key_wakeup_flag;
+extern u16 	error_code;
+
+#define	ERR_BASE_NUM		0
+#define	ERROR_DANGER			ERR_BASE_NUM+1			//地检危险位置
+#define	ERROR_BUMPFIX			ERR_BASE_NUM+2			//碰撞故障
+#define	ERROR_FANOC		        ERR_BASE_NUM+3			//风机过载
+#define	ERROR_MBOC				ERR_BASE_NUM+4			//中扫过载
+#define	ERROR_SBOC				ERR_BASE_NUM+5			//边扫过载
+#define	ERROR_LEFTRINGOC		ERR_BASE_NUM+6			//左轮过载
+#define	ERROR_RIGHTRINGOC		ERR_BASE_NUM+7			//右轮过载
+#define	ERROR_RINGOC			ERR_BASE_NUM+8			//双轮过载
+#define	ERROR_BAT				ERR_BASE_NUM+9			//电池故障
+#define	ERROR_GYRO			 	ERR_BASE_NUM+10			//惯导故障
+
+#define	ERROR_SWEEPER_FIX		ERR_BASE_NUM+11			//机器卡住
+#define	ERROR_ROTATE_SKID		ERR_BASE_NUM+12			//旋转打滑故障
+#define	ERROR_GYRO_PITCH		ERR_BASE_NUM+13			//惯导俯仰角故障
+#define	ERROR_GYRO_ROLL			ERR_BASE_NUM+14			//惯导翻转角故障
+#define	ERROR_GYRO_PITCHROLL	ERR_BASE_NUM+15			//惯导俯仰，翻转角故障
+
+#define  ERROR_DCEXIST			ERR_BASE_NUM+16			//未拔掉充电线
+#define	ERROR_DOCKFAIL			ERR_BASE_NUM+17			//回充失败
+
+#define ERROR_NODEMALLOC		ERR_BASE_NUM+18			//内存分配失败
+#define ERROR_PATHMALLOC		ERR_BASE_NUM+19			//内存分配失败
+#define	ERROR_BACKMALLOC		ERR_BASE_NUM+20			//内存分配失败
+
+#define	ERROR_BOXNONE			ERR_BASE_NUM+21
+#define	ERROR_BIRD				ERR_BASE_NUM+22
+#define	ERROR_BIRDCOM			ERR_BASE_NUM+23
+#define	ERROR_VIDEO				ERR_BASE_NUM+24
+#define	ERROR_SLAMCOM			ERR_BASE_NUM+25
+#define	ERROR_MOTION_TICK		ERR_BASE_NUM+26
+#define	ERROR_MOTION_LIFT		ERR_BASE_NUM+27
+#define	ERROR_LEFT_LIFT			ERR_BASE_NUM+28
+#define ERROR_RIGHT_LIFT		ERR_BASE_NUM+29
+#define	ERROR_LEFT_WALL			ERR_BASE_NUM+30
+#define	ERROR_MID_WALL			ERR_BASE_NUM+31
+#define	ERROR_RIGHT_WALL		ERR_BASE_NUM+32
+#define	ERROR_LEFT_EARTH		ERR_BASE_NUM+33
+#define	ERROR_MID_EARTH			ERR_BASE_NUM+34
+#define	ERROR_RIGHT_EARTH		ERR_BASE_NUM+35
+#define	ERROR_LEFTSBOC			ERR_BASE_NUM+36
+#define	ERROR_RIGHTSBOC			ERR_BASE_NUM+37
+
+
 ///////////////////////全局函数////////////////////////////////////	   
 void Do_Cease(void);    //执行在待机状态的程序
 void Init_Cease(void);
-void Cease_No_Key(void);
-void Cease_YaoKong_Manage(void);
 void Init_VirtualSleep(void);
 void Do_VirtualSleep(void);
+void Init_Quit_Charging(u8 sweep_method);
+void Do_Quit_Chargeing(void);
+void Init_Sleep(void); 
+void Do_Sleep(void);
+void Do_Sleep_My(void);
+void RCC_EXITSTOP(void);
+void Init_Err(void); 
+void Do_Err(void);
+void Enable_ExternInt_Weekup(u8 use_key);
+void Disable_ExternInt_Weekup(void);
+void Diable_AllExtInt_Weekup(void);
 
-///////////////////////全局函数////////////////////////////////////
-///////////////////////私有函数////////////////////////////////////	
-void Cease_display_set(void);
-void Cease_SetTime(void);
-void Cease_Timing(void);
-void Cease_Lode_Time(void);
-void Cease_Save_Time(void);
-void Cease_Save_Preengage(void);
-void Cease_Lode_Preengage(void);
-void Cease_Big_Subb_Time(void);
-void Cease_Subb_Time(void);
-void Cease_Big_Add_Time(void);
-void Cease_Add_Time(void);
 
 #endif

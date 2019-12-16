@@ -1,6 +1,5 @@
 #include "AAA-include.h"
 
-u8 app_key=4;
 
 void Init_App_Ctrl(u8 move_dir)
 {

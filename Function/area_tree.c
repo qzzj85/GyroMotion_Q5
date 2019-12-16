@@ -78,7 +78,9 @@ void Del_Tree(struct AREA_TREE *p)
 
 void Del_All_Tree(void)
 {
+#ifdef DEBUG_TREE
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	if(root_tree->first_child==NULL)
 		return;
 	struct AREA_TREE *p;
@@ -88,16 +90,22 @@ void Del_All_Tree(void)
 			Del_Tree(p);	
 		}
 	curr_tree=root_tree;
+#ifdef DEBUG_TREE
 	TRACE("Del All Tree success!!\r\n");
 	TRACE("Out %s\r\n",__func__);	
+#endif
 }
 
 int Init_AreaTree(void)
 {
+#ifdef DEBUG_TREE
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	if(root_tree==NULL)
 	{
+#ifdef DEBUG_TREE
 		TRACE("root_tree is not exist!\r\n");
+#endif
 		root_tree=(struct AREA_TREE*)malloc(TREE_LEN);
 		if(root_tree==NULL)
 			{
@@ -122,15 +130,21 @@ int Init_AreaTree(void)
 	else
 	{
 		curr_tree=root_tree;
+#ifdef DEBUG_TREE
 		TRACE("root_tree is exist!!\r\n");
+#endif
 		if(root_tree->first_child==NULL)
 		{
-			printf("but root tree no leaf!\r\n");
+#ifdef DEBUG_TREE
+			TRACE("but root tree no leaf!\r\n");
+#endif
 			return 0;
 		}
 	    Del_All_Tree();
 	}
+#ifdef DEBUG_TREE
 	TRACE("Out %s\r\n",__func__);
+#endif
 	return 0;
 };
 
@@ -143,7 +157,9 @@ int Add_AreaTree(void)
 	p=(struct AREA_TREE*)malloc(TREE_LEN);
 	if(p==NULL)
 	{
+#ifdef DEBUG_TREE
 		TRACE("%s malloc fail!!\r\n",__func__);
+#endif
 		return 1;
 	}
 	
@@ -200,7 +216,7 @@ int Add_AreaTree(void)
 			p->exit_gridy2=check_point.new_y1;
 			p->exit_tgtyaw=check_point.next_tgtyaw;
 		}
-
+#ifdef DEBUG_TREE
 	TRACE("curr_tree.area_num=%d\r\n",p->area_num);
 	TRACE("curr_tree.exit_gridx1=%d\r\n",p->exit_gridx1);
 	TRACE("curr_tree.exit_gridy1=%d\r\n",p->exit_gridy1);
@@ -208,6 +224,7 @@ int Add_AreaTree(void)
 	TRACE("curr_tree.exit_gridy2=%d\r\n",p->exit_gridy2);
 	TRACE("curr_tree.exit_tgtyaw=%d\r\n",p->exit_tgtyaw);
 	TRACE("curr_tree.exit_area_num=%d\r\n",p->exit_area_num);
+#endif
 	curr_tree=p;
 	return 0;
 }
@@ -226,7 +243,7 @@ void Get_Curr_AreaTree_Info(void)
 	motion1.xmax_ok=curr_tree->xmax_ok;
 	motion1.xmin_ok=curr_tree->xmin_ok;
 	motion1.exit_area_num=curr_tree->exit_area_num;
-
+#ifdef DEBUG_TREE
 	TRACE("Get CurrTree Info!!!\r\n");
 	TRACE("CurrTree.area_num=%d\r\n",curr_tree->area_num);
 	TRACE("motion1.area_num=%d\r\n",motion1.area_num);
@@ -239,14 +256,17 @@ void Get_Curr_AreaTree_Info(void)
 	TRACE("motion1 xmax check %d\r\n",motion1.xmax_ok);
 	TRACE("motion1 xmin check %d\r\n",motion1.xmin_ok);
 	TRACE("motion1 exit_area_num=%d\r\n",motion1.exit_area_num);
+#endif
 }
 
 u8 Out_Curr_AreaTree_Exit(void)
 {
+#ifdef DEBUG_TREE
 	TRACE("curr_tree.exit_gridx1=%d\r\n",curr_tree->exit_gridx1);
 	TRACE("curr_tree.exit_gridy1=%d\r\n",curr_tree->exit_gridy1);
 	TRACE("curr_tree.exit_gridx2=%d\r\n",curr_tree->exit_gridx2);
 	TRACE("curr_tree.exit_gridy2=%d\r\n",curr_tree->exit_gridy2);
+#endif
 	check_point.new_x1=curr_tree->exit_gridx1;
 	check_point.new_y1=curr_tree->exit_gridy1;
 	check_point.new_x2=curr_tree->exit_gridx2;

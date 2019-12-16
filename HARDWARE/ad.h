@@ -29,7 +29,6 @@ u16 account_current (u8 channel);
 void ReInitAd(void);
 
 extern u16  ADC_ConvertedValue[256];
-extern bool ADC_ready;
 
 
 

@@ -36,7 +36,6 @@
 
 extern float X_pos,Y_pos;
 extern volatile u8 coordinate[COORDI_YLENGTH+1][COORDI_XLENGTH+1];
-extern int x_max[20],x_min[20];
 extern GRID grid;
 extern CHECK_POINT check_point;
 extern short gridy_pos[GRIDY_POS_CNT],gridx_pos[GRIDY_POS_CNT];
@@ -54,8 +53,6 @@ u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw);
 u8 Judge_Pos_Reach(short tgt_xpos, short tgt_ypos);
 u8 Judge_Xpos_Reach(short tgt_xpos,u8 xpos_bios);
 u8 Judge_Ypos_Reach(short tgt_ypos,u8 pos_bios);
-void Init_Real_X(void);
-void Cal_Xmaxmin(void);
 u8 Get_TurnDir(short tgt_angle);
 u8 Read_Coordinate_Data(s8 xgrid,s8 ygrid);
 u8 Read_Coordinate_Wall(s8 xgrid,s8 ygrid);
@@ -65,7 +62,6 @@ u8 Read_Coordinate_AreaNo(s8 xgrid,s8 ygrid);
 u8 Find_Leak_Area(void);
 u8 Find_NextArea_Entry(void);
 u8 Find_ExitArea_Entry(void);
-s8 Return_Grid(short pos,short pos_base);
 u8 Read_Coordinate_CleanNoWall(s8 xgrid,s8 ygrid);
 s8 Return_MaxClean_GridX(s8 gridy,u8 nowall);
 s8 Return_MinClean_GridX(s8 gridy,u8 nowall);

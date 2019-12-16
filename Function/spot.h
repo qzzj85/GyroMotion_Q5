@@ -17,7 +17,6 @@ extern s8 spot_gyrobios_cnt;
 void Init_Spot(u8 end_work);
 void Init_Sweep_Spot(u8 start_from);
 
-void Do_Spot(void);
 void Do_Spot_My(void);
 
 #endif

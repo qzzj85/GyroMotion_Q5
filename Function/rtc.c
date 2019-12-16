@@ -1,20 +1,9 @@
 #include "AAA-include.h"
-void RCC_Configuration(void);
-u16  PreengageTime; //定义预约时间，该时间高字节表示小时，
-                       //低字节表示分钟
-u16  PreengageDate; //定义预约天数，低字节八位表示从星期1
-                       //到星期7、每一天。
 u32  Rtc_time;      //实时时钟的值
-
-u32  giv_BatteryCapability;  //电池的容量
-u32  giv_BatteryFDCap;//电池放电的电量
-u8   giv_BatteryChargeForbid; //允许电池大电流充电标志，0为允许，1为不允许。
-u32  giv_UsePowerTime;//用电时间。
-
 bool watchdog_time;
-
-bool PREEN_TIME_UP=false;
-
+#ifdef PREEN_SWEEP
+PREEN_DATA		Preen_Data[PREEN_LENGTH];
+#endif
 
 void Reinit_Rtc(void)
 {
@@ -24,7 +13,9 @@ void Reinit_Rtc(void)
 	RCC_LSEConfig(RCC_LSE_ON);
 	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
 		{
+#ifdef DEBUG_RTC
 			TRACE("hang at %s %d\r\n",__func__,__LINE__);
+#endif
 		}
 	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
 #else
@@ -108,7 +99,9 @@ void init_rtc(void)
 	RCC_LSEConfig(RCC_LSE_ON);
 	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
 		{
+#ifdef DEBUG_RTC
 			TRACE("hang at %s %d\r\n",__func__,__LINE__);
+#endif
 		}
 	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
 #else
@@ -149,6 +142,7 @@ void init_rtc(void)
   	NVIC_Init(&NVIC_InitStructure);
 }
 
+#ifdef PREEN_SWEEP
 void ReadPreengage(void)
 {
 	u32 addr=PREEN_DATA_ADDR;
@@ -181,7 +175,7 @@ u8 CleanPreenFlashPage(void)
 {
 	if(!FLASH_GetWriteProtectionOptionByte())
 	{		
-#ifdef PREEN_DEBUG
+#ifdef DEBUG_PREEN
 		TRACE("FLASH Write Protect!\r\n");
 #endif
 		return 1;
@@ -194,7 +188,7 @@ u8 CleanPreenFlashPage(void)
 			return 1;
 		}
 	FLASH_Lock();
-#ifdef PREEN_DEBUG
+#ifdef DEBUG_PREEN
 	TRACE("Flash erase complete\r\n");
 #endif
 
@@ -231,7 +225,7 @@ u8  WritePreenData(void)
 
 	   if(!FLASH_GetWriteProtectionOptionByte())
 	   	{		
-#ifdef PREEN_DEBUG
+#ifdef DEBUG_PREEN
 				TRACE("FLASH Write Protect!\r\n");
 #endif
 				return 1;
@@ -239,7 +233,7 @@ u8  WritePreenData(void)
 	   
 		if(CleanPreenFlashPage())			//清除之前预约数据
 			{
-#ifdef PREEN_DEBUG
+#ifdef DEBUG_PREEN
 	   			TRACE("Flash earse error\r\n");
 #endif			
 				return 1;
@@ -272,12 +266,52 @@ u8  WritePreenData(void)
 
 	   FLASH_Lock();
 
-#ifdef PREEN_DEBUG
 	   ReadPreengage();
+#ifdef DEBUG_PREEN
 	   TRACE("Flash write complete\r\n");
 #endif	  
 	   return 0;
 }
+
+/************************************************************
+核对当前时间是否与预约时间一致，如果是则返回1；否则返回0
+************************************************************/
+u8 Check_PreengageTime(void)
+{
+	u8 week_day,piv_hour,piv_min;
+	week_day=(Rtc_time)/86400;
+    piv_hour = (u8)((Rtc_time % 86400) / 3600); 
+    piv_min = (u8)((Rtc_time % 3600) / 60);
+	if(week_day==0)
+		week_day=(1<<6);			//周日为0100 0000b
+	else
+		week_day=1<<(week_day-1);
+	for(int i=0;i<PREEN_LENGTH;i++)
+		{
+			if(Preen_Data[i].Flag)											//7个预约时间，每个的标记是否ENABLE,从第一个预约开始检查
+				{															//预约时间标记有效
+					if((Preen_Data[i].Preen_Hour==piv_hour)&(Preen_Data[i].Preen_Min==piv_min))
+						{
+							if(!Preen_Data[i].Cycle)
+								{
+									Preen_Data[i].Flag=0;
+									CleanPreenData();			//qz add 20180428:Flag被清零，表示单次的预约完成，Flag被更改，需要重新保存，
+																//不保存的话，如果中途被关机了，重新开机时，读到的预约数据Flag仍然为1，时间到后，又会开始。
+									return 1;
+								}
+							else if(week_day&Preen_Data[i].Preen_Week_Num)
+								{
+									Preen_Data[i].Hour_done=1;
+									return 1;
+								}
+						}
+					return 0;
+				}
+		}
+	return 0;																//一个预约时间都没有到，返回0
+}
+#endif
+
 /************************************************************************
 功能：写实时时钟时间
 *************************************************************************/

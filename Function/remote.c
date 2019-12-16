@@ -33,7 +33,7 @@ void Remote_Handle(void)
 	remote_info.effect=false;
 		
 	//机器处于船型开关未打开,退出
-	if((mode.mode==CHARGEING)&(mode.sub_mode==SWITCHOFF))
+	if((mode.mode==MODE_CHARGE)&(mode.sub_mode==SUBMODE_CHARGE_SWITCHOFF))
 		return;
 //	if(!Read_Key2())
 	//	return;
@@ -47,11 +47,11 @@ void Remote_Handle(void)
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING))
+				if((mode.mode==MODE_CHARGE))
 					return;
-				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+				if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
-				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+				else if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_SLEEP))
 					Init_Cease();
 				//remote_info.key_time=giv_sys_time;
 				break;
@@ -61,11 +61,11 @@ void Remote_Handle(void)
 					break;
 				
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING))
+				if((mode.mode==MODE_CHARGE))
 					return;
-				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+				if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
-				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+				else if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_SLEEP))
 					Init_Cease();
 				break;
 			case REMOTE_KEY_RIGHT:
@@ -73,11 +73,11 @@ void Remote_Handle(void)
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING))
+				if((mode.mode==MODE_CHARGE))
 					return;
-				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+				if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
-				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+				else if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_SLEEP))
 					Init_Cease();
 				break;
 			case REMOTE_KEY_BACK:
@@ -85,7 +85,7 @@ void Remote_Handle(void)
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出
-				if((mode.mode==CHARGEING))
+				if((mode.mode==MODE_CHARGE))
 					return;
 
 				if(!Read_Key2())
@@ -95,9 +95,9 @@ void Remote_Handle(void)
 						return;
 					}
 				
-				if((mode.mode==CEASE)&((mode.sub_mode==CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
+				if((mode.mode==MODE_CEASE)&((mode.sub_mode==SUBMODE_CEASE)|(mode.sub_mode==SUBMODE_PAUSESWEEP)))
 					Init_Remote_Move();
-				else if((mode.mode==CEASE)&(mode.sub_mode==SLEEP))
+				else if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_SLEEP))
 					Init_Cease();
 				break;
 
@@ -106,10 +106,10 @@ void Remote_Handle(void)
 			case REMOTE_KEY_DOCK:
 				switch(mode.mode)
 					{
-						case CEASE:
+						case MODE_CEASE:
 							switch(mode.sub_mode)
 								{
-									case CEASE:
+									case SUBMODE_CEASE:
 									case SUBMODE_PAUSESWEEP:
 										motion1.force_dock=true;
 #ifdef TUYA_WIFI
@@ -123,17 +123,17 @@ void Remote_Handle(void)
 											}
 										Init_Docking();
 									break;
-									case SLEEP:
+									case SUBMODE_SLEEP:
 										Init_Cease();
 									break;
 									default:
 										break;
 								}
 							break;
-						case SWEEP:
-						case SHIFT:
-						case PASS2INIT:
-						case EXIT:
+						case MODE_SWEEP:
+						case MODE_SHIFT:
+						case MODE_PASS2INIT:
+						case MODE_EXIT:
 							if(!Read_Key2())
 								{
 									Send_Voice(VOICE_VOLUME_2);
@@ -146,8 +146,8 @@ void Remote_Handle(void)
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 							Force_Dock();
 							break;
-						case YBS:
-						case SPOT:
+						case MODE_YBS:
+						case MODE_SPOT:
 							if(!Read_Key2())
 								{
 									Send_Voice(VOICE_VOLUME_2);
@@ -159,15 +159,15 @@ void Remote_Handle(void)
 							Sweep_Level_Set(SWEEP_LEVEL_DOCK);
 							Init_Docking();
 							break;
-						case CHARGEING:
+						case MODE_CHARGE:
 							if(Read_Key2())
 								return;
 							switch(mode.sub_mode)
 								{
-									case DC_CHARGING:
+									case SUBMODE_CHARGE_DC:
 										Send_Voice(VOICE_ERROR_DC_EXIST);
 										break;
-									case SEAT_CHARGING:
+									case SUBMODE_CHARGE_SEAT:
 										Send_Voice(VOICE_VOLUME_2);										
 										Init_Test(SUBMODE_BURN_TEST);
 										break;
@@ -178,7 +178,7 @@ void Remote_Handle(void)
 							break;
 					}				
 				
-#ifdef REMOTE_DEBUG
+#ifdef DEBUG_REMOTE
 				TRACE("Remote Dock key,request dock!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
@@ -187,23 +187,23 @@ void Remote_Handle(void)
 				//机器处于工作状态，退出
 				if(mode.status)
 					break;				
-#ifdef REMOTE_DEBUG
+#ifdef DEBUG_REMOTE
 				TRACE("Remote GUIHUA key,request guihua!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
 				switch(mode.mode)
 					{
-						case CEASE:
+						case MODE_CEASE:
 							switch(mode.sub_mode)
 								{
-									case CEASE:
+									case SUBMODE_CEASE:
 									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
 										Reset_Map();
 #endif
 										Init_First_Sweep(0);
 										break;
-									case SLEEP:
+									case SUBMODE_SLEEP:
 										Init_Cease();
 										break;
 									default:
@@ -211,13 +211,13 @@ void Remote_Handle(void)
 										
 								}
 							break;
-						case CHARGEING:
+						case MODE_CHARGE:
 							switch(mode.sub_mode)
 								{
-									case DC_CHARGING:
+									case SUBMODE_CHARGE_DC:
 										Send_Voice(VOICE_ERROR_DC_EXIST);
 										break;
-									case SEAT_CHARGING:
+									case SUBMODE_CHARGE_SEAT:
 										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 										break;
 									default:
@@ -231,10 +231,10 @@ void Remote_Handle(void)
 			case REMOTE_KEY_YBS:
 				switch(mode.mode)
 					{
-						case CEASE:
+						case MODE_CEASE:
 							switch(mode.sub_mode)
 								{
-									case CEASE:
+									case SUBMODE_CEASE:
 									case SUBMODE_PAUSESWEEP:
 #ifdef TUYA_WIFI
 										Reset_Map();
@@ -243,22 +243,22 @@ void Remote_Handle(void)
 										delay_ms(3000);
 										Init_Right_YBS(1,0);
 									break;
-									case SLEEP:
+									case SUBMODE_SLEEP:
 										Init_Cease();
 										break;
 									default:
 										break;
 								}
 							break;
-						case CHARGEING:
+						case MODE_CHARGE:
 							switch(mode.sub_mode)
 								{
-									case SWITCHOFF:
+									case SUBMODE_CHARGE_SWITCHOFF:
 										break;
-									case DC_CHARGING:
+									case SUBMODE_CHARGE_DC:
 										Send_Voice(VOICE_ERROR_DC_EXIST);
 										break;
-									case SEAT_CHARGING:
+									case SUBMODE_CHARGE_SEAT:
 										Init_Quit_Charging(SWEEP_METHOD_YBS);
 										break;
 									default:
@@ -270,7 +270,7 @@ void Remote_Handle(void)
 					}
 				break;
 			case REMOTE_KEY_START:
-#ifdef REMOTE_DEBUG
+#ifdef DEBUG_REMOTE
 				TRACE("Remote GUIHUA key,request guihua!\r\n");
 				TRACE("Remote.ir=%d\r\n",remote_info.rece_ir);
 #endif
@@ -282,17 +282,17 @@ void Remote_Handle(void)
 					}
 				switch(mode.mode)
 					{
-						case CEASE:
+						case MODE_CEASE:
 							switch(mode.sub_mode)
 								{
-									case CEASE:
+									case SUBMODE_CEASE:
 #ifdef TUYA_WIFI
 										Reset_Map();
 #endif
 										Init_First_Sweep(0);
 										break;
-									case SLEEP:
-									case ERR:
+									case SUBMODE_SLEEP:
+									case SUBMODE_ERR:
 										Init_Cease();
 										break;
 									case SUBMODE_PAUSESWEEP:
@@ -308,31 +308,31 @@ void Remote_Handle(void)
 										
 								}
 							break;
-						case CHARGEING:
+						case MODE_CHARGE:
 							switch(mode.sub_mode)
 								{
-									case DC_CHARGING:
+									case SUBMODE_CHARGE_DC:
 										Send_Voice(VOICE_ERROR_DC_EXIST);
 										break;
-									case SEAT_CHARGING:
+									case SUBMODE_CHARGE_SEAT:
 										Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 										break;
 									default:
 										break;
 								}
 							break;
-						case SWEEP:
-						case SHIFT:
-						case PASS2INIT:
-						case EXIT:
-						case YBS:
+						case MODE_SWEEP:
+						case MODE_SHIFT:
+						case MODE_PASS2INIT:
+						case MODE_EXIT:
+						case MODE_YBS:
 							stop_rap();
 							Save_Pause_Data();
 							Send_Voice(VOICE_PAUSE_SWEEP);
 							Send_Voice(VOICE_VOLUME_2);
 							Init_PauseSweep();
 							break;
-						case DOCKING:
+						case MODE_DOCK:
 							stop_rap();
 							Save_Pause_Data();							
 							Send_Voice(VOICE_PAUSE_SWEEP);
@@ -354,8 +354,8 @@ void Remote_Handle(void)
 					}
 				switch(mode.mode)
 					{
-						case CEASE:
-							if(mode.sub_mode==CEASE)
+						case MODE_CEASE:
+							if(mode.sub_mode==SUBMODE_CEASE)
 								{
 #ifdef TUYA_WIFI
 									Reset_Map();
@@ -363,19 +363,19 @@ void Remote_Handle(void)
 									Init_First_Sweep(0);
 								}
 							break;
-						case SWEEP:
-						case YBS:
-						case EXIT:
-						case SHIFT:
-						case PASS2INIT:
+						case MODE_SWEEP:
+						case MODE_YBS:
+						case MODE_EXIT:
+						case MODE_SHIFT:
+						case MODE_PASS2INIT:
 							Sweep_Level_Set(sweep_level);
 							break;
-						case CHARGEING:
-							if(mode.sub_mode==SEAT_CHARGING)
+						case MODE_CHARGE:
+							if(mode.sub_mode==SUBMODE_CHARGE_SEAT)
 								{
 									Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 								}
-							else if(mode.sub_mode==DC_CHARGING)
+							else if(mode.sub_mode==SUBMODE_CHARGE_DC)
 								{
 									Send_Voice(VOICE_ERROR_DC_EXIST);
 								}
@@ -462,7 +462,6 @@ u8 Read_Remote_Bump(u8 ir_enable)
 					 mode.bump=BUMP_ONLY_LEFT;
 					 mode.bump_flag=true;
 					 mode.step_bp=0;
-					 Slam_Data.l_bump_flag=true;
 					 mode.bump_time=giv_sys_time;
 				 }
 			 return BUMP_ONLY_LEFT;
@@ -565,10 +564,6 @@ u8 Read_Remote_Bump(u8 ir_enable)
 #ifdef FREE_SKID_CHECK
 	if(Check_Free_Sikd())
 		{
-			Slam_Data.skid_flag=1;
-#ifdef SKID_REPORT_TIME
-			Slam_Data.skid_report_time=giv_sys_time;
-#endif
 #ifdef FREE_SKID_ACTION
 			stop_rap();
 			mode.bump=0xff;

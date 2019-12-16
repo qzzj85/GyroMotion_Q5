@@ -38,14 +38,18 @@ u8 Creat_AreaNodeList(void)
 {
 	if(head_node!=NULL)
 		{
+#ifdef DEBUG_AREALIST
 			TRACE("head_node is exist!!\r\n");
+#endif
 			if(head_node->last_node!=NULL)
 				head_node->last_node=NULL;
 			if(head_node->next_node!=NULL)
 				{
 					if(Del_All_AreaNode())
 						{
+#ifdef DEBUG_AREALIST
 							TRACE("can't del all areanode!!\r\n");
+#endif
 							return 1;
 						}
 				}
@@ -55,7 +59,9 @@ u8 Creat_AreaNodeList(void)
 //	curr_node=(struct AREA_NODE*)malloc(NODE_LEN);
 	if(head_node==NULL)
 		{
+#ifdef DEBUG_AREALIST
 			TRACE("Area HEAD Node Dynamic memory allocation failure!!!\r\n");
+#endif
 			return 1;
 		}
 	head_node->area_num=0;
@@ -63,7 +69,9 @@ u8 Creat_AreaNodeList(void)
 	head_node->last_node=NULL;
 	head_node->clean=false;
 	curr_node=head_node;
+#ifdef DEBUG_AREALIST
 	TRACE("Creat AreaNodeList Complete!!\r\n");
+#endif
 	return 0;
 }
 
@@ -83,7 +91,9 @@ u8 Add_AreaNode_End(void)
 	p=(struct AREA_NODE*)malloc(NODE_LEN);
 	if(p==NULL)
 		{
+#ifdef DEBUG_AREALIST
 			TRACE("Area Node Dynamic memory allocation failure!!!\r\n");
+#endif
 			return 1;
 		}
 	
@@ -110,7 +120,9 @@ u8 Add_AreaNode_End(void)
 	p->next_node=NULL;
 	
 	curr_node=p;
+#ifdef DEBUG_AREALIST
 	TRACE("Add a AreaNode complete!!\r\n");
+#endif
 	return 0;
 }
 
@@ -119,14 +131,18 @@ u8 Del_AreaNode_End(void)
 	struct AREA_NODE *p;
 	if(curr_node->area_num==0)
 		{
+#ifdef DEBUG_AREALIST
 			TRACE("head node can't be del!!!\r\n");
+#endif
 			return 0;
 		}
 	p=curr_node;									//找到当前区域指针
 	curr_node=curr_node->last_node;					//将curr_node移动到当前指针的上一个指针
 	free(p);										//删除指针
 	curr_node->next_node=NULL;						//当前指针的下一指针指向空
+#ifdef DEBUG_AREALIST
 	TRACE("Del a AreaNode complete!!\r\n");
+#endif
 	return 0;
 }
 
@@ -134,7 +150,6 @@ u8 Del_All_AreaNode(void)
 {
 	struct AREA_NODE *p,*q;
 	p=head_node;
-//	TRACE("Enter in Delete All PathPoint!!\r\n");
 	while(p->next_node!=NULL)			//先去到最后一个节点
 		{
 			p=p->next_node;
@@ -148,11 +163,15 @@ u8 Del_All_AreaNode(void)
 		}
 	if(p!=head_node)
 		{
+#ifdef DEBUG_AREALIST
 			TRACE("Delete All AreaNode fail!\r\n");
+#endif
 			return 1;
 		}
 	head_node->next_node=NULL; 				//现在p是head_point，将其next设置为空
+#ifdef DEBUG_AREALIST
 	TRACE("Delete All AreaNode success!\r\n");
+#endif
 	return 0;
 }
 
@@ -192,13 +211,14 @@ void Load_CurrNode_Info(void)
 	curr_node->xmax_ok=motion1.xmax_ok;
 	curr_node->xmin_ok=motion1.xmin_ok;
 	curr_node->exit_area_num=motion1.exit_area_num;
-	
+#ifdef DEBUG_AREALIST
 	TRACE("curr_node.exit_gridx1=%d\r\n",curr_node->exit_gridx1);
 	TRACE("curr_node.exit_gridy1=%d\r\n",curr_node->exit_gridy1);
 	TRACE("curr_node.exit_gridx2=%d\r\n",curr_node->exit_gridx2);
 	TRACE("curr_node.exit_gridy2=%d\r\n",curr_node->exit_gridy2);
 	TRACE("curr_node.exit_tgtyaw=%d\r\n",curr_node->exit_tgtyaw);
 	TRACE("curr_node.exit_area_num=%d\r\n",curr_node->exit_area_num);
+#endif
 }
 
 void Get_CurrNode_Info(void)
@@ -215,7 +235,7 @@ void Get_CurrNode_Info(void)
 	motion1.xmax_ok=curr_node->xmax_ok;
 	motion1.xmin_ok=curr_node->xmin_ok;
 	motion1.exit_area_num=curr_node->exit_area_num;
-
+#ifdef DEBUG_AREALIST
 	TRACE("Get CurrNode Info!!!\r\n");
 	TRACE("CurrNode.area_num=%d\r\n",curr_node->area_num);
 	TRACE("motion1.area_num=%d\r\n",motion1.area_num);
@@ -228,14 +248,17 @@ void Get_CurrNode_Info(void)
 	TRACE("motion1 xmax check %d\r\n",motion1.xmax_ok);
 	TRACE("motion1 xmin check %d\r\n",motion1.xmin_ok);
 	TRACE("motion1 exit_area_num=%d\r\n",motion1.exit_area_num);
+#endif
 }
 
 u8 Out_CurrNode_Exit(void)
 {
+#ifdef DEBUG_AREALIST
 	TRACE("curr_node.exit_gridx1=%d\r\n",curr_node->exit_gridx1);
 	TRACE("curr_node.exit_gridy1=%d\r\n",curr_node->exit_gridy1);
 	TRACE("curr_node.exit_gridx2=%d\r\n",curr_node->exit_gridx2);
 	TRACE("curr_node.exit_gridy2=%d\r\n",curr_node->exit_gridy2);
+#endif
 	check_point.new_x1=curr_node->exit_gridx1;
 	check_point.new_y1=curr_node->exit_gridy1;
 	check_point.new_x2=curr_node->exit_gridx2;

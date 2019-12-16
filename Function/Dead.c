@@ -25,7 +25,7 @@ void Init_Dead(void)
 	disable_hwincept();//禁止红外接收电源
 	Disable_Speed();  //禁止红外灯光发送
 //	mode.mode = ERR;
-	mode.mode = CEASE;
+	mode.mode = MODE_CEASE;
 	mode.Info_Abort =1;			//禁止SLAM通信
 	mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 	mode.sub_mode=DEAD;		//子模式为ERR
@@ -37,7 +37,6 @@ void Init_Dead(void)
 	CHECK_STATUS_FLAG=false;		//禁止异常检测
 	Init_Check_Status();
 	
-	Slam_Data.tick_check_step=0;	//重启SLAM_TICK检测
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 #ifdef UV
 	Reset_UV();
@@ -67,7 +66,7 @@ void Init_ShutDown(void)
 		disable_hwincept();//禁止红外接收电源
 		Disable_Speed();  //禁止红外灯光发送
 	//	mode.mode = ERR;
-		mode.mode = CEASE;
+		mode.mode = MODE_CEASE;
 		mode.Info_Abort =1; 		//禁止SLAM通信
 		mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 		mode.sub_mode=SHUTDOWN; 	//子模式为ERR
@@ -78,7 +77,6 @@ void Init_ShutDown(void)
 	
 		CHECK_STATUS_FLAG=false;		//禁止异常检测
 		Init_Check_Status();
-		Slam_Data.tick_check_step=0;	//重启SLAM_TICK检测
 
 #ifdef UV
 		Reset_UV();
@@ -139,7 +137,7 @@ void Do_Dead(void)
 				break;
 			case 1:
 #ifdef STOP_WEEKUP										
-				Enable_ExternInt_Weekup(1); //可以使用KEY1,直充,座充唤醒				
+				Enable_ExternInt_Weekup(0); //可以使用KEY1,直充,座充唤醒				
 #else
 				Diable_AllExtInt_Weekup();	//屏蔽所有外部中断，无法唤醒
 #endif

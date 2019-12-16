@@ -243,17 +243,10 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		Free_Skid_Indep.check_start_time++;
 #endif
 
-	POWER_ready = true;           	//电池充电时间
 	
 	if((giv_sys_time % 2) == 0)
 		{
 			VOL_TEMP_ready = true;      //马达电流采样   
-		}
-
-	//qz add 20180615
-	if((giv_sys_time%5)==0)
-		{
-			VOL_TEMP_READY_MY=true;
 		}
 
 	if((giv_sys_time %10) == 0)			//	1mS  1000HZ   实际500赫兹
@@ -262,9 +255,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		}
 	if((giv_sys_time%20)==0)			//2ms
 		{
-			dock_rap_time=true;
 			check_earth_time=true;
-			//YBS_rap_time=true;
 		}
 
 	if((giv_sys_time%30)==0)
@@ -273,15 +264,11 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			action_wall_time=true;
 #endif
 			earth_time=true;
-//			YBS_rap_time=true;
 		}
 
 			
 	if((giv_sys_time%50)==0)			//5ms
 		{
-//			YBS_rap_time=true;
-//			rap_time=true;
-//			YBS_Check_Flag  		= true;	
 //#ifndef  FAST_WALL_DET
 			wall_time = true; 	
 //#endif
@@ -295,22 +282,11 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			YBS_Check_Flag=true;
 			key_time = true;          //按键时间	  
 			rap_time = true;          //左右轮速度调节时间
-//			gbv_yaokong_time = true;	
-			
-//			YBS_Conor_Check_Flag  = true;
 			CHARGE_READY=true;		//qz add 20180522
 			Rotate_Skid.time_flag=true;
-			rotate_angle.time_flag=true;
-//			time_speed=true;
 			gyro_check_time=true;
-			coordinate_show=true;
-			//if((mode.mode==SWEEP)|(mode.mode==DOCKING)|(mode.mode==SHIFT)|(mode.mode==YBS))
-				{
-//					Cal_xy();
-					Cal_CoordinateXY();
-					Record_Coordinate_Intime();
-				}
-			//Cal_Xmaxmin();
+			Cal_CoordinateXY();
+			Record_Coordinate_Intime();
 		}			
 		
 		
@@ -319,14 +295,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 	if((giv_sys_time % 200) == 0)				//20mS
 		{
 //			rap_time=true;
-			sensor_report_time = true;			//里程计 数据上报时间
-			Mileage_report_time=true;
-//			YBS_Check_Flag  		= true;			
-//			Ultra.Repeat_time 	= true;
-			time_stemp=giv_sys_time;	//QZ ADD
-//			YBS_Wall_Count_Time=true;			//qz add 20180902
 //			Coordinate_report_time=true;
-			time_speed=true;
 			//Analysis_Coordinate();
 		}
 
@@ -346,7 +315,6 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		
 	if((giv_sys_time % 1000) == 0)				//100ms			
 		{
-//			log_show = true;				//显示更新时间		
 			CHECK_STATUS_TIME=true; 		//qz add 20180417
 #ifndef  FAST_WALL_DET
 			action_wall_time=true;
@@ -357,7 +325,6 @@ void TIM2_IRQHandler(void)	//	10K 中断
 
 	if((giv_sys_time%3000)==0)
 		{
-//			spd_acc_flag=true;
 			led.quic_flag=true;
 #ifdef TUYA_WIFI
 			wifi_update_time=true;
@@ -367,7 +334,6 @@ void TIM2_IRQHandler(void)	//	10K 中断
 	if((giv_sys_time % 5000) == 0)				//500 mS
 		{
 			log_show = true;				//显示更新时间		
-			Half_Sec  = true;
 			led.halfsec_flag=true;
 			Read_PwrSwitch_Status();
 			test_500ms_flag=true;
@@ -384,10 +350,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 	
 	if((giv_sys_time%20000)==0)			//2s
 		{
-			get_dispow_flag=true;
-			Sec_Two  = true; 
 			watchdog_time = true;
-//			abort_shiftybs_flag=true;
 		}
 
 	if((giv_sys_time%30000)==0)
@@ -400,20 +363,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			Five_Sec  = true;	
 		}
 
-	if((giv_sys_time%100000==0))		//10秒标志
-		{
-			Ten_Sec=true;
-		}
-
-	if((giv_sys_time%300000==0))		//30秒标志
-		{
-			Half_Min=true;
-		}
-	
 	if((giv_sys_time % 600000) == 0)	//分钟标志
 		{
 			gbv_minute = true;
-			app_bat_min=true;	//qz add
 		}
 
 	if((motion1.worktime%600000)==0)
@@ -423,58 +375,8 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			else
 				Gyro_Data.cal_flag=false;
 		}
-	if((giv_sys_time%1200000)==0)
-		{
-		}
-
 #ifdef EARTH_IN_TIM2	
 	Read_Earth_My();							//	读取地检
-#if 0
-	switch(earth_step)
-		{
-			case 0:
-				if(!mode.status)
-					return;
-				temp_data1=Read_Cliff();
-				if(temp_data1)
-					{
-						mode.bump=temp_data1;
-						mode.step_bp=0;
-						disable_pwm(L_FRONT);
-						disable_pwm(R_FRONT);
-						enable_pwm(L_BACK,1200);
-						enable_pwm(R_BACK,1200);
-						l_rap.ori=BACK;
-						r_rap.ori=BACK;
-						earth_step++;
-					}
-				break;
-			case 1:
-				if(!Read_Cliff())
-					{
-						disable_pwm(L_FRONT);
-						disable_pwm(R_FRONT);
-						disable_pwm(L_BACK);
-						disable_pwm(R_BACK);
-						earth_step=0;
-					}
-				mode.step_bp=0;
-				break;
-		}
-#else
-	if(mode.status)
-		{
-			if(((e_l.sign==FARN)|(e_m.sign==FARN)|(e_r.sign==FARN))&(mode.mode!=DOCKING))
-				{
-					//disable_pwm(L_FRONT);
-					//disable_pwm(R_FRONT);
-					//enable_pwm(L_BACK,1300);
-					//enable_pwm(R_BACK,1300);
-					//l_rap.ori=BACK;
-					//r_rap.ori=BACK;
-				}
-		}
-#endif
 #endif
 }
 //======================================================================================

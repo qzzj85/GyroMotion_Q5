@@ -881,7 +881,7 @@ void YBS_Left_Bump(u8 out_enable)
 								mode.step_bp=0;
 								return;
 							}
-						if(mode.mode==DOCKING)
+						if(mode.mode==MODE_DOCK)
 							{
 								if(l_ring.all_length-start_length>(end_length/2))
 								{
@@ -907,7 +907,7 @@ void YBS_Left_Bump(u8 out_enable)
 		case BUMP_LB_OUT:
 
 #if 0
-			if((mode.mode==SHIFT)|(mode.mode==EXIT))
+			if((mode.mode==MODE_SHIFT)|(mode.mode==MODE_EXIT))
 				{
 					if((mode.bump==BUMP_YMAX_OUT)|(mode.bump==BUMP_YMIN_OUT))
 						{

@@ -17,7 +17,7 @@ void Init_Test(u8 test_mode)
 	Enable_Speed(); 				//允许速度发送
 	Init_Action();
 	
-	mode.mode = CEASE;			
+	mode.mode = MODE_CEASE;			
 	mode.sub_mode=test_mode;
 	mode.step=0;
 	mode.time=giv_sys_time;
@@ -62,7 +62,7 @@ void Do_BurningTest(void)
 #ifdef TUYA_WIFI
 				Reset_Map();
 #endif
-				if(mode.last_sub_mode==SEAT_CHARGING)
+				if(mode.last_sub_mode==SUBMODE_CHARGE_SEAT)
 					Init_Quit_Charging(SWEEP_METHOD_GUIHUA);
 				else
 					Init_First_Sweep(0);

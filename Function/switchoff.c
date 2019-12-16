@@ -23,8 +23,8 @@ void Init_Switchoff(void)
 	disable_hwincept();//禁止红外接收电源
 	Disable_Speed();  //禁止红外灯光发送
 	power.pwm=0;
-	mode.mode = CHARGEING;
-	mode.sub_mode=SWITCHOFF;
+	mode.mode = MODE_CHARGE;
+	mode.sub_mode=SUBMODE_CHARGE_SWITCHOFF;
 	mode.Info_Abort =0;			//禁止SLAM通信
 	mode.step=0xff;			//防止从充电座后退
 	mode.status=0;			//qz add 20180422

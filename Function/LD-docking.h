@@ -38,7 +38,6 @@ extern 	u32 	findseat_skid_check_length;
 extern 	u32 	findseat_skid_check_time;
 extern  u32     find_home;
 extern 	u8 		REYBS_TIME;
-extern  bool 	dock_rap_time;
 
 void Docking_Bump_My(void);
 void Docking_Bump_My_Action(void);
@@ -52,7 +51,6 @@ void Start_Recharge(void);
 u32 ReadHwSign_My(void);
 void Do_Docking_My(void);
 void Start_Top_Straight(void);
-s16 Cal_Angle(s16 angle_1,s16 angle_2);
 void Start_Left_Straight(void);
 void Start_Right_Straight(void);
 void Start_Right_Straight_Spiral(void);
@@ -65,7 +63,6 @@ void Start_Right_Deflect_Turn(void);
 void Start_Left_Deflect_Turn(void);
 void Start_Start(void);
 void Start_Start_II(void);
-void YBS_Find_Seat(void);
 
 u8 Find_Seat_Skid_Check(void);
 void ReYBS2Dock(void);
@@ -73,7 +70,6 @@ u8 Find_Seat_My(void);
 void Find_Seat_New(void);
 u8 Find_Seat_New_II(void);
 void Start_Start_III(void);
-void Start_Start_IV(void);
 void Start_Start_V(void);
 
 void Init_Dock_RightYBS(u8 temp_data);

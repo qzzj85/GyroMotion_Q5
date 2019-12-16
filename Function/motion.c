@@ -29,13 +29,15 @@ short Get_Back_Angle(void)
 	short xpos,ypos,angle,back_angle;
 	delay_ms(1000);
 	xpos=Gyro_Data.x_pos;ypos=Gyro_Data.y_pos;
-	TRACE("motion1.xpos_ybs_start=%d ypos_ybs_start=%d in %s\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start,__func__);
-	TRACE("now xpos=%d ypos=%d in %s\r\n",xpos,ypos,__func__);
 	angle=(short)(atan2(abs(ypos-motion1.ypos_ybs_start),abs(xpos-motion1.xpos_ybs_start))*PI180);
 	angle=abs(angle)*100;
+#ifdef DEBUG_MOTION
+	TRACE("motion1.xpos_ybs_start=%d ypos_ybs_start=%d in %s\r\n",motion1.xpos_ybs_start,motion1.ypos_ybs_start,__func__);
+	TRACE("now xpos=%d ypos=%d in %s\r\n",xpos,ypos,__func__);
 	TRACE("angle=%d in %s\r\n",angle,__func__);
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
-	if(mode.last_sub_mode==YBS_SUB_RIGHT)
+#endif
+	if(mode.last_sub_mode==SUBMODE_YBS_RIGHT)
 		{
 			angle=motion1.tgt_yaw-angle;
 			if(angle<=(-180*100))
@@ -47,7 +49,9 @@ short Get_Back_Angle(void)
 				angle=angle-360*100;
 		}
 	back_angle=Get_Reverse_Angle(angle);
+#ifdef DEBUG_MOTION
 	TRACE("back_angle=%d\r\n",back_angle);
+#endif
 	return back_angle;
 }
 
@@ -80,7 +84,6 @@ void Get_Const_Angle(void)
 void Save_Abort_Data(void)
 {
 #if 1
-	TRACE("Saving Abort Data...\r\n");
 	motion1.tgtyaw_abort=motion1.tgt_yaw;
 	motion1.leftright_abort=motion1.leftright;
 	motion1.anti_tgtyaw_abort=motion1.anti_tgt_yaw;
@@ -88,11 +91,14 @@ void Save_Abort_Data(void)
 	motion1.ydir_abort=motion1.y_dir;
 	grid.x_abort=grid.x;
 	grid.y_abort=grid.y;
+#ifdef DEBUG_MOTION
+	TRACE("Saving Abort Data...\r\n");
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgtyaw_abort);
 	TRACE("motion1.leftright=%d\r\n",motion1.leftright);
 	TRACE("Saving Abort Data complete!\r\n");
 	TRACE("Ready to back sweep!\r\n");
+#endif
 #else
 	Add_BackInfo();
 #endif
@@ -100,18 +106,20 @@ void Save_Abort_Data(void)
 
 void Restore_Abort_Data(void)
 {
-	TRACE("Restore Abort Data...\r\n");
 #if 1
 	motion1.tgt_yaw=motion1.tgtyaw_abort;
 	motion1.anti_tgt_yaw=motion1.anti_tgtyaw_abort;
 	motion1.leftright=motion1.leftright_abort;
 	motion1.repeat_sweep=motion1.repeat_sweep_abort;
 	motion1.y_dir=motion1.ydir_abort;
+#ifdef DEBUG_MOTION
+	TRACE("Restore Abort Data...\r\n");
 	TRACE("motion1.tgt_yaw=%d\r\n",motion1.tgt_yaw);
 	TRACE("motion1.anti_tgt_yaw=%d\r\n",motion1.anti_tgtyaw_abort);
 	TRACE("motion1.leftright=%d\r\n",motion1.leftright);
 	TRACE("Ready to Normal Sweep from Back Sweep!\r\n");
 	TRACE("Loading Abort Data complete!\r\n");
+#endif
 #else
 	Get_Curr_BackInfo();
 #endif
@@ -130,8 +138,9 @@ u8 Analysis_Back_Leak(void)
 	s8 xmax_check1,xmin_check1,xmax_check2,xmin_check2;
 	if(grid.y_abort==grid.y_back_last)			//如果最后一次回扫的Y坐标与中断Y坐标一致，则直接退出
 		return 0;
-
+#ifdef DEBUG_MOTION
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	check_gridy1=grid.y_abort;
 	now_gridx=grid.x;
 	while(check_gridy1!=grid.y_back_last)		//从当前中断Y坐标开始，直到最后一次回扫Y坐标为止，每个Y坐标进行检查
@@ -227,7 +236,9 @@ u8 Analysis_Back_Leak(void)
 			else
 				check_gridy1++;
 		}
+#ifdef DEBUG_MOTION
 	TRACE("%s complete! No leak area!!\r\n",__func__);
+#endif
 	return 0;
 }
 
@@ -253,7 +264,9 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 		return 0;
 	//if(motion1.first_leak_y)
 		//return 0;
+#ifdef DEBUG_MOTION
 	TRACE("Analysis NeedBack...\r\n");
+#endif
 	//if(motion1.tgt_yaw==F_Angle)
 	if(motion1.tgt_yaw==F_Angle_Const)
 		{
@@ -269,8 +282,9 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 						{
 							if((Read_Coordinate_CleanNoWall(check_gridx,ygrid_abort))&(Read_Coordinate_Clean(check_gridx-1,ygrid_abort)))
 								{
-
+#ifdef DEBUG_MOTION
 									TRACE("Need Back!!!\r\n");
+#endif
 									return 1;
 								}
 						}
@@ -290,14 +304,17 @@ u8 Analysis_NeedBack(s8 ygrid_abort)
 						{
 							if((Read_Coordinate_CleanNoWall(check_gridx,ygrid_abort))&(Read_Coordinate_Clean(check_gridx+1,ygrid_abort)))
 								{
-
+#ifdef DEBUG_MOTION
 									TRACE("Need Back!!!\r\n");
+#endif
 									return 1;
 								}
 						}
 				}
 		}
+#ifdef DEBUG_MOTION
 	TRACE("No Need Back!\r\n");
+#endif
 	return 0;
 }
 
@@ -343,8 +360,9 @@ u8 Analysis_StopBack(short tgt_yaw)
 	s8 temp_x,temp_x2,ydir;
 	s8 now_gridx,now_gridy,next_gridy,next_gridx;
 	now_gridx=grid.x;now_gridy=grid.y;
-
+#ifdef DEBUG_MOTION
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	ydir=Read_Motion_YDir();
 	if(ydir>0)
 		{
@@ -380,17 +398,23 @@ u8 Analysis_StopBack(short tgt_yaw)
 			//if(Read_Coordinate_Clean(temp_x,grid.y))
 			if((Read_Coordinate_Clean(temp_x,grid.y))&(Read_Coordinate_Clean(temp_x2,grid.y)))
 				{
+#ifdef DEBUG_MOTION
 					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x);
 					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x2);
+#endif
 					if(Read_Coordinate_Clean(next_gridx,next_gridy))
 						{
+#ifdef DEBUG_MOTION
 							TRACE("coor[%d][%d] has clean !!\r\n",next_gridy,next_gridx);
 							TRACE("return 1\r\n");
+#endif
 							return 1;
 						}
 					else
 						{
+#ifdef DEBUG_MOTION
 							TRACE("return 2!!\r\n");
+#endif
 							return 2;
 						}
 				}
@@ -414,17 +438,23 @@ u8 Analysis_StopBack(short tgt_yaw)
 			//if(Read_Coordinate_Clean(temp_x,grid.y))
 			if((Read_Coordinate_Clean(temp_x,grid.y))&(Read_Coordinate_Clean(temp_x2,grid.y)))
 				{
+#ifdef DEBUG_MOTION
 					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x);
-					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x2);					
+					TRACE("coor[%d][%d] has clean !!\r\n",grid.y,temp_x2);
+#endif
 					if(Read_Coordinate_Clean(next_gridx,next_gridy))
 						{
+#ifdef DEBUG_MOTION
 							TRACE("coor[%d][%d] has clean !!\r\n",next_gridy,next_gridx);
 							TRACE("return 1\r\n");
+#endif
 							return 1;
 						}
 					else
 						{
+#ifdef DEBUG_MOTION
 							TRACE("return 2!!\r\n");
+#endif
 							return 2;
 						}
 				}
@@ -540,10 +570,10 @@ void Cal_PosArea_Max(void)
 {
 //	short xmax,xmin,ymax,ymin;
 	short temp_pos;
-
+#ifdef DEBUG_MOTION
 	TRACE("Enter in %s...\r\n",__func__);
 	TRACE("motion1.xacc=%d yacc=%d\r\n",motion1.x_acc,motion1.y_acc);
-
+#endif
 	motion1.xpos_start_area=Return_GridXPos_Point(grid.x_area_start);
 	motion1.ypos_start_area=Return_GridYPos_Point(grid.y_area_start);
 
@@ -626,7 +656,7 @@ void Cal_PosArea_Max(void)
 	if(temp_pos>motion1.ypos_start+RANGE_MAX)
 		temp_pos=motion1.ypos_start+RANGE_MAX;
 	motion1.ypos_max_area=temp_pos;
-	
+#ifdef DEBUG_MOTION
 	TRACE("Grid.x_area_start=%d\r\n",grid.x_area_start);
 	TRACE("Gird.y_area_start=%d\r\n",grid.y_area_start);
 	TRACE("Grid.x_area_max=%d\r\n",grid.x_area_max);
@@ -637,6 +667,7 @@ void Cal_PosArea_Max(void)
 	TRACE("motion1.xpos_min_area=%d\r\n",motion1.xpos_min_area);
 	TRACE("motion1.ypos_max_area=%d\r\n",motion1.ypos_max_area);
 	TRACE("motion1.ypos_min_area=%d\r\n",motion1.ypos_min_area);
+#endif
 }
 
 u8 Analysis_LastYClean(void)
@@ -709,7 +740,9 @@ u8 Analysis_LastYClean(void)
 
 void Set_AreaWorkTime(u32 min_num)
 {
+#ifdef DEBUG_MOTION
 	TRACE("set max time=%d\r\n",min_num);
+#endif
 	u32 sec_num=min_num*60*10000;
 	motion1.worktime_area=giv_sys_time;
 	motion1.worktime_area_max=sec_num;
@@ -718,15 +751,17 @@ void Set_AreaWorkTime(u32 min_num)
 void Work_TimeOut_Handle(void)
 {
 	u8 temp_nextaction=Read_CheckPoint_NextAction();
-	if((mode.mode==SWEEP)|(mode.mode==SHIFT))
+	if((mode.mode==MODE_SWEEP)|(mode.mode==MODE_SHIFT))
 		{
 			if(giv_sys_time-motion1.worktime_area>motion1.worktime_area_max)
 				{
-					if(mode.mode==SWEEP)
+					if(mode.mode==MODE_SWEEP)
 						{
 							stop_rap();
+#ifdef DEBUG_MOTION
 							TRACE("working time out!!!\r\n");
 							TRACE("now is sweep,goto area_check!!!\r\n");
+#endif
 							motion1.area_ok=true;
 #ifdef USE_AREA_TREE
 							Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
@@ -749,8 +784,10 @@ void Work_TimeOut_Handle(void)
 									case CHECK_BACKSWEEP:
 									case CHECK_LEAKSWEEP:
 										stop_rap();
+#ifdef DEBUG_MOTION
 										TRACE("working time out!!!\r\n");
 										TRACE("now is shift,set leak_area ok,and goto new_area!!!\r\n");
+#endif
 										motion1.area_ok=true;
 #ifdef USE_AREA_TREE
 										Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
@@ -763,11 +800,15 @@ void Work_TimeOut_Handle(void)
 										break;
 									case CHECK_NEWAREA:
 										stop_rap();
+#ifdef DEBUG_MOTION
 										TRACE("working time out!!!\r\n");
+#endif
 										switch(check_point.new_area_dir)
 											{
 												case DIR_YMAX:
+#ifdef DEBUG_MOTION
 													TRACE("Dir Ymax timeout!!!,Set Ymax Ok!\r\n");
+#endif
 													motion1.ymax_ok=true;
 #ifdef USE_AREA_TREE
 													Set_Curr_AreaTree_NewInfo(motion1.ymax_ok,DIR_YMAX);
@@ -776,7 +817,9 @@ void Work_TimeOut_Handle(void)
 #endif
 												break;
 												case DIR_XMAX:
+#ifdef DEBUG_MOTION
 													TRACE("DIR_XMAX timeout!!!,Set Xmax Ok!\r\n");
+#endif
 													motion1.xmax_ok=true;
 #ifdef USE_AREA_TREE
 													Set_Curr_AreaTree_NewInfo(motion1.xmax_ok,DIR_XMAX);
@@ -785,7 +828,9 @@ void Work_TimeOut_Handle(void)
 #endif
 												break;
 												case DIR_YMIN:
+#ifdef DEBUG_MOTION
 													TRACE("DIR_YMIN timeout!!!,Set Ymin Ok!\r\n");
+#endif
 													motion1.ymin_ok=true;
 #ifdef USE_AREA_TREE
 													Set_Curr_AreaTree_NewInfo(motion1.ymin_ok,DIR_YMIN);
@@ -794,7 +839,9 @@ void Work_TimeOut_Handle(void)
 #endif
 												break;
 												case DIR_XMIN:
+#ifdef DEBUG_MOTION
 													TRACE("DIR_XMIN timeout!!!,Set Xmin Ok!\r\n");
+#endif
 													motion1.xmin_ok=true;
 #ifdef USE_AREA_TREE
 													Set_Curr_AreaTree_NewInfo(motion1.xmin_ok,DIR_XMIN);
@@ -803,7 +850,9 @@ void Work_TimeOut_Handle(void)
 #endif
 												break;
 												default:
+#ifdef DEBUG_MOTION
 													TRACE("Set AllNewArea OK!!\r\n");
+#endif
 #ifdef USE_AREA_TREE
 													Set_Curr_AreaTree_AllNewOK();
 #else
@@ -813,7 +862,9 @@ void Work_TimeOut_Handle(void)
 													
 											}
 										//Set_Curr_AllNewAreaOK();
+#ifdef DEBUG_MOTION
 										TRACE("Set Working time max 10min!\r\n");
+#endif
 										Set_AreaWorkTime(10);
 										Area_Check(0);
 										Init_Shift_Point1(0);
@@ -821,8 +872,10 @@ void Work_TimeOut_Handle(void)
 									case CHECK_GOEXIT:
 									case CHECK_DOCK:
 										stop_rap();
+#ifdef DEBUG_MOTION
 										TRACE("working time out!!!\r\n");
 										TRACE("now is exit,goto dock!!!\r\n");
+#endif
 										//Init_Docking();
 										Init_Sweep_Done();
 										break;
@@ -853,24 +906,6 @@ u8 Analysis_InSeatArea(s8 now_gridx,s8 now_gridy)
 	return 0;
 }
 
-u8 Is_Close_Angle(short tgt_angle,short now_angle,u32 bios)
-{
-	int temp_angle=0;
-	temp_angle=now_angle-tgt_angle;
-	if(abs(temp_angle>DEGREE_180))
-		{
-			if(temp_angle>0)
-				temp_angle=DEGREE_360-temp_angle;
-			else
-				temp_angle=DEGREE_360+temp_angle;
-		}
-	if(abs(temp_angle)<bios)
-		{
-			return 1;
-		}
-	return 0;
-}
-
 u8 Analysis_Check_Dock(void)
 {
 #if 1
@@ -885,7 +920,9 @@ u8 Analysis_Check_Dock(void)
 			if((find_home&ALL_TOP_MASK)&(mode.bump!=BUMP_SEAT))
 				{
 					stop_rap();
+#ifdef DEBUG_MOTION
 					TRACE("Call this in %s %d\r\n",__func__,__LINE__);
+#endif
 					//Init_Docking();
 					Init_Sweep_Done();
 					return 1;
@@ -895,7 +932,9 @@ u8 Analysis_Check_Dock(void)
 	if(Analysis_InSeatArea(grid.x, grid.y))
 		{
 			stop_rap();
+#ifdef DEBUG_MOTION
 			TRACE("Motion in seat area!!!\r\n");
+#endif
 			//Init_Docking();
 			Init_Sweep_Done();
 			return 1;
@@ -924,7 +963,9 @@ u8 Analysis_Stop_StartArea(void)
 u8 Force_Dock(void)
 {
 	u8 temp_data1=0,temp_data2=0;
+#ifdef DEBUG_MOTION
 	TRACE("Enter in %s...\r\n",__func__);
+#endif
 	temp_data1=Find_Directly_Way(grid.x_start,grid.y_start);
 	temp_data2=Find_PathPoint_WayAll(grid.x_start,grid.y_start);
 	
@@ -942,11 +983,15 @@ u8 Force_Dock(void)
 		}
 	else
 		{
+#ifdef DEBUG_MOTION
 			TRACE("Can't Directly to 00!!\r\n");
+#endif
 			Area_Check(0);						
 			//Set_CheckPoint_NextAction(CHECK_DOCK);
 			Init_Shift_Point1(0);
 		}
+#ifdef DEBUG_MOTION
 	TRACE("Out %s!!\r\n",__func__);
+#endif
 	return 0;
 }

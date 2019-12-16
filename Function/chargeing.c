@@ -4,9 +4,7 @@
 ////////////////////////全局变量//////////////////////////////////
 ///////////////////////私有变量////////////////////////////////////
 ///////////////////////全局函数////////////////////////////////////	  
-void Do_Chargeing(void);
 
-bool Quit_Charge_Button=false;
 ///////////////////////私有函数////////////////////////////////////	
 ///////////////////////函数实体////////////////////////////////////
 /******************************************************************
@@ -28,8 +26,8 @@ void Init_Switchoff(void)
 	disable_hwincept();				//禁止红外接收电源
 	Disable_Speed();  				//禁止红外灯光发送
 
-	mode.mode = CHARGEING;
-	mode.sub_mode=SWITCHOFF;
+	mode.mode = MODE_CHARGE;
+	mode.sub_mode=SUBMODE_CHARGE_SWITCHOFF;
 	mode.Info_Abort =1; 			//禁止SLAM速度通信
 	mode.All_Info_Abort=1;			//禁止SLAM通信,qz add 20180919
 	mode.step=0; 					//防止从充电座后退
@@ -60,7 +58,7 @@ void Init_Chargeing(u8 temp_sub_mode)
 	mode.last_sub_mode=mode.sub_mode;
     /******初始化显示***********/
 	/******初始化设置的值********************/
-	mode.mode = CHARGEING;
+	mode.mode = MODE_CHARGE;
 	mode.sub_mode=temp_sub_mode;
 	mode.step=0;		//qz add 20180522
 	mode.Info_Abort=0;	//qz add 20180615
@@ -83,10 +81,6 @@ void Init_Chargeing(u8 temp_sub_mode)
 	power.step = 0;
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	
-	Slam_Data.dipan_req_pre=DIPAN_REQ_SWEEP;			//qz modify 1-->0 20180522
-	Slam_Data.no_msg=false;
-	SLAM_DOCK=false;					//qz add 20180522
-	DOCK_SWEEP=false;				//qz add 20180803	
 	
 	CHECK_STATUS_FLAG=false;			//禁止异常检测		//qz add 20180913
 	Init_Check_Status();				//qz add 20180522
@@ -113,21 +107,21 @@ void Do_Chargeing(void)
 		{
 			case 0:
 				ChargeControl_Volt_My();
-				if((mode.sub_mode==SWITCHOFF)&(power.switch_flag))
+				if((mode.sub_mode==SUBMODE_CHARGE_SWITCHOFF)&(power.switch_flag))
 					{
 						if(power.charge_dc)
 							{
-								Init_Chargeing(DC_CHARGING);
+								Init_Chargeing(SUBMODE_CHARGE_DC);
 								return;
 							}
 						else if(power.charge_seat)
 							{
-								Init_Chargeing(SEAT_CHARGING);
+								Init_Chargeing(SUBMODE_CHARGE_SEAT);
 								return;
 							}
 					}
 
-				if(((mode.sub_mode==DC_CHARGING)|(mode.sub_mode==SEAT_CHARGING))&(!power.switch_flag))
+				if(((mode.sub_mode==SUBMODE_CHARGE_DC)|(mode.sub_mode==SUBMODE_CHARGE_SEAT))&(!power.switch_flag))
 					{
 						Init_Switchoff();
 						return;
@@ -149,9 +143,9 @@ void Do_Chargeing(void)
 				if(giv_sys_time-mode.time>5000)
 					mode.step++;
 				if(power.charge_seat)
-					Init_Chargeing(SEAT_CHARGING);
+					Init_Chargeing(SUBMODE_CHARGE_SEAT);
 				if(power.charge_dc)
-					Init_Chargeing(DC_CHARGING);
+					Init_Chargeing(SUBMODE_CHARGE_DC);
 				break;
 			case 2:
 #if 0
@@ -177,18 +171,6 @@ void Do_Chargeing(void)
 	if(dc_nobat_run)
 		Init_Cease();
 
-#if 0
-	if((mode.sub_mode==SWITCHOFF))
-		{
-			read_key(&key1);
-			if(Read_Button_Key(&key1)==3)
-				{
-					Slam_Data.dipan_req=DIPAN_REQ_BURNNING;
-					if(power.charge_dc)		//qz add 20180814
-						dc_nobat_run=true;
-				}
-		}
-#endif
 #endif
 }
 //==========================================================================================================

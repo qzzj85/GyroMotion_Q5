@@ -27,14 +27,10 @@ BATTERY	Battery;
 CHARGE_DATA charge_data;	//qz add 20180522
 bool CHARGE_READY;			//qz add 20180522
 
-bool POWER_ready;
 bool VOL_TEMP_ready;
-bool VOL_TEMP_READY_MY;
-bool get_dispow_flag;
 u16  jt_chargecurrent;   //静态时主板所耗电流
 u16  battery_chargecurrent;//电池5秒内的平均电流
 u16  battery_voltage;    //电池1秒的电压
-unsigned char battery_low_beep_flag = 1;
 u16  battery_temp;       //电池1秒的温度
 u16  l_current;          //左轮电流
 u16  r_current;          //右轮电流
@@ -53,24 +49,10 @@ u16  sb_current_1s;
 bool dc_nobat_run=false;	//不用电池,DC直插跑机标志位
 u16  battery_voltage_10s=0;	//电池10s的电压值
 u32  battery_voltage_10s_temp=0;
-
-u16  l_current_50ms=0;
-u16	 r_current_50ms=0;
-u32  sample_number_50ms=0;
-u32  l_temp_curr_50ms=0;
-u32  r_temp_curr_50ms=0;
-bool ms_curr_flag=false;	//毫秒级电流准备好标志
-u32 l_curr_buf[10]={0,0,0,0,0,0,0,0,0,0};
-u32 r_curr_buf[10]={0,0,0,0,0,0,0,0,0,0};
-
-
 bool  flag_full = false;			//电池充满电标志
-u8  bat_recal = false;				//底盘主动请求回充标志
 ///////////////////////私有变量////////////////////////////////////
 uint16 piv_current;
 uint16 piv_voltage;
-u32    real_chg_current;
-u32    real_bat_voltage;
 
 u16 full_power=VOL_16_8V;
 
@@ -681,13 +663,10 @@ u32 t;
    t =	account_current(ADC_LRING_CURR);		//qz modify 20181120,冠唯采样电阻为0.47欧,贝莱恩为2欧, 2/0.47=4.25
    l_linshi_current += t;
 	l_linshi_current_1s += t ;
-	l_temp_curr_50ms+=t;
 	
    t = 	account_current(ADC_RRING_CURR);
    r_linshi_current += t;
    r_linshi_current_1s += t;
-   r_temp_curr_50ms+=t;
-   sample_number_50ms++;
    
    t = 	account_current(ADC_MB_CURR) ;
    m_linshi_current += t;
@@ -762,18 +741,7 @@ u32 t;
    		battery_voltage_10s=(u16)(battery_linshi_chargecurrent_10s/50000);
 		sampling_number_10s=0;
 		battery_linshi_chargecurrent_10s=0;
-   	}
-   if(sample_number_50ms== 100)		//50ms
-   	{
-   		l_current_50ms=(u16)(l_temp_curr_50ms/100);
-		r_current_50ms=(u16)(r_temp_curr_50ms/100);
-		l_temp_curr_50ms=0;
-		r_temp_curr_50ms=0;
-		sample_number_50ms=0;
-		ms_curr_flag=true;
-
-   	}
-   
+   	}   
 }
 
 /*************************************************************************
@@ -828,7 +796,7 @@ s8 Get_APPBat(void)
 	//battery_vol=battery_voltage_1s;
 	delay_ms(500);
 	battery_vol=account_current(ADC_BAT_VOL);
-	if(mode.mode==CHARGEING)
+	if(mode.mode==MODE_CHARGE)
 		a=(float)(battery_vol-VOL_12_8V)/(float)(full_power-VOL_12_8V);
 	else
 		a=(float)(battery_vol-VOL_12_8V)/(float)(VOL_16_5V-VOL_12_8V);
@@ -917,7 +885,6 @@ void APP_BAT_Handle(void)
 				Battery.BatteryFDCap=Battery.BatteryCapability;
 			WriteFDCap();
 			WriteBatteryCapability();
-//			Slam_Data.dipan_req=DIPAN_REQ_TURNOFFSLAM;
 			Init_Dead();
 		}
 	
@@ -952,7 +919,7 @@ void APP_BAT_Handle(void)
 			//如果电压又高于回充电压了，防止百分比出现反复。
 			//qz add 20180902加入100/79的目的是为了百分比计算达到21%，但是电压还高于回充电压，此时放电量在不断增加，
 			//但是电池电量保持不变，那么充电以后，电池百分比会迅速下降很多。
-			if((temp_per<=20.0)&(!temp_power)&(mode.mode!=CHARGEING)&(!Battery.bat_recal))
+			if((temp_per<=20.0)&(!temp_power)&(mode.mode!=MODE_CHARGE)&(!Battery.bat_recal))
 				{
 					temp_per=21.0;
 
@@ -1005,129 +972,6 @@ void AccountCapability(void)
 	  
 	  在电池电压低于13.2v时，电池认为已经放完电，并且将放电容量存入备份寄存器
 ****************************************************/
-
-
-void  AccountCapabilityReal(void)
-{
-static u8 entercapability = 0;
-	char i;
-u32 t;//耗电时间
-u32 curr;//耗电电流
-	t = 0;
-	curr = 0;
-	if(Rtc_time < Battery.UsePowerTime)
-			{
-					t = 604800;
-			}
-	t = (Rtc_time + t) - Battery.UsePowerTime;
-	Battery.UsePowerTime = Rtc_time;
-	switch(mode.mode)
-		{
-				case CEASE: 
-				case ERR:
-						curr = 71 + MAIN_PCB_CURRENT;
-						break;
-				
-				case SLEEP:
-						curr = 20 + MAIN_PCB_CURRENT;
-						break;
-				
-				case SWEEP:
-				case SPOT:
-						curr = 1200 + MAIN_PCB_CURRENT;
-						break ;
-				
-				case DOCKING:
-						curr = 400 + MAIN_PCB_CURRENT;
-						break;
-				
-				case CHARGEING:
-						switch(power.step)
-								{
-									case 2:
-									case 4:
-											curr = 120 + MAIN_PCB_CURRENT;
-											break;
-									case 3:
-											curr = 800 + MAIN_PCB_CURRENT;
-										break;
-								}
-						break;
-		}
-	//------------------------------------
-		
-	t = t*curr;
-	if(t > 2600)
-		{
-				return;
-		}
-	
-	
-	if(mode.mode == CHARGEING)
-			{
-					if(Battery.BatteryFDCap > t)
-					{
-							Battery.BatteryFDCap -= t;
-					}
-					else
-					{
-							Battery.BatteryFDCap = 0;
-					}
-			}
-	else 
-			{
-				if(Battery.BatteryFDCap < 0x83d600)
-						Battery.BatteryFDCap += t;
-			}
-	if((((Battery.BatteryFDCap *10)/Battery.BatteryCapability) > 2)&&(Battery.BatteryChargeForbid == 1))
-			{
-					Battery.BatteryChargeForbid = 0;
-			}
-			
-	WriteFDCap();
-	if((battery_voltage < LOWPOWER) && (mode.mode == CEASE))
-			{
-					if(entercapability == 0)
-							{
-								entercapability = 1;
-								Battery.BatteryChargeForbid = 0;
-								if((Battery.BatteryFDCap > 0x36ee80)&&(Battery.BatteryFDCap < 0x83d600))
-									{
-												Battery.BatteryCapability = Battery.BatteryFDCap;
-									}
-								else
-									{
-										Battery.BatteryFDCap = 	 Battery.BatteryCapability;
-									}					   
-								WriteBatteryCapability();
-							}
-					if(battery_low_beep_flag)
-							{
-								battery_low_beep_flag = 0;
-								for(i=0;i<LOWPOWER_BEEP_NUM;i++)
-										{
-											//Set_Beep();
-											DelayMs(100);
-											//Reset_Beep();
-											DelayMs(100);
-										}
-							}
-
-////////////						Init_Sleep();
-////////////						Do_Sleep();
-			}
-	else
-	{
-			battery_low_beep_flag = 1;
-	    if(battery_voltage > TWOPOWER)
-				{
-						entercapability = 0;
-				}
-	}
-    return;
-}
-
-
 void  AccountCapabilityReal_My(void)
 {
 //static u8 entercapability = 0;
@@ -1145,33 +989,33 @@ u32 curr;//耗电电流
 	#if 1
 	switch(mode.mode)
 		{
-			case CEASE: 
+			case MODE_CEASE: 
 				switch(mode.sub_mode)
 					{
-						case SLEEP:
+						case SUBMODE_SLEEP:
 							curr=(CURR_CEASE);
 							break;
-						case CEASE:
-						case ERR:
+						case SUBMODE_CEASE:
+						case SUBMODE_ERR:
 							curr=(CURR_CEASE);
 							break;
-						case QUIT_CHARGING:
-						case SELF_TEST:
+						case SUBMODE_QUITCHARGE:
+						case SUBMODE_SELF_TEST:
 							curr=CURR_WORK;
 						break;
 					}
 				break;
-			case YBS:				
-			case DOCKING:
-			case SHIFT:
-			case SWEEP:
-			case EXIT:
-			case PASS2INIT:	
+			case MODE_YBS:				
+			case MODE_DOCK:
+			case MODE_SHIFT:
+			case MODE_SWEEP:
+			case MODE_EXIT:
+			case MODE_PASS2INIT:	
 			case MODE_CTRL:
-			case SPOT:
+			case MODE_SPOT:
 				curr=CURR_WORK;
 					break ;
-			case CHARGEING:
+			case MODE_CHARGE:
 				switch(power.step)
 						{
 							case 0:
@@ -1196,7 +1040,7 @@ u32 curr;//耗电电流
 				break;
 		}
 	#else
-	if(mode.mode!=CHARGEING)
+	if(mode.mode!=MODE_CHARGE)
 		{
 			curr+=MAIN_CUR;
 		}
@@ -1220,7 +1064,7 @@ u32 curr;//耗电电流
 		}
 	
 	
-	if(mode.mode == CHARGEING)							//机器处于充电模式中
+	if(mode.mode == MODE_CHARGE)							//机器处于充电模式中
 			{
 				if(!flag_full)			//电池尚未充满
 					{
@@ -1253,15 +1097,15 @@ u32 curr;//耗电电流
 			}
 
 	//qz add 2080803,17V以上开始的动作，不计入电量计算，即此时电量一直为100%
-	if((mode.mode!=CHARGEING)&(Battery.BatteryFDCap<=t)&(battery_voltage>VOL_17V))
+	if((mode.mode!=MODE_CHARGE)&(Battery.BatteryFDCap<=t)&(battery_voltage>VOL_17V))
 		{
 			Battery.BatteryFDCap=0;
 		}
 			
 	WriteFDCap();
 #if 0		//qz mask 20180625
-	//if((battery_voltage < LOWPOWER) && (mode.mode == CEASE))		//qz mask 20180615
-	if((battery_voltage < CUTPOWER) && (mode.mode != CHARGEING))	//qz add 20180615
+	//if((battery_voltage < LOWPOWER) && (mode.mode == MODE_CEASE))		//qz mask 20180615
+	if((battery_voltage < CUTPOWER) && (mode.mode != MODE_CHARGE))	//qz add 20180615
 			{
 					if(entercapability == 0)
 							{
@@ -1381,176 +1225,6 @@ void Init_Charge_Data(void)
 	charge_data.real_voltage=0;
 }
 
-void Disable_Charge(void)
-{
-	power.pwm=0;
-}
-
-
-//qz add 20180717，滑动平均滤波
-u32 Check_curr_oc(u32 now_curr,u32 *buf)
-{
-	u32 sum;
-	for(int i=0;i<9;i++)
-		buf[i]=buf[i+1];
-	buf[9]=now_curr;
-	for(int i=0;i<10;i++)
-		sum+=buf[i];
-	return (sum/10);
-}
-
-void clr_curr_buf(u32 *buf)
-{
-	for(int i=0;i<9;i++)
-		buf[i]=0;
-}
-
-//qz add 20180717
-//用于检测左轮遇到障碍时，电流是否增大。
-//因为在遇到障碍被挂住时，左右轮电流会增大，但是并不是一直都是一个很大的值
-//所以判断电流值时，做了一个Buffer，用于滑动平均滤波，来过滤掉那个小值
-u8 Check_Left_Ring_Cur(void)
-{
-	static u8 step=0;
-	static u32 step1_time=0,step2_time=0;
-	u32 l_curr;
-	//l_curr=account_current(ADC_LRING_CURR);
-	switch (step)
-		{
-			case 0:
-				l_curr=Check_curr_oc(l_current_50ms,l_curr_buf);
-				if(l_curr>=116)		//116-->200mA  105-->180mA
-					{
-						step++;
-						step1_time=giv_sys_time;
-#ifdef CURR_DEBUG
-						TRACE("l_curr_oc=%d\r\n",l_curr);
-						TRACE("l_curr=%d\r\n",l_current_50ms);
-						TRACE("goto step1!\r\n");
-#endif
-					}
-				break;
-			case 1:
-				l_curr=Check_curr_oc(l_current_50ms,l_curr_buf);
-				if(giv_sys_time-step1_time>5000)
-					{ 
-#ifdef CURR_DEBUG
-						TRACE("l_curr ov!\r\n");
-#endif
-						step=0;
-						return 1;
-					}
-				if(l_curr<58)		//58--->100mA
-					{
-						step=0;
-						step2_time=giv_sys_time;
-#ifdef CURR_DEBUG
-						TRACE("l_curr=%d\r\n",l_current_50ms);
-						TRACE("goto step0!\r\n");
-#endif						
-					}
-				break;
-			case 2:
-				if(giv_sys_time-step2_time>3000)
-					{
-#ifdef CURR_DEBUG
-						TRACE("l_curr=%d\r\n",l_current_50ms);
-						TRACE("times2up goback step0!\r\n");
-#endif
-						step=0;
-						return 0;
-					}
-				if(l_current_50ms>116)
-					{
-						if(giv_sys_time-step1_time>5000)
-							{
-#ifdef CURR_DEBUG
-								TRACE("times1up goback step0!\r\n");
-#endif
-								step=0;
-								return 0;
-							}
-#ifdef CURR_DEBUG
-						TRACE("l_curr=%d\r\n",l_current_50ms);
-						TRACE("goback step1!\r\n");
-#endif
-						step=1;
-					}
-		}
-	return 0;
-}
-
-u8 Check_Right_Ring_Cur(void)
-{
-	static u8 step=0;
-	static u32 step1_time=0,step2_time=0;
-	u32 r_curr;
-	//l_curr=account_current(ADC_LRING_CURR);
-	switch (step)
-		{
-			case 0:
-				r_curr=Check_curr_oc(r_current_50ms,r_curr_buf);
-				if(r_curr>=116)		//116-->200mA  105-->180mA
-					{
-						step++;
-						step1_time=giv_sys_time;
-#ifdef CURR_DEBUG
-						TRACE("r_curr_oc=%d\r\n",r_curr);
-						TRACE("r_curr=%d\r\n",r_current_50ms);
-						TRACE("goto step1!\r\n");
-#endif
-					}
-				break;
-			case 1:
-				r_curr=Check_curr_oc(r_current_50ms,r_curr_buf);
-				if(giv_sys_time-step1_time>5000)
-					{ 
-#ifdef CURR_DEBUG
-						TRACE("r_curr ov!\r\n");
-#endif
-						step=0;
-						return 1;
-					}
-				if(r_curr<58)		//58--->100mA
-					{
-						step=0;
-						step2_time=giv_sys_time;
-#ifdef CURR_DEBUG
-						TRACE("r_curr=%d\r\n",r_current_50ms);
-						TRACE("goto step0!\r\n");
-#endif						
-					}
-				break;
-			case 2:
-				if(giv_sys_time-step2_time>3000)
-					{
-#ifdef CURR_DEBUG
-						TRACE("r_curr=%d\r\n",r_current_50ms);
-						TRACE("times2up goback step0!\r\n");
-#endif
-						step=0;
-						return 0;
-					}
-				if(r_current_50ms>116)
-					{
-						if(giv_sys_time-step1_time>5000)
-							{
-#ifdef CURR_DEBUG
-								TRACE("times1up goback step0!\r\n");
-#endif
-								step=0;
-								return 0;
-							}
-#ifdef CURR_DEBUG
-						TRACE("r_curr=%d\r\n",r_current_50ms);
-						TRACE("goback step1!\r\n");
-#endif
-						step=1;
-					}
-		}
-	return 0;
-}
-
 /*---检测30s内电压是否低于RETURN_PWR-----
 //qz add 20180803
 输出：
@@ -1605,10 +1279,10 @@ void Parse_LowPower2Dock(void)
 			mode.low_power=true;
 			switch(mode.mode)
 				{
-					case SWEEP:
-					case PASS2INIT:
-					case EXIT:
-					case SHIFT:
+					case MODE_SWEEP:
+					case MODE_PASS2INIT:
+					case MODE_EXIT:
+					case MODE_SHIFT:
 						if(motion1.start_seat)
 							{								
 								stop_rap();
@@ -1623,8 +1297,8 @@ void Parse_LowPower2Dock(void)
 								Init_Cease();
 							}
 						break;
-					case YBS:
-					case SPOT:
+					case MODE_YBS:
+					case MODE_SPOT:
 						if(motion1.start_seat)
 							{
 								stop_rap();

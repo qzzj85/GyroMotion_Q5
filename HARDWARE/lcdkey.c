@@ -208,14 +208,14 @@ void  AutoDisplay(void)
 			}
 
 #if 0
-			if(mode.mode==YBS)
+			if(mode.mode==MODE_YBS)
 				{
 					Dis_Test_Data(YBS_DISTANCE);
 				}
 #endif
 		}
 
-		if((mode.mode==CEASE)&(mode.sub_mode==SELF_TEST))
+		if((mode.mode==MODE_CEASE)&(mode.sub_mode==SELF_TEST))
 			{
 				Dis_Data[0]=0;
 				Dis_Data[2]=0;
@@ -852,7 +852,7 @@ void dis_Power(void)
 	if(Dis_Power>5)
 		Dis_Power=5;
 	//qz add
-	//if((mode.mode==CHARGEING))		//qz mask 20180522
+	//if((mode.mode==MODE_CHARGE))		//qz mask 20180522
 	if(Dis_PowerGlint)					//qz add 20180522
 		{
 			switch (Dis_Power)

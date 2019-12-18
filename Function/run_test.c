@@ -25,7 +25,6 @@ void Init_RunTest(void)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 //		WriteWorkState();
 
 	w_l.on=0;

@@ -21,7 +21,7 @@ bool	MIDMOVE_BUMP_FLAG		=false;			//表示找到中信号，开始回充对中过程中产生的碰撞
 u8 		WHICH_TO_MID			=0;				//表示从哪个方向找到的中信号，左或者右
 #define LEFT_TO_MID				0x02
 #define	RIGHT_TO_MID			0X01
-
+bool    rm_t_cnt_timeflag=false,lm_t_cnt_timeflag=false,first_top_back=false;
 
 //qz add 20180418
 u8 		dock_fail_count			=0;		//qz modify V2.3.8
@@ -94,6 +94,7 @@ void Init_Docking(void)
 	Send_Voice(VOICE_DOCK_START);
 	CHECK_STATUS_FLAG=true;			//使能异常检测
 	Init_Check_Status();
+	first_top_back=true;
 }
 
 
@@ -411,7 +412,9 @@ void Do_Docking_My(void)
 
 	if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
 		{
-			if((mode.step<DOCKMODE_STEP_CHARGE))
+			if(((mode.step<DOCKMODE_STEP_CHARGE)&(mode.step>DOCKMODE_STEP_START))\
+				|((mode.step==DOCKMODE_STEP_START)&(mode.step_mk>2)&(mode.step_mk<60)))
+			//if(mode.step<DOCKMODE_STEP_CHARGE)
 				{
 					stop_rap();
 					mode.step=DOCKMODE_STEP_FINDSEAT;
@@ -426,11 +429,8 @@ void Do_Docking_My(void)
 		  switch(mode.step)					//第一步，自转360
 				{		
 			   		case DOCKMODE_STEP_START:
-						//Start_Start();
-						//Start_Start_II();
-						//Start_Start_III();
-						//Start_Start_IV();
-						Start_Start_V();
+						//Start_Start_V();
+						Start_Start_VI();
 					//qz add end
 		   			break;
 
@@ -1710,7 +1710,7 @@ void Docking_Bump_My(void)
 														mode.step_bp=0;
 														mode.bump=0;
 														mode.bump_flag=false;
-														if(mode.step_mk==1)
+														if((mode.step_mk==1)|(mode.step_mk==2))
 															mode.step_mk=0;
 													}
 												break;
@@ -3993,6 +3993,321 @@ void Start_Start_V(void)
 		}
 }
 
+void Start_Start_VI(void)
+{
+	static bool lml_flag=false,lmr_flag=false,t_flag=false,lmm_flag=false;
+	static bool ll_flag=false,rr_flag=false;
+	static bool l_flag=false,r_flag=false,m_flag=false;
+	static bool lt_flag=false,rt_flag=false,lmt_flag=false,rmt_flag=false,rbt_flag=false,lbt_flag=false;
+	static u8 t_count=0;
+	static u32 m_t_cnt=0;
+	static bool m_t_cnt_flag=false;
+	switch(mode.step_mk)
+		{
+			case 0:
+				lml_flag=false;lmr_flag=false;t_flag=false;lmm_flag=false;
+				ll_flag=false;rr_flag=false;
+				l_flag=false;r_flag=false;m_flag=false;
+				lt_flag=false;rt_flag=false;lmt_flag=false;rmt_flag=false;rbt_flag=false;lbt_flag=false;
+				t_count=0;
+				m_t_cnt=0;
+				m_t_cnt_flag=false;
+				if((!lm_hw.effectTop)&(!rm_hw.effectTop))
+					{
+						m_t_cnt_flag=true;
+						mode.step_mk=2;
+					}
+				else
+					{
+						mode.step_mk=1;
+					}
+			break;
+			case 1:
+				Speed=TURN_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				if((!rm_hw.effectTop)&(!lm_hw.effectTop))
+					{
+						stop_rap();
+						m_t_cnt_flag=true;
+						mode.step_mk++;
+					}
+			case 2:
+				Speed=TURN_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+#ifdef DEBUG_DOCK
+						TRACE("m_t_count=%d\r\n",m_t_cnt);
+						TRACE("t_count=%d in %s\r\n",t_count,__func__);
+#endif
+						if((m_t_cnt>120)&(first_top_back))
+							{
+								first_top_back=false;
+								mode.step_mk=60;
+								return;
+							}
+					
+						if(t_count>=2)
+							{
+								if(lmm_flag|lml_flag|lmr_flag)
+									{
+#ifdef DEBUG_DOCK
+										TRACE("lm_hw get Signal,goto step_mk 10!!\r\n");
+#endif
+										mode.step_mk=10;
+										t_flag=false;
+									}
+								else if(rr_flag|ll_flag)
+									{
+#ifdef DEBUG_DOCK
+										TRACE("r_hw|l_hw get Signal,goto step_mk 20!!\r\n");
+#endif
+										mode.step_mk=20;
+									}
+								else
+									{
+#ifdef DEBUG_DOCK
+										TRACE("r_hw|l_hw|lm_hw can't get Signal goto step TOP!!\r\n");
+#endif
+										mode.step=DOCKMODE_STEP_TOP_SPOT;
+										mode.step_mk=0;
+									}
+								return;
+							}
+						else
+							{
+#if 0
+								if(lmm_flag|lml_flag|lmr_flag)
+									{
+										mode.step_mk=50;
+										t_flag=false;
+									}
+								else
+#endif
+									{
+#ifdef DEBUG_DOCK
+										TRACE("Top signal is not good, goto step TOP!!\r\n");
+#endif
+										mode.step=DOCKMODE_STEP_REYBS;
+										mode.step_mk=0;
+									}
+								return;
+							}
+						
+					}
+				if((l_hw.effectTop)&(!lt_flag))
+					{
+						lt_flag=true;
+						t_count++;
+					}
+				if((lm_hw.effectTop))
+					{
+						if(!lmt_flag)
+							{
+								lmt_flag=true;
+								t_count++;								
+							}
+						if(m_t_cnt_flag)
+							{
+								if(lm_t_cnt_timeflag)
+									{
+										lm_t_cnt_timeflag=false;
+										m_t_cnt++;
+									}
+							}
+					}
+				if((lb_hw.effectTop)&(!lbt_flag))
+					{
+						lbt_flag=true;
+						t_count++;
+					}
+				if((r_hw.effectTop)&(!rt_flag))
+					{
+						rt_flag=true;
+						t_count++;
+					}
+				if((rm_hw.effectTop))
+					{
+						if(!rmt_flag)
+							{
+								rmt_flag=true;
+								t_count++;
+							}
+						if(m_t_cnt_flag)
+							{
+								if(rm_t_cnt_timeflag)
+									{
+										rm_t_cnt_timeflag=false;
+										m_t_cnt++;
+									}
+							}
+					}
+				if((rb_hw.effectTop)&(!rbt_flag))
+					{
+						rbt_flag=true;
+						t_count++;
+					}
+				if((lm_hw.effectLeft)&(!lml_flag))
+					{
+						lml_flag=true;
+					}
+				if((lm_hw.effectRight)&(!lmr_flag))
+					{
+						lmr_flag=true;
+					}
+				if((lm_hw.effectMid)&(!lmm_flag))
+					{
+						lmm_flag=true;
+					}
+				if((l_hw.effectLeft)&(!ll_flag))
+					{
+						ll_flag=true;
+					}
+				if((r_hw.effectRight)&(!rr_flag))
+					{
+						rr_flag=true;
+					}
+#if 0
+				if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_FINDSEAT;
+						mode.step_mk=4;
+					}
+#endif
+				if((!m_t_cnt_flag)&(!lm_hw.effectTop)&(!rm_hw.effectTop))
+					{
+						m_t_cnt_flag=true;
+					}
+			break;
+			case 10:
+				Speed=TURN_SPEED;
+				if(do_action(2,380*Angle_1))
+					{
+						stop_rap();
+						if((t_flag)&(l_flag|r_flag|m_flag))
+							{
+								mode.step=DOCKMODE_STEP_TOP_SPOT;
+								mode.step_mk=0;
+							}
+						else
+							{
+								mode.step=DOCKMODE_STEP_REYBS;
+								mode.step_mk=0;
+							}
+						return;
+					}
+				if((lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid)&(lm_hw.effectTop))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_FINDSEAT;
+						mode.step_mk=4;
+					}
+				if(find_home&ALL_TOP_ONLY)
+					{
+						t_flag=true;
+					}
+				if(find_home&ALL_LEFT_ONLY)
+					{
+						l_flag=true;
+					}
+				if(find_home&ALL_RIGHT_ONLY)
+					{
+						r_flag=true;
+					}
+				if(find_home&ALL_MID_ONLY)
+					{
+						m_flag=true;
+					}
+				break;
+			case 20:
+				Speed=TURN_SPEED;
+				if(do_action(2,380*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step_mk=0;
+						return;
+					}
+				if((l_hw.effectLeft)&(l_hw.effectTop))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_LEFT;
+						//mode.step_mk=40;
+						mode.step_mk=1;
+						return;
+					}
+				if((r_hw.effectRight)&(r_hw.effectTop))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_RIGHT;
+						//mode.step_mk=40;
+						mode.step_mk=1;
+					}
+				break;
+			case 50:
+				Speed=TURN_SPEED;
+				if(do_action(2,380*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_REYBS;
+						mode.step_mk=0;
+					}
+				if(lm_hw.effectLeft|lm_hw.effectRight|lm_hw.effectMid/
+					rm_hw.effectLeft|rm_hw.effectRight|rm_hw.effectMid)
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 51:
+				Speed=MID_MOVE_SPEED;
+				if(do_action(3,300*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_mk=50;
+					}
+				if((!lm_hw.effectLeft)&(!lm_hw.effectRight)&(!lm_hw.effectMid)/
+					(!rm_hw.effectLeft)&(!rm_hw.effectRight)&(!rm_hw.effectMid))
+					{
+						stop_rap();
+						mode.step_mk=50;
+					}
+				if(find_home&ALL_TOP_ONLY)
+					{
+						mode.step=DOCKMODE_STEP_FINDSEAT;
+						mode.step_mk=4;
+						return;
+					}
+				break;
+			case 60:
+				Speed=TURN_SPEED;
+				if(do_action(1,360*Angle_1))
+					{
+						stop_rap();
+					}
+				if(lm_hw.effectTop&rm_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 61:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(4,30*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_mk=0;
+					}
+				break;
+		}
+}
+
+
 u8 Abort_Dock_YBS(void)
 {
 #if 0
@@ -4055,7 +4370,6 @@ void Init_Dock_RightYBS(u8 direct_first)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
 	if(direct_first)
@@ -4115,7 +4429,6 @@ void Init_Dock_LeftYBS(u8 temp_data)
 	mode.bump = 0;
 	mode.bump_flag=false;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 
 	mode.status=1;

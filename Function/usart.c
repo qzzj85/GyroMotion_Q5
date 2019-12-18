@@ -18,7 +18,6 @@ GYRO_DATA		Gyro_Data;
 UART 			UART1;
 UART 			UART2;
 UART 			UART3;
-MOTION motion1;
 
 short old_yaw=0;
 char cnt_180=0;

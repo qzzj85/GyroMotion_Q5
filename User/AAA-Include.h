@@ -82,3 +82,4 @@
 #include "sweep_area.h"
 #include "area_tree.h"
 #include "self_test.h"
+#include "fan.h"

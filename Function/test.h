@@ -42,6 +42,7 @@ void Init_Test(u8 test_mode);
 void Do_SelfTest(void);
 u8 Parse_SelfTest_Stop(void);
 void ChargeControl_Test(void);
+void Do_BurningTest(void);
 
 
 #endif

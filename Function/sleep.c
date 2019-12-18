@@ -30,7 +30,6 @@ void Init_Sleep(void)
 	
 	mode.mode = MODE_CEASE; 
 	mode.Info_Abort=0;				//打开SLAM通信，qz add 20180418
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.sub_mode=SLEEP;			//QZ ADD
 	mode.step=0x00;					//qz add
 	mode.status=0;					//非工作状态

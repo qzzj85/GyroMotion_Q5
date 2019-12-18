@@ -5,7 +5,7 @@
 ///////////////////////私有函数////////////////////////////////////	
 ///////////////////////函数实体////////////////////////////////////
 ////////////////////////私有定义//////////////////////////////////
-
+bool wifi_ok=false;
   #ifdef  	DEBUG   
   #define   DBGMCU_CR ((uint32 *)0xe0042004)
   #endif   
@@ -48,14 +48,29 @@ void Do_Cease(void)
 
 #ifdef SLEEP_SUBMODE
     /**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
-	if(((giv_sys_time-mode.time)>10000*60)&(!mode.factory))			//qz mask 20181110
-	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
+	if(wifi_ok)
 		{
-			//Init_Sleep();
-			//Init_ShutDown();
-			Init_VirtualSleep();
-			return;
+			if((giv_sys_time-mode.time)>10000*60)			//如果WIFI连接上，则1min之内进入
+			//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
+				{
+					//Init_Sleep();
+					//Init_ShutDown();
+					Init_VirtualSleep();
+					return;
+				}
 		}
+	else
+		{
+			if((giv_sys_time-mode.time)>10000*300)			//如果WIFI没有连接上，则5min之内进入
+			//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
+				{
+					//Init_Sleep();
+					//Init_ShutDown();
+					Init_VirtualSleep();
+					return;
+				}
+		}
+
 #endif
 	clr_all_hw_effect();
 	ACC_DEC_Curve();
@@ -127,7 +142,6 @@ void Init_Cease(void)
 	/****设置机器的工作模式******/   
 	mode.mode = MODE_CEASE; 
 	mode.Info_Abort=0;				//打开SLAM通信，qz add 20180418
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.sub_mode=SUBMODE_CEASE;			//QZ ADD
 	mode.step=0x00;					//qz add
 	mode.status=0;					//qz add 20180625
@@ -179,7 +193,6 @@ void Init_VirtualSleep(void)
 	/****设置机器的工作模式******/   
 	mode.mode = MODE_CEASE; 
 	mode.Info_Abort=0;				//打开SLAM通信，qz add 20180418
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.sub_mode=SUBMODE_VIRTUAL_SLEEP;			//QZ ADD
 	mode.step=0x00; 				//qz add
 	mode.status=0;					//qz add 20180625
@@ -230,7 +243,7 @@ void Do_VirtualSleep(void)
 
 #ifdef SLEEP_SUBMODE
 	/**********如果机器在3分钟内没有操作,机器进入睡眠模式**********/
-	if(((giv_sys_time-mode.time)>10000*600)&(!mode.factory))			//qz mask 20181110
+	if((giv_sys_time-mode.time)>10000*600)			//qz mask 20181110
 	//if(((giv_sys_time-mode.sleep_time)>1800000)&(!mode.factory))		//qz add 20181110
 		{
 			Init_Sleep();
@@ -263,7 +276,6 @@ void Init_Quit_Charging(u8 sweep_method)
 
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	//mode.Info_Abort=1;		//qz add 20180316:屏蔽导航板命令 //qz mask 20180522
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.Info_Abort=0;
 
 	CHECK_STATUS_FLAG=true;
@@ -390,7 +402,6 @@ void Init_Err(void)
 	mode.mode = MODE_CEASE;				//主模式为CEASE
 	mode.sub_mode=SUBMODE_ERR;				//子模式为ERR
 	mode.Info_Abort =0;				//允许SLAM通信
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=0;					//非工作状态
 	mode.time=giv_sys_time;
 	
@@ -530,7 +541,6 @@ void Init_Sleep(void)
 	
 	mode.mode = MODE_CEASE; 
 	mode.Info_Abort=0;				//打开SLAM通信，qz add 20180418
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.sub_mode=SUBMODE_SLEEP;			//QZ ADD
 	mode.step=0x00;					//qz add
 	mode.status=0;					//非工作状态
@@ -742,7 +752,6 @@ void Init_Dead(void)
 //	mode.mode = ERR;
 	mode.mode = MODE_CEASE;
 	mode.Info_Abort =1;			//禁止SLAM通信
-	mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 	mode.sub_mode=SUBMODE_DEAD;		//子模式为ERR
 	mode.step=0;
 	mode.status=0;			//qz add 20180422
@@ -783,7 +792,6 @@ void Init_ShutDown(void)
 	//	mode.mode = ERR;
 		mode.mode = MODE_CEASE;
 		mode.Info_Abort =1; 		//禁止SLAM通信
-		mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 		mode.sub_mode=SUBMODE_SHUTDOWN; 	//子模式为ERR
 		mode.step=0;
 		mode.status=0;			//qz add 20180422

@@ -18,7 +18,7 @@
 #define	PWM_CHARGE_PRESCALER	0
 
 //hzh  风机等级
-#define 	SILENCE_PWM   			PWM_CHARGE_MAX/5
+#define 	SILENCE_PWM   			PWM_SWEEP_MAX/5
 #define		SB_STANDARD_PWM			500
 #define 	STANDARD_PWM  			1600//PWM_CHARGE_MAX/2		//qz add 20180804
 #define 	FORCE_PWM     			2000//PWM_CHARGE_MAX*4/5
@@ -30,12 +30,21 @@
 #define		SWEEP_LEVEL_DOCK		3
 #define		SWEEP_LEVEL_FORCE		4
 
+#define		SB_SIL_PWM				PWM_SWEEP_MAX/5
 
+#ifdef FAN_SPD_CTL
+#define		FAN_SIL_PWM				6000				//6000 r/min
+#define		FAN_STD_PWM				12000	//12000 r/min 		
+#define		FAN_FORCE_PWM			15000	//15000 r/min 		//1600 //80%
+#else
+#define		FAN_SIL_PWM				PWM_SWEEP_MAX/5
+#define		FAN_STD_PWM				1000 	//50%
+#define		FAN_FORCE_PWM			1600	//80%
+#endif
+
+#define		MB_SIL_PWM				PWM_SWEEP_MAX/5				
 #define		MB_STD_PWM				800			//40%
-#define		FAN_STD_PWM				1000		//50%
-
 #define		MB_FORCE_PWM			800			//40%
-#define		FAN_FORCE_PWM			1600		//80%
 
 void Init_Ring_Pwm(u16 period,u16 prescaler);
 void Init_Sweep_Pwm(u16 period,u16 prescaler);

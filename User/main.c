@@ -93,7 +93,9 @@ void log_out(void)
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("max_time=%d\r\n",motion1.worktime_area_max);
 	TRACE("version is V%d.%d.%d\r\n",MAIN_VERISON,SUB_VERSION,CORRECT_VERSION);
-	TRACE("ÖÐ¹ú\r\n");
+	TRACE("fanspd_tgt=%d\r\n",fanspd_tgt);
+	TRACE("fanspd=%d r/s\r\n",fanspd);
+	TRACE("fanpwm=%d\r\n",fan_pwm);
 //	TRACE("top=%d\r\n",top_time_sec);
 //	TRACE("start_seat=%d\r\n",motion1.start_seat);
 #else
@@ -132,7 +134,6 @@ int main(void)
 //	Init_Sleep();
 //	Init_Init_Sweep();
 //	Init_Left_YBS(0);
-//	Set_FJ_Level(400);
 //	Init_RunTest();
 //	while(1)
 //	{
@@ -192,6 +193,9 @@ int main(void)
 		Work_TimeOut_Handle();						
 		Parse_LowPower2Dock();
 		Parse_SelfTest_Stop();
+#ifdef FAN_SPD_CTL
+		FanSpd_PID();
+#endif
 #ifdef DEBUG
 		if((log_show)&(mode.sub_mode!=SUBMODE_FACT_TEST))
 			{

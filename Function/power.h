@@ -175,5 +175,7 @@ void Charge_PID_CtrPwr(u32 tgt_voltage);
 void ChargeControl_Volt_My(void);
 void Parse_LowPower2Dock(void);
 void Reset_Bat_Data(void);
+void Reinit_Battery(void);
+void Init_Battery_Data(void);
 
 #endif

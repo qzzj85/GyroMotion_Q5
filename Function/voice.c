@@ -403,9 +403,12 @@ void Send_Voice(u8 data)
 			delay_100us(1);
 			V_DAT_0;	
 		}
+	delay_us(100);
 	V_CLK_0;
 	V_DAT_0;
-	delay_us(100);
+
+	if(data==VOICE_WIFI_OK)
+		wifi_ok=true;
 #endif
 }
 

@@ -74,24 +74,6 @@ u8 Analysis_StopLeak(short tgt_yaw)
 	return 0;
 }
 
-u8 Analysis_NextLeakSweep(void)
-{
-	s8 now_gridx,now_gridy;
-	now_gridx=grid.x;now_gridy=grid.y;
-	if(motion1.tgt_yaw==F_Angle_Const)
-		{
-			if(Read_Coordinate_Clean(now_gridx+1,now_gridy))
-				return 1;
-		}
-	else
-		{
-			if(Read_Coordinate_Clean(now_gridx-1,now_gridy))
-				return 1;
-		}
-	return 0;
-}
-
-
 void Init_LeakSweep(short tgt_yaw)
 {
 	mode.last_mode=mode.mode;		//qz add 20180205
@@ -116,7 +98,6 @@ void Init_LeakSweep(short tgt_yaw)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 //		WriteWorkState();
 
@@ -358,7 +339,6 @@ void Init_Leak_BackSweep(short tgt_yaw)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
 //		WriteWorkState();

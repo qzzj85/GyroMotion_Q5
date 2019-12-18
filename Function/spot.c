@@ -79,9 +79,6 @@ void Init_Sweep_Spot(u8 start_from)
 	Enable_Speed();
 	enable_hwincept();
 	Speed=OUTSIDE_SPEED;
-
-	
-	
 	Init_Action();
 //	ReInitAd();
 

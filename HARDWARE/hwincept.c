@@ -97,6 +97,7 @@ void  init_hwincept(void)
 	disable_hwincept();
 }
 
+#if 0
 u8 Check_Start(INFR_DATA *hw_struct)
 {
 	  u32 t;
@@ -702,6 +703,7 @@ void read_dummy_wall_bit(INFR_DATA *hw_struct)
       }
  				
 } 
+#endif
 /***************************************************************************
 功能: 清除红外结构的数据
 ***************************************************************************/
@@ -724,11 +726,8 @@ void clr_hw_struct(INFR_DATA *hw_struct)
   hw_struct->effect_timeRight=giv_sys_time;
   hw_struct->effectMid=0;
   hw_struct->effect_timeMid=giv_sys_time;
-  hw_struct->effectTopReal=0;
-  hw_struct->effect_timeTopReal=giv_sys_time;
   hw_struct->effectTop=0;
   hw_struct->effect_timeTop=giv_sys_time;
-  hw_struct->effect_timeSignal=giv_sys_time;
   hw_struct->flag=0;
 
   hw_struct->effectNear=0;
@@ -794,18 +793,6 @@ void clr_hw_effect(INFR_DATA *hw_struct)
 		{
 				hw_struct->effectRight = 0;	
 		} 
-
-   //hzh
-	if((hw_struct->effectTopReal == 1) && ((giv_sys_time - hw_struct->effect_timeTopReal) > CLEAN_EFFECT_TIME))
-		{
-				hw_struct->effectTopReal = 0;	
-		} 
-
-   //hzh
-	if((hw_struct->effectSignal == 1) && ((giv_sys_time - hw_struct->effect_timeSignal) > CLEAN_EFFECT_TIME))
-		{
-				hw_struct->effectSignal = 0;	
-		}		
 		
    //hzh   
 	if((hw_struct->effectMid == 1) && ((giv_sys_time - hw_struct->effect_timeMid) > CLEAN_EFFECT_TIME))

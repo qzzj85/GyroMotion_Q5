@@ -31,7 +31,6 @@ void Init_Err(void)
 	mode.mode = MODE_CEASE;				//主模式为CEASE
 	mode.sub_mode=ERR;				//子模式为ERR
 	mode.Info_Abort =0;				//允许SLAM通信
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=0;					//非工作状态
 	mode.time=giv_sys_time;
 	

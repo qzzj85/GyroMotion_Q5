@@ -27,7 +27,6 @@ void Init_Dead(void)
 //	mode.mode = ERR;
 	mode.mode = MODE_CEASE;
 	mode.Info_Abort =1;			//禁止SLAM通信
-	mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 	mode.sub_mode=DEAD;		//子模式为ERR
 	mode.step=0;
 	mode.status=0;			//qz add 20180422
@@ -68,7 +67,6 @@ void Init_ShutDown(void)
 	//	mode.mode = ERR;
 		mode.mode = MODE_CEASE;
 		mode.Info_Abort =1; 		//禁止SLAM通信
-		mode.All_Info_Abort=0;			//qz add 20180919	//qz modify 20181110
 		mode.sub_mode=SHUTDOWN; 	//子模式为ERR
 		mode.step=0;
 		mode.status=0;			//qz add 20180422

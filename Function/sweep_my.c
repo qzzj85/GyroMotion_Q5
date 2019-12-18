@@ -2180,7 +2180,6 @@ void Init_NormalSweep(short tgt_yaw)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
 //		WriteWorkState();
@@ -2395,7 +2394,6 @@ void Init_Back_Sweep(short tgt_yaw)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
 //		WriteWorkState();
@@ -2698,7 +2696,6 @@ void Init_Pass2Sweep(void)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
 	WriteWorkState();
@@ -3683,7 +3680,6 @@ void Init_Pass2Init(short tgt_yaw,u8 y_acc,u8 x_acc)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
 	WriteWorkState();
@@ -3766,7 +3762,6 @@ void Init_Sweep_RightYBS(u8 avoid_staright)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 	mode.time=giv_sys_time;
 	if(avoid_staright==0)
@@ -3822,7 +3817,6 @@ void Init_Sweep_LeftYBS(u8 avoid_staright)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 	mode.status=1;
 	if(avoid_staright==0)
@@ -4582,7 +4576,6 @@ void Init_PauseSweep(void)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=0;
 
@@ -4717,7 +4710,6 @@ void Init_Sweep_Done(void)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 
 	mode.status=1;
 //		WriteWorkState();

@@ -77,12 +77,9 @@ void Init_Mode(void)
 	mode.step_abn=0;
 	mode.abn_time=giv_sys_time;
 	mode.action=0;
-	mode.All_Info_Abort=0;
 	mode.Info_Abort=0;
 	mode.time=giv_sys_time;
 	mode.step_mk=0;
-	mode.factory=false;							
-	mode.factory_burnning=false;				
 	lastisdead=Read_Last_Is_Dead();	
 	Read_PwrSwitch_Status();
 #ifdef SWITCHOFF_SUBMODE
@@ -2943,14 +2940,14 @@ u8 Check_Gyro_Tick(void)
 				if(giv_sys_time-Gyro_Data.tick_check_time>50000)			//5s
 					{
 						Gyro_Data.tick_check_step=0;
-						//qz add 20181101
+#if 0
 						if((!Gyro_Data.first_rst)&(!mode.status))
 							{
 								Gyro_Rst();
 								Gyro_Data.first_rst=true;
 								return 0;
 							}
-						//qz add end
+#endif
 						Gyro_Data.tick_flag=false;
 						return 1;
 					}
@@ -3342,13 +3339,26 @@ void Set_FJ_Level(u16 level)
   	{
   		FAN_PWR_CTL_0;
   		Fan.flag=false;
+#ifdef FAN_SPD_CTL
+		fanspd_tgt=0;
+#endif
   	}
   else
   	{
+ #ifdef FAN_SPD_CTL
+  		if(!Fan.flag)
+  			{
+				Reset_FanSpd_Data();
+				fan_pwm=1000;
+				Set_Fan_Pwm(fan_pwm);
+  			}
+		fanspd_tgt=level/60*6;		//风机转一圈输出6个脉冲，level的单位是r/min;
+#else
+		Set_Fan_Pwm(level);
+#endif
   		FAN_PWR_CTL_1;
   		Fan.flag=true;
-//  TIM_SetCompare4(TIM3,level);//标准  
-		Set_Fan_Pwm(level);
+		//  TIM_SetCompare4(TIM3,level);//标准  
   	}
 }
 
@@ -3392,7 +3402,7 @@ void Sweep_Level_Set(u16 sweep_level)
 			case SWEEP_LEVEL_SILENCE:
 				Set_BS_Level(SILENCE_PWM);
 				Set_ZS_Level(SILENCE_PWM);
-				Set_FJ_Level(SILENCE_PWM);
+				Set_FJ_Level(FAN_SIL_PWM);
 			break;
 			case SWEEP_LEVEL_FORCE:
 				Set_BS_Level(FORCE_PWM);
@@ -3858,7 +3868,7 @@ void Check_Status(void)
 #endif
 			/////惯导数据检测////////////////
 #ifdef 		GYRO_TICK_CHECK
-			//if(Check_Gyro_Tick())
+			Check_Gyro_Tick();
 			if(Gyro_Data.tick_flag==false)
 				{
 					error_code=ERROR_GYRO;
@@ -3946,8 +3956,7 @@ void Init_Check_Status(void)
 	Fan.error_time=0;		//qz add V2.3.7
 	Fan.length=0;			//qz add 
 	Fan.last_length=0;
-	Fan.flag=0;
-	Fan.step=0;
+	//Fan.flag=0;
 
 	//离地检测初始化
 	l_lidi.check_step=0;

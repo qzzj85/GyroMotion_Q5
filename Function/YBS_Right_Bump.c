@@ -507,7 +507,6 @@ static void Left_Bump_Action(u8 m)
 						mode.step_bp=0;
 						//if((m==5)&(YBS_TurnRight_Cnt>2))			//如果左转次数超过3次，则直接右转
 							//mode.step_bp=0x50;
-						mode.last_bump=LEFT;	//qz add 20181020
 					}
 				break;
 			case 0x50:
@@ -532,8 +531,6 @@ static void Left_Bump_Action(u8 m)
 				mode.bump=0;
 				mode.bump_flag=false;
 				mode.step=0x00;
-				mode.last_bump=LEFT;	//qz add 20181020
-				mode.bump_time=giv_sys_time;
 				break;
 	
 							
@@ -751,7 +748,6 @@ void YBS_Right_Bump(u8 out_enable)
 						YBS_DISTANCE=YBS_DISTANCE_CONST;
 						rightbumpcnt=0;			//qz add 20180902
 #endif
-						mode.last_bump=RIGHT;	//qz add 20181020
 						mode.bump_time=giv_sys_time;
 						return ; 
 					}	
@@ -814,8 +810,6 @@ void YBS_Right_Bump(u8 out_enable)
 							mode.bump = 0;
 							mode.bump_flag=false;
 							mode.step = 0x00;//0x88; 原来为0x88
-							mode.last_bump=RIGHT;	//qz add 20181020
-
 #ifdef YBS_BLACK
 							if(rightbumpcnt==0)
 								{
@@ -878,7 +872,6 @@ void YBS_Right_Bump(u8 out_enable)
 						mode.step_bp=0;
 						mode.step=0;
 						mode.bump_flag=false;
-						mode.last_bump=RIGHT;	//qz add 20181020
 						//qz add 20181210
 						YBS_DISTANCE+=10;
 						if(YBS_DISTANCE>YBS_DISTANCE_LONG)		//qz add 20180919
@@ -988,7 +981,6 @@ void YBS_Right_Bump(u8 out_enable)
 						mode.step_bp = 0;
 						mode.bump = 0;
 						mode.step = 0x00;		//zdkshield
-						mode.last_bump=RIGHT;	//qz add 20181020
 						mode.bump_time=giv_sys_time;
 						break;
 					default :
@@ -1023,7 +1015,6 @@ void YBS_Right_Bump(u8 out_enable)
 						mode.step_bp = 0;
 						mode.bump = 0;
 						mode.step = 0x00;		//QZ MASK
-						mode.last_bump=RIGHT;	//qz add 20181020
 						mode.bump_time=giv_sys_time;
 						break;
 					default :
@@ -1058,7 +1049,6 @@ void YBS_Right_Bump(u8 out_enable)
 								YBS_DISTANCE=YBS_DISTANCE_CONST;
 								rightbumpcnt=0;
 #endif
-								mode.last_bump=RIGHT;	//qz add 20181020
 								return;
 							}
 						stop_rap();
@@ -1077,7 +1067,6 @@ void YBS_Right_Bump(u8 out_enable)
 					YBS_DISTANCE=YBS_DISTANCE_CONST;
 					rightbumpcnt=0; 		//qz add 20180902
 #endif
-					mode.last_bump=RIGHT;	//qz add 20181020
 					mode.bump_time=giv_sys_time;
 					break;
 				default :
@@ -1111,7 +1100,6 @@ void YBS_Right_Bump(u8 out_enable)
 							//YBS_DISTANCE=YBS_DISTANCE_CONST;
 							//rightbumpcnt=0;		//qz add 20180902
 #endif
-							mode.last_bump=RIGHT;	//qz add 20181020
 						}	
 										//	return 0;	
 					break;
@@ -1126,7 +1114,6 @@ void YBS_Right_Bump(u8 out_enable)
 					//YBS_DISTANCE=YBS_DISTANCE_CONST;
 					//rightbumpcnt=0; 		//qz add 20180902
 #endif
-					mode.last_bump=RIGHT;	//qz add 20181020
 					mode.bump_time=giv_sys_time;
 					break;
 				default :
@@ -1230,6 +1217,7 @@ void YBS_Right_Bump(u8 out_enable)
 		Set_Coordinate_Seat(now_gridx,now_gridy);
 		switch(mode.step_bp)
 			{
+#if 0
 				case 0:
 					Speed=TURN_SPEED;
 					if(do_action(1,80*Angle_1))
@@ -1256,6 +1244,70 @@ void YBS_Right_Bump(u8 out_enable)
 							mode.bump=0;
 							mode.step_bp=0;
 							mode.step=0;
+						}
+					if((m!=mode.bump)&(m>0))
+						{
+							stop_rap();
+							mode.bump=m;
+							mode.step_bp=0;
+							return;
+						}
+					if(mode.mode==MODE_DOCK)
+						{
+							if(l_ring.all_length-start_length>(end_length/2))
+							{
+								stop_rap();
+								enable_hwincept();
+								Init_Docking();
+							}
+						}
+					break;
+#endif
+				case 0:
+					Speed=TURN_SPEED;
+					if(do_action(1,360*Angle_1))
+						{
+							stop_rap();
+							mode.step=0;
+							mode.bump=0;
+							mode.step_bp=0;
+							mode.bump_flag=false;
+							return;
+						}
+					if(r_hw.effectTop)
+						{	
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 1:
+					Speed=TURN_SPEED;
+					do_action(1,360*Angle_1);
+					if(!r_hw.effectTop)
+						{
+							stop_rap();
+							mode.step_bp++;
+						}
+					break;
+				case 2:
+					l_speed=800;
+					r_speed=550;
+					radius=(float)(RING_RANGE*r_speed)/(l_speed-r_speed);	//半径约为20mm
+					end_length=(u32)((radius+RING_RANGE)*2*3.141592/PULSE_LENGTH/2);	//准备右偏转180度
+					start_length=l_ring.all_length;
+					mode.step_bp++;
+					break;
+				case 3:
+					l_speed=800;
+					r_speed=550;
+					enable_rap_no_length(FRONT,l_speed,FRONT,r_speed);
+					//if(l_ring.all_length-start_length>end_length)
+					if(r_hw.effectTop)
+						{
+							stop_rap();
+							//mode.bump=0;
+							mode.step_bp=0;
+							//mode.step=0;
 						}
 					if((m!=mode.bump)&(m>0))
 						{

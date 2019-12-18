@@ -994,159 +994,94 @@ u32  YBS_read_bump1(u8 out_enable)
 
 uint16_t  Return_Distance(uint16_t data)
 {
-static uint16_t 	Distance;
+	static uint16_t 	Distance;
 
-#if 0
-	if(data < 0x30)
+	if(data < VALUE200)
 		{Distance = 200;}
-		
-	else if(data < 0x50)	//QZ:30<=DATA<40
+	else if(data<VALUE190)
 		{
-			Distance = 200 - (uint16_t)( ( (float)((data-0x30) * (200-150) / (0x50-0x30)) ) );	//QZ: 150<DISTANCE<=200
+			Distance = 200 - (uint16_t)( ( (float)((data-VALUE200) * (200-190) / (VALUE190-VALUE200)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0x70)	//QZ:40<=DATA<63
+	else if(data<VALUE180)
 		{
-			Distance = 150 - (uint16_t)( ( (float)((data-0x50) * (150-120) / (0x70-0x50) )) 		);	//QZ: 120<DISTANCE<=150;
+			Distance = 190 - (uint16_t)( ( (float)((data-VALUE190) * (190-180) / (VALUE180-VALUE190)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0xA0)	//QZ:63<=DATA<98
+	else if(data<VALUE170)
 		{
-			Distance = 120 - (uint16_t)( ( (float)((data-0x70) * (120-100) / (0xA0-0x70) )) 		);	//QZ:  100<DISTANCE<=120
+			Distance = 180 - (uint16_t)( ( (float)((data-VALUE180) * (180-170) / (VALUE170-VALUE180)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0xC0)	//QZ:98<=DATA<167
+	else if(data<VALUE160)
 		{
-			Distance = 100 - (uint16_t)( ( (float)((data-0xA0) * (100-90) / (0xC0-0xA0) )) 		);	//QZ:  90<DISTANCE<=100
+			Distance = 170 - (uint16_t)( ( (float)((data-VALUE170) * (170-160) / (VALUE160-VALUE170)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0xF0)	//QZ:167<=DATA<220
+	else if(data < VALUE150)	//QZ:30<=DATA<40
 		{
-			Distance = 90 - (uint16_t)( ( (float)((data-0xC0) * (90-80) / (0xF0-0xC0) )) 	);		//QZ:  80<DISTANCE<=90
+			Distance = 160 - (uint16_t)( ( (float)((data-VALUE160) * (160-150) / (VALUE150-VALUE160)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0x140)	//QZ:220<=DATA<361
+	else if(data<VALUE140)
 		{
-			Distance = 80 - (uint16_t)( ( (float)((data-0xF0) * (80-70) / (0x140-0xF0) )) 	);		//QZ:  70<DISTANCE<=80
+			Distance = 150 - (uint16_t)( ( (float)((data-VALUE150) * (150-140) / (VALUE140-VALUE150)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0x1A0)	//QZ:361<=DATA<470 //190
+	else if(data<VALUE130)
 		{
-			Distance = 70 - (uint16_t)( ( (float)((data-0x140) * (70-60) / (0x1A0-0x140) ))	);		//QZ:  60<DISTANCE<=70
+			Distance = 140 - (uint16_t)( ( (float)((data-VALUE140) * (140-130) / (VALUE130-VALUE140)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0x240)	//QZ:470<=DATA<830	//220
+	else if(data < VALUE120)	//QZ:40<=DATA<63
 		{
-			Distance = 60 - (uint16_t)( ( (float)((data-0x1A0) * (60-50) / (0x240-0x1A0) )	) );	//QZ:  50<DISTANCE<=60
+			Distance = 130 - (uint16_t)( ( (float)((data-VALUE130) * (130-120) / (VALUE120-VALUE130) )) 		);	//QZ: 120<DISTANCE<=150;
 		}
-	else if(data < 0x360)//QZ:830<=DATA<2050	//2e0
+	else if(data<VALUE110)
 		{
-			Distance = 50 -  (uint16_t)( ( (float)((data-0x240) * (50-40)/ (0x360-0x240) ) )		);	//QZ:40<DISTANCE<=50
+			Distance = 120 - (uint16_t)( ( (float)((data-VALUE120) * (120-110) / (VALUE110-VALUE120)) ) );	//QZ: 150<DISTANCE<=200
 		}
-	else if(data < 0x4C0)//QZ:830<=DATA<2050
+	else if(data < VALUE100)	//QZ:63<=DATA<98
 		{
-			Distance = 40 -  (uint16_t)( ( (float)((data-0x360) * (40-30)/ (0x4C0-0x360) ) )		);	//QZ:30<DISTANCE<=40
+			Distance = 110 - (uint16_t)( ( (float)((data-VALUE110) * (110-100) / (VALUE100-VALUE110) )) 		);	//QZ:  100<DISTANCE<=120
 		}
-	else if(data < 0x6E0)//QZ:830<=DATA<2050
+	else if(data < VALUE90)	//QZ:98<=DATA<167
 		{
-			Distance = 30 -  (uint16_t)( ( (float)((data-0x4C0) * (30-20)/ (0x6E0-0x4C0) ) )		);	//QZ:20<DISTANCE<=30
+			Distance = 100 - (uint16_t)( ( (float)((data-VALUE100) * (100-90) / (VALUE90-VALUE100) ))		);	//QZ:  90<DISTANCE<=100
+		}
+	else if(data < VALUE80)	//QZ:167<=DATA<220
+		{
+			Distance = 90 - (uint16_t)( ( (float)((data-VALUE90) * (90-80) / (VALUE80-VALUE90) ))	);		//QZ:  80<DISTANCE<=90
+		}
+	else if(data < VALUE70)	//QZ:220<=DATA<361
+		{
+			Distance = 80 - (uint16_t)( ( (float)((data-VALUE80) * (80-70) / (VALUE70-VALUE80) ))	);		//QZ:  70<DISTANCE<=80
+		}
+	else if(data < VALUE60)	//QZ:361<=DATA<470 //190
+		{
+			Distance = 70 - (uint16_t)( ( (float)((data-VALUE70) * (70-60) / (VALUE60-VALUE70) )) );		//QZ:  60<DISTANCE<=70
+		}
+	else if(data < VALUE50)	//QZ:470<=DATA<830	//220
+		{
+			Distance = 60 - (uint16_t)( ( (float)((data-VALUE60) * (60-50) / (VALUE50-VALUE60) )	) );	//QZ:  50<DISTANCE<=60
+		}
+	else if(data < VALUE40)//QZ:830<=DATA<2050	//2e0
+		{
+			Distance = 50 -  (uint16_t)( ( (float)((data-VALUE50) * (50-40)/ (VALUE40-VALUE50) ) )		);	//QZ:40<DISTANCE<=50
+		}
+	else if(data < VALUE30)//QZ:830<=DATA<2050
+		{
+			Distance = 40 -  (uint16_t)( ( (float)((data-VALUE40) * (40-30)/ (VALUE30-VALUE40) ) )		);	//QZ:30<DISTANCE<=40
+		}
+	else if(data < VALUE20)//QZ:830<=DATA<2050
+		{
+			Distance = 30 -  (uint16_t)( ( (float)((data-VALUE30) * (30-20)/ (VALUE20-VALUE30) ) )		);	//QZ:20<DISTANCE<=30
+		}
+	else if(data < VALUE10)//QZ:830<=DATA<2050
+		{
+			Distance = 20 -  (uint16_t)( ( (float)((data-VALUE20) * (20-10)/ (VALUE10-VALUE20) ) )		);	//QZ:20<DISTANCE<=30
 		}
 
-	
-	else		//QZ:DATA>=2025
+	else if(data < VALUE05)//QZ:830<=DATA<2050
 		{
-			Distance = 20; 
+			Distance = 20 -  (uint16_t)( ( (float)((data-VALUE10) * (10-5)/ (VALUE05-VALUE10) ) )		);	//QZ:20<DISTANCE<=30
 		}
-
-	if(Distance-20<0)
-		Distance=0;
 	else
-		Distance-=20;
-	return(Distance);
-#endif
-
-#if 1
-if(data < VALUE200)
-	{Distance = 200;}
-else if(data<VALUE190)
-	{
-		Distance = 200 - (uint16_t)( ( (float)((data-VALUE200) * (200-190) / (VALUE190-VALUE200)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data<VALUE180)
-	{
-		Distance = 190 - (uint16_t)( ( (float)((data-VALUE190) * (190-180) / (VALUE180-VALUE190)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data<VALUE170)
-	{
-		Distance = 180 - (uint16_t)( ( (float)((data-VALUE180) * (180-170) / (VALUE170-VALUE180)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data<VALUE160)
-	{
-		Distance = 170 - (uint16_t)( ( (float)((data-VALUE170) * (170-160) / (VALUE160-VALUE170)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data < VALUE150)	//QZ:30<=DATA<40
-	{
-		Distance = 160 - (uint16_t)( ( (float)((data-VALUE160) * (160-150) / (VALUE150-VALUE160)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data<VALUE140)
-	{
-		Distance = 150 - (uint16_t)( ( (float)((data-VALUE150) * (150-140) / (VALUE140-VALUE150)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data<VALUE130)
-	{
-		Distance = 140 - (uint16_t)( ( (float)((data-VALUE140) * (140-130) / (VALUE130-VALUE140)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data < VALUE120)	//QZ:40<=DATA<63
-	{
-		Distance = 130 - (uint16_t)( ( (float)((data-VALUE130) * (130-120) / (VALUE120-VALUE130) )) 		);	//QZ: 120<DISTANCE<=150;
-	}
-else if(data<VALUE110)
-	{
-		Distance = 120 - (uint16_t)( ( (float)((data-VALUE120) * (120-110) / (VALUE110-VALUE120)) ) );	//QZ: 150<DISTANCE<=200
-	}
-else if(data < VALUE100)	//QZ:63<=DATA<98
-	{
-		Distance = 110 - (uint16_t)( ( (float)((data-VALUE110) * (110-100) / (VALUE100-VALUE110) )) 		);	//QZ:  100<DISTANCE<=120
-	}
-else if(data < VALUE90)	//QZ:98<=DATA<167
-	{
-		Distance = 100 - (uint16_t)( ( (float)((data-VALUE100) * (100-90) / (VALUE90-VALUE100) ))		);	//QZ:  90<DISTANCE<=100
-	}
-else if(data < VALUE80)	//QZ:167<=DATA<220
-	{
-		Distance = 90 - (uint16_t)( ( (float)((data-VALUE90) * (90-80) / (VALUE80-VALUE90) ))	);		//QZ:  80<DISTANCE<=90
-	}
-else if(data < VALUE70)	//QZ:220<=DATA<361
-	{
-		Distance = 80 - (uint16_t)( ( (float)((data-VALUE80) * (80-70) / (VALUE70-VALUE80) ))	);		//QZ:  70<DISTANCE<=80
-	}
-else if(data < VALUE60)	//QZ:361<=DATA<470 //190
-	{
-		Distance = 70 - (uint16_t)( ( (float)((data-VALUE70) * (70-60) / (VALUE60-VALUE70) )) );		//QZ:  60<DISTANCE<=70
-	}
-else if(data < VALUE50)	//QZ:470<=DATA<830	//220
-	{
-		Distance = 60 - (uint16_t)( ( (float)((data-VALUE60) * (60-50) / (VALUE50-VALUE60) )	) );	//QZ:  50<DISTANCE<=60
-	}
-else if(data < VALUE40)//QZ:830<=DATA<2050	//2e0
-	{
-		Distance = 50 -  (uint16_t)( ( (float)((data-VALUE50) * (50-40)/ (VALUE40-VALUE50) ) )		);	//QZ:40<DISTANCE<=50
-	}
-else if(data < VALUE30)//QZ:830<=DATA<2050
-	{
-		Distance = 40 -  (uint16_t)( ( (float)((data-VALUE40) * (40-30)/ (VALUE30-VALUE40) ) )		);	//QZ:30<DISTANCE<=40
-	}
-else if(data < VALUE20)//QZ:830<=DATA<2050
-	{
-		Distance = 30 -  (uint16_t)( ( (float)((data-VALUE30) * (30-20)/ (VALUE20-VALUE30) ) )		);	//QZ:20<DISTANCE<=30
-	}
-else if(data < VALUE10)//QZ:830<=DATA<2050
-	{
-		Distance = 20 -  (uint16_t)( ( (float)((data-VALUE20) * (20-10)/ (VALUE10-VALUE20) ) )		);	//QZ:20<DISTANCE<=30
-	}
-
-else if(data < VALUE05)//QZ:830<=DATA<2050
-	{
-		Distance = 20 -  (uint16_t)( ( (float)((data-VALUE10) * (10-5)/ (VALUE05-VALUE10) ) )		);	//QZ:20<DISTANCE<=30
-	}
-else
-	Distance=0;
-return Distance;
-#endif
-	
+		Distance=0;
+	return Distance;	
 }
 
 
@@ -1503,7 +1438,6 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	mode.sub_mode = SUBMODE_YBS_RIGHT;		
 	mode.step_bp = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 	mode.status=1;
 	if(pre_action)
@@ -1576,7 +1510,6 @@ void Init_Left_YBS(u8 direct_first)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 
 	mode.status=1;

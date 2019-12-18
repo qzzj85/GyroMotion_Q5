@@ -4,6 +4,7 @@
 extern short F_Angle_Const,B_Angle_Const,L_Angle_Const,R_Angle_Const;//机器开始清扫时的前向角度和后向角度，固定不变
 extern short LF_Angle_Const,RF_Angle_Const,LB_Angle_Const,RB_Angle_Const;
 
+extern MOTION motion1;			//qz add
 
 short get_gyro_angle(void);
 short Get_Back_Angle(void);

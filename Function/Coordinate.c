@@ -1613,12 +1613,12 @@ u8 Analysis_Leak_Point(void)
 									if(check_point.y2<check_point.y1)
 										{
 											check_point.ydir=0;
-											check_point.ybs_dir=LEFT;
+											check_point.ybs_dir=DIR_LEFT;
 										}
 									else
 										{
 											check_point.ydir=1;
-											check_point.ybs_dir=RIGHT;
+											check_point.ybs_dir=DIR_RIGHT;
 										}
 
 									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
@@ -1678,12 +1678,12 @@ u8 Analysis_Leak_Point(void)
 									if(check_point.y2<check_point.y1)
 										{
 											check_point.ydir=1;
-											check_point.ybs_dir=RIGHT;
+											check_point.ybs_dir=DIR_RIGHT;
 										}
 									else
 										{
 											check_point.ydir=0;
-											check_point.ybs_dir=LEFT;
+											check_point.ybs_dir=DIR_LEFT;
 										}
 
 									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
@@ -1752,12 +1752,12 @@ LEAK_POINT_MIN_CHECK:
 									if(check_point.y2<check_point.y1)
 										{
 											check_point.ydir=1;
-											check_point.ybs_dir=LEFT;
+											check_point.ybs_dir=DIR_LEFT;
 										}
 									else
 										{
 											check_point.ydir=0;
-											check_point.ybs_dir=RIGHT;
+											check_point.ybs_dir=DIR_RIGHT;
 										}
 
 									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
@@ -1816,12 +1816,12 @@ LEAK_POINT_MIN_CHECK:
 									if(check_point.y2<check_point.y1)
 										{
 											check_point.ydir=0;
-											check_point.ybs_dir=RIGHT;
+											check_point.ybs_dir=DIR_RIGHT;
 										}
 									else
 										{
 											check_point.ydir=1;
-											check_point.ybs_dir=LEFT;
+											check_point.ybs_dir=DIR_LEFT;
 										}
 
 									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
@@ -1984,9 +1984,9 @@ LEAK_POINT_MIN_CHECK:
 					check_point.new_y2=check_gridy2;
 					check_point.next_tgtyaw=B_Angle_Const;
 					if(ydir)
-						check_point.ybs_dir=RIGHT;
+						check_point.ybs_dir=DIR_RIGHT;
 					else
-						check_point.ybs_dir=LEFT;
+						check_point.ybs_dir=DIR_LEFT;
 					if(Can_Entry_Point())
 						return 1;
 				}
@@ -2770,7 +2770,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy+1;
 													check_point.ydir=1;
-													check_point.ybs_dir=RIGHT;
+													check_point.ybs_dir=DIR_RIGHT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 #ifdef DEBUG_COOR
@@ -2803,7 +2803,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy+1;
 													check_point.ydir=1;
-													check_point.ybs_dir=RIGHT;
+													check_point.ybs_dir=DIR_RIGHT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 #ifdef DEBUG_COOR
@@ -2888,7 +2888,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_y2=check_gridy-1;
 													//check_point.ydir=1;
 													check_point.ydir=0;
-													check_point.ybs_dir=LEFT;
+													check_point.ybs_dir=DIR_LEFT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
@@ -2923,7 +2923,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_y2=check_gridy-1;
 													//check_point.ydir=1;
 													check_point.ydir=0;
-													check_point.ybs_dir=LEFT;
+													check_point.ybs_dir=DIR_LEFT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
@@ -3016,7 +3016,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy-1;
 													check_point.ydir=0;
-													check_point.ybs_dir=LEFT;
+													check_point.ybs_dir=DIR_LEFT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 #ifdef DEBUG_COOR				
@@ -3051,7 +3051,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_x2=check_gridx;
 													check_point.new_y2=check_gridy-1;
 													check_point.ydir=0;
-													check_point.ybs_dir=LEFT;
+													check_point.ybs_dir=DIR_LEFT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 #ifdef DEBUG_COOR				
@@ -3135,7 +3135,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_y2=check_gridy+1;
 													//check_point.ydir=0;
 													check_point.ydir=1;
-													check_point.ybs_dir=RIGHT;
+													check_point.ybs_dir=DIR_RIGHT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
@@ -3172,7 +3172,7 @@ u8 Find_Leak_Area_II(void)
 													check_point.new_y2=check_gridy+1;
 													//check_point.ydir=0;
 													check_point.ydir=1;
-													check_point.ybs_dir=RIGHT;
+													check_point.ybs_dir=DIR_RIGHT;
 													check_point.next_tgtyaw=F_Angle_Const;
 													//Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
 													Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);

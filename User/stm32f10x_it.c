@@ -287,6 +287,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			gyro_check_time=true;
 			Cal_CoordinateXY();
 			Record_Coordinate_Intime();
+			rm_t_cnt_timeflag=true;
+			lm_t_cnt_timeflag=true;
+			
 		}			
 		
 		
@@ -297,6 +300,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 //			rap_time=true;
 //			Coordinate_report_time=true;
 			//Analysis_Coordinate();
+#ifdef FAN_SPD_CTL
+			FanSpd_Cal();
+#endif
 		}
 
 	//qz add 20180316
@@ -304,6 +310,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		{
 #ifdef TUYA_WIFI
 			wifi_time=true;
+#endif
+#ifdef FAN_SPD_CTL
+			fanspd_flag=true;
 #endif
 		}
 		
@@ -646,7 +655,11 @@ void EXTI3_IRQHandler(void)
 //右轮速度脉冲外部中断函数
 void EXTI4_IRQHandler(void)
 {
-	
+	if(EXTI_GetITStatus(EXTI_Line4)!=RESET)
+		{
+			EXTI_ClearITPendingBit(EXTI_Line4);
+			fanspd_cnt++;
+		}
 }
 
 

@@ -1,6 +1,7 @@
 #include "AAA-include.h"
 
 #define PI180				57.295791		//180/PI
+MOTION motion1;
 
 short F_Angle_Const,B_Angle_Const,L_Angle_Const,R_Angle_Const;//机器开始清扫时的前向角度和后向角度，固定不变
 short LF_Angle_Const,RF_Angle_Const,LB_Angle_Const,RB_Angle_Const;
@@ -179,12 +180,12 @@ u8 Analysis_Back_Leak(void)
 							if(check_gridy1>check_gridy2)
 								{
 									check_point.ydir=0;
-									check_point.ybs_dir=LEFT;
+									check_point.ybs_dir=DIR_LEFT;
 								}
 							else
 								{
 									check_point.ydir=1;
-									check_point.ybs_dir=RIGHT;
+									check_point.ybs_dir=DIR_RIGHT;
 								}
 							Set_CheckPoint_NextAction(CHECK_BACKSWEEP);	//CHECK_ACTION设置为回扫（回扫漏扫仍是回扫）
 							if(Can_Entry_Point())
@@ -220,12 +221,12 @@ u8 Analysis_Back_Leak(void)
 							if(check_gridy1>check_gridy2)
 								{
 									check_point.ydir=0;
-									check_point.ybs_dir=RIGHT;
+									check_point.ybs_dir=DIR_RIGHT;
 								}
 							else
 								{
 									check_point.ydir=1;
-									check_point.ybs_dir=LEFT;
+									check_point.ybs_dir=DIR_LEFT;
 								}
 							if(Can_Entry_Point())
 								return 1;

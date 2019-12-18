@@ -40,6 +40,7 @@ u8  WritePreenData(void);
 u32 ReadFDCap(void);
 void Reinit_Rtc(void);
 u8 	Check_PreengageTime(void);
+void Init_Rtc_Data(void);
 
 
 #endif

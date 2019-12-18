@@ -197,7 +197,7 @@ void AutoReadKey(void)
 						}
 					 break;
 				case 2:
-					if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_FACT_TEST)&(!mode.factory_burnning))		//qz add 20181107
+					if((mode.mode==MODE_CEASE)&(mode.sub_mode==SUBMODE_FACT_TEST))		//qz add 20181107
 						break;
 
 						if(wifi_clean)

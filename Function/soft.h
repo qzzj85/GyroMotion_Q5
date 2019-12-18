@@ -14,7 +14,6 @@
 #define 	FLOAT_PID 				1
 //#define		FREE_SKID_ACTION		1					//万向轮打滑动作处理
 //#define		ROTATE_SKID_ACTION		1				//旋转打滑动作处理
-#define		SKID_REPORT_TIME		1
 #define 	HW_INT_REC 				1					//红外中断接收
 
 #define		DEBUG					1
@@ -38,6 +37,7 @@
 #define		DEBUG_PATH				1
 #define 	DEBUG_SHIFT				1
 #define		DEBUG_AREA				1
+#define		DEBUG_VOICE				1
 #endif
 
 #if 1
@@ -51,48 +51,49 @@
 #define		RING_FIX_CHECK			1					//驱动轮锁定检查
 #define 	RING_OC_CHECK			1					//驱动轮过流检查
 #define		MB_OC_CHECK				1					//中扫过电流检查
-//#define		DUST_BOX_EXIST_CHECK	1					//集尘盒检查
+//#define	DUST_BOX_EXIST_CHECK	1					//集尘盒检查
 #define		SB_FIX_CHECK			1					//边扫缠绕检查
 #define		GYRO_TICK_CHECK			1					//惯导数据检查,5s内未接到收据,判定错误
 //#define	WALL_EARTH_ERROR_CHECK	1					//墙地检异常检测(比如没插)
-#define		GYRO_BIOS_CHECK			1
+#define		GYRO_BIOS_CHECK			1					//惯导多转偏差检测
 #endif
 #define		CLIFF_ENABLE			1					//地检悬崖检查
 
 #define 	YBS_BLACK				1					//沿边时黑色墙体处理
 #define		PWRCAP_CAL				1					//电流计电量计算
 //#define 	OBSTACLE_CURRENT_CHECK	1					//过障时,电流会增加,过去不处理
-#define	 	YBS_AVOID_SEAT			1				//沿边充电座避障
+#define	 	YBS_AVOID_SEAT			1					//沿边充电座避障
 #define		SWITCHOFF_SUBMODE		1					//船型开关未打开模式
-#define		SLEEP_SUBMODE			1				//底盘休眠模式
-//#define		DOCK_NEAR				1				//充电座近信号
+#define		SLEEP_SUBMODE			1					//底盘休眠模式
+//#define	DOCK_NEAR				1					//充电座近信号
 #define		YBS_START_RIGHT_ANGLE	1					//沿边起始动作直行1m,右转90度,直行5m
 #define		DC_NOBAT_RUN			1					//无电池,DC直插的直行
 #define		FREE_SKID_INDEP_ACC		1					//使用直行时间累加的方法判断独立万向轮打滑
 #define		NEW_PWR_CAL				1					//使用2600MAH初始化电池及电量计算方法
-//#define		FINDSEAT_SKID_CHECK		1					//用于回充时骑上充电座但是又不动的情况
-#define		REMOTE					1				//使用遥控器功能
+//#define		FINDSEAT_SKID_CHECK		1				//用于回充时骑上充电座但是又不动的情况
+#define		REMOTE					1					//使用遥控器功能
 #define		REPEAT_DOCK				1					//再接续回充功能
 #define		SHUTDOWN_MODE			1					//关机功能
 #define		INTERFERENCE_ACTION		1					//红外信号抗干扰
 #define 	REYBS2DOCK				1					//小回充信号丢失再次请求沿边
 //#define		NARROW_PASS				1				//沿边窄通道处理,主要是与左碰撞相关。
 #define		GYRO_ROLL_CHECK			1					//惯导俯仰角检测（阈值5度）
-//#define		FREE_FIRST_BAD_CHECK	1					//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
+//#define		FREE_FIRST_BAD_CHECK	1				//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
 #define  	USE_VOICE_BUSY			1					//使用语音芯片BUSY引脚
 #define		USE_BITBAND				1					//GPIO读写使用BITBAND操作
 #define		STOP_WEEKUP				1					//可以从STOP模式中唤醒
 #define		SPEED_EXTI				1					//速度使用外部中断来计数
-#define		GYRO_PITCH_CHECK		1				//惯导俯仰角检测
+#define		GYRO_PITCH_CHECK		1					//惯导俯仰角检测
 #define		GYRO_PITCHROLL_CHECK	1
 //#define		PITCH_SPEEDUP			1			
-//#define		RING_PWM_CTL			1					//轮子PWM切断控制
-#define		GYRO_CAL				1				//惯导校准代码
-//#define		GYRO_COMPENSATION		1					//惯导角度补偿
+//#define		RING_PWM_CTL			1				//轮子PWM切断控制
+#define		GYRO_CAL				1					//惯导校准代码
+//#define		GYRO_COMPENSATION		1				//惯导角度补偿
 
 #define		MILE_COMPENSATION		1					//里程计补偿
-#define		STOP_SPD_CNT			1
-#define		RING_MIL_RECAL			1
+#define		STOP_SPD_CNT			1					//停止速度计算
+#define		RING_MIL_RECAL			1					//轮子里程计异常时停止根据速度补偿
+#define		FAN_SPD_CTL				1					//风机速度控制
 
 //#define		NEW_Q55_BOARD_1113		1
 
@@ -107,7 +108,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			7
+#define		CORRECT_VERSION			8
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -116,53 +117,13 @@
 #define		SWEEP_METHOD_YBS		1
 #define		SWEEP_METHOD_SPOT		2
 
-//QZ:dm=0,return; dm=1,左转; dm=2,右转; dm=3,前进; dm=4,后退; dm=5,左轮不动向左转; dm=6,右轮不动向右转;
-//	 dm=7,右轮不动向左转; dm=8,左轮不动向右转 18:顺时针走螺旋形; 19:逆时针走螺旋形; 21 走螺旋线
-///////////////////下面是do_action动作码////////////////////////
-#define  TURN_LEFT  				1
-#define  TURN_RIGHT  				2
-#define  FORWARD     				3
-#define  BACKWARD    				4
-#define  TURN_LEFT_STAY_L_WHEEL   	5
-#define  TURN_RIGHT_STAY_R_WHEEL  	6
-#define  TURN_LEFT_STAY_R_WHEEL   	7
-#define  TURN_RIGHT_STAY_L_WHEEL  	8
-
-#define  HELIX_CLK_WISE           18//螺旋线顺时针
-#define  HELIX_ANTI_CLK_WISE      19//螺旋线逆时针
 
 ////////////下面是PWM驱动脚使用的软定义/////////////////////////
 #define   L_FRONT     0x1   //左轮向前
 #define   L_BACK      0x2   //左轮向后
 #define   R_FRONT     0x3   //右轮向前
 #define   R_BACK      0x4   //右轮向后
-#define   CHARGE_PWM  0x5   //充电控制
-
-
-/////////////下面是红外接收的数据定义////////////////////////////
-#define  L_CHARGE         	0xe0		
-#define  M_CHARGE         	0xb0
-#define  R_CHARGE         	0xd0
-#define  UP_CHARGE         	0x70
-#define  L_UP_CHARGE        0x60 
-#define  M_UP_CHARGE        0x30 
-#define  R_UP_CHARGE  			0x50
-#define  L_M_CHARGE         0xa0
-#define  L_R_CHARGE         0xc0
-#define  R_M_CHARGE         0x90 
-#define  L_M_UP_CHARGE      0x20   
-#define  L_R_UP_CHARGE      0x40   
-#define  R_M_UP_CHARGE   		0x10
-#define  L_M_R_CHARGE 			0x80
-#define  L_M_R_UP_CHARGE 		0x00
-#define  V_DUMMYWALL        0xdc 
-#define  UP__DUMMYWALL      0xec    
-#define  V_UP_DUMMYWALL     0xcc
-
-#define  B_HW_MASK			0x0040
-#define	 L_HW_MASK			0X0100
-#define	 R_HW_MASK			0X0400
-    
+#define   CHARGE_PWM  0x5   //充电控制    
 
 /////////////下面是遥控器的按键定义//////////////////////////////
 #define  YAOKONG_ESC           	10	 //退出、取消、关闭电源
@@ -182,13 +143,12 @@
                          
 ///////下面是地检和墙检的状态定义///////////////////////////
 
-#define     NEAR            1                              //近
-#define     FARN            0                              //远
+#define     NEAR            	1                              //近
+#define     FARN            	0                              //远
 
 
-#define    LEFT             1            	//方向是向左
-#define    RIGHT            2            	//方向是向右
-#define 	 STOP 			0X03
+#define		DIR_LEFT             1            	//方向是向左
+#define    	DIR_RIGHT            2            	//方向是向右
 
 #define     FRONT           0X01    			// 向前
 #define     BACK            0X02 					// 向后
@@ -199,12 +159,6 @@
 #define     LI_ANGLE        0X90         //内墙角
 #define     WAI_ANGLE       0XA0         //外墙角
 #define     U_ANGLE         0XB0         //U型墙角
-
-#define    POWER_DOWN       0X003        //显示电池没电
-#define    POWER_TEMP       0x005        //显示电池温度过高
-#define    POWER_NTC        0X006        //电池没有NTC
-#define    POWER_CHARGE     0X007        //电池正在充电
-#define    CHARGE_ERR       0X009        //充电错误
 
 //qz add 自有协议
 //////////////////////主模式///////////////////////////////
@@ -558,13 +512,6 @@ typedef struct 			  //遥控器
 	unsigned char test;			  //测试的遥控器标志  0表示自己的遥控器；1表示信号是由编码为FFFF的遥控器发出的信号
 }YAOKONG;
 
-typedef struct 			  //光敏电阻值的结构
-{
- bool uv;		 
- unsigned char work_mode;	 
- unsigned char speed;
-}WORK_MODE;
-
 typedef struct
 {
  unsigned int time;//采样垃圾检测的时间    
@@ -625,13 +572,8 @@ typedef struct             //墙检地检的数据结构	//红外数据结构?  QZ
 	//hzh
 	//其实sign并没有用到
 	volatile	  unsigned int	  effectTop;
-	volatile	unsigned int	  signTop;
 	volatile	unsigned int	  effect_timeTop;
-
-	volatile	unsigned int	effectSignal;//用于前接收头
-	volatile	unsigned int	  effect_timeSignal;
-	unsigned	char			Cnt_fallRise;
-
+	
 	volatile	  unsigned int	  effectLeft;
 	volatile	  unsigned int	  effect_timeLeft;
 
@@ -641,9 +583,6 @@ typedef struct             //墙检地检的数据结构	//红外数据结构?  QZ
 
 	volatile	  unsigned int	  effectMid;
 	volatile	  unsigned int	  effect_timeMid;
-
-	volatile	  unsigned int	  effectTopReal;
-	volatile	  unsigned int	  effect_timeTopReal;
 
 	volatile	  unsigned int	  effectNear;
 	volatile	  unsigned int	  effect_timeNear;
@@ -829,23 +768,18 @@ unsigned int angle;		//机器的角度
 typedef struct		//机器系统的工作状态
 {
 	bool 		speed_up;
-	bool 		factory;				//厂测状态qz add 20181024
-	bool 		factory_burnning;		//厂测跑机状态qz add 20181024
 	bool 		bump_flag; 				   //qz add for bleamn
 	bool        low_power;
 	bool		burning;
 	bool		self_test;
 		
-	u8 			factory_tst_item;		//qz add 20181107
 	u8 		 	mode ;	   //机器的运行模式  0：静止模式；1：扫地模式；2：自动回充模式；3；遥控模式	4:出错模式
 	u8  		sub_mode;	//子模式，0x01:cease,0xfe:quit_charge,0xff：err
 	u8  		step;		//路径执行的步骤
 	u8 			step_abn;    //异常时的步骤
 	u8			step_bp;	//碰撞时的步骤标志
 	u8			step_mk;	//多垃圾清扫步骤
-	u8	 		last_bump;
 	u8 			Info_Abort;			//qz add中止接收指令，比如碰撞后退或退出充电座时,20180919修正为只速度屏蔽
-	u8 			All_Info_Abort;		//qz add 20180919，屏蔽所有指令
 	u8 			last_mode;			//qz add上一次的模式
 	u8 			last_sub_mode;
 	u8 			test_step;	
@@ -868,7 +802,6 @@ typedef struct		//机器系统的工作状态
 	u32  		abnormity;  //异常号码  0表示没有异常 //QZ:16:中扫电流过大,19:左轮不动,20:右轮不动,22:左轮离地,23:右轮离地,31:右轮电流,32:左轮电流
 	u32 		bump ;      //碰撞的标志 //QZ:1:左地检,2:左中地检,3:右中地检,4:右地检,5:左碰撞,6:右碰撞,7:左墙检靠近墙,
  									//8:左中墙检靠近墙,9:中墙检,10:顶红外或虚拟,14:右墙检,15:右中墙检,90:双碰撞,
-
 	u32 		bump_time;
 	u32 		abn_time;			//qz add 20181011
 	u32			self_test_time;
@@ -904,9 +837,6 @@ typedef struct					//坐标格信息结构体
 {
 	bool clean;					//该坐标是否清扫标志
 	bool wall;					//该坐标是否墙壁，碰撞标志
-	short clr_xpos;
-	short clr_ypos;
-	u32  cnt;
 }COORDINATE;
 
 typedef struct 					//清扫结构体

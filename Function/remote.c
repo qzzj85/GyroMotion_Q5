@@ -70,6 +70,15 @@ void Remote_Handle(void)
 				break;
 			case REMOTE_KEY_RIGHT:
 				//机器处于工作状态，退出
+
+				if(!Read_Key2())
+					{
+						WriteBatInitFlash();
+						NVIC_GenerateSystemReset();
+						return;
+					}
+
+				
 				if(mode.status)
 					break;
 				/////机器处于充电状态且未进入时间预约设置模式，退出

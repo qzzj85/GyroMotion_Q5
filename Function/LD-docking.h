@@ -38,6 +38,7 @@ extern 	u32 	findseat_skid_check_length;
 extern 	u32 	findseat_skid_check_time;
 extern  u32     find_home;
 extern 	u8 		REYBS_TIME;
+extern bool lm_t_cnt_timeflag,rm_t_cnt_timeflag;
 
 void Docking_Bump_My(void);
 void Docking_Bump_My_Action(void);
@@ -69,8 +70,8 @@ void ReYBS2Dock(void);
 u8 Find_Seat_My(void);
 void Find_Seat_New(void);
 u8 Find_Seat_New_II(void);
-void Start_Start_III(void);
 void Start_Start_V(void);
+void Start_Start_VI(void);
 
 void Init_Dock_RightYBS(u8 temp_data);
 void Init_Dock_LeftYBS(u8 temp_data);

@@ -38,6 +38,9 @@ void  Init_System(void)
 	NVIC_Configuration();				//初始化系统的中断，如有移植需要修改
 	init_time_2();        				//Timer2 10K中断  计数器，用于系统的基本心跳
 	Init_Hardware();    				//初始化系统的硬件，如有移植需要修改
+#ifdef FAN_SPD_CTL
+	Init_FanSpd_Interrupt();
+#endif
 	init_ad();							//初始化AD	  
 	URAT1_init(115200);
 

@@ -21,7 +21,6 @@ void Init_Quit_Charging(u8 sweep_method)
 
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	//mode.Info_Abort=1;		//qz add 20180316:∆¡±Œµº∫Ω∞Â√¸¡Ó //qz mask 20180522
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.Info_Abort=0;
 
 	CHECK_STATUS_FLAG=true;

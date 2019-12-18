@@ -107,10 +107,6 @@
 extern UART UART1;			//串口数据结构
 extern UART UART2;
 extern UART UART3;
-extern MOTION motion1;			//qz add
-extern bool 	Bump_report_time;	//qz add
-
-extern UNIX_TIME 	Unix_Time;
 extern GYRO_DATA	Gyro_Data;
 
 extern u8 USART1_TX_BUF[USART1_TX_SIZE];

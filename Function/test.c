@@ -25,7 +25,6 @@ void Init_Test(u8 test_mode)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 //		WriteWorkState();
 	w_l.on=0;
@@ -826,7 +825,7 @@ void Do_FactoryTest(void)
 				test_data1=0;test_cnt=0;test_100ms_flag=false;
 				Sweep_Level_Set(SWEEP_LEVEL_STOP);
 				TRACE("====================24，风机电流测试====================\r\n");
-				Set_FJ_Level(STANDARD_PWM);
+				Set_FJ_Level(FAN_STD_PWM);
 			break;
 			/////////////////风机电流测试/////////////////////
 			case 26:

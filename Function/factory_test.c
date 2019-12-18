@@ -33,7 +33,6 @@ void Init_FactoryTest(void)
 	mode.action 										= 0;
 	mode.step=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.factory=true;
 	mode.factory_burnning=false;
 	mode.factory_tst_item=0;

@@ -303,12 +303,12 @@ void Shift_BumpAction(void)
 										}
 									else
 										{
-											if(check_point.ybs_dir==LEFT)
+											if(check_point.ybs_dir==DIR_LEFT)
 												{
 													Init_Shift_LeftYBS(0);
 													return;
 												}
-											else if(check_point.ybs_dir==RIGHT)
+											else if(check_point.ybs_dir==DIR_RIGHT)
 												{
 													Init_Shift_RightYBS(0);
 													return;
@@ -320,12 +320,12 @@ void Shift_BumpAction(void)
 								{
 									if(nextaction<=CHECK_LEAKSWEEP)
 										{
-											if(check_point.ybs_dir==LEFT)
+											if(check_point.ybs_dir==DIR_LEFT)
 												{
 													Init_Shift_LeftYBS(0);
 													return;
 												}
-											else if(check_point.ybs_dir==RIGHT)
+											else if(check_point.ybs_dir==DIR_RIGHT)
 												{
 													Init_Shift_RightYBS(0);
 													return;
@@ -457,12 +457,12 @@ void Shift_BumpAction(void)
 													
 													else
 														{
-															if(check_point.ybs_dir==LEFT)
+															if(check_point.ybs_dir==DIR_LEFT)
 																{
 																	Init_Shift_LeftYBS(0);
 																	return;
 																}
-															else if(check_point.ybs_dir==RIGHT)
+															else if(check_point.ybs_dir==DIR_RIGHT)
 																{
 																	Init_Shift_RightYBS(0);
 																	return;
@@ -474,12 +474,12 @@ void Shift_BumpAction(void)
 												{
 													if(nextaction<=CHECK_LEAKSWEEP)
 														{
-															if(check_point.ybs_dir==LEFT)
+															if(check_point.ybs_dir==DIR_LEFT)
 																{
 																	Init_Shift_LeftYBS(0);
 																	return;
 																}
-															else if(check_point.ybs_dir==RIGHT)
+															else if(check_point.ybs_dir==DIR_RIGHT)
 																{
 																	Init_Shift_RightYBS(0);
 																	return;
@@ -714,7 +714,6 @@ void Init_Shift_Point1(u8 pre_action)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 	switch(pre_action)
 		{
@@ -1957,7 +1956,6 @@ void Init_Shift_Point2(void)
 	mode.step_bp = 0;
 	mode.bump_flag=0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=1;
 //		WriteWorkState();
 	w_l.on=0;
@@ -2220,7 +2218,6 @@ void Init_Shift_RightYBS(u8 pre_action)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
 	if(pre_action==0)
@@ -2287,7 +2284,6 @@ void Init_Shift_LeftYBS(u8 pre_action)
 	mode.bump = 0;
 	mode.bump_flag=false;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 
 	mode.status=1;
@@ -3533,7 +3529,6 @@ void Init_ShiftExit_RightYBS(u8 pre_action)
 	mode.step_bp = 0;
 	mode.bump = 0;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	
 	mode.status=1;
 	if(pre_action==0)
@@ -3593,7 +3588,6 @@ void Init_ShiftExit_LeftYBS(u8 pre_action)
 	mode.bump = 0;
 	mode.bump_flag=false;
 	mode.Info_Abort=0;				//qz add 20180919
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.time=giv_sys_time;
 
 	mode.status=1;

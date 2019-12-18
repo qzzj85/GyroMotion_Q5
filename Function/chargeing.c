@@ -29,7 +29,6 @@ void Init_Switchoff(void)
 	mode.mode = MODE_CHARGE;
 	mode.sub_mode=SUBMODE_CHARGE_SWITCHOFF;
 	mode.Info_Abort =1; 			//禁止SLAM速度通信
-	mode.All_Info_Abort=1;			//禁止SLAM通信,qz add 20180919
 	mode.step=0; 					//防止从充电座后退
 	mode.status=0;					//非工作状态
 	mode.time=giv_sys_time;
@@ -62,7 +61,6 @@ void Init_Chargeing(u8 temp_sub_mode)
 	mode.sub_mode=temp_sub_mode;
 	mode.step=0;		//qz add 20180522
 	mode.Info_Abort=0;	//qz add 20180615
-	mode.All_Info_Abort=0;			//qz add 20180919
 	mode.status=0;						//qz add 20180522
 	WriteWorkState();
 	clr_ram();

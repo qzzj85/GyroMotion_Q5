@@ -142,6 +142,72 @@ void init_rtc(void)
   	NVIC_Init(&NVIC_InitStructure);
 }
 
+
+#ifdef  RTC_8M_CORR
+unsigned int  second_time=0; 
+bool  rtc_8m_flag   = FALSE;
+u8  rtc_8m_mode  =   WAIT_CORR;
+
+void enable_rtc_second_irq(void)
+{
+  	NVIC_InitTypeDef NVIC_InitStructure;
+//  	EXTI_InitTypeDef EXTI_InitStructure;	
+    /* 使能RTC秒中断 */ 
+    RTC_ITConfig(RTC_IT_SEC, ENABLE);
+    /* 等待对RTC寄存器最后的写操作完成 */         
+    RTC_WaitForLastTask();
+  /* Enable the RTC Interrupt */
+//  NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQChannel;
+  	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
+  	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  	//使能闹钟中断
+  	NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;
+  	NVIC_Init(&NVIC_InitStructure);	
+}
+void disable_rtc_second_irq(void)
+{
+  	NVIC_InitTypeDef NVIC_InitStructure;
+  //	EXTI_InitTypeDef EXTI_InitStructure;	
+    /* 使能RTC秒中断 */ 
+    RTC_ITConfig(RTC_IT_SEC, DISABLE);
+    /* 等待对RTC寄存器最后的写操作完成 */         
+    RTC_WaitForLastTask();
+  /* Enable the RTC Interrupt */
+//  NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQChannel;
+  	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
+  	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  	NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+  	//使能闹钟中断
+  	NVIC_InitStructure.NVIC_IRQChannel = RTC_IRQn;
+  	NVIC_Init(&NVIC_InitStructure);	
+}
+
+void  rtc_8m_corr(void)
+{
+	switch(rtc_8m_mode )
+		{
+			case WAIT_CORR:
+				enable_rtc_second_irq();
+				rtc_8m_mode  = BEGIN_CORR_1;
+				second_time =  0;
+				break;
+			case BEGIN_CORR_1  :
+				break;
+			case BEGIN_CORR_2  :
+				break;				
+			case END_CORR:
+				disable_rtc_second_irq();
+				rtc_8m_flag   = TRUE;	
+				break;
+			default :		
+				break;
+        }	    
+}
+#endif
+
+
+
 #ifdef PREEN_SWEEP
 void ReadPreengage(void)
 {

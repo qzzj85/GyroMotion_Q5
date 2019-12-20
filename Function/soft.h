@@ -94,7 +94,11 @@
 #define		STOP_SPD_CNT			1					//停止速度计算
 #define		RING_MIL_RECAL			1					//轮子里程计异常时停止根据速度补偿
 #define		FAN_SPD_CTL				1					//风机速度控制
-
+#ifdef FAN_SPD_CTL
+#define		FAN_SPD_TIM1			1
+#endif
+//#define		YBS_NEAR_TGT			1
+#define		STOP_BACK_DIRECT		1
 //#define		NEW_Q55_BOARD_1113		1
 
 #define		TEST_ONESTEP			1
@@ -108,7 +112,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				4
-#define		CORRECT_VERSION			8
+#define		CORRECT_VERSION			9
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

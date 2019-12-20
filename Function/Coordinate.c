@@ -199,7 +199,9 @@ void Cal_xy(void)
 void Reset_XY(void)
 {
 	TIM_ITConfig(TIM2,TIM_IT_Update,DISABLE);
+#ifndef     	RTC_8M_CORR 
 	GYRO_RST_0;
+#endif		
 	X_pos=0;Y_pos=0;
 	last_l_all_length=0;last_r_all_length=0;r_length=0;l_length=0;r1=0;
 	old_angle=0;
@@ -208,8 +210,15 @@ void Reset_XY(void)
 	grid.x=0;grid.y=0;
 	l_ring.all_length=0;
 	r_ring.all_length=0;
+#ifndef 		RTC_8M_CORR 
 	delay_ms(300);
 	GYRO_RST_1;
+#else
+	rtc_8m_Report();
+	delay_ms(10);
+	rtc_8m_Report();	
+	delay_ms(10);		
+#endif 		
 	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
 }
 
@@ -2142,8 +2151,11 @@ u8 Area_Check(u8 avoid_ybs)
 #endif
 			Set_AreaWorkTime(10);
 		}
-	
+#ifdef YBS_NEAR_TGT
 	if((!motion1.force_dock)&(Find_Leak_Area_II())	)					//寻找当前区域漏扫
+#else
+	if((!motion1.force_dock)&(Find_Leak_Area()))
+#endif
 		{
 #ifdef DEBUG_COOR
 			TRACE("Go to LeakArea!!!\r\n");
@@ -2341,7 +2353,7 @@ u8 Can_Entry_Point(void)
 				entry_point[i].gridx=check_point.new_x1-i;
 			entry_point[i].gridy=check_point.new_y1;
 			first_check[i].gridx=entry_point[i].gridx;
-			if(ydir)
+			if(ydir>0)
 				{
 					first_check[i].gridy=check_point.new_y1-1;
 					//second_check[i].gridy=check_point.new_y1-2;
@@ -2433,13 +2445,19 @@ u8 Can_Entry_Point(void)
 		}
 	
 	check_result=0;
-	for(i=0;i<first_len;i++)
+	//for(i=0;i<first_len;i++)
+	for(i=0;i<len;i++)
 		{
+#ifdef DEBUG_COOR
+			TRACE("first_check[%d].gridx=%d gridy=%d \r\n",i,first_check[i].gridx,first_check[i].gridy);
+			TRACE("and wall=%d\r\n",Read_Coordinate_Wall(first_check[i].gridx,first_check[i].gridy));
+#endif
 			if((Read_Coordinate_Wall(first_check[i].gridx, first_check[i].gridy))\
 				|(!Read_Coordinate_Clean(first_check[i].gridx, first_check[i].gridy)))
 				check_result++;
 		}
-	if(check_result>=first_len)
+	//if(check_result>=first_len)
+	if(check_result>=len)
 		{
 #ifdef DEBUG_COOR
 			TRACE("Entry Point has surround by firstwall!!\r\n");
@@ -2697,7 +2715,1326 @@ u8 Analysis_Fake_Leak(s8 xcheck,s8 ycheck,u8 ydir)
 
 //function:检查漏扫区域
 //return: 0,无漏扫，1，有漏扫
+u8 Analysis_Leak_Point_MAX(void)
+{
+	s8 max_cleanx1,min_cleanx1,max_cleanx2,min_cleanx2,check_gridy1,check_gridy2,check_gridy3;
+	s8 data1=0,temp_gridx,temp1_gridx;
+	max_cleanx1=check_point.max_cleanx1;min_cleanx1=check_point.min_cleanx1;check_gridy1=check_point.y1;
+	max_cleanx2=check_point.max_cleanx2;min_cleanx2=check_point.min_cleanx2;check_gridy2=check_point.y2;
+	s8 start_checky=grid.y;
+	u8 check_result=0;
+
+	check_point.backup_grid=0;
+	///////////先进行max min检查///////////////////
+	///////////先进行max min检查///////////////////
+	if((Read_Coordinate_Seat(max_cleanx1,check_gridy1))|(Read_Coordinate_Seat(max_cleanx2,check_gridy2)))
+		{
+			return 0;
+		}
+	data1=abs(max_cleanx1-max_cleanx2);				//两个相邻Y坐标的X轴方向最大清扫坐标比较
+	if(data1>2)										//如果两个相邻Y坐标的X轴方向最大清扫坐标差距大于2个坐标格（40cm）
+		{
+			if(max_cleanx1>max_cleanx2)				//如果检查点X1大于相邻检查点X2
+				{
+					for(temp_gridx=max_cleanx2+1;temp_gridx<max_cleanx1;temp_gridx++)
+						{
+							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(Read_Coordinate_Clean(temp_gridx+1,check_gridy1)))
+								{
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
+										{
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+									else
+										{
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
+										{
+											continue;
+										}
+									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
+										{
+		//									temp1_gridx=temp_gridx+1;
+											temp1_gridx=temp_gridx;
+											while(temp1_gridx<max_cleanx1)
+												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy2))
+														{
+															check_result=0;
+#ifdef DEBUG_COOR
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy2);
+#endif
+															break;
+														}
+													
+													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
+														{
+															check_point.backup_grid++;
+															temp1_gridx++;
+														}
+													else
+														{
+															check_result=1;
+															break;
+														}
+												}
+
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy1;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy2;
+													check_point.next_tgtyaw=F_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
+										}
+								}
+						}
+				}
+			else									//如果检查点X1小于相邻检查点X2
+				{
+					for(temp_gridx=max_cleanx1+1;temp_gridx<max_cleanx2;temp_gridx++)
+						{
+							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy2))&(Read_Coordinate_Clean(temp_gridx+1,check_gridy2)))
+								{
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
+										{
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+									else
+										{
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
+										{
+											continue;
+										}
+									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
+										{
+		//									temp1_gridx=temp_gridx+1;
+											temp1_gridx=temp_gridx;
+											while(temp1_gridx<max_cleanx2)
+												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy1))
+														{
+#ifdef DEBUG_COOR
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy1);
+#endif
+															check_result=0;
+															break;
+														}
+													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
+														{
+															temp1_gridx++;
+															check_point.backup_grid++;
+														}
+													else
+														{
+															check_result=1;
+															break;
+														}
+												}
+											
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy2;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy1;
+													check_point.next_tgtyaw=F_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
+										}
+								}
+						}
+				}
+		}
+	return 0;
+}
+
+
+u8 Analysis_Leak_Point_MIN(void)
+{
+	s8 max_cleanx1,min_cleanx1,max_cleanx2,min_cleanx2,check_gridy1,check_gridy2,check_gridy3;
+	s8 data1=0,temp_gridx,temp1_gridx;
+	max_cleanx1=check_point.max_cleanx1;min_cleanx1=check_point.min_cleanx1;check_gridy1=check_point.y1;
+	max_cleanx2=check_point.max_cleanx2;min_cleanx2=check_point.min_cleanx2;check_gridy2=check_point.y2;
+	s8 start_checky=grid.y;
+	u8 check_result=0;
+
+	check_point.backup_grid=0;
+	if((Read_Coordinate_Seat(min_cleanx1,check_gridy1))|(Read_Coordinate_Seat(min_cleanx2,check_gridy2)))
+		{
+			return 0;
+		}
+	data1=abs(min_cleanx1-min_cleanx2);				//两个相邻Y坐标的X轴方向最小清扫坐标比较
+	if(data1>2)										//如果两个相邻Y坐标的X轴方向最小清扫坐标差距大于2个坐标格（40cm）
+		{
+			if(min_cleanx1>min_cleanx2) 			//如果检查点X大于相邻检查点X
+				{
+					for(temp_gridx=min_cleanx1-1;temp_gridx>min_cleanx2;temp_gridx--)
+						{
+							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy2))&(Read_Coordinate_Clean(temp_gridx-1,check_gridy2)))
+								{
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
+										{
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+									else
+										{
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy2,check_point.ydir))
+										{
+											continue;
+										}
+									//if(Can_Entry_Point(temp_gridx, check_gridy2, check_point->ydir))
+										{
+		//									temp1_gridx=temp_gridx-1;
+											temp1_gridx=temp_gridx;
+											while(temp1_gridx>min_cleanx2)
+												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy1))
+														{
+#ifdef DEBUG_COOR
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy1);
+#endif
+															check_result=0;
+															break;
+														}
+												
+													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy2))
+														{
+															temp1_gridx--;
+															check_point.backup_grid--;
+														}
+													else
+														{
+															check_result=1;
+															break;
+														}
+												}
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy2;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy1;
+													check_point.next_tgtyaw=B_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
+										}
+								}
+						}
+				}
+			else									//如果检查点X小于相邻检查点X
+				{
+					for(temp_gridx=min_cleanx2-1;temp_gridx>min_cleanx1;temp_gridx--)
+						{
+							if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(Read_Coordinate_Clean(temp_gridx-1,check_gridy1)))
+								{
+									//if(check_point->y2<start_checky)
+									if(check_point.y2<check_point.y1)
+										{
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+									else
+										{
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+
+									if(Analysis_Fake_Leak(temp_gridx,check_gridy1,check_point.ydir))
+										{
+											continue;
+										}
+									//if(Can_Entry_Point(temp_gridx, check_gridy1, check_point->ydir))
+										{
+		//									temp1_gridx=temp_gridx-1;
+											temp1_gridx=temp_gridx;
+											while(temp1_gridx>min_cleanx1)
+												{
+													check_result=1;
+													if(Read_Coordinate_Clean(temp1_gridx,check_gridy2))
+														{
+#ifdef DEBUG_COOR
+															TRACE("grid.x=%d .y=%d has clean\r\n",temp1_gridx,check_gridy2);
+#endif
+															check_result=0;
+															break;
+														}
+												
+													if(Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))
+														{
+															temp1_gridx--;
+															check_point.backup_grid--;
+														}
+													else
+														{
+															check_result=1;
+															break;
+														}
+												}
+											if(check_result)
+												{
+				//									temp_gridx=(temp_gridx+temp1_gridx)/2;
+													check_point.new_x1=temp_gridx;
+													check_point.new_y1=check_gridy1;
+													check_point.new_x2=temp_gridx;
+													check_point.new_y2=check_gridy2;
+													check_point.next_tgtyaw=B_Angle_Const;
+													if(Can_Entry_Point())
+														return 1;
+												}
+										}
+								}
+						}
+				}
+		}
+	return 0;
+}
+
+
+u8 Analysis_Leak_Point_MID(void)
+{
+	s8 max_cleanx1,min_cleanx1,max_cleanx2,min_cleanx2,check_gridy1,check_gridy2,check_gridy3;
+	s8 data1=0,temp_gridx,temp1_gridx;
+	max_cleanx1=check_point.max_cleanx1;min_cleanx1=check_point.min_cleanx1;check_gridy1=check_point.y1;
+	max_cleanx2=check_point.max_cleanx2;min_cleanx2=check_point.min_cleanx2;check_gridy2=check_point.y2;
+	s8 start_checky=grid.y;
+	u8 check_result=0;
+
+#if 1
+	check_point.backup_grid=0;
+	s8 ydir=0;
+	
+	if((Read_Coordinate_Seat(min_cleanx1,check_gridy1))|(Read_Coordinate_Seat(min_cleanx2,check_gridy2)))
+		{
+			return 0;
+		}
+	if(check_gridy1>check_gridy2)
+		ydir=0;
+	else
+		ydir=1;
+	for(temp_gridx=min_cleanx1+1;temp_gridx<max_cleanx1;temp_gridx++)
+		{
+			if((Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))&(!Read_Coordinate_Seat(temp_gridx,check_gridy1)))
+				{
+					if(Analysis_Fake_Leak(temp_gridx,check_gridy1,ydir))
+						continue;
+					
+					temp1_gridx=temp_gridx;
+					while(temp1_gridx<grid.x_area_max)
+						{
+							if((Read_Coordinate_CleanNoWall(temp1_gridx,check_gridy1))&(!Read_Coordinate_Seat(temp1_gridx,check_gridy1)))
+								{
+									check_point.backup_grid++;									
+									temp1_gridx++;
+								}
+							else
+								break;
+						}
+					check_point.new_x1=temp_gridx;
+					check_point.new_y1=check_gridy1;
+					check_point.new_x2=temp_gridx;
+					check_point.new_y2=check_gridy2;
+					check_point.next_tgtyaw=B_Angle_Const;
+					if(ydir)
+						check_point.ybs_dir=DIR_RIGHT;
+					else
+						check_point.ybs_dir=DIR_LEFT;
+					if(Can_Entry_Point())
+						return 1;
+				}
+		}
+#endif
+	return 0;
+}
+
+u8 Analysis_Leak_Point_NoSweep(s8 ydir,bool x_up)
+{
+	s8 check_gridx,check_gridy1,check_gridy2,temp_gridx,now_gridx;
+	check_gridy1=check_point.y1;check_gridy2=check_point.y2;
+	now_gridx=grid.x;
+	check_point.backup_grid=0;
+	
+	if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
+		{
+#ifdef DEBUG_COOR
+			TRACE("y2 hadnot sweeped!!!\r\n");
+#endif
+			if((check_point.max_cleanx1==grid.x_area_min)|(check_point.min_cleanx1==grid.x_area_max))			//检查点出现空白未扫
+				{
+#ifdef DEBUG_COOR
+					TRACE("y1 also hadnot sweeped!\r\n");
+#endif
+					return 0;//break;//直接退出，漏扫检查完毕
+				}
+			else																								//检查点未出现空白
+				{
+#if 0
+					check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+					while(check_gridx<check_point.max_cleanx1)
+						{
+							if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx+1,check_gridy1)))
+								{
+									temp_gridx=check_gridx;
+									while(temp_gridx<check_point.max_cleanx1)
+										{
+											if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+												{
+													temp_gridx++;
+													check_point.backup_grid++;
+												}
+											else
+												break;
+										}
+									if(ydir>0)
+										{
+											check_point.new_x1=check_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=check_gridx;
+											check_point.new_y2=check_gridy1+1;
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+									else
+										{
+											check_point.new_x1=check_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=check_gridx;
+											check_point.new_y2=check_gridy1-1;
+											//check_point.ydir=1;
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+									check_point.next_tgtyaw=F_Angle_Const;
+#ifdef DEBUG_COOR
+									TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+#endif
+									return 1;																	//发现可进入点								
+								}
+							check_gridx++;
+						}
+				
+					check_gridx=(check_point.min_cleanx1+check_point.max_cleanx1)/2;
+					while(check_gridx>check_point.min_cleanx1)
+						{
+							if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx-1,check_gridy1)))
+								{
+									temp_gridx=check_gridx;
+									while(temp_gridx>check_point.min_cleanx1)
+										{
+											if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+												{
+													temp_gridx--;
+													check_point.backup_grid--;
+												}
+											else
+												break;
+										}
+									if(ydir>0)
+										{
+											check_point.new_x1=check_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=check_gridx;
+											check_point.new_y2=check_gridy1+1;
+											check_point.ydir=1;
+											check_point.ybs_dir=DIR_RIGHT;
+										}
+									else
+										{
+											check_point.new_x1=check_gridx;
+											check_point.new_y1=check_gridy1;
+											check_point.new_x2=check_gridx;
+											check_point.new_y2=check_gridy1-1;
+											//check_point.ydir=1;
+											check_point.ydir=0;
+											check_point.ybs_dir=DIR_LEFT;
+										}
+									check_point.next_tgtyaw=F_Angle_Const;
+#ifdef DEBUG_COOR
+									TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+#endif
+									return 1;																	//发现可进入点								
+								}
+							check_gridx--;
+						}
+#ifdef DEBUG_COOR
+					TRACE("y1 can't find entry!\r\n");
+#endif
+#else
+					if(x_up)
+						{
+							//check_gridx=check_point.max_cleanx1;
+							check_gridx=now_gridx;
+							check_point.backup_grid=0;
+							while(check_gridx<check_point.max_cleanx1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx+1,check_gridy1)))
+										{
+											temp_gridx=check_gridx;
+											while(temp_gridx<check_point.max_cleanx1)
+												{
+													if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+														{
+															temp_gridx++;
+															check_point.backup_grid++;
+														}
+													else
+														break;
+												}
+											check_point.new_x1=check_gridx;check_point.new_y1=check_point.y1;
+											check_point.new_x2=check_gridx;check_point.new_y2=check_point.y2;
+											if(check_gridy2>check_gridy1)
+												check_point.ybs_dir=DIR_RIGHT;
+											else
+												check_point.ybs_dir=DIR_LEFT;
+											if(ydir>0)
+												check_point.ydir=1;
+											else
+												check_point.ydir=0;
+											check_point.next_tgtyaw=B_Angle_Const;
+#ifdef DEBUG_COOR
+											TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+											TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+											TRACE("tgt_ydir=%d ybs_dir=%d\r\n",check_point.ydir,check_point.ybs_dir);
+#endif
+											return 1;																	//发现可进入点								
+										}
+									check_gridx++;
+								}
+							check_gridx=now_gridx;
+							check_point.backup_grid=0;
+							while(check_gridx>check_point.min_cleanx1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx-1,check_gridy1)))
+										{
+											temp_gridx=check_gridx;
+											while(temp_gridx>check_point.min_cleanx1)
+												{
+													if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+														{
+															temp_gridx--;
+															check_point.backup_grid--;
+														}
+													else
+														break;
+												}
+											check_point.new_x1=check_gridx;check_point.new_y1=check_point.y1;
+											check_point.new_x2=check_gridx;check_point.new_y2=check_point.y2;
+											if(check_gridy2>check_gridy1)
+												check_point.ybs_dir=DIR_LEFT;
+											else
+												check_point.ybs_dir=DIR_RIGHT;
+											if(ydir>0)
+												check_point.ydir=1;
+											else
+												check_point.ydir=0;
+											check_point.next_tgtyaw=B_Angle_Const;
+#ifdef DEBUG_COOR
+											TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+											TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+											TRACE("tgt_ydir=%d ybs_dir=%d\r\n",check_point.ydir,check_point.ybs_dir);
+#endif
+											return 1;																	//发现可进入点								
+										}
+									check_gridx--;
+								}
+						}
+					else
+						{
+							//check_gridx=check_point.min_cleanx1;
+							check_gridx=now_gridx;
+							check_point.backup_grid=0;
+							while(check_gridx>check_point.min_cleanx1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx-1,check_gridy1)))
+										{
+											temp_gridx=check_gridx;
+											while(temp_gridx>check_point.min_cleanx1)
+												{
+													if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+														{
+															temp_gridx--;
+															check_point.backup_grid--;
+														}
+													else
+														break;
+												}
+											check_point.new_x1=check_gridx;check_point.new_y1=check_point.y1;
+											check_point.new_x2=check_gridx;check_point.new_y2=check_point.y2;
+											if(check_gridy2>check_gridy1)
+												check_point.ybs_dir=DIR_LEFT;
+											else
+												check_point.ybs_dir=DIR_RIGHT;
+											if(ydir>0)
+												check_point.ydir=1;
+											else
+												check_point.ydir=0;
+											check_point.next_tgtyaw=F_Angle_Const;
+#ifdef DEBUG_COOR
+											TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+											TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+											TRACE("tgt_ydir=%d ybs_dir=%d\r\n",check_point.ydir,check_point.ybs_dir);
+#endif
+											return 1;																	//发现可进入点								
+										}
+									check_gridx--;
+								}
+							check_gridx=now_gridx;
+							check_point.backup_grid=0;
+							while(check_gridx<check_point.max_cleanx1)
+								{
+									if((Read_Coordinate_CleanNoWall(check_gridx,check_gridy1))&(Read_Coordinate_Clean(check_gridx+1,check_gridy1)))
+										{
+											temp_gridx=check_gridx;
+											while(temp_gridx<check_point.max_cleanx1)
+												{
+													if(Read_Coordinate_CleanNoWall(temp_gridx,check_gridy1))
+														{
+															temp_gridx++;
+															check_point.backup_grid++;
+														}
+													else
+														break;
+												}
+											check_point.new_x1=check_gridx;check_point.new_y1=check_point.y1;
+											check_point.new_x2=check_gridx;check_point.new_y2=check_point.y2;
+											if(check_gridy2>check_gridy1)
+												check_point.ybs_dir=DIR_RIGHT;
+											else
+												check_point.ybs_dir=DIR_LEFT;
+											if(ydir>0)
+												check_point.ydir=1;
+											else
+												check_point.ydir=0;
+											check_point.next_tgtyaw=F_Angle_Const;
+#ifdef DEBUG_COOR
+											TRACE("y1 find entry! tgt_x1=%d tgt_y1=%d \r\n",check_point.new_x1,check_point.new_y1);
+											TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+											TRACE("tgt_ydir=%d ybs_dir=%d\r\n",check_point.ydir,check_point.ybs_dir);
+#endif
+											return 1;																	//发现可进入点								
+										}
+									check_gridx++;
+								}
+						}
+#endif
+				}
+#ifdef DEBUG_COOR
+			TRACE("y1 can't find entry!\r\n");
+#endif
+		}
+	return 0;
+}
+
 u8 Find_Leak_Area_II(void)
+{
+	bool x_up=false;
+	s8 start_gridy,max_gridy,min_gridy;
+	s8 check_gridy,check_gridx,temp_gridx;
+	s8 now_gridx,now_gridy;
+	now_gridx=grid.x;now_gridy=grid.y;
+	
+	Init_CheckPoint();
+
+	if(motion1.area_ok)
+		return 0;
+	
+	start_gridy=grid.y;
+	if(start_gridy>grid.y_area_max)
+		start_gridy=grid.y_area_max;
+	else if(start_gridy<grid.y_area_min)
+		start_gridy=grid.y_area_min;
+	max_gridy=grid.y_area_max;
+	min_gridy=grid.y_area_min;
+
+	if(now_gridx>=(grid.x_area_max+grid.x_area_min)/2)
+		x_up=true;
+	
+	s8 ydir=Read_Motion_YDir();
+	if(ydir>0)							//当前正在沿Y轴正方向清扫
+		{
+#ifdef DEBUG_COOR
+			TRACE("prepare now point to Ymax check...\r\n");
+		////////////////////////////////// YDIR>0,start_gridy-->YMAX//////////////////////////////////////
+#endif
+			for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy+1;
+#ifdef DEBUG_COOR
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+#endif
+					if(Analysis_Leak_Point_NoSweep(1,x_up))
+						{
+							Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+							return 1;
+						}
+				}
+			if(x_up)
+				{
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+			else
+				{
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+			
+#ifdef DEBUG_COOR
+			TRACE("now point to Ymax check out!\r\n");
+			TRACE("prepare now point to Ymin check...\r\n");
+			//////////////////////////////////YDir>0,start_gridy-->YMIN//////////////////////////////////////
+#endif
+			for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy-1;
+#ifdef DEBUG_COOR
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+#endif
+					if(Analysis_Leak_Point_NoSweep(0,x_up))
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							return 1;
+						}
+				}
+			if(x_up)
+				{
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+			else
+				{
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+#ifdef DEBUG_COOR
+			TRACE("now point Ymin check out,No leak!\r\n");
+#endif
+		}
+
+	
+	////////////////////当前正在沿Y轴负方向清扫////////////////////////////
+	////////////////////当前正在沿Y轴负方向清扫////////////////////////////
+	////////////////////当前正在沿Y轴负方向清扫////////////////////////////
+	else				
+		{
+#ifdef DEBUG_COOR
+			TRACE("prepare now point to Ymin check...\r\n");
+//////////////////////////////////YDir<0,start_gridy-->YMIN//////////////////////////////////////
+#endif
+			for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy-1;
+#ifdef DEBUG_COOR
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+#endif					
+					if(Analysis_Leak_Point_NoSweep(0,x_up))
+						{
+							Set_CheckPoint_NextAction(CHECK_NORMALSWEEP);
+							return 1;
+						}
+				}
+			if(x_up)
+				{
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+			else
+				{
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xdown area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy>min_gridy;check_gridy--)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy-1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy-1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy-1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+#ifdef DEBUG_COOR				
+			TRACE("now point to Ymin check out!\r\n");
+			TRACE("prepare now point to Ymax check...\r\n");
+			////////////////////////////////// YDIR<0,start_gridy-->YMAX//////////////////////////////////////
+#endif
+			for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+				{
+					check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+					check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+					check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+					check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+					check_point.y1=check_gridy;
+					check_point.y2=check_gridy+1;
+#ifdef DEBUG_COOR				
+					TRACE("check_point.max_cleanx1=%d min_cleanx1=%d\r\n",check_point.max_cleanx1,check_point.min_cleanx1);
+					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
+					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
+#endif
+					if(Analysis_Leak_Point_NoSweep(1,x_up))
+						{
+							Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+							return 1;
+						}
+				}
+			if(x_up)
+				{
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmin area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+			else
+				{
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MIN())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmin area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MID())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xmid area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+					for(check_gridy=start_gridy;check_gridy<max_gridy;check_gridy++)
+						{
+							check_point.max_cleanx1=Return_MaxClean_GridX(check_gridy,0);
+							check_point.min_cleanx1=Return_MinClean_GridX(check_gridy,0);
+							check_point.max_cleanx2=Return_MaxClean_GridX(check_gridy+1,0);
+							check_point.min_cleanx2=Return_MinClean_GridX(check_gridy+1,0);
+							check_point.y1=check_gridy;
+							check_point.y2=check_gridy+1;
+							if(Analysis_Leak_Point_MAX())
+								{
+									Set_CheckPoint_NextAction(CHECK_LEAKSWEEP);
+#ifdef DEBUG_COOR
+									TRACE("find leak xup area!\r\n");
+									TRACE("tgt_x1=%d tgt_y1=%d\r\n",check_point.new_x1,check_point.new_y1); 						
+									TRACE("tgt_x2=%d tgt_y2=%d\r\n",check_point.new_x2,check_point.new_y2);
+									TRACE("c_p.backgrid=%d\r\n",check_point.backup_grid);
+									TRACE("c_p.ybs_dir=%d ydir=%d\r\n",check_point.ybs_dir,check_point.ydir);
+#endif
+									return 1;
+								}
+						}
+				}
+#ifdef DEBUG_COOR				
+			TRACE("now point to Ymax check out!\r\n");
+#endif
+		}
+	motion1.area_ok=true;
+	//Logout_Area_Coordinate();
+#ifdef USE_AREA_TREE
+	Set_Curr_AreaTree_LeakInfo(motion1.area_ok);
+#else
+	Set_CurrNode_LeakInfo(motion1.area_ok);
+#endif
+#ifdef DEBUG_COOR				
+	TRACE("now point to Ymax&Ymin check out! No leak!!\r\n");
+	TRACE("leak area check complete!!!\r\n");
+#endif
+	return 0;
+}
+
+
+u8 Find_Leak_Area(void)
 {
 	s8 start_gridy,max_gridy,min_gridy;
 	s8 check_gridy,check_gridx,temp_gridx;

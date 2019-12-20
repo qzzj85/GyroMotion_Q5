@@ -114,7 +114,23 @@ void SysTick_Handler(void)
 {
 }
 
-/////////////////////////////////////////////////////////////////////////////////
+void TIM1_UP_IRQHandler(void)
+{
+	TIM_ClearITPendingBit(TIM1,TIM_IT_Update);
+	sys_time1_cnt++;		//10ms“ª¥Œ
+
+	if(sys_time1_cnt%2==0)	//20ms
+		{
+			FanSpd_Cal();
+		}
+
+	if(sys_time1_cnt%4==0)	//40ms
+		{
+			FanSpd_PID();
+		}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 #ifdef REMOTE
 void Parse_Remote_Signa(INFR_DATA *hw_info)
@@ -301,7 +317,9 @@ void TIM2_IRQHandler(void)	//	10K ÷–∂œ
 //			Coordinate_report_time=true;
 			//Analysis_Coordinate();
 #ifdef FAN_SPD_CTL
+#ifndef FAN_SPD_TIM1
 			FanSpd_Cal();
+#endif
 #endif
 		}
 
@@ -1596,6 +1614,11 @@ void RTC_IRQHandler(void)
 {
 	if(RTC_GetITStatus(RTC_IT_SEC)!=RESET)
 		{
+#ifdef 	RTC_8M_CORR	
+			rtc_8m_mode  ++;
+			if( rtc_8m_mode == END_CORR)	 second_time = giv_sys_time -second_time ; 
+			if( rtc_8m_mode == BEGIN_CORR_2)	  second_time = giv_sys_time;
+#endif			
 			RTC_GetCounter();
 			RTC_ClearITPendingBit(RTC_IT_SEC);
 		}			

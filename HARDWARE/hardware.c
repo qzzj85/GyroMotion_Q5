@@ -37,6 +37,9 @@ void  Init_System(void)
 	delay_init(64);
 	NVIC_Configuration();				//初始化系统的中断，如有移植需要修改
 	init_time_2();        				//Timer2 10K中断  计数器，用于系统的基本心跳
+#ifdef FAN_SPD_TIM1
+	Init_Time_1();
+#endif
 	Init_Hardware();    				//初始化系统的硬件，如有移植需要修改
 #ifdef FAN_SPD_CTL
 	Init_FanSpd_Interrupt();
@@ -174,7 +177,15 @@ void Init_Hardware (void)
   	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_8;		//左边扫保护引脚，暂时按照GPIO读取
 	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	#ifdef USE_HSE	
 	RCC_MCOConfig(RCC_MCO_HSE);
+	#else
+	#ifdef            RTC_8M_CORR   
+	RCC_MCOConfig(RCC_MCO_HSI);
+	#else
+	RCC_MCOConfig(RCC_MCO_HSI);	
+    #endif
+	#endif		
 #endif
 /**************************/
 //
@@ -217,7 +228,11 @@ void Init_Hardware (void)
 #ifdef GYRO_PWM_RUN_STATE
     GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN |RSB_PWR_PIN| GYRO_PWM_RUN_PIN;
 #else
-    GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN|RSB_PWR_PIN;
+ #ifdef 	  RTC_8M_CORR 
+			 GPIO_InitStructure.GPIO_Pin=RSB_PWR_PIN;
+ #else
+		  GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN|RSB_PWR_PIN;
+#endif
 #endif	
     GPIO_Init(GPIOC,&GPIO_InitStructure);
 	#ifdef   NEW_Q55_BOARD_1113 
@@ -966,11 +981,14 @@ u8 Read_Last_Is_Dead(void)
 
 void Gyro_Rst(void)
 {
-#if 1
-	//qz add 20180910
-	GYRO_RST_0;
-	delay_100us(3000);
-	GYRO_RST_1;
+#ifndef 		RTC_8M_CORR 
+		//qz add 20180910
+		GYRO_RST_0;
+		delay_100us(3000);
+		GYRO_RST_1;
+		
+		//qz add end
+#else
 	
 	//qz add end
 #endif

@@ -359,6 +359,25 @@ void  enable_rap_yaw(u32 ori_l, u32 length_l,u32 ori_r,u32 length_r,short tgt_ya
 	spd_acc_flag=true;
 }
 
+#ifdef   MOTOR_SELF_TEST
+void  motor_self_test(void)
+{
+    static  u16   curr;
+	Set_BS_Level(1);   
+	delay_100us(3);
+	Set_BS_Level(0);  
+	u16 l;
+	u8  x;
+	l = 0;
+	for(x=0; x<16; x++)
+		{
+			l += ADC_ConvertedValue[ADC_SB_CURRENT + x*16] & 0XFFF;
+		}
+	curr  = l/16;   
+              //     Set_BS_Level(0);       		
+}
+#endif
+
 /******************************************************
 停止两个轮子的转动
 ******************************************************/

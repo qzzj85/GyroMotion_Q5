@@ -2555,6 +2555,7 @@ void Do_BackSweep(void)
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 #endif
 						Init_Pass2Sweep();
+						motion1.repeat_sweep=false;
 					}
 				else
 					{
@@ -2863,6 +2864,7 @@ void Init_Stop_BackSweep(void)
 	TRACE("Enter in %s...\r\n",__func__);
 #endif
 #if 1
+	s8 ydir;
 	if(Analysis_Back_Leak())
 		{
 #ifdef DEBUG_SWEEP
@@ -2876,35 +2878,36 @@ void Init_Stop_BackSweep(void)
 		{
 			Restore_Abort_Data();
 			Set_Motion_BackSweep(0);
+#ifdef STOP_BACK_DIRECT
+			ydir=Read_Motion_YDir();
+			if(((ydir>0)&(grid.y_abort>=grid.y_area_max))|((ydir<0)&(grid.y_abort<=grid.y_area_min)))
+				{
+#ifdef DEBUG_SWEEP
+					TRACE("grid y_abort is in Boundary,Do area check!!!\r\n");
+#endif
+					Area_Check(0);
+					Init_Shift_Point1(0);
+					return;
+				}
+			check_point.new_x1=grid.x;
+			check_point.new_y1=grid.y_abort;
+			check_point.new_x2=grid.x;
+			if(ydir>0)
+				check_point.new_y2=grid.y_abort+1;
+			else
+				check_point.new_y2=grid.y_abort-1;
+			check_point.ybs_dir=0;
+			check_point.next_tgtyaw=motion1.tgt_yaw;
+			Set_CheckPoint_NextAction(CHECK_BACK2NORMAL);
+#else
 			Area_Check(0);
+#endif
 			Init_Shift_Point1(0);
 			return;
 		}
 
 
-	
-	if(grid.y!=grid.y_abort)
-		{
-#ifdef DEBUG_SWEEP
-			TRACE("use shift point!!\r\n");
-#endif
-			s8 tgt_gridx,tgt_xmin,tgt_xmax;
-			check_point.new_x1=grid.x_abort;check_point.new_y1=grid.y_abort;
-			check_point.new_x2=grid.x_abort;check_point.new_y2=grid.y_abort;
-			check_point.next_action=CHECK_BACK2NORMAL;
-			Init_Shift_Point1(0);
-			return;
-		}
-#endif
-	if(Analysis_Back_Leak())
-		{
-#ifdef DEBUG_SWEEP
-			TRACE("find back leak!!\r\n");
-			TRACE("goto back leak!!\r\n");
-#endif
-			Init_Shift_Point1(0);
-			return;
-		}
+#else
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
 	/******≥ı ºªØœ‘ æ***********/
@@ -2936,6 +2939,7 @@ void Init_Stop_BackSweep(void)
 #ifdef DEBUG_SWEEP
 	TRACE("Init Stop Backsweep complete!!!\r\n");
 	TRACE("grid.x_abort=%d y_abort=%d\r\n",grid.x_abort,grid.y_abort);
+#endif
 #endif
 }
 

@@ -42,5 +42,21 @@ void Reinit_Rtc(void);
 u8 	Check_PreengageTime(void);
 void Init_Rtc_Data(void);
 
+#ifdef  RTC_8M_CORR
+extern unsigned int  second_time; 
+extern unsigned int  second_old_time; 
+extern bool  rtc_8m_flag   ;
+extern u8  rtc_8m_mode  ;
+
+#define    WAIT_CORR   0
+#define    BEGIN_CORR_1   1
+#define    BEGIN_CORR_2   2
+#define    END_CORR   3
+void  rtc_8m_corr(void);
+
+void enable_rtc_second_irq(void);
+void disable_rtc_second_irq(void);
+
+#endif
 
 #endif

@@ -12,4 +12,5 @@ extern volatile bool Sec;
 extern bool gbv_minute;   													//分钟标志，用于定时采样电池的电压。
 extern bool Five_Sec;
 extern bool gyro_check_time;
+extern u32 sys_time1_cnt;
 	#endif

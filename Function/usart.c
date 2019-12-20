@@ -111,6 +111,53 @@ u8 LRC8( u8 *ptr,u32 length)
 	return value;
 }
 
+
+
+#ifdef  RTC_8M_CORR
+void rtc_8m_Report(void)
+{
+//				int temp_32;
+	u16 temp_u16=0,count=0;
+	u8 temp_u8=0;
+	while(DMA_UART3_TX_Channel->CNDTR!=0);	
+	short    temp_second = 0;
+
+	/*-----------帧头---------*/
+	USART3_TX_BUF[count++]=0xA5;	//帧头						0
+	USART3_TX_BUF[count++]=0x08;	//Command					1
+
+	/*---------长度-----------*/
+	USART3_TX_BUF[count++]=0x00;
+	USART3_TX_BUF[count++]=NORMAL_LENGTH;	//data_cnt						3
+
+	/*---------时间戳--------*/
+	//	second_time = 0X2100;
+	if ((second_time > 0x2000) &&(second_time <0x2E00))  //偏差太大 有异常  
+	temp_second =  second_time - 0x2710 ;
+	USART3_TX_BUF[count++] = (temp_second>>8);// 				4			
+	USART3_TX_BUF[count++] = (temp_second);// 				5
+
+	temp_u16=count-2;
+	USART3_TX_BUF[2]=temp_u16>>8;
+	USART3_TX_BUF[3]=temp_u16;
+
+	/*------校验字节----------*/
+	temp_u8=LRC8(&(USART3_TX_BUF[2]),temp_u16);
+	USART3_TX_BUF[count++]=temp_u8; 						//6
+
+	/*------帧尾--------------*/
+	USART3_TX_BUF[count++]=0x5A; //7
+	UART3.TxdDataNum = count;	
+
+	DMA_USART3_TX_Length(UART3.TxdDataNum);
+	//	UART3.Trans_Busy = true;
+}
+
+#endif 
+
+
+
+
 #ifdef   TUYA_WIFI
 #ifdef   NEW_Q55_BOARD_1113   
 void Uart1_send(u8 *temp1 ,unsigned short count1)
@@ -598,6 +645,12 @@ void USART3_Init(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO,ENABLE);
 
 	GPIO_PinRemapConfig(GPIO_PartialRemap_USART3,ENABLE);
+#ifdef		RTC_8M_CORR 
+	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_Init(GPIOC,&GPIO_InitStructure);
+#endif
 
 #if 0
 	GPIO_InitStructure.GPIO_Pin=GYRO_RST_PIN;

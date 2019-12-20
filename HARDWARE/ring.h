@@ -24,8 +24,13 @@ void Change_Ring_Speed(int lspeed,int rspeed);
 void enable_rap_no_length(u32 ori_l,u32 speed_l,u32 ori_r,u32 speed_r);
 void Enable_Speed(void);
 void Disable_Speed(void);
+
+
+#ifdef   MOTOR_SELF_TEST
+void motor_self_test(void);
 #endif
 
+#endif
 
 
 

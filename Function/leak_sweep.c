@@ -210,25 +210,27 @@ void Do_LeakSweep(void)
 #if 0
 				if((motion1.tgt_yaw==F_Angle_Const))
 					{
-						if(Read_Coordinate_Clean(now_gridx+1,now_gridy))
+						if((Read_Coordinate_Clean(now_gridx+1,now_gridy))&(now_gridx+1<=grid.x_area_max))
 							{
 								stop_rap();
-								mode.step++;
-#ifdef DEBUG_SWEEP
-								TRACE("The next point has clean!!\r\n");
+#ifdef DEBUG_SWEEP	
+								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
+								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx+1);
 #endif
+								mode.step++;
 							}
 					}
 
 				if(motion1.tgt_yaw==B_Angle_Const)
 					{
-						if(Read_Coordinate_Clean(now_gridx-1,now_gridy))
+						if((Read_Coordinate_Clean(now_gridx-1,now_gridy))&(now_gridx-1>=grid.x_area_min))
 							{
 								stop_rap();
-								mode.step++;
-#ifdef DEBUG_SWEEP
-								TRACE("The next point has clean!!\r\n");
+#ifdef DEBUG_SWEEP	
+								TRACE("Now Grid.x=%d y=%d\r\n",now_gridx,now_gridy);
+								TRACE("coor[%d][%d] has been clean,goto next!!!\r\n",now_gridy,now_gridx-1);
 #endif
+								mode.step++;
 							}
 					}
 #endif
@@ -506,6 +508,7 @@ void Do_Leak_BackSweep(void)
 						TRACE("Call this in %s %d\r\n",__func__,__LINE__);
 #endif
 						Init_Pass2Sweep();
+						motion1.repeat_sweep=false;
 					}
 				else
 					{

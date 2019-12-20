@@ -93,11 +93,14 @@ void log_out(void)
 	TRACE("work time=%d min %d sec\r\n",min,sec);
 	TRACE("max_time=%d\r\n",motion1.worktime_area_max);
 	TRACE("version is V%d.%d.%d\r\n",MAIN_VERISON,SUB_VERSION,CORRECT_VERSION);
-	TRACE("fanspd_tgt=%d\r\n",fanspd_tgt);
-	TRACE("fanspd=%d r/s\r\n",fanspd);
-	TRACE("fanpwm=%d\r\n",fan_pwm);
+//	TRACE("fanspd_tgt=%d\r\n",fanspd_tgt);
+//	TRACE("fanspd=%d r/s\r\n",fanspd);
+//	TRACE("fanpwm=%d\r\n",fan_pwm);
 //	TRACE("top=%d\r\n",top_time_sec);
 //	TRACE("start_seat=%d\r\n",motion1.start_seat);
+#ifdef YBS_NEAR_TGT
+	TRACE("ybs_n_f=%d\r\n",ybs_near_flag);
+#endif
 #else
 	//TRACE("gyro.first_pitch=%d\r\n",Gyro_Data.first_pitch);
 	//TRACE("gyro.pitch=%d\r\n",Gyro_Data.pitch);
@@ -146,12 +149,19 @@ int main(void)
 //	Set_BS_Level(500);
 //	delay_ms(5000);
 //	while(1);
+#ifdef           MOTOR_SELF_TEST   
+     motor_self_test();
+#endif
 
 #ifdef DEBUG_Enter_Mode
 	TRACE("============welcome to sweeper!=============\r\n");
 #endif
 	while(1)
 	{	
+#ifdef  RTC_8M_CORR
+		if (rtc_8m_flag == FALSE)    
+			rtc_8m_corr();
+#endif 	
 		//Uart3_Communication();
 #ifdef TUYA_WIFI						  
 		Uart1_Comunication();						//串口数据解析函数	 
@@ -194,7 +204,9 @@ int main(void)
 		Parse_LowPower2Dock();
 		Parse_SelfTest_Stop();
 #ifdef FAN_SPD_CTL
+#ifndef FAN_SPD_TIM1
 		FanSpd_PID();
+#endif
 #endif
 #ifdef DEBUG
 		if((log_show)&(mode.sub_mode!=SUBMODE_FACT_TEST))

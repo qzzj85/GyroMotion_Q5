@@ -15,34 +15,26 @@ volatile bool Sec;												//秒标志
 bool gbv_minute;   												//分钟标志，用于定时采样电池的电压。
 bool Five_Sec;
 bool gyro_check_time=false;
-
+u32 sys_time1_cnt=0;
 void Init_Time_1(void)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	TIM_ICInitTypeDef		TIM_ICInitStructure;
-	NVIC_InitTypeDef		NVIC_InitStructure;
-	GPIO_InitTypeDef		GPIO_InitStructure;
+	NVIC_InitTypeDef		NVIC_InitStructure;	
 	
-	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1|RCC_APB2Periph_GPIOE|RCC_APB2Periph_AFIO, ENABLE);
-
-	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IN_FLOATING;
-	GPIO_InitStructure.GPIO_Pin=RM_HW;
-	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
-	GPIO_Init(GPIOE,&GPIO_InitStructure);
-	GPIO_PinRemapConfig(GPIO_FullRemap_TIM1,ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 
 #ifdef CPU_FREQ_36MHz
-	TIM_TimeBaseStructure.TIM_Period = 5000; 	   //主频修改到36MHz,36MHZ/(1200+1)*(2+1)=10KHz        
+	TIM_TimeBaseStructure.TIM_Period = 4999; 	   //主频修改到36MHz,36MHZ/(1200+1)*(2+1)=10KHz        
 	TIM_TimeBaseStructure.TIM_Prescaler = 35;
 	
 #endif
 #ifdef CPU_FREQ_64MHz
-	TIM_TimeBaseStructure.TIM_Period = 5000;	   //5ms
+	TIM_TimeBaseStructure.TIM_Period = 9999;	   //10ms
 	TIM_TimeBaseStructure.TIM_Prescaler = 63;
 #endif
 #ifdef CPU_FREQ_72MHz
-	TIM_TimeBaseStructure.TIM_Period = 5000;	   //5ms
+	TIM_TimeBaseStructure.TIM_Period = 4999;	   //5ms
 	TIM_TimeBaseStructure.TIM_Prescaler = 71;
 #endif
 	TIM_TimeBaseStructure.TIM_RepetitionCounter=0;
@@ -50,7 +42,6 @@ void Init_Time_1(void)
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; 
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 
-	///////////输入捕获/////////////////////////
   	TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;  
   	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Falling;	
   	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
@@ -58,22 +49,14 @@ void Init_Time_1(void)
   	TIM_ICInitStructure.TIM_ICFilter = 0x00;
   	TIM_ICInit(TIM1, &TIM_ICInitStructure);
 
-	NVIC_InitStructure.NVIC_IRQChannel						= TIM1_CC_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority	= 1;	//1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority			= 0;  
-	NVIC_InitStructure.NVIC_IRQChannelCmd					= ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-
-#if 0
 	NVIC_InitStructure.NVIC_IRQChannel						= TIM1_UP_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority	= 0;	//1
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority	= 10;	//1
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority			= 0;  
 	NVIC_InitStructure.NVIC_IRQChannelCmd					= ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-#endif
-	TIM_ClearFlag(TIM1,TIM_IT_CC2);
+	TIM_ClearFlag(TIM1,TIM_IT_Update);
 
-	TIM_ITConfig(TIM1,TIM_IT_CC2,ENABLE);
+	TIM_ITConfig(TIM1,TIM_IT_Update,ENABLE);
 	TIM_Cmd(TIM1, ENABLE);
 	
 }

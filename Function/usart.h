@@ -158,8 +158,11 @@ void USART2_Putc(u8 c);
 void USART2_Send_Enter(void);
 void USART2_Send_Str(char *s);
 void Init_Gyro_Data(void);
+#ifdef  RTC_8M_CORR
 
+void rtc_8m_Report(void);
 #endif
 
+#endif
 
 

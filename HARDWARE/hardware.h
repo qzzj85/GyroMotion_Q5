@@ -206,8 +206,11 @@ PE15	船型开关检测
 ///////////////////小鸟模块电源开关hzh//////////////////////////////////
 #define  	BIRD_POW     	GPIO_Pin_1	
 #define	 	GYRO_RST_PIN	GPIO_Pin_10
+
+#ifndef 		RTC_8M_CORR 
 #define	 	GYRO_RST_1		{GPIOC->BSRR|=1<<10;}
 #define	 	GYRO_RST_0		{GPIOC->BRR|=1<<10;}
+#endif
 
 #ifdef GYRO_PWM_RUN_STATE
 #define	 	GYRO_PWM_RUN_PIN	GPIO_Pin_12

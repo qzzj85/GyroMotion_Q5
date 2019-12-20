@@ -9,18 +9,36 @@
 bool abort_shiftybs_flag=false;
 static u8 next_action=0;
 bool recal_ybsstart=false;	//重新设置沿边起始坐标标志位
-
+#ifdef YBS_NEAR_TGT
+bool ybs_near_flag=false;
+#endif
 u8 Analysis_Reach_YAbort(void)
 {
 	u8 temp_nextaction=Read_CheckPoint_NextAction();
+	s8 ydir=Read_Motion_YDir();
 	if(temp_nextaction==CHECK_BACK2NORMAL)
 		{
+#ifndef STOP_BACK_DIRECT
 			if(Judge_GridYPOS_Reach(grid.y_abort,0))
 				{
 					stop_rap();
 					Init_Stop_BackSweep();
 					return 1;
 				}
+#else
+			if((grid.y==grid.y_abort)|((ydir>0)&(grid.y>grid.y_abort))|((ydir<0)&(grid.y<grid.y_abort)))
+				{
+					stop_rap();
+#ifdef DEBUG_SHIFT
+					TRACE("Motion is on Grid.y_abort!!!\r\n");
+					TRACE("Cancle All CHECK_BACK2NORMAL,goto normal!!\r\n");
+#endif
+					Init_NormalSweep(check_point.next_tgtyaw);
+					if(grid.y!=grid.y_abort)
+						motion1.repeat_sweep=true;
+					return 1;
+				}
+#endif
 		}
 
 	if(temp_nextaction==CHECK_BACKSWEEP)
@@ -34,7 +52,30 @@ u8 Analysis_Reach_YAbort(void)
 #endif
 					Restore_Abort_Data();
 					Set_Motion_BackSweep(0);
+#ifdef STOP_BACK_DIRECT
+					ydir=Read_Motion_YDir();
+					if(((ydir>0)&(grid.y_abort>=grid.y_area_max))|((ydir<0)&(grid.y_abort<=grid.y_area_min)))
+						{
+#ifdef DEBUG_SWEEP
+							TRACE("grid y_abort is in Boundary,Do area check!!!\r\n");
+#endif
+							Area_Check(0);
+							Init_Shift_Point1(0);
+							return 1;
+						}
+					check_point.new_x1=grid.x;
+					check_point.new_y1=grid.y_abort;
+					check_point.new_x2=grid.x;
+					if(ydir>0)
+						check_point.new_y2=grid.y_abort+1;
+					else
+						check_point.new_y2=grid.y_abort-1;
+					check_point.ybs_dir=0;
+					check_point.next_tgtyaw=motion1.tgt_yaw;
+					Set_CheckPoint_NextAction(CHECK_BACK2NORMAL);
+#else
 					Area_Check(0);
+#endif
 					Init_Shift_Point1(0);
 					return 1;
 				}
@@ -653,17 +694,45 @@ void Shift_BumpAction(void)
 								}
 							else if(nextaction==CHECK_BACK2NORMAL)
 								{
+#ifndef STOP_BACK_DIRECT
 									mode.bump=0;
 									mode.step_bp=0;
 									mode.bump_flag=false;
 									bump_time=0;
 									mode.step=0;
+#else								
+#ifdef DEBUG_SHIFT
+									TRACE("motion is in CHECK_BACK2NORMAL!!!\r\n");
+									TRACE("now gird is tgt1 or tgt2!!!\r\n");
+									TRACE("Direct to Normal!!\r\n");
+#endif
+									Init_NormalSweep(check_point.next_tgtyaw);
+									motion1.repeat_sweep=true;
+#endif
 									return;
 								}
-							else
+							else		//CHECK_NORMALSWEEP,CHECK_LEAKSWEEP,
 								{
-									Area_Check(1);
-									Init_Shift_Point1(1);
+#ifdef YBS_NEAR_TGT
+									if(!(ybs_near_flag)&(abs(check_point.backup_grid)>1)&(check_point.ybs_dir))
+										{
+											ybs_near_flag=true;
+											TRACE("ybs_near_flag=%d\r\n",ybs_near_flag);
+											if(check_point.ybs_dir==1)
+												{
+													Init_Shift_LeftYBS(0);
+													return;
+												}
+											else if(check_point.ybs_dir==2)
+												{
+													Init_Shift_RightYBS(0);
+													return;
+												}
+										}
+#endif
+									TRACE("call a_c in %s %d\r\n",__func__,__LINE__);
+									Area_Check(0);
+									Init_Shift_Point1(0);
 								}
 							break;
 						case 10:
@@ -747,6 +816,9 @@ void Init_Shift_Point1(u8 pre_action)
 #endif
 	Delete_All_PathPoint();
 	delay_ms(100);
+#ifdef YBS_NEAR_TGT
+	ybs_near_flag=false;
+#endif
 }
 
 
@@ -2187,7 +2259,14 @@ void Do_Shift_Point2(void)
 								motion1.repeat_sweep=true;
 							}
 						else if(temp_nextaction==CHECK_BACK2NORMAL)
-							Init_Stop_BackSweep();
+							{
+#ifndef STOP_BACK_DIRECT
+								Init_Stop_BackSweep();
+#else
+								Init_NormalSweep(motion1.tgt_yaw);
+								motion1.repeat_sweep=true;
+#endif
+							}
 						Set_AreaWorkTime(20);
 					}
 				break;
@@ -2261,6 +2340,21 @@ void Init_Shift_RightYBS(u8 pre_action)
 
 //输入参数pre_action：
 //0:直接沿边；1：先以当前角度直行再沿边；2:CHECK_NEWAREA/CHECK_GOEXIT专用动作再直行
+u8 IS_GridX_In_Backup(s8 now_gridx)
+{
+	if(check_point.backup_grid>0)
+		{
+			if((now_gridx>check_point.new_x2)&(now_gridx<check_point.new_x2+check_point.backup_grid))
+				return 1;
+		}
+	else
+		{
+			if((now_gridx<check_point.new_x2)&(now_gridx>check_point.new_x2+check_point.backup_grid))
+				return 1;
+		}
+	return 0;
+}
+
 void Init_Shift_LeftYBS(u8 pre_action)
 {
 	mode.last_mode=mode.mode;
@@ -2329,13 +2423,14 @@ void Init_Shift_LeftYBS(u8 pre_action)
 u8 Abort_ShiftYBS(void)
 {
 	u8 temp_nextaction=0,area_check=0;
-	s8 now_gridx;//now_gridy;
+	s8 now_gridx,now_gridy;
 	s8 tgt_gridx1,tgt_gridy1,tgt_gridx2,tgt_gridy2;
-	now_gridx=grid.x;//now_gridy=grid.y;
+	now_gridx=grid.x,now_gridy=grid.y;
 	tgt_gridx1=check_point.new_x1;tgt_gridy1=check_point.new_y1;
 	tgt_gridx2=check_point.new_x2;tgt_gridy2=check_point.new_y2;
 	temp_nextaction=Read_CheckPoint_NextAction();
-	
+
+#if 0	
 	if((mode.bump>=BUMP_OUTRANGE)&(temp_nextaction>=CHECK_NEWAREA))	//(check_point.next_area))
 		{
 			if(Check_OutRange_Clean_YBS(mode.bump))
@@ -2356,6 +2451,7 @@ u8 Abort_ShiftYBS(void)
 					return 1;
 				}
 		}
+#endif
 
 	if(mode.last_sub_mode==SUBMODE_SHIFTPOINT1)
 		{
@@ -2397,8 +2493,49 @@ u8 Abort_ShiftYBS(void)
 					return 1;
 				}
 		}
+#ifdef YBS_NEAR_TGT
+	if(ybs_near_flag)
+		{
+			if(abs(check_point.backup_grid)<2)
+				ybs_near_flag=false;
 
+			else if((now_gridy!=tgt_gridy1)&(now_gridy!=tgt_gridy2))
+				ybs_near_flag=false;
+
+			else if(!IS_GridX_In_Backup(now_gridx))
+				ybs_near_flag=false;
+			
+			else if(Judge_GridYPOS_Reach(tgt_gridy2,0))
+				{
+					if(IS_GridX_In_Backup(now_gridx))
+						{
+							stop_rap();
+#ifdef DEBUG_SHIFT	
+							TRACE("In backup grid!!!\r\n");
+#endif
+							check_point.new_x1=now_gridx;
+							check_point.new_y1=now_gridy;
+							check_point.new_x2=now_gridx;
+							check_point.new_y2=now_gridy;
+							Init_Shift_Point2();
+							return 1;
+						}
+					else 
+						{
+							ybs_near_flag=false;
+							stop_rap();
+							Area_Check(0);
+							Init_Shift_Point1(0);
+							return 1;
+						}
+				}
+		}
+#endif
+#ifndef YBS_NEAR_TGT
 	if(abort_shiftybs_flag)
+#else
+	if((abort_shiftybs_flag)&(!ybs_near_flag))
+#endif
 		{
 			abort_shiftybs_flag=false;
 			//if(abs(Gyro_Data.y_pos-motion1.ypos_ybs_start)<=20)
@@ -3188,7 +3325,10 @@ u8 Abort2Sweep(void)
 
 	if(motion1.force_dock)
 		return 0;
-	
+#ifdef YBS_NEAR_TGT
+	if(ybs_near_flag)
+		return 0;
+#endif	
 	switch(nextaction)
 		{
 

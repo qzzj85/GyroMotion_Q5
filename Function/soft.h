@@ -111,8 +111,8 @@
 //#define		USE_AREA_TREE			1
 
 #define 	MAIN_VERISON 			1
-#define 	SUB_VERSION				4
-#define		CORRECT_VERSION			9
+#define 	SUB_VERSION				5
+#define		CORRECT_VERSION			0
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

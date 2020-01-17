@@ -9,7 +9,6 @@ s8 spot_gyrobios_cnt=0;	//正则右转多，负则左转多
 ///////////////////////私有变量////////////////////////////////////
 static bool piv_out;	//机器是否向外展开，1为向外展开，0为向里缩小
 static bool piv_left; //机器是否向左转，1为向左转，0为向右转
-static bool piv_done;   //qz add，机器完成定点为1,未完成为0，20180125
 static s8 spd_cnt=0;
 static u8 startfrom=0;
 ///////////////////////全局函数////////////////////////////////////
@@ -50,7 +49,6 @@ void Init_Spot(u8 start_from)
 	WriteWorkState();
 
 	piv_left=1;
-	piv_done=0;
 	piv_out=1;
 	startfrom=start_from;
 	if((startfrom==SPOT_FROM_CHARGE)|(startfrom==SPOT_FROM_CEASE))
@@ -85,7 +83,6 @@ void Init_Sweep_Spot(u8 start_from)
 	WriteWorkState();
 
 	piv_left=1;
-	piv_done=0;
 	piv_out=1;
 	startfrom=start_from;
 	if((startfrom==SPOT_FROM_CHARGE)|(startfrom==SPOT_FROM_CEASE))

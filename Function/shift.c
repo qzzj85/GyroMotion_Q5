@@ -311,12 +311,18 @@ void Shift_BumpAction(void)
 							switch(nextaction)
 								{
 									case CHECK_NEWAREA:
-									case CHECK_GOEXIT:
 #ifdef DEBUG_SHIFT
-										TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+										TRACE("now is CHECK_NEWAREA!!\r\n");
 										TRACE("Goto Right Shift YBS!!\r\n");
 #endif
 										Init_Shift_RightYBS(2);
+										return;
+									case CHECK_GOEXIT:
+#ifdef DEBUG_SHIFT
+										TRACE("now is EXIT!!\r\n");
+										TRACE("Goto Right Shift Exit YBS!!\r\n");
+#endif
+										Init_ShiftExit_RightYBS(0);
 										return;
 									case CHECK_DOCK:
 #ifdef DEBUG_SHIFT
@@ -463,12 +469,18 @@ void Shift_BumpAction(void)
 											switch(nextaction)
 												{
 													case CHECK_NEWAREA:
+#ifdef DEBUG_SHIFT
+														TRACE("now is CHECK_NEWAREA!!\r\n");
+														TRACE("Goto Right Shift YBS!!\r\n");
+#endif
+														Init_Shift_RightYBS(2);
+														return;
 													case CHECK_GOEXIT:
 #ifdef DEBUG_SHIFT
-														TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
-														TRACE("Goto Right Shift YBS!!\r\n");
-#endif														
-														Init_Shift_RightYBS(2);
+														TRACE("now is EXIT!!\r\n");
+														TRACE("Goto Right Shift Exit YBS!!\r\n");
+#endif
+														Init_ShiftExit_RightYBS(0);
 														return;
 													case CHECK_DOCK:
 #ifdef DEBUG_SHIFT
@@ -1038,16 +1050,34 @@ void Do_Shift_Point1(void)
 					}
 				else if(temp_nextaction>=CHECK_NEWAREA)
 					{
-#if 0
+#if 1
 						switch(temp_nextaction)
 							{
 								case CHECK_NEWAREA:
+									temp_result=Judge_YBS_Dir();
+									if(temp_result==1)
+										{
+#ifdef DEBUG_SHIFT
+											TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+											TRACE("Goto Left Shift YBS!!\r\n");
+#endif
+											Init_Shift_LeftYBS(0);
+										}
+									else
+										{
+#ifdef DEBUG_SHIFT
+											TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
+											TRACE("Goto Right Shift YBS!!\r\n");
+#endif
+											Init_Shift_RightYBS(2);
+										}
+									return;
 								case CHECK_GOEXIT:
 #ifdef DEBUG_SHIFT
-									TRACE("now is CHECK_NEWAREA|EXIT!!\r\n");
-									TRACE("Goto Right Shift YBS!!\r\n");
+									TRACE("now is CHECK_GOEXIT!!\r\n");
+									TRACE("Goto Right Shift Exit YBS!!\r\n");
 #endif
-									Init_Shift_RightYBS(2);
+									Init_ShiftExit_RightYBS(0);
 									return;
 								case CHECK_DOCK:
 #ifdef DEBUG_SHIFT
@@ -2306,6 +2336,7 @@ void Init_Shift_RightYBS(u8 pre_action)
 	else if(pre_action==1)
 		{
 			mode.step = 0x88;
+			recal_ybsstart=true;
 		}
 	else
 		{
@@ -2388,6 +2419,7 @@ void Init_Shift_LeftYBS(u8 pre_action)
 	else if(pre_action==1)
 		{
 			mode.step = 0x88;
+			recal_ybsstart=true;
 		}
 	else
 		{
@@ -3861,6 +3893,18 @@ u8 Abort_ShiftExit_YBS(void)
 			//Init_Shift_Point2();
 			Init_Shift_Point1(2);
 			return 1;
+		}
+
+	if(giv_sys_time-mode.time>600000)				//Ô­À´ÊÇ15s
+		{
+			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
+				{
+#ifdef DEBUG_SHIFT					
+					TRACE("motion1 ybs has been complete one circle!!!\r\n:");
+#endif
+					//Init_Docking();
+					Init_Sweep_Done();
+				}
 		}
 	return 0;
 }

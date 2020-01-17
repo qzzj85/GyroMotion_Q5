@@ -1318,7 +1318,7 @@ void YBS_Right_Bump(u8 out_enable)
 						}
 					if(mode.mode==MODE_DOCK)
 						{
-							if(l_ring.all_length-start_length>(end_length/2))
+							if((l_ring.all_length-start_length>(end_length/2))|(l_hw.effectLeft|l_hw.effectRight))
 							{
 								stop_rap();
 								enable_hwincept();

@@ -111,17 +111,10 @@ void Battery_Reinit(void)
 		{
 			//if(mode.mode)
 						//qz add 20180615
-#ifdef NEW_PWR_CAL
-			Battery.BatteryCapability=MAH2600; 	//qz modify 20180801:原来为MAH2600//2400mAh
-#else	
-			Battery.BatteryCapability=MAH1800;
-#endif
+			//Battery.BatteryCapability=MAH2600; 	//qz modify 20180801:原来为MAH2600//2400mAh
+			Battery.BatteryCapability=DEFAULT_CAP;
 			temp_data=Get_APPBat();
-#ifdef NEW_PWR_CAL
-			Battery.BatteryFDCap=(100-temp_data)*MAH2600/100;
-#else
-			Battery.BatteryFDCap=(100-temp_data)*MAH1800/100;
-#endif
+			Battery.BatteryFDCap=(100-temp_data)*Battery.BatteryCapability/100;
 			Battery.BatteryChargeForbid=0;
 			WriteBatteryCapability();
 			WriteFDCap();
@@ -153,17 +146,9 @@ void Reinit_Battery(void)
 void Reinit_Battery_Data(void)
 {
   	s8 temp_data;
-#ifdef NEW_PWR_CAL
-	Battery.BatteryCapability=MAH2600;	//qz modify 20180801:原来为MAH2600//2400mAh
-#else	
-	Battery.BatteryCapability=MAH1800;
-#endif
+	Battery.BatteryCapability=DEFAULT_CAP;	//qz modify 20180801:原来为MAH2600//2400mAh
 	temp_data=Get_APPBat();
-#ifdef NEW_PWR_CAL
-	Battery.BatteryFDCap=(100-temp_data)*MAH2600/100;
-#else
-	Battery.BatteryFDCap=(100-temp_data)*MAH1800/100;
-#endif
+	Battery.BatteryFDCap=(100-temp_data)*Battery.BatteryCapability/100;
 	Battery.BatteryChargeForbid=0;
 	Battery.bat_recal=1;
 	WriteBatRecal(Battery.bat_recal);
@@ -318,7 +303,7 @@ void ChargeControl_Volt_My(void)
 						power.step=2;
 					}
 				Init_Charge_Data();
-				jt_chargecurrent=battery_chargecurrent;
+				jt_chargecurrent=battery_chargecurrent_1s;
 #ifdef DEBUG_CHARGE
 				TRACE("jt_curr=%d\r\n",(u32)(jt_chargecurrent*CURR_CHG_CNT));
 #endif
@@ -861,8 +846,10 @@ void APP_BAT_Handle(void)
 			TRACE("Bat_Cap before cal=%d\r\n",Battery.BatteryCapability);
 #endif
 			Battery.BatteryCapability=Battery.BatteryFDCap*10/8;
-			if(Battery.BatteryCapability>=MAH2600)
-				Battery.BatteryCapability=MAH2600;
+#ifdef BAT_CAP_MAX
+			if(Battery.BatteryCapability>=CAP_MAX)
+				Battery.BatteryCapability=CAP_MAX;
+#endif
 #ifdef DOCK_POWER
 			TRACE("Bat_Cap after cal=%d\r\n",Battery.BatteryCapability);
 #endif
@@ -872,6 +859,8 @@ void APP_BAT_Handle(void)
 			WriteBatRecal(Battery.bat_recal);
 
 		}
+	
+#ifdef BAT_CAP_MAX
 	//电池电压低于NOPOWER,进入Dead模式,qz add 20180625
 	if((battery_voltage!=0)&(battery_voltage<NOPOWER)&(!Read_Charge_Dc())&(!Read_Charge_Seat()))
 		{
@@ -879,7 +868,7 @@ void APP_BAT_Handle(void)
 			Battery.bat_per=0;
 			Battery.BatteryChargeForbid = 0;		//qz add 20180703
 			//如果电池电压小于NOPOWER时，电池放电量小于电池电量，则将放电量复制给电量，用于动态调整
-			if((Battery.BatteryFDCap>MAH1000)&(Battery.BatteryFDCap<=MAH2600))
+			if((Battery.BatteryFDCap>MAH1000)&(Battery.BatteryFDCap<=CAP_MAX))
 				Battery.BatteryCapability=Battery.BatteryFDCap;
 			else									//qz add 20180703
 				Battery.BatteryFDCap=Battery.BatteryCapability;
@@ -890,7 +879,7 @@ void APP_BAT_Handle(void)
 	
 	//如果当前电池放电电量大于当前电池电量，则始终向导航板上报1%，直到撑到NOPOWER
 	//且将新的电池放电量赋值给电池电量（放电量要小于2600mAh），保存新电池放电量和新电池电量
-	if((Battery.BatteryFDCap>Battery.BatteryCapability)&&(Battery.BatteryFDCap<MAH2600))		
+	if((Battery.BatteryFDCap>Battery.BatteryCapability)&&(Battery.BatteryFDCap<CAP_MAX))		
 		{											
 			Battery.bat_per=1;
 			Battery.BatteryCapability=Battery.BatteryFDCap;	//同时新的电池放电电量数据必须保存，且新电池电量=新电池放电电量
@@ -898,14 +887,38 @@ void APP_BAT_Handle(void)
 			WriteBatteryCapability();
 		}
 	//电池放电量大于2600mAh，不予理会
-	else if(Battery.BatteryFDCap>MAH2600)
+	else if(Battery.BatteryFDCap>CAP_MAX)
 		{
-			Battery.BatteryFDCap=MAH2600;
-			Battery.BatteryCapability=MAH2600;
+			Battery.BatteryFDCap=CAP_MAX;
+			Battery.BatteryCapability=CAP_MAX;
 			Battery.bat_per=1;
 			WriteFDCap();
 			WriteBatteryCapability();
 		}
+#else
+	//电池电压低于NOPOWER,进入Dead模式,qz add 20180625
+	if((battery_voltage!=0)&(battery_voltage<NOPOWER)&(!Read_Charge_Dc())&(!Read_Charge_Seat()))
+		{
+			stop_rap();
+			Battery.bat_per=0;
+			Battery.BatteryChargeForbid = 0;		//qz add 20180703
+			Battery.BatteryCapability=Battery.BatteryFDCap;
+			WriteFDCap();
+			WriteBatteryCapability();
+			Init_Dead();
+			return;
+		}
+
+	//如果当前电池放电电量大于当前电池电量，则始终向导航板上报1%，直到撑到NOPOWER
+	//且将新的电池放电量赋值给电池电量（放电量要小于2600mAh），保存新电池放电量和新电池电量
+	if((Battery.BatteryFDCap>Battery.BatteryCapability))		
+		{											
+			Battery.bat_per=1;
+			Battery.BatteryCapability=Battery.BatteryFDCap; //同时新的电池放电电量数据必须保存，且新电池电量=新电池放电电量
+			WriteFDCap();
+			WriteBatteryCapability();
+		}
+#endif
 	//qz add end
 	//else 
 		{
@@ -927,8 +940,10 @@ void APP_BAT_Handle(void)
 					//qz add 20180902
 					temp_data_float=(float)(Battery.BatteryFDCap)*100/79;		//更新电池电量，因为此刻电池电量偏小
 					temp_data_u32=(u32)(temp_data_float);
-					if(temp_data_u32>MAH2600)
-						temp_data_u32=MAH2600;
+#ifdef BAT_CAP_MAX
+					if(temp_data_u32>CAP_MAX)
+						temp_data_u32=CAP_MAX;
+#endif
 					Battery.BatteryCapability=temp_data_u32;
 					WriteBatteryCapability();
 					//qz add end
@@ -1025,10 +1040,10 @@ u32 curr;//耗电电流
 							case 2:
 							case 4:
 							case 5: //qz add 20180615
-									curr = 100;//150;		//起始及涓流充电时，虽然固定电流为360mA,但是导航板占去210mA电流
+									curr = 250;//100;//150;		//起始及涓流充电时，虽然固定电流为360mA,实际测定为250mA(20200120)
 									break;
 							case 3:
-									curr = 400;//600;		//大电流充电时，虽然固定电流为800mA,但是导航板占去210mA电流
+									curr = 700;//600;		//大电流充电时，虽然固定电流为800mA,实际测定为250mA(20200120)
 								break;
 							case 6:
 									curr = battery_chargecurrent_1s;
@@ -1056,11 +1071,12 @@ u32 curr;//耗电电流
 	//if(UV_FLAG)				//qz add 20180902:加入UV电流
 		//curr=curr+140;		
 
+	TRACE("curr=%d\r\n",curr);
 
 	t = t*curr;
 	if(t > 2600)
 		{
-			return;
+			//return;
 		}
 	
 	
@@ -1087,7 +1103,9 @@ u32 curr;//耗电电流
 	else 
 			{
 				//if(Battery.BatteryFDCap < 0x83d600)//qz mask 20180625
-				if(Battery.BatteryFDCap<MAH2600)	//qz add 20180625
+#ifdef BAT_CAP_MAX
+				if(Battery.BatteryFDCap<CAP_MAX)	//qz add 20180625
+#endif
 					Battery.BatteryFDCap += t;
 				//电量的其他情况在APP_BAT_HANDLE函数中也有计算
 			}

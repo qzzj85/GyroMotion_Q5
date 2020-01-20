@@ -27,6 +27,7 @@
 #define		DOCKMODE_STEP_RECHARGE	7
 #define		DOCKMODE_STEP_DOCKFAIL	9
 #define		DOCKMODE_STEP_REYBS		10
+#define		DOCKMODE_STEP_TOP_CIRCUM	11
 
 ///////////////////ÕÒ»Ø³äÊ±µÄcase hzh////////////////////////////
 #define  DOCKMODE_STEP_FINDSEAT   0Xff
@@ -72,6 +73,10 @@ void Find_Seat_New(void);
 u8 Find_Seat_New_II(void);
 void Start_Start_V(void);
 void Start_Start_VI(void);
+void Start_Start_VII(void);
+
+void Start_Top_Circum(void);
+
 
 void Init_Dock_RightYBS(u8 temp_data);
 void Init_Dock_LeftYBS(u8 temp_data);

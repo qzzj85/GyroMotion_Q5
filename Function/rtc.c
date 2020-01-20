@@ -144,7 +144,7 @@ void init_rtc(void)
 
 
 #ifdef  RTC_8M_CORR
-unsigned int  second_time=0; 
+unsigned int  second_time=0x2710; 
 bool  rtc_8m_flag   = FALSE;
 u8  rtc_8m_mode  =   WAIT_CORR;
 
@@ -190,7 +190,7 @@ void  rtc_8m_corr(void)
 			case WAIT_CORR:
 				enable_rtc_second_irq();
 				rtc_8m_mode  = BEGIN_CORR_1;
-				second_time =  0;
+			//	second_time =  0;
 				break;
 			case BEGIN_CORR_1  :
 				break;
@@ -199,6 +199,7 @@ void  rtc_8m_corr(void)
 			case END_CORR:
 				disable_rtc_second_irq();
 				rtc_8m_flag   = TRUE;	
+				   rtc_8m_mode  =  WAIT_CORR;
 				break;
 			default :		
 				break;

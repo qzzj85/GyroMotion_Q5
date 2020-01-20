@@ -114,7 +114,7 @@ u8 LRC8( u8 *ptr,u32 length)
 
 
 #ifdef  RTC_8M_CORR
-void rtc_8m_Report(void)
+void rtc_8m_Report(u8   reset_flag )
 {
 //				int temp_32;
 	u16 temp_u16=0,count=0;
@@ -124,7 +124,10 @@ void rtc_8m_Report(void)
 
 	/*-----------帧头---------*/
 	USART3_TX_BUF[count++]=0xA5;	//帧头						0
+	if (reset_flag	== 1)
 	USART3_TX_BUF[count++]=0x08;	//Command					1
+	else  
+			USART3_TX_BUF[count++]=0x20;	//Command					1
 
 	/*---------长度-----------*/
 	USART3_TX_BUF[count++]=0x00;

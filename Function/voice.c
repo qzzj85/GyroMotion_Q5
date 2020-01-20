@@ -4,10 +4,37 @@
 #define	VOICELIST_START 		1
 #define VOICE_LEN sizeof(struct node)
 
+#ifdef NEW_VOICE_IC
+static uint32_t voice_busy_time=0;
+static bool voice_busy=FALSE;
+
+uint8_t Check_Voice_Busy(void)
+{
+	if(voice_busy)
+		{
+			if(giv_sys_time-voice_busy_time>1000)
+				{
+					voice_busy=FALSE;
+					return 0;
+				}
+			else
+				{
+					return 1;
+				}
+		}
+	else
+		return 0;
+}
+#endif
+
+
 #ifdef VOICE_LIST
+
+bool voice_ok=true;
+#ifndef NEW_VOICE_IC
 u32 voice_time=0;
 u8 voice_level;
-bool voice_ok=true;
+#endif
 
 struct node
 {
@@ -121,26 +148,10 @@ u8 Voice_Driver(u8 data)
 }
 #endif
 
+#ifndef NEW_VOICE_IC
 u8 Voice_Driver(u8 data)
 {
 	u8 temp_addr=data;
-#ifdef  NEW_VOICE_IC
-	if (temp_addr >	13)  
-		return  1;
-		// temp_addr = 9; //测试用 
-		V_CLK_1;					//拉低时钟
-		if(giv_sys_time-voice_time<50)
-			return 0;
-		V_CLK_0;			
-		for(int i=0;i<temp_addr;i++)
-			{
-				delay_100us(3);
-				V_DAT_1;
-				delay_100us(3);
-				V_DAT_0;	
-			}
-	return 1;							 
-#else
 	V_DAT_1;
 	V_CLK_0;					//拉低时钟
 	if(giv_sys_time-voice_time<50)
@@ -166,8 +177,8 @@ u8 Voice_Driver(u8 data)
 	V_CLK_1;
 	V_DAT_1;
 	return 1;
-#endif	
 }
+#endif
 
 void Voice_Handle(void)
 {
@@ -175,15 +186,34 @@ void Voice_Handle(void)
 	if(voice_head->next==NULL)
 		return;
 	struct node *p;
-#if 0
-	p=voice_head->next;
-#else
 	p=voice_head;
 	while(p->next!=NULL)
 		p=p->next;
-#endif
 
+#ifdef NEW_VOICE_IC
+	if(Check_Voice_Busy())
+		return;
+	V_CLK_1;
+	delay_us(100);
+	V_CLK_0;
+	delay_us(100);
+	for(int i=0;i<p->data;i++)
+		{
+			delay_100us(1);
+			V_DAT_1;
+			delay_100us(1);
+			V_DAT_0;	
+		}
+	delay_us(100);
+	V_CLK_0;
+	V_DAT_0;
+	if(p->data==VOICE_WIFI_OK)
+		wifi_ok=true;
 
+	voice_busy=TRUE;
+	voice_busy_time=giv_sys_time;
+	Del_Node();
+#else
 	switch (step)
 		{
 		case 0:
@@ -229,7 +259,6 @@ void Voice_Handle(void)
 					voice_time=giv_sys_time;
 				}
 		break;
-#if 1
 		case 5:
 			if(Voice_Driver(0xF8))				//发送0xF3
 				{
@@ -251,7 +280,6 @@ void Voice_Handle(void)
 					voice_time=giv_sys_time;					
 				}
 		break;
-#endif
 		case 8:
 #ifdef USE_VOICE_BUSY
 			Del_Node();
@@ -280,6 +308,7 @@ void Voice_Handle(void)
 				}
 			break;
 		}
+#endif
 		return;
 }
 
@@ -290,6 +319,7 @@ void Init_Voice(void)
 			voice_ok=false;
 			return;
 		}
+#ifndef NEW_VOICE_IC
 	voice_ok=true;
 	voice_level=Read_Voice_Level();
 #ifdef DEBUG_INIT
@@ -306,8 +336,10 @@ void Init_Voice(void)
 #ifdef DEBUG_INIT
 	TRACE("Voice init OK!\r\n");
 #endif
+#endif
 }
 
+#ifndef NEW_VOICE_IC
 void Set_Voice_Level(u8 data)
 {
 	voice_time=giv_sys_time;
@@ -348,6 +380,7 @@ u8 Read_Voice_Level(void)
 	return data;
 }
 #endif
+#endif
 
 void delay_100us(u32 delay_time)
 {
@@ -356,6 +389,10 @@ void delay_100us(u32 delay_time)
 }
 void Send_Voice(u8 data)
 {
+#ifdef DEBUG_VOICE
+	TRACE("vd=%d\r\n",data);
+#endif
+
 #ifdef NEW_VOICE_IC
 	if(data>13)
 		return;
@@ -389,9 +426,6 @@ void Send_Voice(u8 data)
 	p->data=data;
 #endif
 #else						//不使用LIST，直接发语音
-#ifdef DEBUG_VOICE
-	TRACE("vd=%d\r\n",data);
-#endif
 	V_CLK_1;
 	delay_us(100);
 	V_CLK_0;

@@ -360,6 +360,7 @@ void Enable_RingPWMCtrl(void);
 void Disable_RingPWMCtrl(void);
 void Init_BKP_Bat_Rtc(void);
 
+void Init_8M_out (void);
 
 ///////////////////////È«¾Öº¯Êý////////////////////////////////////
 #endif

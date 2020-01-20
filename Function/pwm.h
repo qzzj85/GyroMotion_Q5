@@ -34,7 +34,7 @@
 
 #ifdef FAN_SPD_CTL
 #define		FAN_SIL_PWM				6000				//6000 r/min
-#define		FAN_STD_PWM				12000	//12000 r/min 		
+#define		FAN_STD_PWM				13000	//12000 r/min 		
 #define		FAN_FORCE_PWM			15000	//15000 r/min 		//1600 //80%
 #else
 #define		FAN_SIL_PWM				PWM_SWEEP_MAX/5

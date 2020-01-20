@@ -16,6 +16,7 @@
 //#define		ROTATE_SKID_ACTION		1				//旋转打滑动作处理
 #define 	HW_INT_REC 				1					//红外中断接收
 
+#define		DEBUG_HEX					1
 #define		DEBUG					1
 #ifdef 		DEBUG
 #define 	DEBUG_DOCK				1
@@ -79,6 +80,7 @@
 //#define		NARROW_PASS				1				//沿边窄通道处理,主要是与左碰撞相关。
 #define		GYRO_ROLL_CHECK			1					//惯导俯仰角检测（阈值5度）
 //#define		FREE_FIRST_BAD_CHECK	1				//万向轮故障检测，用于每次“开始清扫”后的第一次Free_Skid_Indep_Check
+#define		VOICE_LIST				1
 #define  	USE_VOICE_BUSY			1					//使用语音芯片BUSY引脚
 #define		USE_BITBAND				1					//GPIO读写使用BITBAND操作
 #define		STOP_WEEKUP				1					//可以从STOP模式中唤醒
@@ -100,10 +102,15 @@
 //#define		YBS_NEAR_TGT			1
 #define		STOP_BACK_DIRECT		1
 //#define		NEW_Q55_BOARD_1113		1
+//#define		OUT_8MHZ				1
+//#define     RTC_8M_CORR  	 		1
+#define     MOTOR_SELF_TEST    		1
+#define     MOTOR_OPPOSITE_DIR		1
+#define		BAT_CAP_MAX				1					//电池最大容量限制
 
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
-//#define		OUT_8MHZ				1
+
 //#define		YIS055					1
 #define	FAST_WALL_DET			1
 //#define		IR_CORRECT				1
@@ -112,7 +119,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				5
-#define		CORRECT_VERSION			0
+#define		CORRECT_VERSION			1
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -1011,6 +1018,9 @@ typedef struct
 }GYRO_DATA;
 
 extern bool log_show;
+#ifdef DEBUG_HEX
+extern bool  log_hex_show ;
+#endif
 
 
 typedef struct

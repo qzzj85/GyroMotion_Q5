@@ -37,7 +37,12 @@ void Init_Ring_Pwm(u16 period,u16 prescaler)
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;		 //通道的工作模式  
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
 	TIM_OCInitStructure.TIM_Pulse = 0;						 //脉冲有效宽度
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //有效电平
+//	
+#ifdef  MOTOR_OPPOSITE_DIR
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //有效电平
+#else
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //有效电平	
+#endif
 	TIM_OC1Init(TIM4, &TIM_OCInitStructure);
 
 	TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Disable);	//qz add
@@ -283,7 +288,11 @@ void  enable_pwm(u16 channel,u16  pwm)
 {
 	switch (channel)
 	{
+#ifdef  MOTOR_OPPOSITE_DIR	
+		case	L_BACK:
+#else
 		case	L_FRONT:
+#endif			
 			 if(pwm>PWM_RING_MAX)
 			 	pwm=PWM_RING_MAX;
 			 TIM_SetCompare4(TIM4,pwm);
@@ -292,7 +301,11 @@ void  enable_pwm(u16 channel,u16  pwm)
              //TIM_SetCompare3(TIM4,0);
 		
 			break;
+#ifdef  MOTOR_OPPOSITE_DIR	
+		case	L_FRONT:
+#else			 
 		case	L_BACK:
+#endif			
 			if(pwm>PWM_RING_MAX)
 			   pwm=PWM_RING_MAX;
 			TIM_SetCompare3(TIM4,pwm);
@@ -301,7 +314,11 @@ void  enable_pwm(u16 channel,u16  pwm)
             //TIM_SetCompare4(TIM4,0);
 		
 			break;
+#ifdef  MOTOR_OPPOSITE_DIR	
+		case	R_FRONT:
+#else			
 		case	R_BACK:
+#endif			
 			if(pwm>PWM_RING_MAX)
 			   pwm=PWM_RING_MAX;
 			TIM_SetCompare1(TIM4,pwm);
@@ -310,7 +327,11 @@ void  enable_pwm(u16 channel,u16  pwm)
             //TIM_SetCompare2(TIM4,0);
 		
 			break;
+#ifdef  MOTOR_OPPOSITE_DIR	
+		case	R_BACK:
+#else			
 		case	R_FRONT:
+#endif			
 			if(pwm>PWM_RING_MAX)
 			   pwm=PWM_RING_MAX;
 			TIM_SetCompare2(TIM4,pwm);

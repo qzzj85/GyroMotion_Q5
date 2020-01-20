@@ -413,6 +413,13 @@ void stop_rap(void)
 #endif
 #ifdef MILE_COMPENSATION
 							delay_ms(300);
+#ifdef		 RTC_8M_CORR 
+							rtc_8m_Report(0);
+							delay_ms(10);
+							rtc_8m_Report(0);	 
+							delay_ms(10);	 
+#endif
+
 #else
 							delay_ms(700);
 #endif

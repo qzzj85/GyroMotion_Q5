@@ -393,6 +393,9 @@ void TIM2_IRQHandler(void)	//	10K 中断
 	if((giv_sys_time % 600000) == 0)	//分钟标志
 		{
 			gbv_minute = true;
+#ifdef  RTC_8M_CORR
+			rtc_8m_flag = FALSE;
+#endif 
 		}
 
 	if((motion1.worktime%600000)==0)
@@ -1609,15 +1612,19 @@ void RTCAlarm_IRQHandler(void)
 		}
 }
 //==================================================================================
-
+#ifdef 	RTC_8M_CORR	
+unsigned int   second_old_time   = 0;
+#endif
 void RTC_IRQHandler(void)
 {
 	if(RTC_GetITStatus(RTC_IT_SEC)!=RESET)
 		{
 #ifdef 	RTC_8M_CORR	
 			rtc_8m_mode  ++;
-			if( rtc_8m_mode == END_CORR)	 second_time = giv_sys_time -second_time ; 
-			if( rtc_8m_mode == BEGIN_CORR_2)	  second_time = giv_sys_time;
+			if( rtc_8m_mode == END_CORR)	 
+				second_time = giv_sys_time -second_old_time ; 
+			if( rtc_8m_mode == BEGIN_CORR_2)	  
+				second_old_time = giv_sys_time;					
 #endif			
 			RTC_GetCounter();
 			RTC_ClearITPendingBit(RTC_IT_SEC);

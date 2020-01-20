@@ -34,6 +34,7 @@ void  Init_System(void)
 	uint32 	time;
   
 	RCC_Configuration();				//初始化系统的晶振，如有移植需要修改
+	 Init_8M_out ();
 	delay_init(64);
 	NVIC_Configuration();				//初始化系统的中断，如有移植需要修改
 	init_time_2();        				//Timer2 10K中断  计数器，用于系统的基本心跳
@@ -96,6 +97,7 @@ void  Init_System(void)
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	init_hwincept();					//初始化红外接收程序
 //	Init_Remote_Info();					//qz add 20189817初始化遥控信息
+           DelayMs(2);
 	init_power();
 	time = giv_sys_time;
 	while((giv_sys_time - time) < 400){judge_charge();};
@@ -123,7 +125,29 @@ void  Init_System(void)
 
 //===============================================================================================================
 //===============================================================================================================
+void Init_8M_out (void)
+{
+#ifdef OUT_8MHZ
+	GPIO_InitTypeDef GPIO_InitStructure; //管脚结构
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB 
+                     | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD 
+					           | RCC_APB2Periph_GPIOE , ENABLE);
 
+  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_8;		//左边扫保护引脚，暂时按照GPIO读取
+	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	#ifdef USE_HSE	
+	RCC_MCOConfig(RCC_MCO_HSE);
+	#else
+	#ifdef            RTC_8M_CORR   
+	RCC_MCOConfig(RCC_MCO_HSI);
+	#else
+	RCC_MCOConfig(RCC_MCO_HSI);	
+    #endif
+	#endif		
+#endif
+}
 void Init_Hardware (void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure; //管脚结构
@@ -171,7 +195,7 @@ void Init_Hardware (void)
   ///////////////////////PE浮空输入 
   	GPIO_InitStructure.GPIO_Pin =CHARGE_DC|R_SPEED|L_SPEED|PWR_SWITCH_PIN|KEY_2|FAN_SPEED_PIN|MB_SPEED_PIN;
 	GPIO_Init(GPIOE,&GPIO_InitStructure);
-
+/*
 #ifdef OUT_8MHZ
   	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
   	GPIO_InitStructure.GPIO_Speed= GPIO_Speed_50MHz; 
@@ -186,7 +210,7 @@ void Init_Hardware (void)
 	RCC_MCOConfig(RCC_MCO_HSI);	
     #endif
 	#endif		
-#endif
+#endif*/
 /**************************/
 //
 //上拉上拉上拉上拉上拉上拉

@@ -95,12 +95,18 @@ FAN PWM					FAN CUR
 //#define FULLPOWER_WORK      1651   //工作时的满格电压   1.22V   14.64V
 //#define TWOPOWER_WORK       1624   //工作时的两格电压   1.20V   14.40V
 //#define ONEPOWER_WORK       1584   //工作时的一格电压   1.17V   14.04V
+#define	MAH3800				0XD0BD80
+#define	MAH3600				0XC5C100
 #define	MAH2600				0x8ED280
 #define	MAH2400				0x83D600
+#define	MAH2100				0X735B40
 #define	MAH2000				0x6ddd00
 #define	MAH1800				0x62E080
 #define	MAH1600				0x57E400
 #define	MAH1000				0X36EE80
+
+#define	DEFAULT_CAP			MAH2100
+#define	CAP_MAX				MAH3600
 
 #define VOL_12_8V			1444 //相当于NOPOWER
 #define	VOL_13V				1354

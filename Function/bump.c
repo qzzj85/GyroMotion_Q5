@@ -45,6 +45,9 @@ void Init_Bump_Interrupt(void)
 #ifdef MILE_COMPENSATION
 void back_speed(void)
 {
+#ifdef 	MOTOR_OPPOSITE_DIR
+    return;
+#endif
 	u8 i;
 	disable_pwm(R_FRONT);
 	disable_pwm(L_FRONT);

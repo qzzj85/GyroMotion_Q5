@@ -214,9 +214,9 @@ void Reset_XY(void)
 	delay_ms(300);
 	GYRO_RST_1;
 #else
-	rtc_8m_Report();
+	rtc_8m_Report(1);
 	delay_ms(10);
-	rtc_8m_Report();	
+	rtc_8m_Report(1);	
 	delay_ms(10);		
 #endif 		
 	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
@@ -4072,7 +4072,8 @@ u8 Find_Leak_Area(void)
 					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
 					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
 #endif
-					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
+					//if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
+					if((check_point.max_cleanx2==grid.x_area_min)&(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
 						{
 #ifdef DEBUG_COOR
 							TRACE("y2 hadnot sweeped!!!\r\n");
@@ -4186,7 +4187,8 @@ u8 Find_Leak_Area(void)
 					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
 					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
 #endif
-					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+					//if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+					if((check_point.max_cleanx2==grid.x_area_min)&(check_point.min_cleanx2==grid.x_area_max))
 						{
 #ifdef DEBUG_COOR
 							TRACE("y2 hadnot sweeped!!!\r\n");
@@ -4313,7 +4315,8 @@ u8 Find_Leak_Area(void)
 					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
 					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
 #endif					
-					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+					//if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))
+					if((check_point.max_cleanx2==grid.x_area_min)&(check_point.min_cleanx2==grid.x_area_max))
 						{
 #ifdef DEBUG_COOR
 							TRACE("y2 hadnot sweeped!!!\r\n");
@@ -4434,6 +4437,7 @@ u8 Find_Leak_Area(void)
 					TRACE("check_point.max_cleanx2=%d min_cleanx2=%d\r\n",check_point.max_cleanx2,check_point.min_cleanx2);
 					TRACE("check_point.y1=%d y2=%d\r\n",check_point.y1,check_point.y2);
 #endif
+					//if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
 					if((check_point.max_cleanx2==grid.x_area_min)|(check_point.min_cleanx2==grid.x_area_max))					//相邻检查点是否为空白区域					//相邻检查点出现空白未扫
 						{
 #ifdef DEBUG_COOR				

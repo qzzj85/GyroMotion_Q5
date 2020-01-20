@@ -147,6 +147,7 @@ void Do_LeakSweep(void)
 	static u8 turn_dir=0;
 	s8 now_gridx,now_gridy,ydir=0;
 	short now_angle=Gyro_Data.yaw;
+	static bool speed_on=FALSE;
 	
 	ACC_DEC_Curve();
 	clr_all_hw_effect();
@@ -171,25 +172,29 @@ void Do_LeakSweep(void)
 						return;
 					}
 				mode.step++;
+				speed_on=FALSE;
 			break;
 			case 1:
-				Speed=HIGH_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
 				//do_action(3,FARAWAY);
 				do_action_my(3,FARAWAY,motion1.tgt_yaw);
 				if((w_m.high_sign==NEAR)|(w_r.high_sign==NEAR)|(w_l.high_sign==NEAR)|(w_lm.high_sign==NEAR)|(w_rm.high_sign==NEAR))
 					{
 						r_rap.rap=HIGH_MOVE_SPEED;
 						l_rap.rap=HIGH_MOVE_SPEED;
+						speed_on=FALSE;
 					}
-				else if(giv_sys_time-mode.time>10000)
+				else if(giv_sys_time-mode.time>5000)
 					{
-						if((grid.x>=grid.x_area_max-1)|(grid.x<=grid.x_area_min+1))
+						if((grid.x>=grid.x_area_max)|(grid.x<=grid.x_area_min))
 							{
-								l_rap.rap=HIGH_MOVE_SPEED;
-								r_rap.rap=HIGH_MOVE_SPEED;
+								l_rap.rap=FAST_MOVE_SPEED;
+								r_rap.rap=FAST_MOVE_SPEED;
 							}
-						else
+						else if(!speed_on)
 							{
+								speed_on=TRUE;
 								r_rap.rap=TOP_MOVE_SPEED;
 								l_rap.rap=TOP_MOVE_SPEED;
 							}
@@ -409,6 +414,7 @@ void Do_Leak_BackSweep(void)
 	s8 now_gridx,now_gridy,ydir;
 	static u8 turn_dir;
 	short now_angle=Gyro_Data.yaw;
+	static bool speed_on=FALSE;
 	
 	now_gridx=grid.x;now_gridy=grid.y;
 	ydir=Read_Motion_YDir();
@@ -440,25 +446,29 @@ void Do_Leak_BackSweep(void)
 						return;
 					}
 				mode.step++;
+				speed_on=FALSE;
 			break;
 			case 1:
-				Speed=HIGH_MOVE_SPEED;
+				//Speed=HIGH_MOVE_SPEED;
+				Speed=FAST_MOVE_SPEED;
 				//do_action(3,FARAWAY);
 				if(do_action_my(3,FARAWAY,motion1.tgt_yaw));
 				if((w_m.high_sign==NEAR)|(w_r.high_sign==NEAR)|(w_l.high_sign==NEAR)|(w_lm.high_sign==NEAR)|(w_rm.high_sign==NEAR))
 					{
 						r_rap.rap=HIGH_MOVE_SPEED;
 						l_rap.rap=HIGH_MOVE_SPEED;
+						speed_on=FALSE;
 					}
-				else if(giv_sys_time-mode.time>10000)
+				else if(giv_sys_time-mode.time>5000)
 					{
-						if((grid.x>=grid.x_area_max-1)|(grid.x<=grid.x_area_min+1))
+						if((grid.x>=grid.x_area_max)|(grid.x<=grid.x_area_min))
 							{
 								l_rap.rap=HIGH_MOVE_SPEED;
 								r_rap.rap=HIGH_MOVE_SPEED;
 							}
-						else
+						else if(!speed_on)
 							{
+								speed_on=TRUE;
 								r_rap.rap=TOP_MOVE_SPEED;
 								l_rap.rap=TOP_MOVE_SPEED;
 							}

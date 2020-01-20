@@ -38,6 +38,8 @@ u8 REYBS_TIME=0;						//qz add 20180910,Ð¡»Ø³äÃ»ÕÒµ½ÐÅºÅ£¬ÖØÐÂÇëÇóÑØ±ß´ÎÊý£¬3´ÎÇ
 
 u32 dock_ybs_time=0;
 u32 delay_time=0;
+
+bool circum_right=FALSE;
 /******************************************************************
 »Ø³ä³ÌÐòµÄ³õÊ¼»¯
 ******************************************************************/
@@ -474,6 +476,9 @@ void Do_Docking_My(void)
 						//Start_Left_Straight_Spiral();
 						Start_Left_Deflect_Turn();
 						BUMP_TURN_DIR=2;			//qz modify 20180502:Ô­À´Îª1,ÐÞ¸ÄÎª2
+						break;
+					case DOCKMODE_STEP_TOP_CIRCUM:
+						Start_Top_Circum();
 						break;
 	/********************
 	·¢ÏÖ³äµç×ù
@@ -1776,6 +1781,112 @@ void Docking_Bump_My(void)
 									}
 								break;
 						}
+					break;
+				case DOCKMODE_STEP_TOP_CIRCUM:
+
+					if(mode.bump)
+						{
+							switch(mode.step_bp)
+								{
+									case 0:
+
+										Speed=BUMP_BACK_SPEED;
+										if(do_action(4,BUMP_BACK_LENGTH*CM_PLUS))
+											{
+												stop_rap();
+												mode.step_bp++;
+											}
+										break;
+									case 1:
+										//Speed=HIGH_MOVE_SPEED;
+										//if(do_action(2,90*Angle_1))
+											{
+												stop_rap();
+												mode.bump=0;
+												mode.step_bp=0;
+												mode.bump_flag=FALSE;
+												mode.step_mk=1;
+											}
+										break;
+#if 0
+									case 1:
+										switch(mode.step_mk)
+											{
+												case 10:
+												case 11:
+													mode.step_bp=10;
+													break;
+												case 20:
+												case 21:
+													mode.step_bp=20;
+
+													break;
+												case 12:
+												case 13:
+												case 14:
+												case 22:
+												case 23:
+												case 24:
+													mode.bump=0;
+													mode.step_bp=0;
+													mode.bump_flag=false;
+													mode.step=DOCKMODE_STEP_FINDSEAT;
+													mode.step_mk=4;
+													break;
+												default:
+													mode.bump=0;
+													mode.step_bp=0;
+													mode.bump_flag=false;
+													mode.step_mk=0;
+													break;
+											}
+										break;
+									case 10:
+										Speed=HIGH_MOVE_SPEED;
+										if(do_action(2,360*Angle_1))
+											{
+												stop_rap();
+												mode.bump=0;
+												mode.bump_flag=false;
+												mode.step_bp=0;
+												mode.step=DOCKMODE_STEP_START;
+												return;
+											}
+										if(r_hw.effectTop)
+											{
+												stop_rap();
+												mode.bump=0;
+												mode.step_bp=0;
+												mode.bump_flag=false;
+												mode.step_mk=20;
+												return;
+											}
+										break;
+									case 20:
+										Speed=HIGH_MOVE_SPEED;
+										if(do_action(1,360*Angle_1))
+											{
+												stop_rap();
+												mode.bump=0;
+												mode.bump_flag=false;
+												mode.step_bp=0;
+												mode.step=DOCKMODE_STEP_START;
+												return;
+											}
+										if(l_hw.effectTop)
+											{
+												stop_rap();
+												mode.bump=0;
+												mode.step_bp=0;
+												mode.bump_flag=false;
+												mode.step_mk=10;
+												return;
+											}
+										break;
+#endif								
+								}
+						}
+					break;
 			}
 	}
 }
@@ -4066,14 +4177,29 @@ void Start_Start_VI(void)
 #ifdef DEBUG_DOCK
 										TRACE("r_hw|l_hw get Signal,goto step_mk 20!!\r\n");
 #endif
+										if((rr_flag)&(!ll_flag))
+											{
+												mode.step=DOCKMODE_STEP_TOP_CIRCUM;
+												mode.step_mk=0;
+												circum_right=TRUE;
+												return;
+											}
+										else if((ll_flag)&(!rr_flag))
+											{
+												mode.step=DOCKMODE_STEP_TOP_CIRCUM;
+												mode.step_mk=0;
+												circum_right=FALSE;
+												return;
+											}
 										mode.step_mk=20;
 									}
 								else
 									{
 #ifdef DEBUG_DOCK
-										TRACE("r_hw|l_hw|lm_hw can't get Signal goto step TOP!!\r\n");
+										TRACE("r_hw|l_hw|lm_hw can't get Signal goto step TOP CIRCUM!!\r\n");
 #endif
-										mode.step=DOCKMODE_STEP_TOP_SPOT;
+										//mode.step=DOCKMODE_STEP_TOP_SPOT;
+										mode.step=DOCKMODE_STEP_TOP_CIRCUM;
 										mode.step_mk=0;
 									}
 								return;
@@ -4189,9 +4315,11 @@ void Start_Start_VI(void)
 				if(do_action(2,380*Angle_1))
 					{
 						stop_rap();
-						if((t_flag)&(l_flag|r_flag|m_flag))
+						//if((t_flag)&(l_flag|r_flag|m_flag))
+						if(t_flag)
 							{
-								mode.step=DOCKMODE_STEP_TOP_SPOT;
+								//mode.step=DOCKMODE_STEP_TOP_SPOT;
+								mode.step=DOCKMODE_STEP_TOP_CIRCUM;
 								mode.step_mk=0;
 							}
 						else
@@ -4229,7 +4357,8 @@ void Start_Start_VI(void)
 				if(do_action(2,380*Angle_1))
 					{
 						stop_rap();
-						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						//mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step=DOCKMODE_STEP_TOP_CIRCUM;
 						mode.step_mk=0;
 						return;
 					}
@@ -4307,6 +4436,301 @@ void Start_Start_VI(void)
 		}
 }
 
+void Start_Start_VII(void)
+{
+	switch(mode.step_mk)
+		{
+			case 0:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_REYBS;
+						mode.step_mk=0;
+						return;
+					}
+				if(l_hw.effectTop|r_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 1:
+				mode.step=DOCKMODE_STEP_TOP_CIRCUM;
+				mode.step_mk=0;
+				break;
+		}
+}
+
+void Start_Top_Circum(void)
+{
+	static int8_t circum_cnt=0;
+	static bool ll_flag,lr_flag,rl_flag,rr_flag;
+	if(l_hw.effectLeft)
+		{
+			ll_flag=TRUE;
+		}
+	if(l_hw.effectRight)
+		{
+			lr_flag=TRUE;
+		}
+	if(r_hw.effectLeft)
+		{
+			rl_flag=TRUE;
+		}
+	if(r_hw.effectRight)
+		{
+			rr_flag=TRUE;
+		}
+	switch(mode.step_mk)
+		{
+			case 0:
+				circum_cnt=0;
+				if(circum_right)
+					circum_cnt=(-1);
+				mode.step_mk++;
+				break;
+			case 1:
+				circum_cnt++;
+				if(circum_cnt>5)
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step_mk=0;
+						return;
+					}
+				ll_flag=FALSE;lr_flag=FALSE;
+				rl_flag=FALSE;rr_flag=FALSE;
+				if(circum_cnt%2!=0)				//L_HW
+					{
+						mode.step_mk=10;
+					}
+				else
+					{
+						mode.step_mk=20;
+					}
+				break;
+				
+			case 10:
+				if(!l_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk+=2;
+					}
+				else
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 11:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(1,360*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step_mk=0;
+						ll_flag=FALSE;lr_flag=FALSE;
+						rl_flag=FALSE;rr_flag=FALSE;
+					}
+				if(!l_hw.effectTop)
+					{	
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 12:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(1,360*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk=20;
+						return;
+					}
+				if(l_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk=30;
+					}
+				break;
+
+			case 20:
+				if(!r_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk+=2;
+						return;
+					}
+				else
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 21:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step_mk=0;
+						ll_flag=FALSE;lr_flag=FALSE;
+						rl_flag=FALSE;rr_flag=FALSE;
+						return;
+					}
+				if(!r_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 22:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_TOP_SPOT;
+						mode.step_mk=0;
+						ll_flag=FALSE;lr_flag=FALSE;
+						rl_flag=FALSE;rr_flag=FALSE;
+						return;
+					}
+				if(r_hw.effectTop)
+					{
+						stop_rap();
+						mode.step_mk=40;
+					}
+				break;
+				
+			//L_HW get Top
+			case 30:
+				enable_rap_no_length(FRONT,600,FRONT,400);
+				if(!l_hw.effectTop)
+					{
+						//stop_rap();
+						mode.step_mk++;
+					}
+				//if(l_hw.effectLeft|l_hw.effectRight|l_hw.effectMid)
+				if((lr_flag)&(ll_flag))
+					{
+						stop_rap();
+						//mode.step_mk+=2;
+						mode.step_mk=34;
+					}
+				break;
+			case 31:
+				enable_rap_no_length(FRONT,400,FRONT,600);
+				if(l_hw.effectTop)
+					{
+						//stop_rap();
+						mode.step_mk--;
+					}
+				//if(l_hw.effectLeft|l_hw.effectRight|l_hw.effectMid)
+				if((lr_flag)&(ll_flag))
+					{
+						stop_rap();
+						//mode.step_mk++;
+						mode.step_mk=34;
+					}
+				break;
+			case 32:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(2,60*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 33:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,10*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 34:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(1,360*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk=0;
+					}
+				if(lm_hw.effectMid|lm_hw.effectLeft|lm_hw.effectRight)
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_FINDSEAT;
+						mode.step_mk=4;
+						ll_flag=FALSE;lr_flag=FALSE;
+						rl_flag=FALSE;rr_flag=FALSE;
+					}
+				break;
+				
+			//R_HW get Top
+			case 40:
+				enable_rap_no_length(FRONT,400,FRONT,600);
+				if(!r_hw.effectTop)
+					{
+						//stop_rap();
+						mode.step_mk++;
+					}
+				//if(r_hw.effectLeft|r_hw.effectRight|r_hw.effectMid)
+				if((rl_flag)&(rr_flag))
+					{
+						stop_rap();
+						//mode.step_mk+=2;
+						mode.step_mk=44;
+					}
+				break;
+			case 41:
+				enable_rap_no_length(FRONT,600,FRONT,400);
+				if(r_hw.effectTop)
+					{
+						//stop_rap();
+						mode.step_mk--;
+					}
+				//if(r_hw.effectLeft|r_hw.effectRight|r_hw.effectMid)
+				if((rl_flag)&(rr_flag))
+					{
+						stop_rap();
+						//mode.step_mk++;
+						mode.step_mk=44;
+					}
+				break;
+			case 42:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(1,60*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 43:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(3,10*CM_PLUS))
+					{
+						stop_rap();
+						mode.step_mk++;
+					}
+				break;
+			case 44:
+				Speed=HIGH_MOVE_SPEED;
+				if(do_action(2,360*Angle_1))
+					{
+						stop_rap();
+						mode.step_mk=0;
+					}
+				if(lm_hw.effectMid|lm_hw.effectLeft|lm_hw.effectRight)
+					{
+						stop_rap();
+						mode.step=DOCKMODE_STEP_FINDSEAT;
+						mode.step_mk=4;
+						ll_flag=FALSE;lr_flag=FALSE;
+						rl_flag=FALSE;rr_flag=FALSE;
+					}
+				break;
+		}
+}
 
 u8 Abort_Dock_YBS(void)
 {

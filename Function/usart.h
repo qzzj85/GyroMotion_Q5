@@ -160,7 +160,7 @@ void USART2_Send_Str(char *s);
 void Init_Gyro_Data(void);
 #ifdef  RTC_8M_CORR
 
-void rtc_8m_Report(void);
+void rtc_8m_Report(u8   reset_flag );
 #endif
 
 #endif

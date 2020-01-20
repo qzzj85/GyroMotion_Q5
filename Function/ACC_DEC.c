@@ -143,48 +143,87 @@ void ACC_DEC_Comm_rap_My (void)
 
 #ifdef PITCH_SPEEDUP
 	static bool rap_speed=false;
-		if((mode.speed_up)&(!rap_speed))//&(mode.abnormity==0))
-			{
-				r_rap.rap=15*r_rap.rap/10;
-				l_rap.rap=15*l_rap.rap/10;
-				rap_speed=true;
-			}
-		else if(!mode.speed_up)
-			{
-				rap_speed=false;
-			}
+	if((mode.speed_up)&(!rap_speed))//&(mode.abnormity==0))
+		{
+			r_rap.rap=15*r_rap.rap/10;
+			l_rap.rap=15*l_rap.rap/10;
+			rap_speed=true;
+		}
+	else if(!mode.speed_up)
+		{
+			rap_speed=false;
+		}
 #endif
 
 
 #if 1
+    static  u8  l_acc_flag = 0; 
+    static  u8  r_acc_flag = 0; 
+	#define    ACC_FLAG 		
+    if ((l_rap.rap_run == 0)&&(r_rap.rap_run == 0))   
+		{ 
+			l_acc_flag = 0; // 开始起步了
+			r_acc_flag = 0;
+		}
+	//	if ((l_rap.rap_run >=l_rap.rap) &&(l_acc_flag == 0)) 		l_acc_flag = 1;
+	//	if ((r_rap.rap_run >=r_rap.rap) &&(r_acc_flag == 0))        r_acc_flag = 1;//到达目标速度了
+	if ((r_rap.rap_run >=(r_rap.rap-100))&&(r_acc_flag == 1))  
+		r_acc_flag = 0; // 中间减速了 
+	if ((l_rap.rap_run >=(l_rap.rap-100))&&(l_acc_flag == 1))  
+		l_acc_flag = 0; // 中间减速了 	
+	if ((r_rap.rap_run >=(r_rap.rap+100))&&(r_acc_flag == 1))   
+		r_acc_flag = 0; // 中间加速了 
+	if ((l_rap.rap_run >=(l_rap.rap+100))&&(l_acc_flag == 1))  
+		l_acc_flag = 0; // 中间加速了 		
+// 到达目标后不要执行下面的加减 200 程序 	
+
 	if(spd_acc_flag)
 		{
 			spd_acc_flag=false;
-			if(l_rap.rap_run<l_rap.rap)
-			{
-				l_rap.rap_run+=200;
-				if(l_rap.rap_run>=l_rap.rap)
-					l_rap.rap_run=l_rap.rap;
-			}
-			else if(l_rap.rap_run>l_rap.rap)
-			{
-				l_rap.rap_run-=200;
-				if(l_rap.rap_run<l_rap.rap)
-					l_rap.rap_run=l_rap.rap;
-			}	
-			
-			if(r_rap.rap_run<r_rap.rap)
-			{
-				r_rap.rap_run+=200;
-				if(r_rap.rap_run>=r_rap.rap)
-				r_rap.rap_run=r_rap.rap;
-			}
-			else if(r_rap.rap_run>r_rap.rap)
-			{
-				r_rap.rap_run-=200;
-				if(r_rap.rap_run<r_rap.rap)
-					r_rap.rap_run=r_rap.rap;
-			}	
+#ifdef  ACC_FLAG 			
+			if (l_acc_flag ==0)  
+				{		
+#endif	
+					if(l_rap.rap_run<l_rap.rap)
+						{
+							l_rap.rap_run+=200;
+							if(l_rap.rap_run>=l_rap.rap){
+								l_rap.rap_run=l_rap.rap;
+								  l_acc_flag = 1;
+								}
+						}
+					else if(l_rap.rap_run>l_rap.rap)
+						{
+							l_rap.rap_run-=200;
+							if(l_rap.rap_run<l_rap.rap){
+								l_rap.rap_run=l_rap.rap;
+								  l_acc_flag = 1;
+								}
+						}	
+#ifdef  ACC_FLAG				
+				}
+			if (r_acc_flag == 0)  
+				{		
+#endif
+					if(r_rap.rap_run<r_rap.rap)
+					{
+						r_rap.rap_run+=200;
+						if(r_rap.rap_run>=r_rap.rap){
+						r_rap.rap_run=r_rap.rap;		
+						  r_acc_flag = 1;
+						}
+					}
+					else if(r_rap.rap_run>r_rap.rap)
+					{
+						r_rap.rap_run-=200;
+						if(r_rap.rap_run<r_rap.rap){
+							r_rap.rap_run=r_rap.rap;
+							  r_acc_flag = 1;
+							}
+					}		
+#ifdef  ACC_FLAG 
+				}	
+#endif
 		}
 #else
 	l_rap.rap_run=l_rap.rap;

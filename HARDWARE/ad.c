@@ -66,9 +66,6 @@ void init_ad(void)
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
 	ReInitAd();
-#ifdef DEBUG_INIT
-	TRACE("AD init OK!\r\n");
-#endif
 }
 /***************************************************
 重新初始化AD的寄存器

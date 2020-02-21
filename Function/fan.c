@@ -29,9 +29,6 @@ void Init_FanSpd_Interrupt(void)
 
 void Reset_FanSpd_Data(void)
 {
-#ifdef DEBUG_Enter_Mode
-	TRACE("Reset FanSpd Data!!\r\n");
-#endif
 	fanspd_cnt=0;
 	fanspd_cnt_last=0;
 	fan_pwm=0;

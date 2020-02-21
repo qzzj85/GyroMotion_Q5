@@ -92,6 +92,8 @@ void Init_Chargeing(u8 temp_sub_mode)
 
 #ifdef UV
 	Reset_UV(); 					//关闭UV
+
+	motion1.sweep_done=false;
 #endif
 	REYBS_TIME=0;					//qz add 20180910,小回充重新请求沿边次数清0
 	Open_Led(0,0,1);				//qz add 20181120,红灯慢闪

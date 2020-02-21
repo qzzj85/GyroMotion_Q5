@@ -81,6 +81,7 @@ void  Init_System(void)
 	USART2_DMA_RX_Init(USART2_RX_SIZE);
 #endif// NEW_Q55_BOARD_1113  
 
+
 	USART3_Init();
 	USART3_DMA_TX_Init(USART3_TX_SIZE);
 	USART3_DMA_RX_Init(USART3_RX_SIZE);

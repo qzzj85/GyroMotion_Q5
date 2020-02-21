@@ -116,6 +116,20 @@ extern u8 USART2_RX_BUF[USART2_RX_SIZE];
 extern u8 USART3_TX_BUF[USART3_TX_SIZE];
 extern u8 USART3_RX_BUF[USART3_RX_SIZE];	//需存放小鸟数据
 //extern bool Wall_report_time;	//QZ
+
+
+#ifdef UART_TWOBUF
+extern u8 UART_BUF3[600];
+extern u8 UART_BUF2[100];
+extern u8 UART_BUF1[100];
+extern volatile bool buf3_full,buf2_full,buf1_full,log_send_end;
+extern volatile u16 buf3_cnt;
+extern volatile bool uart_log;
+extern volatile bool uart_dma_busy;
+extern volatile u8 dma_buf_num;
+
+#endif
+
 //如果想串口中断接收，请不要注释以下宏定义
 void URAT1_init(u32 bound);
 void Usart1_Trans_Data(u8 length);
@@ -161,6 +175,10 @@ void Init_Gyro_Data(void);
 #ifdef  RTC_8M_CORR
 
 void rtc_8m_Report(u8   reset_flag );
+#endif
+
+#ifdef UART_TWOBUF
+void DMA_USART2_TX_Address(u32 address,u32 length);
 #endif
 
 #endif

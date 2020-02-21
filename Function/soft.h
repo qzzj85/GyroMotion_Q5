@@ -39,6 +39,8 @@
 #define 	DEBUG_SHIFT				1
 #define		DEBUG_AREA				1
 #define		DEBUG_VOICE				1
+//#define		UART_LIST_SEND			1
+#define		UART_TWOBUF				1	
 #endif
 
 #if 1
@@ -107,6 +109,7 @@
 #define     MOTOR_SELF_TEST    		1
 #define     MOTOR_OPPOSITE_DIR		1
 #define		BAT_CAP_MAX				1					//电池最大容量限制
+#define		YBS_AFTER_SWEEPDONE		1
 
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
@@ -119,7 +122,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				5
-#define		CORRECT_VERSION			1
+#define		CORRECT_VERSION			2
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节
@@ -361,9 +364,9 @@
 #define     KI              10    //30
 #define     KD              80    //150
 
-#define 	F_KP			0.02//0.1//0.5//0.02//0.025
-#define		F_KI			0.1	//1.5	//0.1
-#define		F_KD			0.0125	//0.2//0.0125//0.0125
+#define 	F_KP			0.02f//0.1//0.5//0.02//0.025
+#define		F_KI			0.1f	//1.5	//0.1
+#define		F_KD			0.0125f	//0.2//0.0125//0.0125
 
 #define		D_KP			0.01
 #define		D_KI			0.05
@@ -863,6 +866,7 @@ typedef struct 					//清扫结构体
 	bool 	pathpoint_ok;
 	bool	start_seat;
 	bool	force_dock;
+	bool	sweep_done;
 	
 	u8 		back_sweep;				//回扫标志，true:回扫,false:正常扫
 	u8 		leftright;				//左右沿边标志，0：左沿边，1：右沿边

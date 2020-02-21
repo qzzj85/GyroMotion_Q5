@@ -2010,6 +2010,12 @@ LEAK_POINT_MIN_CHECK:
 u8 Find_NextArea_Entry(void)
 {
 	s8 temp_data1,temp_data2,temp_data3,temp_data4;
+
+#ifdef YBS_AFTER_SWEEPDONE
+	if(motion1.sweep_done)
+		return 0;
+#endif
+
 	temp_data1=Analysis_Boundary_Y_II(1);	//YMAX边界，起点为x_area_min,y_area_max
 	temp_data2=Analysis_Boundary_X_II(1);	//XMAX边界，起点为x_area_max,y_area_max
 	temp_data3=Analysis_Boundary_Y_II(0);	//YMIN边界，起点为x_area_max,y_area_min
@@ -2177,6 +2183,34 @@ u8 Area_Check(u8 avoid_ybs)
 #ifdef DEBUG_COOR
 			TRACE("Go to Exit!!!\r\n");
 #endif
+			//分析所有区域的情况
+			
+#ifdef YBS_AFTER_SWEEPDONE			
+			//code
+			if(!motion1.sweep_done)
+				{
+					if(Analysis_AllNode_NewArea())
+						{//如果所有区域分析，发现任一一个可以有新区域，则需要去扫		
+							Get_CurrNode_Info();	//重新回到当前区域
+							Cal_PosArea_Max();		//重新计算当前区域的坐标
+						//准备执行Find_ExitArea_Entry
+						}
+					else
+						{
+						//如果所有区域都没有新区域可以开发，直接大沿边，然后结束工作
+#ifdef DEBUG_COOR
+							TRACE("No more new area can sweep!!!\r\n");
+							TRACE("Directly goto YBS!!!\r\n");
+#endif
+							Get_CurrNode_Info();
+							Cal_PosArea_Max();
+							motion1.sweep_done=true;
+							Init_Right_YBS(1,motion1.start_seat);
+							return 0;
+						}
+				}
+			//分析所有区域的情况
+#endif			
 			Find_ExitArea_Entry();
 			if(curr_areanum==1)		//是否是第一打扫区域,是则打扫完成
 				{
@@ -4045,7 +4079,12 @@ u8 Find_Leak_Area(void)
 
 	if(motion1.area_ok)
 		return 0;
-	
+
+#ifdef YBS_AFTER_SWEEPDONE
+	if(motion1.sweep_done)
+		return 0;
+#endif
+
 	start_gridy=grid.y;
 	if(start_gridy>grid.y_area_max)
 		start_gridy=grid.y_area_max;

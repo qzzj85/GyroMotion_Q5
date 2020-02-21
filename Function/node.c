@@ -251,6 +251,22 @@ void Get_CurrNode_Info(void)
 #endif
 }
 
+void Get_Node_Info(struct AREA_NODE *p)
+{
+	grid.x_area_start=p->gridx_area_start;
+	grid.y_area_start=p->gridy_area_start;
+	motion1.x_acc=p->x_acc;
+	motion1.y_acc=p->y_acc;
+	motion1.area_num=p->area_num;
+	motion1.area_ok=p->area_ok;
+	
+	motion1.ymax_ok=p->ymax_ok;
+	motion1.ymin_ok=p->ymin_ok;
+	motion1.xmax_ok=p->xmax_ok;
+	motion1.xmin_ok=p->xmin_ok;
+	motion1.exit_area_num=p->exit_area_num;
+}
+
 u8 Out_CurrNode_Exit(void)
 {
 #ifdef DEBUG_AREALIST
@@ -336,4 +352,27 @@ u8 Set_Curr_AllNewAreaOK(void)
 	curr_node->xmax_ok=motion1.xmax_ok;
 	curr_node->xmin_ok=motion1.xmin_ok;
 	return 0;
+}
+
+u8 Analysis_AllNode_NewArea(void)
+{
+	struct AREA_NODE *p;
+	p=head_node;
+	while(p->next_node!=NULL)
+		{
+			p=p->next_node;
+
+			Get_Node_Info(p);
+			Cal_PosArea_Max();
+			
+			if(Analysis_Boundary_X_II(0)!=0x7f)
+				return 1;
+			if(Analysis_Boundary_X_II(1)!=0x7f)
+				return 1;
+			if(Analysis_Boundary_Y_II(0)!=0x7f)
+				return 1;
+			if(Analysis_Boundary_Y_II(1)!=0x7f)
+				return 1;
+		}
+	return 0;	
 }

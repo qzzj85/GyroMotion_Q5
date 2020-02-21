@@ -1,7 +1,7 @@
 #ifndef SHIFT_H
 #define SHIFT_H
 
-extern bool abort_shiftybs_flag,ybs_near_flag;
+extern bool abort_shiftybs_flag,ybs_near_flag,recal_ybsstart;
 
 void Init_Shift_Point1(u8 pre_action);
 void Do_Shift_Point1(void);

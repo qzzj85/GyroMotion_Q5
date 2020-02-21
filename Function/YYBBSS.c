@@ -101,8 +101,23 @@ void YBS_YBS(void)
 		{
 			if((grid.x==grid.x_ybs_start)&(grid.y==grid.y_ybs_start))
 				{
+					stop_rap();
 					Send_Voice(VOICE_SWEEP_DONE);
-					Init_Docking();
+					//Init_Docking();
+#ifdef YBS_AFTER_SWEEPDONE
+					if(motion1.sweep_done)			//如果是弓形清扫完成后的发起的沿边，需要回到原点
+						{
+							Area_Check(0);
+							mode.mode=MODE_SHIFT;
+							Init_Shift_Point1(0);
+							return;
+						}
+					else
+#endif
+						{
+							Init_Sweep_Done();
+						}
+					return;
 				}
 		}
 
@@ -201,6 +216,13 @@ void YBS_YBS(void)
 				break;
 					
 			case 0:
+				if(recal_ybsstart)
+					{
+						recal_ybsstart=false;
+						grid.x_ybs_start=grid.x;
+						grid.y_ybs_start=grid.y;
+					}
+			
 				if(mode.sub_mode==SUBMODE_YBS_LEFT)
 					{
 						mode.step=0x40;
@@ -1408,6 +1430,7 @@ static int32_t xxxx_2;
 /*****************************************************************
 功能：初始化定点清扫的程序
 *****************************************************************/
+//pre_action:0,直接沿边，1,先直线行走遇到障碍了在沿边
 void Init_Right_YBS(u8 pre_action,bool start_seat)
 {
 
@@ -1442,6 +1465,7 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	mode.status=1;
 	if(pre_action)
 		{
+			recal_ybsstart=true;
 			mode.step = 0x90;//0x88;//QZ:原来为0x88;
 		}
 	else
@@ -1479,12 +1503,18 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	YBS_DISTANCE=YBS_DISTANCE_CONST;
 
 	motion1.continue_checkstep=0;			//qz add 20190328
-	motion1.worktime=1;	
-	motion1.clean_size=0;
+#ifdef YBS_AFTER_SWEEPDONE
+	if(!motion1.sweep_done)			//如果不是弓形清扫完成开始的沿边，则重新计时
+#endif
+	{
+		motion1.yaw_start=Gyro_Data.yaw;
+		motion1.worktime=1;	
+		motion1.clean_size=0;
+		Send_Voice(VOICE_SWEEP_START);
+	}
 	Gyro_Data.cal_flag=false;
 	YBS_check_base=false;	
 	Init_Check_Status();	
-	Send_Voice(VOICE_SWEEP_START);
 }
 
 void Init_Left_YBS(u8 direct_first)

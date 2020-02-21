@@ -150,6 +150,7 @@ void Init_Cease(void)
 	mode.self_test=false;
 	motion1.start_seat=false;
 	motion1.force_dock=false;
+	motion1.sweep_done=false;
 
 	Init_Sweep_Pwm(PWM_SWEEP_MAX,PWM_SWEEP_PRESCALER);
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
@@ -262,6 +263,7 @@ void Init_Quit_Charging(u8 sweep_method)
 	mode.last_sub_mode=mode.sub_mode;
 	mode.mode=MODE_CEASE;
 	mode.sub_mode=SUBMODE_QUITCHARGE;
+	motion1.sweep_done=false;
 
 	Enable_wall();
 	Enable_earth();

@@ -34,7 +34,8 @@ void Init_Sleep(void)
 	mode.step=0x00;					//qz add
 	mode.status=0;					//非工作状态
 	mode.time=giv_sys_time;			//qz add 20180703
-	
+
+	motion1.sweep_done=false;
 	Disable_earth();
 	Disable_wall();
 	enable_hwincept();								//禁止红外接收电源

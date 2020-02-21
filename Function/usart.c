@@ -13,6 +13,16 @@ u8 USART2_RX_BUF[USART2_RX_SIZE];
 u8 USART3_TX_BUF[USART3_TX_SIZE];
 u8 USART3_RX_BUF[USART3_RX_SIZE];	//需存放小鸟数据
 
+#ifdef UART_TWOBUF
+u8 UART_BUF3[600];
+u8 UART_BUF2[100];
+u8 UART_BUF1[100];
+volatile bool buf3_full=false,buf2_full=false,buf1_full=false,log_send_end=false;
+volatile u16 buf3_cnt=0;
+volatile bool uart_log=false;
+volatile bool uart_dma_busy=false;
+volatile u8 dma_buf_num=0;
+#endif
 
 GYRO_DATA		Gyro_Data;
 UART 			UART1;
@@ -76,6 +86,51 @@ void u3_printf(char* fmt,...)
 
 void u2_printf(char* fmt,...)  
 {  
+#ifdef UART_TWOBUF
+	u16 len=0;
+	if((uart_log)&(!buf3_full))
+		{
+			va_list ap;
+			va_start(ap,fmt);
+			vsprintf((char*)(UART_BUF3+buf3_cnt),fmt,ap);
+			va_end(ap);
+			len=strlen((const char*)UART_BUF3);
+			buf3_cnt=len;
+			if(log_send_end)
+				{
+					log_send_end=false;
+					buf3_full=true;
+				}
+		}
+	else
+		{
+			va_list ap;
+			va_start(ap,fmt);
+#if 0
+			if(!uart_dma_busy)
+				{	
+					vsprintf((char*)USART2_TX_BUF,fmt,ap);
+					DMA_USART2_TX_Address((uint32_t)USART2_TX_BUF,strlen((const char*)USART2_TX_BUF));
+				}
+			else
+#endif
+				{
+					while(buf1_full&buf2_full);
+					if(!buf1_full)
+						{
+							vsprintf((char*)UART_BUF1,fmt,ap);
+							buf1_full=true;
+						}
+					else if(!buf2_full)
+						{
+							vsprintf((char*)UART_BUF2,fmt,ap);
+							buf2_full=true;
+						}
+				}
+			va_end(ap);
+		}
+	return;
+#endif
 #ifdef   NEW_Q55_BOARD_1113   
 			  while(DMA1_Channel4->CNDTR!=0); //等待通道2传输完成 
 			  va_list ap;
@@ -83,13 +138,13 @@ void u2_printf(char* fmt,...)
 			  vsprintf((char*)USART1_TX_BUF,fmt,ap);
 			  va_end(ap);
 			  DMA_USART1_TX_Length(strlen((const char*)USART1_TX_BUF));
-  #else     
-		while(DMA1_Channel7->CNDTR!=0); //等待通道2传输完成 
-		va_list ap;
-		va_start(ap,fmt);
-		vsprintf((char*)USART2_TX_BUF,fmt,ap);
-		va_end(ap);
-		DMA_USART2_TX_Length(strlen((const char*)USART2_TX_BUF));
+#else    
+	while(DMA1_Channel7->CNDTR!=0); //等待通道2传输完成 
+	va_list ap;
+	va_start(ap,fmt);
+	vsprintf((char*)USART2_TX_BUF,fmt,ap);
+	va_end(ap);
+	DMA_USART2_TX_Length(strlen((const char*)USART2_TX_BUF));
 #endif
 }
 			
@@ -633,6 +688,23 @@ void DMA_USART2_TX_Length(u32 length)
 	DMA_Cmd(DMA_UART2_TX,ENABLE); 		//使能串口1的DMA发送  
 }
 
+#ifdef UART_TWOBUF
+void DMA_USART2_TX_Address(u32 address,u32 length)
+{
+
+	if(address==(u32)(UART_BUF1))
+		dma_buf_num=1;
+	else if(address==(u32)UART_BUF2)
+		dma_buf_num=2;
+	else
+		dma_buf_num=3;
+	DMA_Cmd(DMA_UART2_TX,DISABLE);
+	DMA_UART2_TX->CMAR=address;
+	DMA_UART2_TX->CNDTR=length;
+	DMA_Cmd(DMA_UART2_TX,ENABLE);
+	uart_dma_busy=true;
+}
+#endif
 //============================================================================================
 //USART3
 void USART3_Init(void)

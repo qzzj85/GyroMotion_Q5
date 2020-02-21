@@ -618,6 +618,7 @@ void Init_First_Sweep(u8 start_seat)
 		motion1.start_seat=false;
 	motion1.pathpoint_ok=true;
 	motion1.clean_size=0;
+	motion1.sweep_done=false;
 	motion1.worktime=1;
 	Gyro_Data.cal_flag=false;
 	Set_AreaWorkTime(20);
@@ -4698,6 +4699,7 @@ void Do_PauseSweep(void)
 void Init_Sweep_Done(void)
 {
 	Send_Voice(VOICE_SWEEP_DONE);
+	motion1.sweep_done=true;
 	if((motion1.force_dock|motion1.start_seat)&(!mode.burning))
 		{
 			delay_ms(1000);
@@ -4740,6 +4742,8 @@ void Init_Sweep_Done(void)
 	Enable_Free_Skid_Check();		//打开万向轮检测
 #endif
 	
+	Set_AreaWorkTime(5);
+
 	delay_ms(100);
 }
 

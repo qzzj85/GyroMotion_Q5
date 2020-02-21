@@ -259,6 +259,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 		Free_Skid_Indep.check_start_time++;
 #endif
 
+
 	
 	if((giv_sys_time % 2) == 0)
 		{
@@ -268,6 +269,7 @@ void TIM2_IRQHandler(void)	//	10K 中断
 	if((giv_sys_time %10) == 0)			//	1mS  1000HZ   实际500赫兹
 		{   		
 			action_earth_time=true;
+			
 		}
 	if((giv_sys_time%20)==0)			//2ms
 		{
@@ -305,9 +307,34 @@ void TIM2_IRQHandler(void)	//	10K 中断
 			Record_Coordinate_Intime();
 			rm_t_cnt_timeflag=true;
 			lm_t_cnt_timeflag=true;
-			
+#ifdef UART_TWOBUF
+			if(DMA1_Channel7->CNDTR==0)
+				{
+					if(buf1_full)
+						{
+							DMA_USART2_TX_Address((uint32_t)UART_BUF1,strlen((const char*)UART_BUF1));
+							//buf1_full=false;
+						}
+					else if(buf2_full)
+						{
+							DMA_USART2_TX_Address((uint32_t)UART_BUF2,strlen((const char*)UART_BUF2));
+							//buf2_full=false;
+						}
+					else if(buf3_full)
+						{
+							DMA_USART2_TX_Address((uint32_t)UART_BUF3,strlen((const char*)UART_BUF3));
+							
+							//DMA_USART2_TX_Address((uint32_t)UART_BUF3,buf3_cnt);							
+							buf3_cnt=0;
+							//buf3_full=false;
+						}
+					else
+						{
+							uart_dma_busy=false;
+						}
+				}
+#endif		
 		}			
-		
 		
 		
 			
@@ -1774,6 +1801,37 @@ void DMA1_Channel7_IRQHandler(void)
 			//DMA_ClearFlag(DMA1_FLAG_TC4);
 			DMA_ClearITPendingBit(DMA1_FLAG_TC7);
 			DMA_Cmd(DMA1_Channel7,DISABLE);
+#ifdef UART_TWOBUF
+			if(dma_buf_num==1)
+				buf1_full=false;
+			else if(dma_buf_num==2)
+				buf2_full=false;
+			else if(dma_buf_num==3)
+				buf3_full=false;
+			
+			if(buf1_full)
+				{
+					DMA_USART2_TX_Address((uint32_t)UART_BUF1,strlen((const char*)UART_BUF1));
+					//buf1_full=false;
+				}
+			else if(buf2_full)
+				{
+					DMA_USART2_TX_Address((uint32_t)UART_BUF2,strlen((const char*)UART_BUF2));
+					//buf2_full=false;
+				}
+			else if(buf3_full)
+				{
+					DMA_USART2_TX_Address((uint32_t)UART_BUF3,strlen((const char*)UART_BUF3));
+					
+					//DMA_USART2_TX_Address((uint32_t)UART_BUF3,buf3_cnt);							
+					buf3_cnt=0;
+					//buf3_full=false;
+				}
+			else
+				{
+					uart_dma_busy=false;
+				}
+#endif
 #ifdef   NEW_Q55_BOARD_1113   
    UART2.Trans_Busy=false;
 #else

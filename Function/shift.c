@@ -775,6 +775,10 @@ void Shift_BumpAction(void)
 //2:先到达转移点TURN_GRID，然后再分析路径并移动
 void Init_Shift_Point1(u8 pre_action)
 {
+#ifdef YBS_AFTER_SWEEPDONE
+	if((mode.mode==MODE_YBS)&(motion1.sweep_done))		//如果是弓形清扫完成，需要发起沿边，则直接退出
+		return;
+#endif
 	mode.last_mode=mode.mode;		//qz add 20180205
 	mode.last_sub_mode=mode.sub_mode;
 	/******初始化显示***********/

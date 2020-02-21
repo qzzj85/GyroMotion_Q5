@@ -18,6 +18,9 @@ void log_out(void)
 {
 	s8 now_gridx,now_gridy;
 	now_gridx=grid.x;now_gridy=grid.y;
+#ifdef UART_TWOBUF
+	uart_log=true;
+#endif
 	TRACE("===========\r\n");
 	TRACE("m.mode=0x%x\r\n",mode.mode);
 	TRACE("m.submode=0x%x\r\n",mode.sub_mode);
@@ -111,6 +114,11 @@ void log_out(void)
 	TRACE("lm_hw.t=%d l=%d r=%d m=%d\r\n",lm_hw.effectTop,lm_hw.effectLeft,lm_hw.effectRight,lm_hw.effectMid);
 	TRACE("rm_hw.t=%d l=%d r=%d m=%d\r\n",rm_hw.effectTop,rm_hw.effectLeft,rm_hw.effectRight,rm_hw.effectMid);
 	TRACE("r_hw.t=%d l=%d r=%d m=%d\r\n",r_hw.effectTop,r_hw.effectLeft,r_hw.effectRight,r_hw.effectMid);
+#endif
+#ifdef UART_TWOBUF
+	log_send_end=true;
+	TRACE("===========\r\n");
+	uart_log=false;
 #endif
 }
 

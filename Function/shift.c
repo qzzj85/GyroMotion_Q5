@@ -831,7 +831,7 @@ void Init_Shift_Point1(u8 pre_action)
 	Logout_CheckPoint();
 #endif
 	Delete_All_PathPoint();
-	delay_ms(100);
+//	delay_ms(100);
 #ifdef YBS_NEAR_TGT
 	ybs_near_flag=false;
 #endif
@@ -2080,7 +2080,7 @@ void Init_Shift_Point2(void)
 	Logout_CheckPoint();
 #endif
 	Delete_All_PathPoint();
-	delay_ms(100);
+//	delay_ms(100);
 }
 
 void Do_Shift_Point2(void)

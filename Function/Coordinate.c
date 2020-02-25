@@ -211,7 +211,8 @@ void Reset_XY(void)
 	l_ring.all_length=0;
 	r_ring.all_length=0;
 #ifndef 		RTC_8M_CORR 
-	delay_ms(300);
+	//delay_ms(300);
+	delay_ms(50);
 	GYRO_RST_1;
 #else
 	rtc_8m_Report(1);

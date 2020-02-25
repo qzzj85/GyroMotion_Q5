@@ -1293,7 +1293,6 @@ void Parse_LowPower2Dock(void)
 
 	if((Battery.bat_per<=20)&(!mode.low_power))
 		{
-			Send_Voice(VOICE_POWER_LOW);
 			mode.low_power=true;
 			switch(mode.mode)
 				{
@@ -1301,10 +1300,11 @@ void Parse_LowPower2Dock(void)
 					case MODE_PASS2INIT:
 					case MODE_EXIT:
 					case MODE_SHIFT:
+						Send_Voice(VOICE_POWER_LOW);
 						if(motion1.start_seat)
 							{								
 								stop_rap();
-								delay_ms(1000);
+								//delay_ms(1000);
 								Send_Voice(VOICE_DOCK_START);
 								motion1.force_dock=true;
 								Force_Dock();
@@ -1317,6 +1317,7 @@ void Parse_LowPower2Dock(void)
 						break;
 					case MODE_YBS:
 					case MODE_SPOT:
+						Send_Voice(VOICE_POWER_LOW);
 						if(motion1.start_seat)
 							{
 								stop_rap();

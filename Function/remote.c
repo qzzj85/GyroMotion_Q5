@@ -249,7 +249,7 @@ void Remote_Handle(void)
 										Reset_Map();
 #endif
 										Reset_XY();
-										delay_ms(3000);
+										//delay_ms(3000);
 										Init_Right_YBS(1,0);
 									break;
 									case SUBMODE_SLEEP:

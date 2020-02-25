@@ -6,6 +6,8 @@ extern bool ExitInput;     //有按键、外部电源外部输入
 extern bool key_wakeup_flag;
 extern u16 	error_code;
 extern bool wifi_ok;
+extern bool gyrotick_ok_timeflag;
+
 
 #define	ERR_BASE_NUM		0
 #define	ERROR_DANGER			ERR_BASE_NUM+1			//地检危险位置

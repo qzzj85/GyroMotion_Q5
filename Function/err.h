@@ -6,7 +6,6 @@
 #include "soft.h"
 
 extern u16 	error_code;
-
 #define ERROR_NODE_MALLOC		0X01
 ////////////////////////全局变量//////////////////////////////////
 

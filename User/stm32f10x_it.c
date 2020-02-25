@@ -391,6 +391,7 @@ void TIM2_IRQHandler(void)	//	10K ÖÐ¶Ï
 			led.halfsec_flag=true;
 			Read_PwrSwitch_Status();
 			test_500ms_flag=true;
+			gyrotick_ok_timeflag=true;
 		}
 	
 	if((giv_sys_time%10000)==0)

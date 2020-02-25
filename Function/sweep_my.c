@@ -630,7 +630,7 @@ void Init_First_Sweep(u8 start_seat)
 //y_acc:开始新区域清扫时相对Y轴的方向，1：正增长方向，0：负增长方向，2：Y轴双方向
 void Init_Init_Sweep(short tgt_yaw,u8 x_acc,u8 y_acc)
 {
-	delay_ms(100);
+//	delay_ms(100);
 //	F_Angle=tgt_yaw;
 //	B_Angle=Get_Reverse_Angle(F_Angle);
 #ifdef DEBUG_SWEEP
@@ -694,7 +694,7 @@ void Do_FirstInit_Sweep(void)
 		{
 			case 0:
 				Send_Voice(VOICE_SWEEP_START);
-				delay_ms(300);
+//				delay_ms(300);
 				Reset_XY();
 #ifdef GYRO_CAL
 				GYRO_CAL_PIN_0;
@@ -2214,7 +2214,7 @@ void Init_NormalSweep(short tgt_yaw)
 	TRACE("grid.x_straight_start=%d\r\n",grid.x_straight_start);
 	TRACE("grid.y_straight_start=%d\r\n",grid.y_straight_start);
 #endif
-	delay_ms(100);
+//	delay_ms(100);
 }
 
 void Do_NormalSweep(void)
@@ -2446,7 +2446,7 @@ void Init_Back_Sweep(short tgt_yaw)
 			mode.step=2;
 		}
 
-	delay_ms(100);
+//	delay_ms(100);
 }
 
 void Do_BackSweep(void)
@@ -2862,7 +2862,7 @@ void Continue_Sweep(void)
 	mode.abnormity=0;
 	mode.step_abn=0;
 	mode.bump_flag=0;
-	delay_ms(100);
+//	delay_ms(100);
 #ifdef DEBUG_SWEEP
 	TRACE("Continue SWEEP!\r\n");
 #endif
@@ -4609,7 +4609,7 @@ void Init_PauseSweep(void)
 
 	Sweep_Level_Set(SWEEP_LEVEL_STOP);
 	
-	delay_ms(100);
+//	delay_ms(100);
 }
 
 void Save_Pause_Data(void)
@@ -4702,7 +4702,7 @@ void Init_Sweep_Done(void)
 	motion1.sweep_done=true;
 	if((motion1.force_dock|motion1.start_seat)&(!mode.burning))
 		{
-			delay_ms(1000);
+			//delay_ms(1000);
 			Init_Docking();
 			return;
 		}
@@ -4744,7 +4744,7 @@ void Init_Sweep_Done(void)
 	
 	Set_AreaWorkTime(5);
 
-	delay_ms(100);
+//	delay_ms(100);
 }
 
 void SweepDone_Bump_Action(void)

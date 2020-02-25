@@ -272,7 +272,8 @@ void Init_Hardware (void)
 	PWR5V_ON
 #ifdef  NEW_VOICE_IC
 	V_CLK_1;				//拉高VOICE_CLK
-	V_DAT_0;				//拉高VOICE_DATA
+	//V_DAT_0;				//拉高VOICE_DATA
+	V_DAT_1;
 #else
 	V_CLK_1;				//拉高VOICE_CLK
 	V_DAT_1;				//拉高VOICE_DATA

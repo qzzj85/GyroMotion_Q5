@@ -17,6 +17,8 @@ bool key_wakeup_flag=false;
 ////////////////////////私有定义//////////////////////////////////
 ////////////////////////全局变量//////////////////////////////////
 u16 error_code=0;					//底盘检测的异常代码，两字节，
+bool gyrotick_ok_timeflag=false;
+
 ///////////////////////私有变量////////////////////////////////////
 static u8 cliff_step=0;
 ///////////////////////函数实体////////////////////////////////////
@@ -363,12 +365,12 @@ void Do_Quit_Chargeing(void)
 							break;
 						case SWEEP_METHOD_YBS:
 							Reset_XY();
-							delay_ms(3000);
+							//delay_ms(3000);
 							Init_Right_YBS(1,1);
 							break;
 						case SWEEP_METHOD_SPOT:
 							Reset_XY();
-							delay_ms(3000);
+							//delay_ms(3000);
 							Init_Sweep_Spot(SPOT_FROM_CHARGE);
 							break;
 					}
@@ -467,6 +469,29 @@ u8 Check_All_Cliff_OK(void)
 	return 0;
 }
 
+u8 Check_Gyro_Tick_OK(void)
+{
+	static uint8_t gyro_ok_cnt=0;
+	if(!gyrotick_ok_timeflag)
+		return 0;
+	gyrotick_ok_timeflag=false;		//500ms enter
+	switch(Gyro_Data.tick_check_step)
+		{
+			case 0:
+				gyro_ok_cnt=0;
+				Gyro_Data.tick_check_step++;
+				break;
+			case 1:
+				if(giv_sys_time-Gyro_Data.tick_check_time<10000)
+					gyro_ok_cnt++;
+				if(gyro_ok_cnt>=10)
+					return 1;
+				break;		
+		}
+	return 0;
+}
+
+
 void Do_Err(void)
 {
  ///遥控器按键管理		     
@@ -513,6 +538,19 @@ void Do_Err(void)
   			{
   				Send_Voice(VOICE_VOLUME_2);
   				Init_Cease();				
+  			}
+  	}
+
+  
+  if(error_code==ERROR_GYRO)
+  	{
+  		if((mode.last_mode==MODE_CEASE)&(mode.last_sub_mode==SUBMODE_CEASE))
+  			{
+		  		if(Check_Gyro_Tick_OK())
+		  			{
+		  				Send_Voice(VOICE_VOLUME_2);
+						Init_Cease();
+		  			}
   			}
   	}
 

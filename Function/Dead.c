@@ -162,6 +162,7 @@ void Do_Dead(void)
 						 IWDG_ReloadCounter();
 						 //读取实时时钟值////////////
 						 Rtc_time = RTC_GetCounter();
+						 Battery.BatteryFDCap+=20;	//sleep current:10mA
 						 if(Rtc_time >= 604800)
 							  {
 									 Rtc_time = Rtc_time % 604800;

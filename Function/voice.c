@@ -12,8 +12,9 @@ uint8_t Check_Voice_Busy(void)
 {
 	if(voice_busy)
 		{
-			if(giv_sys_time-voice_busy_time>1000)
-				{
+			if(giv_sys_time-voice_busy_time>10000)
+				{
+
 					voice_busy=FALSE;
 					return 0;
 				}
@@ -183,6 +184,10 @@ u8 Voice_Driver(u8 data)
 void Voice_Handle(void)
 {
 	static u8 step=0;
+
+	if(Check_Voice_Busy())
+		return;
+	
 	if(voice_head->next==NULL)
 		return;
 	struct node *p;
@@ -191,8 +196,60 @@ void Voice_Handle(void)
 		p=p->next;
 
 #ifdef NEW_VOICE_IC
-	if(Check_Voice_Busy())
-		return;
+#if 1
+	static uint8_t bit_cnt=0;
+	static u32 voice_delay_time=0;
+	switch(step)
+		{
+			case 0:
+				V_CLK_0;
+				V_DAT_0;
+				voice_delay_time=giv_sys_time;
+				step++;
+				bit_cnt=p->data;
+				if(bit_cnt==0)
+					Del_Node();
+				return;
+			case 1:
+				V_CLK_1;
+				voice_delay_time=giv_sys_time;
+				step++;
+				return;
+			case 2:
+				if(giv_sys_time-voice_delay_time<3)
+					return;
+				V_CLK_0;
+				voice_delay_time=giv_sys_time;
+				step++;
+				return;
+			case 3:
+				if(giv_sys_time-voice_delay_time<3)
+					return;
+				bit_cnt--;
+				V_DAT_1;
+				voice_delay_time=giv_sys_time;
+				step++;
+				return;
+			case 4:
+				if(giv_sys_time-voice_delay_time<3)
+					return;
+				V_DAT_0;
+				if(!bit_cnt)
+					step++;
+				else
+					step=3;
+				voice_delay_time=giv_sys_time;
+				return;
+			case 5:
+				if(giv_sys_time-voice_delay_time<3)
+					return;
+				V_CLK_0;
+				V_DAT_0;
+				bit_cnt=0;
+				step=0;
+				break;
+		}
+#else
 	V_CLK_1;
 	delay_us(100);
 	V_CLK_0;
@@ -207,6 +264,7 @@ void Voice_Handle(void)
 	delay_us(100);
 	V_CLK_0;
 	V_DAT_0;
+#endif
 	if(p->data==VOICE_WIFI_OK)
 		wifi_ok=true;
 

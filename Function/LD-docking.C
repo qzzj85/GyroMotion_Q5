@@ -582,7 +582,7 @@ void ReYBS2Dock(void)
 					mode.step_mk++;
 				break;
 			case 1:
-				delay_100us(100);		//—” ±10ms
+				//delay_100us(100);		//—” ±10ms
 				Init_Dock_RightYBS(1);
 #ifdef DEBUG_DOCK
 				TRACE("Dipan Request Dock ReYBS!\r\n");

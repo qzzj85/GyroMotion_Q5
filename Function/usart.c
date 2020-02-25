@@ -102,7 +102,7 @@ void u2_printf(char* fmt,...)
 					buf3_full=true;
 				}
 		}
-	else
+	else if(!uart_log)
 		{
 			va_list ap;
 			va_start(ap,fmt);

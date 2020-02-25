@@ -28,7 +28,7 @@ int Get_Pythagorean(short a,short b)
 short Get_Back_Angle(void)
 {
 	short xpos,ypos,angle,back_angle;
-	delay_ms(1000);
+//	delay_ms(1000);
 	xpos=Gyro_Data.x_pos;ypos=Gyro_Data.y_pos;
 	angle=(short)(atan2(abs(ypos-motion1.ypos_ybs_start),abs(xpos-motion1.xpos_ybs_start))*PI180);
 	angle=abs(angle)*100;

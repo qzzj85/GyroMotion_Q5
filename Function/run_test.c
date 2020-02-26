@@ -248,7 +248,7 @@ void Do_RunTest(void)
 							return;
 						Speed=TURN_SPEED;
 						do_action(2,360*Angle_1);
-						if(Judge_Yaw_Reach(8700,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(8700,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 #ifdef TEST_ONESTEP
@@ -280,7 +280,7 @@ void Do_RunTest(void)
 							return;
 						Speed=TURN_SPEED;
 						do_action(2,360*Angle_1);
-						if(Judge_Yaw_Reach(17700,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(17700,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 #ifdef TEST_ONESTEP
@@ -311,7 +311,7 @@ void Do_RunTest(void)
 							return;
 						Speed=TURN_SPEED;
 						do_action(1,360*Angle_1);
-						if(Judge_Yaw_Reach(9300,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(9300,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 #ifdef TEST_ONESTEP
@@ -342,7 +342,7 @@ void Do_RunTest(void)
 							return;
 						Speed=TURN_SPEED;
 						do_action(1,360*Angle_1);
-						if(Judge_Yaw_Reach(3,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(3,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 #ifdef TEST_ONESTEP

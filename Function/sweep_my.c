@@ -1248,7 +1248,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 						case 23:
 							Set_Coordinate_WallClean(now_gridx,now_gridy);
 							enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 								{	
 									stop_rap();
 									mode.bump=0;
@@ -1553,7 +1553,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							Set_Coordinate_WallClean(now_gridx,now_gridy);
 							enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
 
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 								{	
 									stop_rap();
 #ifdef DEBUG_SWEEP
@@ -1707,7 +1707,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							turn_dir=Get_TurnDir(tgt_angle);
 							Speed=TURN_SPEED;
 							do_action(turn_dir,360*Angle_1);
-							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 								{
 									stop_rap();
 									mode.step_bp=1;
@@ -1806,7 +1806,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									stop_rap();
 									//mode.step_bp++;
 								}
-							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 								{
 									stop_rap();
 									mode.step_bp++;
@@ -1965,7 +1965,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 									stop_rap();
 									//mode.step_bp++;
 								}
-							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 								{
 									stop_rap();
 									mode.step_bp++;
@@ -2099,7 +2099,7 @@ void Sweep_Bump_Action(u8 ir_enable,u8 out_enable)
 							Speed=TURN_SPEED;
 							turn_dir=Get_TurnDir(tgt_angle);
 							do_action(2,360*Angle_1);
-							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 								{
 									stop_rap();
 									mode.step_bp++;
@@ -2252,7 +2252,7 @@ void Do_NormalSweep(void)
 					return;
 				mode.time=giv_sys_time;
 				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
-				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10,0))
 					{
 						mode.step=0xE0;
 						return;
@@ -2367,7 +2367,7 @@ void Do_NormalSweep(void)
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
 				Speed=MID_MOVE_SPEED;
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step=1;
@@ -2480,7 +2480,7 @@ void Do_BackSweep(void)
 			case 0:
 				mode.time=giv_sys_time;
 				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
-				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10,0))
 					{
 						mode.step=0xE0;
 						return;
@@ -2637,7 +2637,7 @@ void Do_BackSweep(void)
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
 				Speed=MID_MOVE_SPEED;
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step=1;
@@ -2776,7 +2776,7 @@ void Do_Pass2Sweep(void)
 					tgt_angle=B_Angle_Const;
 				else
 					tgt_angle=F_Angle_Const;
-				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 #ifdef DEBUG_SWEEP
@@ -2793,7 +2793,7 @@ void Do_Pass2Sweep(void)
 					tgt_angle=B_Angle_Const;
 				else
 					tgt_angle=F_Angle_Const;
-				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step=0xF0;
@@ -2974,7 +2974,7 @@ void StopBack_Bump_Action(void)
 		return;
 	
 #if 1
-	if((Judge_GridYPOS_Reach(grid.y_abort,0))&(!m))
+	if((Judge_GridYPOS_Reach(grid.y_abort,0,0))&(!m))
 		{
 			//if(mode.step==3)
 				{
@@ -3174,7 +3174,7 @@ void StopBack_Bump_Action_II(void)
 		return;
 	
 #if 1
-	if((Judge_GridYPOS_Reach(grid.y_abort,0))&(!m))
+	if((Judge_GridYPOS_Reach(grid.y_abort,0,0))&(!m))
 		{
 			//if(mode.step==3)
 				{
@@ -3285,7 +3285,7 @@ void StopBack_Bump_Action_II(void)
 									mode.bump=m;
 									mode.step_bp=0;
 								}
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 								{
 									stop_rap();
 									mode.step=0;
@@ -3338,7 +3338,7 @@ void StopBack_Bump_Action_II(void)
 									mode.bump=m;
 									mode.step_bp=0;
 								}
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 								{
 									stop_rap();
 									mode.step=0;
@@ -3466,7 +3466,7 @@ void StopBack_Bump_Action_II(void)
 						enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 					}
 				#if 0
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 					{
 						stop_rap();
 						mode.bump=0;
@@ -3597,7 +3597,7 @@ void Do_Stop_BackSweep(void)
 				Speed=TURN_SPEED;
 				turn_dir= Get_TurnDir(tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -3636,7 +3636,7 @@ void Do_Stop_BackSweep(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -3744,7 +3744,7 @@ void Do_Pass2Init(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -4553,7 +4553,7 @@ void Sweep_YBS(void)
 					{	
 						stop_rap();
 					}
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{	
 						stop_rap();
 						mode.step++;
@@ -4887,7 +4887,7 @@ void Do_SweepDone(void)
 				Speed=MID_MOVE_SPEED;
 				turn_dir=Get_TurnDir(tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -4939,7 +4939,7 @@ void Do_SweepDone(void)
 						}
 				break;
 			case 3:
-				if(!Judge_Yaw_Reach(motion1.yaw_start,TURN_ANGLE_BIOS))
+				if(!Judge_Yaw_Reach(motion1.yaw_start,TURN_ANGLE_BIOS,1))
 					{
 						mode.step++;
 					}
@@ -4952,7 +4952,7 @@ void Do_SweepDone(void)
 				Speed=MID_MOVE_SPEED;
 				turn_dir=Get_TurnDir(motion1.yaw_start);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.yaw_start,50))
+				if(Judge_Yaw_Reach(motion1.yaw_start,50,1))
 					{
 						stop_rap();
 						mode.step++;

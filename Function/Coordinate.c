@@ -503,7 +503,7 @@ void Logout_Area_Coordinate(void)
 		
 }
 
-u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw)
+u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw,bool spd_down)
 {
  	int data1=0;
 	turn_stop_angle=tgt_yaw;
@@ -514,14 +514,37 @@ u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw)
 	
 	if(turn_stop_flag)
 		{
-			if(data1<DEGREE_05)
+#ifdef SPD_DOWN
+			if(spd_down)
 				{
-					turn_stop_flag=false;
-					turn_stop_enable=false;
-					return 1;
+					if(data1<DEGREE_01)
+						{
+							turn_stop_flag=false;
+							turn_stop_enable=false;
+							return 1;
+						}
+				}
+			else
+#endif
+				{
+					if(data1<DEGREE_05)
+						{
+							turn_stop_flag=false;
+							turn_stop_enable=false;
+							return 1;
+						}
 				}
 		}
-	
+#ifdef SPD_DOWN
+	if(spd_down)
+		{
+			if(data1<DEGREE_30)
+				{
+					l_rap.rap=LOW_MOVE_SPEED;
+					r_rap.rap=LOW_MOVE_SPEED;
+				}
+		}
+#endif	
 	if(data1<bios_yaw)
 		{
 			return 1;
@@ -663,14 +686,20 @@ OUTPUT:
 	0:未到达预定坐标
 	1:已到达预定坐标
 ----------------------------------------------*/
-u8 Judge_GridYPOS_Reach(s8 gridy,short ydir)
+u8 Judge_GridYPOS_Reach(s8 gridy,short ydir,bool spd_down)
 {
 	short tgt_ypos;
 	tgt_ypos=Return_GridYPos_Point(gridy);
 
 	if(Judge_Ypos_Reach(tgt_ypos,POS_BIOS))
 		return 1;
-
+#ifdef SPD_DOWN
+	if(spd_down&(Judge_Ypos_Reach(tgt_ypos,8)))
+		{
+			l_rap.rap=LOW_MOVE_SPEED;
+			r_rap.rap=LOW_MOVE_SPEED;
+		}
+#endif
 	//以下为补充手段，先不启用
 	if((ydir==R_Angle_Const)&(Gyro_Data.y_pos>tgt_ypos))		//方向角L_Angle_Const,从左接近，y_pos逐渐增大
 		return 1;
@@ -692,14 +721,20 @@ OUTPUT:
 	0:未到达预定坐标
 	1:已到达预定坐标
 ----------------------------------------------*/
-u8 Judge_GridXPOS_Reach(s8 gridx,short dir)
+u8 Judge_GridXPOS_Reach(s8 gridx,short dir,bool spd_down)
 {
 	short tgt_xpos;
 	tgt_xpos=Return_GridXPos_Point(gridx);
 
 	if(Judge_Xpos_Reach(tgt_xpos,POS_BIOS))
 		return 1;
-
+#ifdef SPD_DOWN
+	if(spd_down&(Judge_Xpos_Reach(tgt_xpos,8)))
+		{
+			l_rap.rap=LOW_MOVE_SPEED;
+			r_rap.rap=LOW_MOVE_SPEED;
+		}
+#endif
 	//以下为补充手段，先不启用
 	if((dir==F_Angle_Const)&(Gyro_Data.x_pos>tgt_xpos))		//从下接近，x_pos逐渐增大
 		return 1;

@@ -83,7 +83,7 @@ void Do_Quit_Chargeing(void)
 			case 0x02:
 				Speed=TURN_SPEED;
 				do_action(2,360*Angle_1);
-				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(anti_tgt_angle,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;

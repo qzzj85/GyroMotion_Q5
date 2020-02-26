@@ -1,9 +1,12 @@
 #ifndef CORDINATE_H
 #define	CORDINATE_H
 
+#define	DEGREE_01			100
 #define	DEGREE_05			500
 #define	DEGREE_10			1000
+#define	DEGREE_20			2000
 #define	DEGREE_30			3000
+#define	DEGREE_45			4500
 #define DEGREE_180			18000
 #define DEGREE_300			30000
 #define	DEGREE_360			36000
@@ -49,7 +52,7 @@ void Record_Coordinate_Intime(void);
 void Logout_Area_Coordinate(void);
 void Init_Coordinate(void);
 void Cal_CoordinateXY(void);
-u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw);
+u8 Judge_Yaw_Reach(short tgt_yaw,short bios_yaw,bool spd_down);
 u8 Judge_Pos_Reach(short tgt_xpos, short tgt_ypos);
 u8 Judge_Xpos_Reach(short tgt_xpos,u8 xpos_bios);
 u8 Judge_Ypos_Reach(short tgt_ypos,u8 pos_bios);
@@ -72,9 +75,9 @@ u8 Judge_GridYPOS_Nearby_Reach(s8 gridy);
 u8 Judge_GridYPOS_Far_Reach(s8 gridy);
 
 void Cal_Grid_Pos(void);
-u8 Judge_GridYPOS_Reach(s8 gridy,short dir);
+u8 Judge_GridYPOS_Reach(s8 gridy,short ydir,bool spd_down);
 void Set_Coordinate_WallClean(s8 xgrid,s8 ygrid);
-u8 Judge_GridXPOS_Reach(s8 gridx,short dir);
+u8 Judge_GridXPOS_Reach(s8 gridx,short dir,bool spd_down);
 short Return_GridXPos_Point(s8 gridx);
 short Return_GridYPos_Point(s8 gridy);
 void Reset_CheckPoint_NextAction(void);

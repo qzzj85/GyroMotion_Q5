@@ -109,7 +109,8 @@
 #define     MOTOR_SELF_TEST    		1
 #define     MOTOR_OPPOSITE_DIR		1
 #define		BAT_CAP_MAX				1					//电池最大容量限制
-#define		YBS_AFTER_SWEEPDONE		1
+#define		YBS_AFTER_SWEEPDONE		1					//弓形完成后沿边一周
+#define		SPD_DOWN				1					//行走有减速过程
 
 #define		TEST_ONESTEP			1
 #define		EARTH_IN_TIM2			1
@@ -122,7 +123,7 @@
 
 #define 	MAIN_VERISON 			1
 #define 	SUB_VERSION				5
-#define		CORRECT_VERSION			3
+#define		CORRECT_VERSION			4
 
 #define 	PREEN_DATA_ADDR  		0X0807F800			//7组预约时间存储地址，最后一个页
 #define		BAT_REINIT_ADDR			0x0807FFFC			//最后一个字节

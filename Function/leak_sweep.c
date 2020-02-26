@@ -166,7 +166,7 @@ void Do_LeakSweep(void)
 			case 0:
 				mode.time=giv_sys_time;
 				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
-				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10,0))
 					{
 						mode.step=0xE0;
 						return;
@@ -306,7 +306,7 @@ void Do_LeakSweep(void)
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
 				Speed=MID_MOVE_SPEED;
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step=1;
@@ -440,7 +440,7 @@ void Do_Leak_BackSweep(void)
 			case 0:
 				mode.time=giv_sys_time;
 				//if(!Is_Close_Angle(motion1.tgt_yaw,now_angle,DEGREE_10))		///////角度修正/////////
-				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10))
+				if(!Judge_Yaw_Reach(motion1.tgt_yaw,DEGREE_10,0))
 					{
 						mode.step=0xE0;
 						return;
@@ -585,7 +585,7 @@ void Do_Leak_BackSweep(void)
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);	
 				Speed=MID_MOVE_SPEED;
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step=1;

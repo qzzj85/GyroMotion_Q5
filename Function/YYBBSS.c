@@ -1515,6 +1515,8 @@ void Init_Right_YBS(u8 pre_action,bool start_seat)
 	Gyro_Data.cal_flag=false;
 	YBS_check_base=false;	
 	Init_Check_Status();	
+	Set_AreaWorkTime(30);
+	
 }
 
 void Init_Left_YBS(u8 direct_first)
@@ -1575,7 +1577,7 @@ u8 Parse_ContinueInYBS(s8 now_gridx,s8 now_gridy)
 	switch(motion1.continue_checkstep)
 		{
 			case 0:
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,REPEAT_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,REPEAT_ANGLE_BIOS,0))
 					{
 						motion1.continue_checkstep++;
 						return 0;

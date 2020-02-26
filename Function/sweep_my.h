@@ -1,6 +1,6 @@
 #ifndef __SWEEP_MY_H
 #define __SWEEP_MY_H
-#define POS_BIOS			3
+#define POS_BIOS			3			//3cm
 #define	TURN_ANGLE_BIOS		100//50		//0.5¶È
 #define	HORIZON_LENGTH		20
 

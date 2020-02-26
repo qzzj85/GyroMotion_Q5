@@ -987,7 +987,7 @@ void YBS_Left_Bump(u8 out_enable)
 						Speed=TURN_SPEED;
 						turn_dir=Get_TurnDir(tgt_angle);
 						do_action(turn_dir,360*Angle_1);
-						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 								mode.step_bp=100;
@@ -1125,7 +1125,7 @@ void YBS_Left_Bump(u8 out_enable)
 								mode.bump_time=giv_sys_time;
 								return;
 							}
-						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,0))
 							{
 								stop_rap();
 								mode.step_bp=3;
@@ -1154,7 +1154,7 @@ void YBS_Left_Bump(u8 out_enable)
 						Speed=TURN_SPEED;
 						turn_dir=Get_TurnDir(tgt_angle);
 						if(do_action(turn_dir,720*Angle_1));
-						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,1))
 							{
 								stop_rap();
 								mode.step_bp++;
@@ -1252,7 +1252,7 @@ void YBS_Left_Bump(u8 out_enable)
 								mode.bump_time=giv_sys_time;
 								mode.step_bp=14;
 							}
-						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+						if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,0))
 							{
 								stop_rap();
 								mode.step_bp=13;

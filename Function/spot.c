@@ -92,6 +92,7 @@ void Init_Sweep_Spot(u8 start_from)
 		}
 	CHECK_STATUS_FLAG=true;			// πƒ‹“Ï≥£ºÏ≤‚
 	Init_Check_Status();
+	Set_AreaWorkTime(10);
 }
 
 
@@ -394,7 +395,7 @@ void Do_Spot_My(void)
 			case 20:
 				Speed=TURN_SPEED;
 				do_action(2,360*Angle_1);
-				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						if(!piv_left)

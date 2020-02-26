@@ -884,6 +884,18 @@ void Work_TimeOut_Handle(void)
 						}
 				}
 		}
+	else if((mode.mode==MODE_YBS)|(mode.mode==MODE_SPOT))
+		{
+			if(giv_sys_time-motion1.worktime_area>motion1.worktime_area_max)
+				{
+					stop_rap();
+#ifdef DEBUG_MOTION
+					TRACE("working time out!!!\r\n");
+					TRACE("goto dock!!!\r\n");
+#endif
+					Init_Sweep_Done();
+				}
+		}
 }
 
 void Set_Seat_Grid(void)

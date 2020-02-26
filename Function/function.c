@@ -2067,7 +2067,7 @@ u8 Action_Protect_My(u8 abnoraml)
 						case 4:
 							Speed=TURN_SPEED;
 							do_action(turn_dir,360*Angle_1);
-							if(Judge_Yaw_Reach(resume_anlge,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(resume_anlge,TURN_ANGLE_BIOS,1))
 								{
 									stop_rap();
 									mode.step_abn++;

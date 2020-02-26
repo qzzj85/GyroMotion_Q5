@@ -19,7 +19,7 @@ u8 Analysis_Reach_YAbort(void)
 	if(temp_nextaction==CHECK_BACK2NORMAL)
 		{
 #ifndef STOP_BACK_DIRECT
-			if(Judge_GridYPOS_Reach(grid.y_abort,0))
+			if(Judge_GridYPOS_Reach(grid.y_abort,0,0))
 				{
 					stop_rap();
 					Init_Stop_BackSweep();
@@ -43,7 +43,7 @@ u8 Analysis_Reach_YAbort(void)
 
 	if(temp_nextaction==CHECK_BACKSWEEP)
 		{
-			if(Judge_GridYPOS_Reach(grid.y_abort,0))
+			if(Judge_GridYPOS_Reach(grid.y_abort,0,0))
 				{
 					stop_rap();
 #ifdef DEBUG_SHIFT
@@ -653,7 +653,7 @@ void Shift_BumpAction(void)
 								enable_rap_no_length(FRONT,REVOLUTION_SPEED_LOW,FRONT,REVOLUTION_SPEED_HIGH);
 							else
 								enable_rap_no_length(FRONT,REVOLUTION_SPEED_HIGH,FRONT,REVOLUTION_SPEED_LOW);
-							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+							if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,0))
 								{
 									stop_rap();
 									//if(mode.step>=SHIFTMODE_STEP_REACHPOINT1)
@@ -1177,7 +1177,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1193,7 +1193,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=20;
 					}
-				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1220,7 +1220,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1235,7 +1235,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=20;
 					}
-				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
@@ -1264,7 +1264,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1279,7 +1279,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=40;
 					}
-				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1306,7 +1306,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1321,7 +1321,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=43;
 					}
-				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
@@ -1403,7 +1403,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1432,7 +1432,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1441,7 +1441,7 @@ void Do_Shift_Point1(void)
 			case 67:
 				Speed=HIGH_MOVE_SPEED;
 				do_action_my(3,20*CM_PLUS,motion1.tgt_yaw);
-				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(tgt_gridy1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=60;
@@ -1498,7 +1498,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1511,7 +1511,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step++;
 					}
-				if(Judge_GridYPOS_Reach(temp_tgty, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(temp_tgty, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1588,7 +1588,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1601,7 +1601,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=70;
 					}
-				if(Judge_GridXPOS_Reach(temp_tgtx, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(temp_tgtx, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=70;
@@ -1648,7 +1648,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1672,7 +1672,7 @@ void Do_Shift_Point1(void)
 									}
 							}
 					}
-				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(tgt_gridx1, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=SHIFTMODE_STEP_REACHPOINT1;
@@ -1724,7 +1724,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1738,7 +1738,7 @@ void Do_Shift_Point1(void)
 						mode.step++;
 						return;
 					}
-				if(Judge_GridYPOS_Reach(turn_grid.gridy, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(turn_grid.gridy, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1764,7 +1764,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1778,7 +1778,7 @@ void Do_Shift_Point1(void)
 						mode.step++;
 						return;
 					}
-				if(Judge_GridXPOS_Reach(turn_grid.gridx, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(turn_grid.gridx, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1877,7 +1877,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1897,7 +1897,7 @@ void Do_Shift_Point1(void)
 						stop_rap();
 						mode.step=SHIFTMODE_STEP_PATHPOINT;
 					}
-				if(Judge_GridXPOS_Reach(temp_gridx, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(temp_gridx, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=172;
@@ -1935,7 +1935,7 @@ void Do_Shift_Point1(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -1952,7 +1952,7 @@ void Do_Shift_Point1(void)
 				if(do_action_my(3,length*CM_PLUS,motion1.tgt_yaw))
 					{
 					}
-				if(Judge_GridYPOS_Reach(temp_gridy, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(temp_gridy, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=175;
@@ -2165,7 +2165,7 @@ void Do_Shift_Point2(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -2178,7 +2178,7 @@ void Do_Shift_Point2(void)
 						stop_rap();
 						mode.step=0;
 					}
-				if(Judge_GridYPOS_Reach(tgt_gridy2, motion1.tgt_yaw))
+				if(Judge_GridYPOS_Reach(tgt_gridy2, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=0;
@@ -2206,7 +2206,7 @@ void Do_Shift_Point2(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -2219,7 +2219,7 @@ void Do_Shift_Point2(void)
 						stop_rap();
 						mode.step=0;
 					}
-				if(Judge_GridXPOS_Reach(tgt_gridx2, motion1.tgt_yaw))
+				if(Judge_GridXPOS_Reach(tgt_gridx2, motion1.tgt_yaw,1))
 					{
 						stop_rap();
 						mode.step=0;
@@ -2273,7 +2273,7 @@ void Do_Shift_Point2(void)
 				Speed=TURN_SPEED;
 				turn_dir=Get_TurnDir(motion1.tgt_yaw);
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(motion1.tgt_yaw,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						//if(check_point.leak_sweep)
@@ -2492,7 +2492,7 @@ u8 Abort_ShiftYBS(void)
 	if(mode.last_sub_mode==SUBMODE_SHIFTPOINT1)
 		{
 			//if((now_gridy==tgt_gridy1)&(now_gridx==tgt_gridx1))
-			if((Judge_GridYPOS_Reach(tgt_gridy1,0))&(now_gridx==tgt_gridx1))
+			if((Judge_GridYPOS_Reach(tgt_gridy1,0,0))&(now_gridx==tgt_gridx1))
 				{
 					stop_rap();
 #ifdef DEBUG_SHIFT					
@@ -2503,7 +2503,7 @@ u8 Abort_ShiftYBS(void)
 					return 1;
 				}
 			//if((now_gridy==tgt_gridy2)&(now_gridx==tgt_gridx2))
-			if((Judge_GridYPOS_Reach(tgt_gridy2,0))&(now_gridx==tgt_gridx2))
+			if((Judge_GridYPOS_Reach(tgt_gridy2,0,0))&(now_gridx==tgt_gridx2))
 				{
 					stop_rap();
 #ifdef DEBUG_SHIFT					
@@ -2518,7 +2518,7 @@ u8 Abort_ShiftYBS(void)
 	if(mode.last_sub_mode==SUBMODE_SHIFTPOINT2)
 		{
 			//if((now_gridy==tgt_gridy2)&(now_gridx==tgt_gridx2))
-			if((Judge_GridYPOS_Reach(tgt_gridy2,0))&(now_gridx==tgt_gridx2))
+			if((Judge_GridYPOS_Reach(tgt_gridy2,0,0))&(now_gridx==tgt_gridx2))
 				{
 					stop_rap();
 #ifdef DEBUG_SHIFT					
@@ -2541,7 +2541,7 @@ u8 Abort_ShiftYBS(void)
 			else if(!IS_GridX_In_Backup(now_gridx))
 				ybs_near_flag=false;
 			
-			else if(Judge_GridYPOS_Reach(tgt_gridy2,0))
+			else if(Judge_GridYPOS_Reach(tgt_gridy2,0,0))
 				{
 					if(IS_GridX_In_Backup(now_gridx))
 						{
@@ -3279,7 +3279,7 @@ void Do_ShiftYBS(void)
 				turn_dir=Get_TurnDir(turn_angle);
 				Speed=TURN_SPEED;
 				do_action(turn_dir,360*Angle_1);
-				if(Judge_Yaw_Reach(turn_angle,TURN_ANGLE_BIOS))
+				if(Judge_Yaw_Reach(turn_angle,TURN_ANGLE_BIOS,1))
 					{
 						stop_rap();
 						mode.step++;
@@ -3377,12 +3377,12 @@ u8 Abort2Sweep(void)
 					{
 						if(check_point.ydir>0)
 							{
-								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
 									}
-								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
@@ -3394,12 +3394,12 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
 									}
-								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
@@ -3414,12 +3414,12 @@ u8 Abort2Sweep(void)
 					{
 						if(check_point.ydir>0)
 							{
-								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
 									}
-								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;
@@ -3431,12 +3431,12 @@ u8 Abort2Sweep(void)
 							}
 						else
 							{
-								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+								if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
 									}
-								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+								else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 									{
 										temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 										temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
@@ -3490,12 +3490,12 @@ u8 Abort2Sweep(void)
 
 				if(mode.sub_mode==SUBMODE_YBS_LEFT)														//×óÑØ±ß
 					{
-						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 							{
 								temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 								temp_gridx2=now_gridx+1;temp_gridy2=now_gridy-1;
 							}
-						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 							{
 								temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 								temp_gridx2=now_gridx-1;temp_gridy2=now_gridy+1;
@@ -3507,12 +3507,12 @@ u8 Abort2Sweep(void)
 					}		
 				else																				//ÓÒÑØ±ß
 					{
-						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30))
+						if(Judge_Yaw_Reach(L_Angle_Const,DEGREE_30,0))
 							{
 								temp_gridx1=now_gridx-1;temp_gridy1=now_gridy;
 								temp_gridx2=now_gridx-1;temp_gridy2=now_gridy-1;
 							}
-						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30))
+						else if(Judge_Yaw_Reach(R_Angle_Const,DEGREE_30,0))
 							{
 								temp_gridx1=now_gridx+1;temp_gridy1=now_gridy;
 								temp_gridx2=now_gridx+1;temp_gridy2=now_gridy+1;

@@ -275,6 +275,20 @@ void ACC_DEC_Comm_rap_My (void)
 					r_rap.rap=500;
 				}
 #endif
+
+#ifdef SPD_DOWN
+			if((r_ring.length>6*CM_PLUS)&(l_ring.length>6*CM_PLUS))	
+				{
+					if(r_rap.length==l_rap.length)
+						{
+							if(r_rap.length<r_ring.length+4*CM_PLUS)
+								{
+									r_rap.rap=LOW_MOVE_SPEED;
+									l_rap.rap=LOW_MOVE_SPEED;
+								}
+						}
+				}
+#endif
 			if(r_rap.length  <=  (r_ring.length+10) )
 				{
 					disable_pwm(R_BACK);
@@ -311,6 +325,20 @@ void ACC_DEC_Comm_rap_My (void)
 			if((l_rap.length<l_ring.length+10*CM_PLUS)&(l_rap.rap>500))
 				{
 					l_rap.rap=500;
+				}
+#endif
+
+#ifdef SPD_DOWN
+			if((r_ring.length>6*CM_PLUS)&(l_ring.length>6*CM_PLUS))	
+				{
+					if(r_rap.length==l_rap.length)
+						{
+							if(l_rap.length<l_ring.length+4*CM_PLUS)
+								{
+									r_rap.rap=LOW_MOVE_SPEED;
+									l_rap.rap=LOW_MOVE_SPEED;
+								}
+						}
 				}
 #endif
 			if(l_rap.length  <=  (l_ring.length+10) )

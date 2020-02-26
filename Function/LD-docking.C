@@ -1073,7 +1073,7 @@ void Docking_Bump_My(void)
 										stop_rap();
 										mode.step_bp=2;
 									}
-								if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+								if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,0))
 									{
 										stop_rap();
 										mode.bump=0;
@@ -1671,7 +1671,7 @@ void Docking_Bump_My(void)
 												stop_rap();
 												mode.step_bp=1;
 											}
-										if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS))
+										if(Judge_Yaw_Reach(tgt_angle,TURN_ANGLE_BIOS,0))
 											{
 												stop_rap();
 												mode.bump=0;
